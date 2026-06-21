@@ -56,8 +56,15 @@ npm test                         # 좌표 변환/중복 제거/로더/캐시 단
 
 결정적 산출(해시 고정)을 위해 `PIPELINE_NOW`/`PIPELINE_VERSION` 환경변수로 타임스탬프를 고정할 수 있다.
 
-## 갱신 주기
+## 갱신 주기 / 자동화
 
 - B/C/D: 월 1회
 - B-3/B-4: 분기 1회
 - A-4/D-2: 자치구 수집 파일 갱신 시 수동
+
+**월 1회 자동 갱신**은 `../.github/workflows/pipeline-monthly.yml` 이 담당한다.
+매월 1일 18:00 UTC(KST 2일 03:00) 또는 수동(`workflow_dispatch`) 트리거 시
+`npm ci → npm test → npm run run:pipeline → npm run validate` 를 거쳐 `cdn/` 변경분이
+있으면 자동 커밋한다. 라이브 수집은 저장소 secrets(`KAKAO_REST_API_KEY`,
+`DATA_GO_KR_SERVICE_KEY`, `SEOUL_OPEN_API_KEY`)가 있을 때만 동작하고, 없으면
+`data/raw/` 기반으로 안전 통과한다. 로컬 1회 갱신은 `npm run refresh`.

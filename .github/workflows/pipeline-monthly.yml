@@ -1,0 +1,63 @@
+# 안전거점 CDN JSON — 월 1회 자동 갱신
+# 매월 1일 18:00 UTC(KST 익일 03:00)에 공공데이터 파이프라인을 실행해
+# cdn/ 정적 산출물과 manifest.json 을 재생성하고, 변경분이 있으면 커밋한다.
+# 운영 키(secrets)가 있으면 라이브 수집, 없으면 data/raw/ 기반으로 안전 통과.
+name: pipeline-monthly
+
+on:
+  schedule:
+    # 매월 1일 18:00 UTC = KST 매월 2일 03:00 (월 1회)
+    - cron: "0 18 1 * *"
+  workflow_dispatch: # 수동 트리거(긴급 재수집)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pipeline-monthly
+  cancel-in-progress: false
+
+jobs:
+  refresh-cdn:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Test (좌표변환·dedup·로더)
+        run: npm test
+
+      - name: Run pipeline (좌표변환 → dedup → 시군구 분할 → CDN)
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+          SEOUL_OPEN_API_KEY: ${{ secrets.SEOUL_OPEN_API_KEY }}
+          CDN_BASE_URL: ${{ vars.CDN_BASE_URL }}
+        run: npm run run:pipeline
+
+      - name: Validate CDN outputs (JSON Schema, 단일 WGS84 좌표계)
+        run: npm run validate
+
+      - name: Commit refreshed CDN
+        working-directory: .
+        run: |
+          git config user.name "bueongi-pipeline-bot"
+          git config user.email "bueongi-pipeline-bot@users.noreply.github.com"
+          git add cdn/
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+          else
+            git commit -m "chore(pipeline): 월간 안전거점 CDN 갱신 ($(date -u +%Y-%m))"
+            git push
+          fi

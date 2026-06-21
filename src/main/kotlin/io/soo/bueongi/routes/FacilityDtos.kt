@@ -4,8 +4,9 @@ package io.soo.bueongi.routes
  * 경로상 POI 1건. 프론트 MapMock POI(`{ type, x, y }`)와 호환되도록 정규화 좌표 x/y(0~100)를 주고,
  * 실지도 연동을 위해 lat/lng 도 함께 준다(프론트는 필요한 쪽만 사용).
  *
- * type: 'start' | 'end' | 'cctv' | 'bell' | 'store' | 'police'.
+ * type: 'start' | 'end' | 'cctv' | 'bell' | 'store' | 'police' | 'safehouse'.
  * (start/end 는 안심시설 집계에서 제외 — 프론트 summarizeSafetyFacilities 와 동일 규칙.)
+ * safehouse(여성안심지킴이집·B-2)는 지정 거점일 뿐 영업시간 정보가 없어, 프론트에서 별도 주의 문구로 안내한다.
  */
 data class FacilityPoi(
     val type: String,
@@ -25,6 +26,8 @@ data class FacilitySummary(
     val bell: Int,
     val store: Int,
     val police: Int,
+    /** 여성안심지킴이집(B-2) 수. 지정 거점 — 영업시간 보장이 아님. */
+    val safehouse: Int,
     /** 안심시설 합계(start/end 제외). */
     val total: Int,
 )

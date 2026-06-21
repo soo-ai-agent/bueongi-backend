@@ -38,13 +38,14 @@ class FacilityServiceTest {
         assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == "bell" })
         assertThat(res.summary.store).isEqualTo(res.pois.count { it.type == "store" })
         assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == "police" })
+        assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == "safehouse" })
     }
 
     @Test
     fun `total 은 안심시설 합계이며 start end 를 제외한다`() {
         val res = service.alongRoute(request("safe"))
         val s = res.summary
-        assertThat(s.total).isEqualTo(s.cctv + s.bell + s.store + s.police)
+        assertThat(s.total).isEqualTo(s.cctv + s.bell + s.store + s.police + s.safehouse)
         // start/end 는 집계에서 제외 → total 은 POI 총개수보다 2 작다.
         assertThat(s.total).isEqualTo(res.pois.size - 2)
     }
@@ -105,6 +106,7 @@ class FacilityServiceTest {
         assertThat(s.cctv).describedAs("짧은 추천 경로 cctv floor").isGreaterThanOrEqualTo(2)
         assertThat(s.bell).describedAs("짧은 추천 경로 bell floor").isGreaterThanOrEqualTo(1)
         assertThat(s.store).describedAs("짧은 추천 경로 store floor").isGreaterThanOrEqualTo(1)
+        assertThat(s.safehouse).describedAs("짧은 추천 경로 safehouse floor").isGreaterThanOrEqualTo(1)
     }
 
     @Test

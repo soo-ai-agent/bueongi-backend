@@ -39,11 +39,14 @@ class FacilityService {
         val bell = count(type.bellPerKm, floorWhenSafe = 1)
         val store = count(type.storePerKm, floorWhenSafe = 1)
         val police = count(type.policePerKm, floorWhenSafe = 0)
+        // 안심집(B-2)은 지정 거점이라 희소 — safe 경로에서만 최소 1개 보장.
+        val safehouse = count(type.safehousePerKm, floorWhenSafe = 1)
 
         val pois = buildList {
             add(endpoint("start", o.lat, o.lng))
             addFacilities("cctv", cctv, o, d)
             addFacilities("bell", bell, o, d)
+            addFacilities("safehouse", safehouse, o, d)
             addFacilities("store", store, o, d)
             addFacilities("police", police, o, d)
             add(endpoint("end", d.lat, d.lng))
@@ -55,6 +58,7 @@ class FacilityService {
             bell = pois.count { it.type == "bell" },
             store = pois.count { it.type == "store" },
             police = pois.count { it.type == "police" },
+            safehouse = pois.count { it.type == "safehouse" },
             total = pois.count { it.type in SAFETY_TYPES },
         )
         return FacilitiesResponse(pois = pois, summary = summary)
@@ -86,7 +90,7 @@ class FacilityService {
     }
 }
 
-private val SAFETY_TYPES = setOf("cctv", "bell", "store", "police")
+private val SAFETY_TYPES = setOf("cctv", "bell", "store", "police", "safehouse")
 
 /** 유형별 측면 오프셋(겹침 방지용, 결정론적). */
 private val TYPE_LATERAL = mapOf(
@@ -94,4 +98,5 @@ private val TYPE_LATERAL = mapOf(
     "bell" to -1.0,
     "store" to 0.5,
     "police" to -0.5,
+    "safehouse" to 1.5,
 )
