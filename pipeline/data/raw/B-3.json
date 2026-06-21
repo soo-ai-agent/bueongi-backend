@@ -1,0 +1,20 @@
+[
+  {
+    "source": "B-3",
+    "type": "police",
+    "coordSystem": "address",
+    "sigunguCode": "11680",
+    "name": "역삼지구대",
+    "address": "서울특별시 강남구 테헤란로 142",
+    "phone": "02-3665-0112"
+  },
+  {
+    "source": "B-3",
+    "type": "police",
+    "coordSystem": "address",
+    "sigunguCode": "11110",
+    "name": "청운효자동파출소",
+    "address": "서울특별시 종로구 자하문로 92",
+    "phone": "02-737-0112"
+  }
+]

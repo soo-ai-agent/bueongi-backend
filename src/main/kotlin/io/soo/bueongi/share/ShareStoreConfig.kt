@@ -1,0 +1,76 @@
+package io.soo.bueongi.share
+
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Condition
+import org.springframework.context.annotation.ConditionContext
+import org.springframework.context.annotation.Conditional
+import org.springframework.context.annotation.Configuration
+import org.springframework.core.type.AnnotatedTypeMetadata
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.core.StringRedisTemplate
+import java.net.URI
+import java.time.Clock
+
+/** `bueongi.share.redis-url` 이 비어있지 않으면 매칭(Redis 모드). */
+class RedisConfigured : Condition {
+    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
+        !context.environment.getProperty("bueongi.share.redis-url", "").isNullOrBlank()
+}
+
+/** `bueongi.share.redis-url` 이 비었으면 매칭(인메모리 폴백 모드). [RedisConfigured] 의 정확한 여집합. */
+class RedisNotConfigured : Condition {
+    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
+        context.environment.getProperty("bueongi.share.redis-url", "").isNullOrBlank()
+}
+
+/**
+ * 위치 공유 저장소([LocationStore]) 배선. **빈 env 함정**을 피하려고 `@ConditionalOnProperty`(빈 문자열도 "있음"으로 보는 경우가 있음)
+ * 대신 [RedisConfigured]/[RedisNotConfigured] 라는 상호배타 [Condition] 으로 정확히 한쪽만 [LocationStore] 빈을 만든다 —
+ * null 반환 빈 + `@ConditionalOnMissingBean` 의 순서 의존 함정도 회피한다(어느 쪽이든 `locationStore` 빈이 정확히 1개).
+ *
+ * `RedisAutoConfiguration` 은 [io.soo.bueongi.BueongiApplication] 에서 제외했다 — 부트 기본 자동설정은 URL 미지정 시에도
+ * `localhost:6379` 로 연결을 시도하므로, 접속 팩토리를 여기서 명시적으로만(Redis 모드에서만) 생성한다.
+ */
+@Configuration
+class ShareStoreConfig {
+
+    /** Redis 모드: Lettuce 접속 팩토리 → 템플릿 → [RedisLocationStore]. 팩토리는 Spring 이 종료 시 close(destroy)한다. */
+    @Configuration
+    @Conditional(RedisConfigured::class)
+    class RedisShareStore(
+        @Value("\${bueongi.share.redis-url}") private val redisUrl: String,
+    ) {
+        @Bean(destroyMethod = "destroy")
+        fun shareRedisConnectionFactory(): LettuceConnectionFactory {
+            val uri = URI(redisUrl)
+            val config = RedisStandaloneConfiguration(
+                uri.host ?: "localhost",
+                if (uri.port > 0) uri.port else DEFAULT_REDIS_PORT,
+            )
+            uri.userInfo?.substringAfter(':', "")?.takeIf { it.isNotEmpty() }?.let { config.setPassword(it) }
+            return LettuceConnectionFactory(config).apply { afterPropertiesSet() }
+        }
+
+        @Bean
+        fun shareRedisTemplate(factory: LettuceConnectionFactory): StringRedisTemplate =
+            StringRedisTemplate(factory).apply { afterPropertiesSet() }
+
+        @Bean
+        fun locationStore(template: StringRedisTemplate, clock: Clock): LocationStore =
+            RedisLocationStore(template, clock)
+    }
+
+    /** 폴백 모드: Redis 미주입(로컬/CI/MVP). 동일 [LocationStore] 계약이라 서비스/테스트는 무차별. */
+    @Configuration
+    @Conditional(RedisNotConfigured::class)
+    class InMemoryShareStore {
+        @Bean
+        fun locationStore(clock: Clock): LocationStore = InMemoryLocationStore(clock)
+    }
+
+    private companion object {
+        const val DEFAULT_REDIS_PORT = 6379
+    }
+}

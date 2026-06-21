@@ -1,0 +1,36 @@
+package io.soo.bueongi.routes
+
+/**
+ * 경로상 POI 1건. 프론트 MapMock POI(`{ type, x, y }`)와 호환되도록 정규화 좌표 x/y(0~100)를 주고,
+ * 실지도 연동을 위해 lat/lng 도 함께 준다(프론트는 필요한 쪽만 사용).
+ *
+ * type: 'start' | 'end' | 'cctv' | 'bell' | 'store' | 'police'.
+ * (start/end 는 안심시설 집계에서 제외 — 프론트 summarizeSafetyFacilities 와 동일 규칙.)
+ */
+data class FacilityPoi(
+    val type: String,
+    val x: Int,
+    val y: Int,
+    val lat: Double,
+    val lng: Double,
+    val name: String? = null,
+)
+
+/**
+ * 안심시설 요약. 프론트 SafetyFacilitySummary 와 동일 필드. pois 를 실제로 집계한 값이라
+ * 화면에 렌더된 POI 와 항상 일치한다(없는 데이터를 지어내지 않음).
+ */
+data class FacilitySummary(
+    val cctv: Int,
+    val bell: Int,
+    val store: Int,
+    val police: Int,
+    /** 안심시설 합계(start/end 제외). */
+    val total: Int,
+)
+
+/** POST /api/routes/facilities 응답: 지도 표시용 POI 목록 + 집계 요약. */
+data class FacilitiesResponse(
+    val pois: List<FacilityPoi>,
+    val summary: FacilitySummary,
+)

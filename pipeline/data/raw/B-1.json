@@ -1,0 +1,32 @@
+[
+  {
+    "source": "B-1",
+    "type": "cctv",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11680",
+    "name": "강남구 CCTV 001",
+    "address": "서울특별시 강남구 역삼동 718",
+    "lat": 37.5012,
+    "lng": 127.0361
+  },
+  {
+    "source": "B-1",
+    "type": "cctv",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11680",
+    "name": "강남구 CCTV 002",
+    "address": "서울특별시 강남구 삼성동 159",
+    "lat": 37.5103,
+    "lng": 127.0594
+  },
+  {
+    "source": "B-1",
+    "type": "cctv",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11110",
+    "name": "종로구 CCTV 001",
+    "address": "서울특별시 종로구 청운동 1",
+    "lat": 37.5869,
+    "lng": 126.969
+  }
+]

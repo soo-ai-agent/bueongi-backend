@@ -1,0 +1,22 @@
+[
+  {
+    "source": "B-4",
+    "type": "police",
+    "coordSystem": "epsg5179",
+    "sigunguCode": "11680",
+    "name": "역삼지구대",
+    "address": "서울특별시 강남구 테헤란로 142",
+    "x": 958967.026,
+    "y": 1944714.075
+  },
+  {
+    "source": "B-4",
+    "type": "police",
+    "coordSystem": "epsg5179",
+    "sigunguCode": "11680",
+    "name": "수서치안센터",
+    "address": "서울특별시 강남구 수서동 724",
+    "x": 964726.173,
+    "y": 1943158.816
+  }
+]

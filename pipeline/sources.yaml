@@ -1,0 +1,122 @@
+# 안심귀가(부엉이) Data Pipeline — 원천 API 계약
+# 표준 산출물 좌표계: WGS84 {lat,lng} (EPSG:4326)
+# 기준 문서: docs/mvp-orchestrator-design.md (작업 2)
+#
+# coordSystem 값:
+#   wgs84        원천이 이미 위경도. 범위 검증만.
+#   address      좌표 없음, 주소만. E-2 카카오 지오코딩 필요.
+#   epsg5179     UTM-K (GRS80). proj4 변환.
+#   epsg5174     Bessel 중부원점 TM. proj4 변환.
+#   per-district 자치구별 상이. config/district-coord-map.yaml 로 결정.
+#
+# cadence 값: monthly | quarterly | manual
+# output: CDN 산출 경로. {sigungu} 는 시군구코드로 분할.
+
+version: 1
+standardCrs: "EPSG:4326"
+
+geocoder:
+  # E-2 카카오 지오코딩 (파이프라인 전용)
+  id: E-2
+  name: "카카오 로컬 주소→좌표 지오코딩"
+  endpoint: "https://dapi.kakao.com/v2/local/search/address.json"
+  authEnv: "KAKAO_REST_API_KEY"
+  rateLimitPerSec: 10
+  usedBy: ["B-3"]
+
+sources:
+  # ---- A 그룹 (자치구 안심귀갓길 — 서울 외) ----
+  - id: A-4
+    name: "자치구 안심귀갓길"
+    type: safepath
+    coordSystem: per-district          # 자치구별 좌표계 상이 → district-coord-map
+    districtMapKey: "A-4"
+    cadence: manual                    # 자치구별 수집 파일 기반
+    merge: { strategy: union, into: "safepath/all.json" }
+    output: "safepath/all.json"
+    keyColumns: { name: "노선명", address: "주소", geometry: "경로좌표" }
+    notes: "원천별 coordSystem 메타 기록. 불명확 건은 quarantine 리포트."
+
+  # ---- B 그룹 (전국 표준 시설) ----
+  - id: B-1
+    name: "전국 CCTV 표준데이터"
+    catalogId: "15013094"
+    type: cctv
+    coordSystem: wgs84
+    cadence: monthly
+    splitBy: sigungu
+    output: "cctv/{sigungu}.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "관리기관명", address: "소재지지번주소", sigungu: "시군구코드" }
+
+  - id: B-2
+    name: "전국 여성안심지킴이집 표준데이터"
+    catalogId: "15034535"
+    type: safehouse
+    coordSystem: wgs84
+    cadence: monthly
+    output: "safehouse/all.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "업소명", address: "소재지도로명주소" }
+
+  - id: B-3
+    name: "전국 지구대·파출소 표준데이터"
+    catalogId: "15077036"
+    type: police
+    coordSystem: address               # 주소만 → E-2 지오코딩
+    cadence: quarterly
+    merge: { strategy: dedup, with: "B-4", into: "police/all.json" }
+    output: "police/all.json"
+    keyColumns: { name: "관서명", address: "소재지도로명주소", phone: "전화번호" }
+    notes: "지오코딩 실패 건은 report/geocode-failures 로 남기고 B-4 좌표로 보완 후보."
+
+  - id: B-4
+    name: "생활안전지도 치안안전시설"
+    catalogId: "15101889"
+    type: police
+    coordSystem: epsg5179              # UTM-K → WGS84
+    cadence: quarterly
+    merge: { strategy: dedup, with: "B-3", into: "police/all.json" }
+    output: "police/all.json"
+    keyColumns: { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" }
+
+  # ---- C 그룹 (조명) ----
+  - id: C-1
+    name: "서울특별시 가로등 위치정보"
+    catalogId: "OA-22205"
+    type: lamp
+    coordSystem: wgs84
+    cadence: monthly
+    output: "lamp/seoul.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" }
+
+  - id: C-2
+    name: "전국 보안등 표준데이터"
+    catalogId: "15017320"
+    type: lamp
+    coordSystem: wgs84
+    cadence: monthly
+    splitBy: sigungu
+    output: "lamp/{sigungu}.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" }
+
+  # ---- D 그룹 (비상벨) ----
+  - id: D-1
+    name: "전국 안전비상벨 표준데이터"
+    catalogId: "15028206"
+    type: emergency_bell
+    coordSystem: epsg5174              # Bessel 중부원점 TM → WGS84
+    cadence: monthly
+    splitBy: sigungu
+    merge: { strategy: dedup, with: "D-2", into: "emergency_bell/{sigungu}.json" }
+    output: "emergency_bell/{sigungu}.json"
+    keyColumns: { x: "X좌표", y: "Y좌표", name: "설치장소", manager: "관리기관명", address: "소재지지번주소" }
+
+  - id: D-2
+    name: "자치구 비상벨 보완 데이터"
+    type: emergency_bell
+    coordSystem: per-district          # 자치구별 좌표계 상이 → district-coord-map
+    districtMapKey: "D-2"
+    cadence: manual
+    merge: { strategy: dedup, with: "D-1", into: "emergency_bell/{sigungu}.json", role: supplement }
+    output: "emergency_bell/{sigungu}.json"
+    keyColumns: { name: "설치장소", manager: "관리기관", address: "주소" }
+    notes: "D-1 누락 자치구 또는 D-1 좌표 결측 보완에만 채택. 불명확 좌표계는 quarantine."

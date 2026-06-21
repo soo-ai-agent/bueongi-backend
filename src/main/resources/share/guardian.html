@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>부엉이 안심귀가 — 위치 공유</title>
+  <!-- Leaflet + OpenStreetMap 타일: 지도 SDK 키가 필요 없다(외부 키 없이 기동 원칙과 일관). -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #status {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 10px 14px; font-size: 14px; font-weight: 600; color: #fff;
+      background: #475569; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #status.live { background: #16a34a; }
+    #status.waiting { background: #d97706; }
+    #status.expired { background: #dc2626; }
+    #status.error { background: #475569; }
+    #updated { font-weight: 400; font-size: 12px; opacity: .9; }
+    #map { position: absolute; inset: 0; }
+    #overlay {
+      position: fixed; inset: 0; z-index: 900; display: none;
+      align-items: center; justify-content: center; text-align: center;
+      background: rgba(15,23,42,.82); color: #fff; padding: 24px;
+    }
+    #overlay.show { display: flex; }
+    #overlay .box { max-width: 320px; }
+    #overlay h1 { font-size: 20px; margin: 0 0 8px; }
+    #overlay p { font-size: 14px; opacity: .85; margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="status" class="waiting"><span id="state">연결 중…</span><span id="updated"></span></div>
+  <div id="map"></div>
+  <div id="overlay"><div class="box"><h1 id="ov-title"></h1><p id="ov-desc"></p></div></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // 토큰은 서버가 안전 치환한다(ShareController). base64url 문자만.
+    var TOKEN = "__SHARE_TOKEN__";
+    var POLL_MS = 5000; // 보호자 폴링 주기 = 5초(MVP 계약).
+
+    var statusEl = document.getElementById('status');
+    var stateEl = document.getElementById('state');
+    var updatedEl = document.getElementById('updated');
+    var overlay = document.getElementById('overlay');
+    var ovTitle = document.getElementById('ov-title');
+    var ovDesc = document.getElementById('ov-desc');
+
+    // 서울시청 근처를 초기 중심으로(첫 위치 수신 전 빈 지도 방지).
+    var map = L.map('map', { zoomControl: true }).setView([37.5665, 126.9780], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    var marker = null;
+    var pollTimer = null;
+    var centeredOnce = false;
+
+    function setStatus(cls, text) {
+      statusEl.className = cls;
+      stateEl.textContent = text;
+    }
+    function showOverlay(title, desc) {
+      ovTitle.textContent = title;
+      ovDesc.textContent = desc;
+      overlay.classList.add('show');
+    }
+    function hideOverlay() { overlay.classList.remove('show'); }
+
+    function fmtTime(iso) {
+      try { return new Date(iso).toLocaleTimeString('ko-KR'); } catch (e) { return iso || ''; }
+    }
+
+    function renderLive(data) {
+      hideOverlay();
+      setStatus('live', '실시간 위치 공유 중');
+      updatedEl.textContent = '마지막 갱신 ' + fmtTime(data.updated_at);
+      var ll = [data.lat, data.lng];
+      if (!marker) { marker = L.marker(ll).addTo(map); }
+      else { marker.setLatLng(ll); }
+      if (!centeredOnce) { map.setView(ll, 16); centeredOnce = true; }
+      else { map.panTo(ll); }
+    }
+
+    function renderWaiting() {
+      hideOverlay();
+      setStatus('waiting', '아직 위치를 받는 중…');
+      updatedEl.textContent = '';
+    }
+
+    function renderExpired() {
+      setStatus('expired', '공유 종료됨');
+      updatedEl.textContent = '';
+      showOverlay('공유가 종료되었거나 만료되었습니다', '안전하게 귀가했거나 공유 시간이 만료되었습니다. 이 링크는 더 이상 위치를 표시하지 않습니다.');
+      stopPolling();
+    }
+
+    function renderError() {
+      setStatus('error', '연결 재시도 중…');
+    }
+
+    function poll() {
+      fetch('/share/' + encodeURIComponent(TOKEN) + '/location', { headers: { 'Accept': 'application/json' } })
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          if (data.expired) { renderExpired(); return; }
+          if (data.lat == null || data.lng == null) { renderWaiting(); return; }
+          renderLive(data);
+        })
+        .catch(function () { renderError(); });
+    }
+
+    function startPolling() {
+      poll();
+      pollTimer = setInterval(poll, POLL_MS);
+    }
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    // 탭이 백그라운드로 가면 폴링 중단, 복귀 시 재개(배터리/네트워크 절약).
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { stopPolling(); }
+      else if (!pollTimer && statusEl.className !== 'expired') { startPolling(); }
+    });
+
+    startPolling();
+  </script>
+</body>
+</html>

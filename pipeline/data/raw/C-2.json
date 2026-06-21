@@ -1,0 +1,22 @@
+[
+  {
+    "source": "C-2",
+    "type": "lamp",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11680",
+    "name": "강남 보안등 001",
+    "address": "서울특별시 강남구 역삼동",
+    "lat": 37.501,
+    "lng": 127.0363
+  },
+  {
+    "source": "C-2",
+    "type": "lamp",
+    "coordSystem": "wgs84",
+    "sigunguCode": "26110",
+    "name": "부산중구 보안등 001",
+    "address": "부산광역시 중구 대청동",
+    "lat": 35.1018,
+    "lng": 129.032
+  }
+]

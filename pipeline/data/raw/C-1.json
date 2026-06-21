@@ -1,0 +1,22 @@
+[
+  {
+    "source": "C-1",
+    "type": "lamp",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11680",
+    "name": "강남-22205-001",
+    "address": "역삼동 가로등",
+    "lat": 37.5008,
+    "lng": 127.0359
+  },
+  {
+    "source": "C-1",
+    "type": "lamp",
+    "coordSystem": "wgs84",
+    "sigunguCode": "11110",
+    "name": "종로-22205-001",
+    "address": "청운동 가로등",
+    "lat": 37.5875,
+    "lng": 126.9698
+  }
+]

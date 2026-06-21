@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bueongi.cdn/schema/manifest.schema.json",
+  "title": "CDN manifest",
+  "description": "앱이 가장 먼저 받는 진입점. 파일 버전/생성일/원천 건수/좌표 변환 실패·격리·중복 제거 건수를 담는다. 앱은 version 변경 또는 자치구 변경 시에만 개별 파일을 갱신한다.",
+  "type": "object",
+  "required": ["schemaVersion", "version", "generatedAt", "files", "stats"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "version": { "type": "string", "description": "파이프라인 실행 버전 (예: 2026-06-01)" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "baseUrl": { "type": "string", "description": "CDN base URL (앱이 상대 경로와 결합)" },
+    "files": {
+      "type": "array",
+      "description": "산출된 CDN 파일 인덱스. 앱은 path + sigunguCode 로 결정적으로 파일을 선택한다.",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "count", "bytes", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string", "examples": ["cctv/11110.json", "police/all.json"] },
+          "type": { "type": "string" },
+          "scope": { "type": "string" },
+          "sigunguCode": { "type": "string" },
+          "count": { "type": "integer", "minimum": 0 },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string" }
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "description": "원천별 처리 통계. QA 검증/PM 보고용.",
+      "required": ["bySource"],
+      "additionalProperties": false,
+      "properties": {
+        "bySource": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["input", "output"],
+            "additionalProperties": false,
+            "properties": {
+              "input": { "type": "integer", "description": "원천 입력 건수" },
+              "output": { "type": "integer", "description": "최종 출력 기여 건수" },
+              "coordFailed": { "type": "integer", "description": "좌표 변환/지오코딩 실패 건수" },
+              "outOfRange": { "type": "integer", "description": "WGS84 범위 밖으로 폐기된 건수" },
+              "deduped": { "type": "integer", "description": "중복 제거로 흡수된 건수" },
+              "quarantined": { "type": "integer", "description": "좌표계 미확정으로 격리된 건수 (A-4/D-2)" }
+            }
+          }
+        },
+        "reports": {
+          "type": "object",
+          "description": "상세 리포트 파일 경로",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}
