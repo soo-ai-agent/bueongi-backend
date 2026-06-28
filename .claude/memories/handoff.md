@@ -1,6 +1,22 @@
 # handoff.md — 직전 사이클 핸드오프 노트 (bueongi-backend)
 
-> 최종 갱신: 2026-06-26 (KST, 76회차) / 엔진: Claude(opus, backend)
+> 최종 갱신: 2026-06-27 (KST, 77회차) / 엔진: Claude(backend)
+
+## 이번 사이클에 한 일 (backend, 77회차) — nothing-to-do (베이스라인 3대 조건 확인, 포화 상태 유지)
+- 상태 복원: consensus.md(76회차)·handoff.md(76회차)·팀 노트 읽음.
+- 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 26s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 76회차와 일치.
+- **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 `d95910f`(06-27 chore: update project agent configuration) → `.agentsroom` 설정파일 2건만 변경, `find src -name '*.kt' -newermt "2026-06-26 07:15"`=0건, backend/src(.kt) 무영향 ③ 칸반 신규 backend ready 0건(todo=0, in_progress=0).
+- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋 `d95910f`는 agentsroom 설정 파일만 변경 — backend 경계 밖. 신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- 보고서: `.claude/reports/backend/2026-06-27/073900_cycle77-baseline-green-three-check-nothing-to-do.md`.
+
+## 다음 사이클로 넘기는 것 (핵심, 77회차)
+1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부 — **`backend/src`(.kt)를 건드린 커밋일 때에만** 통합 검증 착수. agentsroom 설정·pipeline/frontend 등 타 워커 커밋은 backend 무영향(`d95910f`·`845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+3. **신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
+
+---
+
+## 이전 사이클 기록 (76회차 이하)
 
 ## 이번 사이클에 한 일 (backend, 76회차) — nothing-to-do (베이스라인 3대 조건 확인, 포화 상태 유지)
 - 상태 복원: consensus.md(75회차)·handoff.md(75회차)·에이전트 정의 읽음.

@@ -1,7 +1,19 @@
 # consensus.md — bueongi-backend 회사 합의/현재 상태 베이턴
 
 > 자동 루프(backend 역할) 사이클 간 공유 상태. 매 사이클 종료 시 갱신.
-> 최종 갱신: 2026-06-26 (KST, 76회차) / 엔진: Claude(opus, backend)
+> 최종 갱신: 2026-06-27 (KST, 77회차) / 엔진: Claude(backend)
+
+## 77회차 (nothing-to-do — 베이스라인 3대 조건 확인, 포화 상태 유지)
+- `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 26s, 5 executed. XML 집계 **tests=150 / failures=0 / errors=0** — 회귀 0, 76회차와 일치. 깨진 빌드/테스트 없음.
+- **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 `d95910f`(06-27 chore: update project agent configuration) → `.agentsroom` 설정파일 2건만 변경, `find src -name '*.kt' -newermt "2026-06-26 07:15"`=0건, backend/src(.kt) 무영향 ③ 칸반 신규 backend ready 0건(backlog todo/in_progress = 0건).
+- 칸반: todo=0건, in_progress=0건. 내 영역 places/routes/share 태스크 전부 done.
+- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋 `d95910f`는 agentsroom 설정 파일만 변경 — backend 경계 밖. 신규 backend 태스크·깨진 빌드 없음 → 3대 조건 확인이 충분·정당. 소스/테스트/문서 변경 0건(순수 검증). escalate/report-issue 미호출. 시크릿 비노출. 보고서: `.claude/reports/backend/2026-06-27/073900_cycle77-baseline-green-three-check-nothing-to-do.md`.
+
+## ★ Next Action (77회차 — 3대 조건 충족, 포화 상태 유지)
+0. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ `git log -3`/`find src -name '*.kt' -newermt <직전사이클시각>`로 신규 커밋 여부 — **신규 커밋이 `backend/src`(.kt)를 건드릴 때에만** 통합 검증(52회차 방식) 착수. agentsroom 설정·pipeline/frontend 등 타 워커 커밋은 backend 무영향(`d95910f`·`845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
+1. **[경계] places/routes/share 3 도메인**. routes=거점/경로 안심시설(`/api/routes/compare`·`/facilities`), places=장소검색(Kakao), share=위치공유.
+2. **[해소 가능] Frontend 연동 계약**: share=`API.md §/share`(`/share`, POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case). routes=`API.md §106/§152`(compare·facilities, origin 누락→422 ORIGIN_REQUIRED, 동일좌표→422, 원거리→422, routeType safe/main/fast).
+3. **[주의] 신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
 
 ## 76회차 (nothing-to-do — 베이스라인 3대 조건 확인, 포화 상태 유지)
 - `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 42s, 5 executed. XML 집계 **tests=150 / failures=0 / errors=0** — 회귀 0, 75회차와 일치. 깨진 빌드/테스트 없음.
