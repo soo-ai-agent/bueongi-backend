@@ -1,25 +1,44 @@
 package io.soo.bueongi.routes
 
+import io.soo.bueongi.facility.FacilityRepository
+import io.soo.bueongi.facility.SafeDetourPlanner
+import io.soo.bueongi.facility.SafetyScorer
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
 /**
- * [RouteController] 슬라이스 테스트(@WebMvcTest). 실 서비스([RouteService]/[FacilityService]) 를
- * import 해 compare/facilities 의 HTTP 계약을 고정한다:
+ * [RouteController] 슬라이스 테스트(@WebMvcTest). 실 서비스([RouteService]/[FacilityService]/[SafeRouteService]) 를
+ * import 해 compare/facilities/safe-compare 의 HTTP 계약을 고정한다:
  *  - 정상 요청 → 200 + 프론트 계약 JSON shape
  *  - destination null → 400 / origin 누락 → 422 ORIGIN_REQUIRED(복구 가능 상태로 구분)
  *  - 위경도 범위 초과(lat>90 / lng>180) → 400
+ *
+ * safe-compare 는 Tmap 키 미설정(테스트 환경)이라 결정론적 폴백(compare)로 동작한다 — 키 의존 외부 호출 없이
+ * 폴백 계약(safe/main/fast)을 고정한다. (실 Tmap/점수/우회는 [SafeRouteServiceTest] 등에서 목으로 검증.)
  */
 @WebMvcTest(RouteController::class)
-@Import(RouteService::class, FacilityService::class)
+@Import(
+    RouteService::class,
+    FacilityService::class,
+    SafeRouteService::class,
+    SafetyScorer::class,
+    SafeDetourPlanner::class,
+    FacilityRepository::class,
+)
 class RouteControllerTest(
     @Autowired private val mockMvc: MockMvc,
 ) {
+
+    // TmapRouteClient 는 RestClient.Builder(웹 슬라이스 미제공)에 의존하므로 목으로 주입한다.
+    // 목의 isEnabled 기본값(false)이라 safe-compare 는 결정론적 폴백(compare) 경로를 탄다.
+    @MockBean
+    private lateinit var tmapRouteClient: TmapRouteClient
 
     private val validBody = """
         {"origin":{"lat":37.4979,"lng":127.0276},
@@ -45,6 +64,28 @@ class RouteControllerTest(
             jsonPath("$[0].tags[0].text") { exists() }
             jsonPath("$[0].tags[0].variant") { exists() }
         }
+    }
+
+    @Test
+    fun `safe-compare 는 Tmap 키 없으면 폴백으로 200 과 safe main fast 3개 경로`() {
+        // 테스트 환경엔 TMAP_APP_KEY 가 없어 SafeRouteService 가 compare 로 폴백한다(점수/마커 없는 RouteOption).
+        mockMvc.post("/api/routes/safe-compare") {
+            contentType = MediaType.APPLICATION_JSON
+            content = validBody
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.length()") { value(3) }
+            jsonPath("$[0].type") { value("safe") }
+            jsonPath("$[2].type") { value("fast") }
+        }
+    }
+
+    @Test
+    fun `safe-compare origin 누락이면 422 ORIGIN_REQUIRED`() {
+        mockMvc.post("/api/routes/safe-compare") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"destination":{"lat":37.5572,"lng":126.9245}}"""
+        }.andExpect { status { isUnprocessableEntity() } }
     }
 
     @Test

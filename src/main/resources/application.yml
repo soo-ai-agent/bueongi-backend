@@ -11,6 +11,13 @@ bueongi:
   places:
     # Kakao Local REST 키. 미설정(빈 값)이면 내장 시드 카탈로그로 검색한다.
     kakao-rest-api-key: ${KAKAO_REST_API_KEY:}
+  facility:
+    # 안심시설(CDN) 데이터 디렉터리. 미설정이면 backend 실행 경로 기준 ../cdn(= apps/bueongi/cdn).
+    # 디렉터리가 없으면 빈 인덱스로 동작하고, safe-compare 는 점수 0/마커 없이 진행된다.
+    data-dir: ${BUEONGI_FACILITY_DATA_DIR:../cdn}
+  tmap:
+    # Tmap 보행자 경로 AppKey. 미설정(빈 값)이면 safe-compare 가 결정론적 폴백(compare)로 동작한다.
+    app-key: ${TMAP_APP_KEY:}
   cors:
     # 프론트 dev 서버(strictPort=3619). 운영 도메인은 환경변수로 덧붙인다.
     allowed-origins: ${BUEONGI_CORS_ORIGINS:http://localhost:3619}

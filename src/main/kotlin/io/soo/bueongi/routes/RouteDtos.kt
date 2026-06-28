@@ -1,5 +1,6 @@
 package io.soo.bueongi.routes
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.soo.bueongi.common.OriginRequiredException
 import io.soo.bueongi.common.SameOriginDestinationException
 import io.soo.bueongi.common.TripTooFarException
@@ -44,6 +45,11 @@ data class RouteRequest(
      * 경로 비교(compare)에서는 무시된다.
      */
     val routeType: String? = null,
+    /**
+     * 안심 강도 선호(safe-compare 전용): "balanced"|"safe"|"safest" → 우회 허용 예산(detourBudget) 0.2/0.35/0.6.
+     * null/미상이면 "safe"(0.35). compare/facilities 에서는 무시된다.
+     */
+    val safetyPreference: String? = null,
 )
 
 /**
@@ -125,7 +131,12 @@ data class RouteTag(
 /**
  * 경로 1건. 프론트 MockRoute 와 동일 필드(id/name/time/dist/desc/tags/type).
  * time 은 "24분", dist 는 "1.2km" 표기, type 은 'safe'|'main'|'fast'.
+ *
+ * safe-compare(실 Tmap + 안심 점수) 응답에서는 path/steps/score/markers 를 추가로 채운다 — 프론트가
+ * 이미 이 필드들을 소비하므로 이름을 일관 유지한다. compare/facilities(폴백) 응답에서는 이들이 null 이며,
+ * [JsonInclude]=NON_NULL 로 직렬화에서 빠져 기존 계약 shape 가 그대로 유지된다(추가만, 변경 없음).
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class RouteOption(
     val id: String,
     val name: String,
@@ -134,4 +145,12 @@ data class RouteOption(
     val desc: String,
     val tags: List<RouteTag>,
     val type: String,
+    /** 경로 라인 좌표열(WGS84). safe-compare 전용 — 프론트 지도/마커 투영의 원천. */
+    val path: List<LatLng>? = null,
+    /** 단계별 길안내(turnType/description/거리/시간). safe-compare 전용. */
+    val steps: List<NavStep>? = null,
+    /** 안전 점수(0~100). safe-compare 전용. */
+    val score: Int? = null,
+    /** 경로변 안심시설 마커(회랑 내 CCTV/안심집/비상벨 + 출발/도착). safe-compare 전용. */
+    val markers: List<FacilityPoi>? = null,
 )

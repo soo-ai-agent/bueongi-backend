@@ -15,12 +15,22 @@ import org.springframework.web.bind.annotation.RestController
 class RouteController(
     private val routeService: RouteService,
     private val facilityService: FacilityService,
+    private val safeRouteService: SafeRouteService,
 ) {
 
     /** POST /api/routes/compare → safe/main/fast 경로 목록(프론트 MockRoute 와 동일 필드). */
     @PostMapping("/compare")
     fun compare(@Valid @RequestBody request: RouteRequest): List<RouteOption> =
         routeService.compare(request)
+
+    /**
+     * POST /api/routes/safe-compare → 실 공공데이터 기반 안심 경로 목록.
+     * Tmap 키가 있으면 실 보행자 경로 + 안심 점수/우회/마커를 채운 RouteOption, 없으면 compare 폴백.
+     * 입력은 compare 와 동일하되 `safetyPreference`(balanced|safe|safest)로 우회 강도를 조절한다.
+     */
+    @PostMapping("/safe-compare")
+    fun safeCompare(@Valid @RequestBody request: RouteRequest): List<RouteOption> =
+        safeRouteService.safeCompare(request)
 
     /**
      * POST /api/routes/facilities → 선택 경로(routeType)상의 안심시설 POI + 집계.

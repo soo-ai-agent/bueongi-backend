@@ -1,0 +1,8 @@
+
+# local env (secrets — never commit)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/

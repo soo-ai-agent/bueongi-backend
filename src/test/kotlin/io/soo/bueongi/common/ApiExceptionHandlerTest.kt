@@ -1,11 +1,17 @@
 package io.soo.bueongi.common
 
+import io.soo.bueongi.facility.FacilityRepository
+import io.soo.bueongi.facility.SafeDetourPlanner
+import io.soo.bueongi.facility.SafetyScorer
 import io.soo.bueongi.routes.FacilityService
 import io.soo.bueongi.routes.RouteController
 import io.soo.bueongi.routes.RouteService
+import io.soo.bueongi.routes.SafeRouteService
+import io.soo.bueongi.routes.TmapRouteClient
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -18,10 +24,22 @@ import org.springframework.test.web.servlet.post
  * [RouteController] 를 통해 실제 `@Valid` 흐름을 태운다.
  */
 @WebMvcTest(RouteController::class)
-@Import(RouteService::class, FacilityService::class, ApiExceptionHandler::class)
+@Import(
+    RouteService::class,
+    FacilityService::class,
+    ApiExceptionHandler::class,
+    SafeRouteService::class,
+    SafetyScorer::class,
+    SafeDetourPlanner::class,
+    FacilityRepository::class,
+)
 class ApiExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,
 ) {
+
+    // TmapRouteClient 는 RestClient.Builder(웹 슬라이스 미제공) 의존이라 목으로 주입한다(@Valid 흐름만 검증).
+    @MockBean
+    private lateinit var tmapRouteClient: TmapRouteClient
 
     @Test
     fun `위경도 범위 초과는 400 과 표준 errors 배열을 반환`() {

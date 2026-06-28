@@ -1,0 +1,118 @@
+package io.soo.bueongi.routes
+
+import io.soo.bueongi.facility.FacilityPoint
+import io.soo.bueongi.facility.FacilityType
+import io.soo.bueongi.facility.FakeFacilitySource
+import io.soo.bueongi.facility.GeoPoint
+import io.soo.bueongi.facility.SafeDetourPlanner
+import io.soo.bueongi.facility.SafetyScorer
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
+
+/**
+ * [SafeRouteService] 단위 테스트. Tmap 은 목으로 격리하고 실 점수/우회/마커 파이프라인을 검증한다:
+ *  - 키 미설정/Tmap 전부 실패 → compare 폴백(점수·마커 없음)
+ *  - 키 설정 → 후보 채점·유형배정(safe=최고점/fast=최소시간)·점수 내림차순·경로변 마커 포함
+ *  - 안심 우회 후보는 기본 최단거리 ×(1+budget) 이내만 채택
+ */
+class SafeRouteServiceTest {
+
+    private val origin = GeoPoint(37.5, 127.0)
+    private val dest = GeoPoint(37.5, 127.01)
+
+    private val request = RouteRequest(
+        origin = LatLng(37.5, 127.0),
+        destination = NamedLatLng(37.5, 127.01, "목적지"),
+    )
+
+    // routeA 회랑 위 CCTV 4개 → A 점수 > 0. routeB(북쪽 ~1.1km offset)는 시설 없음 → 점수 0.
+    private val cctv = listOf(127.002, 127.004, 127.006, 127.008).map {
+        FacilityPoint(FacilityType.CCTV, 37.5, it)
+    }
+    private val source = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv))
+    private val scorer = SafetyScorer(source)
+    private val detourPlanner = SafeDetourPlanner(source)
+    private val routeService = RouteService()
+
+    private val routeA = TmapRoute(
+        searchOption = "0",
+        path = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01)),
+        distanceM = 880.0,
+        timeS = 700,
+        steps = emptyList(),
+    )
+    private val routeB = TmapRoute(
+        searchOption = "10",
+        path = listOf(GeoPoint(37.51, 127.0), GeoPoint(37.51, 127.01)),
+        distanceM = 900.0,
+        timeS = 600, // A 보다 빠름 → fast 배정
+        steps = emptyList(),
+    )
+
+    private fun service(tmap: TmapRouteClient) =
+        SafeRouteService(routeService, tmap, scorer, detourPlanner, source)
+
+    @Test
+    fun `Tmap 키 미설정이면 compare 폴백(3개, 점수 없음)`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(false)
+        val result = service(tmap).safeCompare(request)
+        assertThat(result).hasSize(3)
+        assertThat(result.map { it.type }).containsExactly("safe", "main", "fast")
+        assertThat(result.first().score).isNull()
+        assertThat(result.first().path).isNull()
+    }
+
+    @Test
+    fun `Tmap 전부 실패(빈 후보)면 compare 폴백`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(emptyList())
+        val result = service(tmap).safeCompare(request)
+        assertThat(result).hasSize(3)
+        assertThat(result.first().score).isNull()
+    }
+
+    @Test
+    fun `Tmap 후보를 채점해 안전점수 내림차순과 유형을 배정하고 마커를 포함`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(routeA, routeB))
+        // 우회 호출은 후보를 늘리지 않게 null(없음)로 둔다 — 기본 후보 채점만 검증.
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+
+        val result = service(tmap).safeCompare(request)
+
+        assertThat(result).hasSize(2)
+        // 점수 내림차순: A(시설 있음)가 먼저.
+        assertThat(result[0].score!!).isGreaterThanOrEqualTo(result[1].score!!)
+        assertThat(result[0].type).isEqualTo("safe")
+        assertThat(result[0].score!!).isGreaterThan(0)
+        assertThat(result.map { it.type }).contains("fast")
+        // safe 경로 path/steps/markers 채움.
+        assertThat(result[0].path).isNotNull
+        assertThat(result[0].markers).isNotNull
+        // 마커는 출발/도착 + 회랑 내 CCTV 를 포함.
+        val markerTypes = result[0].markers!!.map { it.type }
+        assertThat(markerTypes).contains("start", "end", "cctv")
+    }
+
+    @Test
+    fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(routeA))
+        // 기본 최단 880m, safe budget 0.35 → 1188m 초과 우회는 제외. 2000m 우회 반환.
+        val longDetour = routeA.copy(searchOption = "0", distanceM = 2000.0, timeS = 1500)
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(longDetour)
+
+        val result = service(tmap).safeCompare(request)
+        // 과도 우회는 채택되지 않아 기본 후보 1개만 남는다.
+        assertThat(result).hasSize(1)
+        assertThat(result.first().dist).isNotEqualTo("2.0km")
+    }
+}
