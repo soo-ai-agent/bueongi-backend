@@ -199,7 +199,16 @@ internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     val lng = parts[parts.size - 5].trim().toDoubleOrNull()
         ?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
     val name = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
-    return FacilityPoint(type = FacilityType.CCTV, lat = lat, lng = lng, name = name)
+    // 카메라대수(N-12) — 적재 대상(목적 정상 판독) 행은 후행 구조가 안정적이라 신뢰 가능. 표시용.
+    val cameraCount = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
+    return FacilityPoint(
+        type = FacilityType.CCTV,
+        lat = lat,
+        lng = lng,
+        name = name,
+        purpose = purpose,
+        cameraCount = cameraCount,
+    )
 }
 
 /** CDN 컬렉션 파일 래퍼. 미사용 메타(schemaVersion/sources 등)는 무시. */
@@ -220,11 +229,21 @@ data class FacilityItemDto(
     val lng: Double? = null,
     val sigunguCode: String? = null,
     val coords: List<CoordDto>? = null,
+    /** 파이프라인이 채우는 표시 메타(CCTV 용도/카메라대수 등). CSV 경로와 동형으로 적재. */
+    val properties: FacilityItemPropertiesDto? = null,
 ) {
     fun toFacilityPoint(type: FacilityType): FacilityPoint? {
         val la = lat?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
         val ln = lng?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
-        return FacilityPoint(type = type, lat = la, lng = ln, name = name, sigungu = sigunguCode)
+        return FacilityPoint(
+            type = type,
+            lat = la,
+            lng = ln,
+            name = name,
+            sigungu = sigunguCode,
+            purpose = properties?.purpose,
+            cameraCount = properties?.cameraCount,
+        )
     }
 
     fun toSafePath(): SafePath? {
@@ -236,6 +255,13 @@ data class FacilityItemDto(
         return SafePath(coords = listOf(GeoPoint(la, ln)), name = name)
     }
 }
+
+/** CDN item.properties 중 표시용 메타(CCTV 용도/카메라대수). 그 외 키는 무시. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class FacilityItemPropertiesDto(
+    val purpose: String? = null,
+    val cameraCount: Int? = null,
+)
 
 /** safepath 좌표열의 한 점. {lat, lng} 또는 [lng, lat] 어느 쪽이든 lat/lng 키 우선. */
 @JsonIgnoreProperties(ignoreUnknown = true)

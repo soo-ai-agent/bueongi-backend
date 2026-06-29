@@ -20,6 +20,8 @@ class CctvCsvParseTest {
         assertThat(point.lat).isEqualTo(37.58774)
         assertThat(point.lng).isEqualTo(126.9839)
         assertThat(point.name).isEqualTo("서울특별시 종로구청")
+        assertThat(point.purpose).isEqualTo("생활방범")
+        assertThat(point.cameraCount).isEqualTo(2)
     }
 
     @Test

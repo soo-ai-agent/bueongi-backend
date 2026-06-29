@@ -15,6 +15,9 @@ data class FacilityPoi(
     val lat: Double,
     val lng: Double,
     val name: String? = null,
+    /** CCTV 마커 표시용 설치목적구분(용도)·카메라대수. 다른 유형/데이터 결측 시 null. */
+    val purpose: String? = null,
+    val cameraCount: Int? = null,
 )
 
 /**

@@ -63,6 +63,10 @@ export interface RawRecord {
   y?: number;
   coordSystem: "wgs84" | "address" | "epsg5179" | "epsg5174" | "unknown";
   sigunguCode?: string;
+  /** CCTV(B-1) 설치목적구분(용도). 방범 필터 + 프론트 표시용. 다른 소스는 미사용. */
+  purpose?: string;
+  /** CCTV(B-1) 카메라 대수. 프론트 표시용. */
+  cameraCount?: number;
   raw?: Record<string, unknown>;
 }
 

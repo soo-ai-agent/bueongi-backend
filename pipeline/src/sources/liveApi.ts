@@ -369,6 +369,10 @@ export interface KeyColumns {
   address?: string;
   phone?: string;
   sigungu?: string;
+  /** CCTV(B-1) 설치목적구분(용도) 원천 컬럼명. 방범 필터·표시용. */
+  purpose?: string;
+  /** CCTV(B-1) 카메라 대수 원천 컬럼명. 표시용. */
+  cameraCount?: string;
 }
 
 export interface MapOptions {
@@ -414,6 +418,8 @@ export function mapRowToRaw(
     address: pickStr(row, k.address),
     phone: pickStr(row, k.phone),
     sigunguCode: pickStr(row, k.sigungu),
+    purpose: pickStr(row, k.purpose),
+    cameraCount: pickNum(row, k.cameraCount),
     raw: row,
   };
 

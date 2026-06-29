@@ -106,12 +106,22 @@ type LiveSpec = OdcloudLiveSpec | SeoulLiveSpec | DataGoKrLiveSpec;
 const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
   // B-1: 전국 CCTV — 행정안전부_CCTV정보 조회서비스(apis.data.go.kr/1741000/cctv_info).
   //  엔드포인트 확정(데이터포털 명시값). ⚠️ keyColumns(원천 필드명)는 키 활성화 후 실응답으로 최종 확정.
+  //  purpose(설치목적구분)/cameraCount(카메라대수)는 방범 필터·표시용 — 조회서비스 영문 필드명은
+  //  키 활성화 후 실응답으로 확정 필요(미설정 시 purpose 결측 → filterSecurityCctv 가 fail-open 통과).
   "B-1": {
     kind: "datagokr",
     endpoint: "https://apis.data.go.kr/1741000/cctv_info",
     type: "cctv",
     coordSystem: "wgs84",
-    keyColumns: { lat: "latitude", lng: "longitude", name: "institutionNm", address: "rdnmadr", sigungu: "" },
+    keyColumns: {
+      lat: "latitude",
+      lng: "longitude",
+      name: "institutionNm",
+      address: "rdnmadr",
+      sigungu: "",
+      purpose: "", // TODO(키 활성 후): 설치목적구분 영문 필드명 확정
+      cameraCount: "", // TODO(키 활성 후): 카메라대수 영문 필드명 확정
+    },
   },
   // B-2: 여성안심지킴이집 (WGS84) — catalogId 15034535
   "B-2": {

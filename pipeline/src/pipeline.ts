@@ -49,7 +49,8 @@ async function main(): Promise<void> {
   // ---- B-1 CCTV: WGS84, 시군구 분할 ----
   {
     const raw = await F.fetchB1(ctx);
-    const { items, stat } = convertWgs84(raw, "B-1");
+    // 방범 성격(설치목적구분) CCTV만 적재 — 백엔드 CSV 경로(parseCctvCsvLine)와 동일 정책으로 양 경로 일관성 유지.
+    const { items, stat } = convertWgs84(filterSecurityCctv(raw), "B-1");
     bySource["B-1"] = stat;
     for (const [sg, group] of splitBySigungu(items)) {
       files.push(buildCollection("cctv", sg, group, ["B-1"], NOW, sg));
@@ -225,8 +226,30 @@ function toItem(
     properties: {
       coordOrigin: origin,
       ...(r.phone ? { phone: r.phone } : {}),
+      ...(r.purpose ? { purpose: r.purpose } : {}),
+      ...(r.cameraCount != null ? { cameraCount: r.cameraCount } : {}),
     },
   };
+}
+
+/**
+ * CCTV(B-1) 방범 필터 — 안심 귀가에 의미 있는 설치목적구분만 남긴다(백엔드 CSV 경로와 동일 keep-set).
+ * 목적 결측 행은 필터 불가 → fail-open(통과)하되, 전량 결측이면 경고(keyColumns.purpose 매핑 미설정 신호).
+ */
+const CCTV_SECURITY_PURPOSES = new Set(["생활방범", "다목적", "어린이보호", "차량방범"]);
+function filterSecurityCctv(raw: RawRecord[]): RawRecord[] {
+  let withPurpose = 0;
+  const kept = raw.filter((r) => {
+    if (r.purpose == null) return true; // 목적 결측 → 필터 불가(보수적 통과)
+    withPurpose++;
+    return CCTV_SECURITY_PURPOSES.has(r.purpose);
+  });
+  if (raw.length > 0 && withPurpose === 0) {
+    console.warn(
+      "[pipeline] B-1 CCTV: 설치목적구분 결측 → 방범 필터 미적용(전량 통과). keyColumns.purpose 매핑 확인 필요.",
+    );
+  }
+  return kept;
 }
 
 function convertWgs84(raw: RawRecord[], source: SourceId) {

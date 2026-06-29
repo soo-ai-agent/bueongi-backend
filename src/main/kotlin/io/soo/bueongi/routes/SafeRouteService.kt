@@ -134,7 +134,18 @@ class SafeRouteService(
         raw.add(FacilityPoi(type = "end", x = 0, y = 0, lat = dest.lat, lng = dest.lng))
         for ((markerType, facilityType) in MARKER_TYPES) {
             for (f in repository.index(facilityType).withinCorridor(path, corridor)) {
-                raw.add(FacilityPoi(type = markerType, x = 0, y = 0, lat = f.lat, lng = f.lng, name = f.name))
+                raw.add(
+                    FacilityPoi(
+                        type = markerType,
+                        x = 0,
+                        y = 0,
+                        lat = f.lat,
+                        lng = f.lng,
+                        name = f.name,
+                        purpose = f.purpose,
+                        cameraCount = f.cameraCount,
+                    ),
+                )
             }
         }
 

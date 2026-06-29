@@ -46,7 +46,7 @@ sources:
     cadence: monthly
     splitBy: sigungu
     output: "cctv/{sigungu}.json"
-    keyColumns: { lat: "위도", lng: "경도", name: "관리기관명", address: "소재지지번주소", sigungu: "시군구코드" }
+    keyColumns: { lat: "위도", lng: "경도", name: "관리기관명", address: "소재지지번주소", sigungu: "시군구코드", purpose: "설치목적구분", cameraCount: "카메라대수" }
 
   - id: B-2
     name: "전국 여성안심지킴이집 표준데이터"
