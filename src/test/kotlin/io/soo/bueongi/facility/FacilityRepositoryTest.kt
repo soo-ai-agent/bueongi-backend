@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.charset.Charset
 import java.nio.file.Path
 
 /**
@@ -41,7 +42,7 @@ class FacilityRepositoryTest {
                  {"name":"sp1","coords":[{"lat":37.5,"lng":127.0},{"lat":37.5,"lng":127.01}]}]}""",
         )
 
-        val repo = FacilityRepository(dir.absolutePath, mapper)
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
         repo.load()
 
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(2)
@@ -55,7 +56,7 @@ class FacilityRepositoryTest {
     fun `safepath 가 단일 점이면 1점짜리 경로로 적재`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "safepath/all.json", """{"items":[{"name":"p","lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper)
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
         repo.load()
         assertThat(repo.safePaths).hasSize(1)
         assertThat(repo.safePaths.first().coords).containsExactly(GeoPoint(37.5, 127.0))
@@ -66,7 +67,7 @@ class FacilityRepositoryTest {
         val dir = tmp.toFile()
         write(dir, "cctv/bad.json", "{ this is not json")
         write(dir, "cctv/good.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper)
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
         repo.load()
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
     }
@@ -78,16 +79,48 @@ class FacilityRepositoryTest {
             dir, "cctv/x.json",
             """{"items":[{"lat":37.5,"lng":127.0},{"lat":999.0,"lng":127.0},{"lat":37.5,"lng":null}]}""",
         )
-        val repo = FacilityRepository(dir.absolutePath, mapper)
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
         repo.load()
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
     }
 
     @Test
     fun `빈 디렉터리도 죽지 않고 빈 인덱스`(@TempDir tmp: Path) {
-        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper)
+        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, "")
         assertThatCode { repo.load() }.doesNotThrowAnyException()
         assertThat(repo.index(FacilityType.CCTV).size).isZero()
         assertThat(repo.safePaths).isEmpty()
+    }
+
+    @Test
+    fun `CCTV CSV(CP949)를 JSON CCTV 와 합쳐 적재`(@TempDir tmp: Path) {
+        val dir = tmp.toFile()
+        write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
+        // CP949(MS949)로 인코딩된 CSV: 헤더 1 + 정상행 2 + 헤더성 좌표불량 1.
+        val csv = File(dir, "CCTV정보.csv")
+        csv.writeText(
+            buildString {
+                appendLine("개방자치단체코드,관리번호,관리기관명,소재지도로명주소,위도,경도,기준일자")
+                appendLine("3000000,id1,서울 종로구청,종로 1,37.58,126.98,2026-05-18,,갱신,수정")
+                appendLine("3000000,id2,서울 종로구청,종로 2,37.57,126.97,2026-05-18,,갱신,수정")
+                appendLine("3000000,id3,서울 종로구청,종로 3,bad,126.97,2026-05-18,,갱신,수정")
+            },
+            Charset.forName("MS949"),
+        )
+
+        val repo = FacilityRepository(dir.absolutePath, mapper, csv.absolutePath)
+        repo.load()
+
+        // JSON 1 + CSV 정상행 2 = 3 (좌표불량 행은 skip).
+        assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(3)
+    }
+
+    @Test
+    fun `CCTV CSV 설정이 비어 있으면 적재 비활성(JSON CCTV 만)`(@TempDir tmp: Path) {
+        val dir = tmp.toFile()
+        write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        assertThatCode { repo.load() }.doesNotThrowAnyException()
+        assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
     }
 }

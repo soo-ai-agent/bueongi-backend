@@ -6,3 +6,6 @@
 
 # IDE
 .idea/
+
+# 대용량 공공데이터 CSV (전국 CCTV 78MB 등 — 커밋 금지)
+*.csv

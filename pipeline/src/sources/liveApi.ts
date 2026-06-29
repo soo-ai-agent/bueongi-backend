@@ -240,6 +240,119 @@ export async function fetchSeoulOpenApi(
 }
 
 // ---------------------------------------------------------------------------
+// 2-b) data.go.kr 표준 조회서비스 (REST, apis.data.go.kr/openapi/tn_pubr_*)
+// ---------------------------------------------------------------------------
+
+export interface DataGoKrStandardOptions {
+  /** 전체 엔드포인트 URL (예: https://api.data.go.kr/openapi/tn_pubr_public_cctv_api). */
+  endpoint: string;
+  /**
+   * data.go.kr 인증키 — **Encoding(URL-인코딩된) 형태**를 그대로 받는다.
+   * 이미 인코딩돼 있으므로 URL 조립 시 재인코딩하지 않는다(이중 인코딩 방지).
+   * 없으면 [] 로 안전 통과(오프라인).
+   */
+  serviceKey?: string;
+  /** 페이지당 건수(표준 조회서비스 보통 최대 1000). */
+  numOfRows?: number;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+  pageDelayMs?: number;
+}
+
+interface DataGoKrBody {
+  items?: Array<Record<string, unknown>> | { item?: Array<Record<string, unknown>> | Record<string, unknown> };
+  totalCount?: number;
+  pageNo?: number;
+  numOfRows?: number;
+}
+
+interface DataGoKrEnvelope {
+  response?: {
+    header?: { resultCode?: string; resultMsg?: string };
+    body?: DataGoKrBody;
+  };
+}
+
+/** 응답 body.items 를 행 배열로 정규화(items 가 배열이거나 {item:[]} 형태 모두 수용). */
+function extractDataGoKrItems(body: DataGoKrBody | undefined): Array<Record<string, unknown>> {
+  if (!body) return [];
+  const items = body.items;
+  if (Array.isArray(items)) return items;
+  if (items && typeof items === "object" && "item" in items) {
+    const inner = (items as { item?: unknown }).item;
+    if (Array.isArray(inner)) return inner as Array<Record<string, unknown>>;
+    if (inner && typeof inner === "object") return [inner as Record<string, unknown>];
+  }
+  return [];
+}
+
+/**
+ * data.go.kr 표준 조회서비스(REST)를 pageNo 순회로 전국 수집한다.
+ *
+ * 엔드포인트: {endpoint}?serviceKey=&pageNo=&numOfRows=&type=json
+ * 응답: { response: { header:{resultCode}, body:{ items:[...], totalCount } } }
+ *  - resultCode "00" 정상. 그 외(예: "30" 키 미등록)는 경고 후 부분/빈 수집 반환.
+ *
+ * serviceKey 는 이미 URL-인코딩된 값이므로 재인코딩하지 않는다(이중 인코딩 시 키 거부됨).
+ * @returns 원천 행 배열(Record). keyColumns 매핑은 mapRowsToRaw 가 담당.
+ */
+export async function fetchDataGoKrStandard(
+  opts: DataGoKrStandardOptions,
+): Promise<Array<Record<string, unknown>>> {
+  const {
+    endpoint,
+    serviceKey,
+    numOfRows = 1000,
+    fetchImpl = fetch,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    pageDelayMs = DEFAULT_PAGE_DELAY_MS,
+  } = opts;
+
+  if (!serviceKey) return [];
+
+  const rows: Array<Record<string, unknown>> = [];
+  let pageNo = 1;
+  let totalCount = Infinity;
+
+  while (pageNo <= MAX_PAGES && rows.length < totalCount) {
+    // serviceKey 는 인코딩된 그대로 사용(재인코딩 금지). 나머지 파라미터만 평범히 조립.
+    const url =
+      `${endpoint}?serviceKey=${serviceKey}` +
+      `&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
+
+    let body: DataGoKrEnvelope;
+    try {
+      const res = await fetchWithTimeout(url, fetchImpl, timeoutMs);
+      if (!res.ok) {
+        console.warn(`[liveApi] data.go.kr http ${res.status} (${endpoint}, page=${pageNo}) → 중단, 부분수집 반환`);
+        break;
+      }
+      body = (await res.json()) as DataGoKrEnvelope;
+    } catch (e) {
+      console.warn(`[liveApi] data.go.kr 호출 실패 (${endpoint}, page=${pageNo}): ${(e as Error).message} → 중단`);
+      break;
+    }
+
+    const code = body.response?.header?.resultCode;
+    if (code && code !== "00") {
+      console.warn(`[liveApi] data.go.kr resultCode=${code} (${body.response?.header?.resultMsg ?? ""}) → 중단`);
+      break;
+    }
+
+    const data = extractDataGoKrItems(body.response?.body);
+    const tc = body.response?.body?.totalCount;
+    if (typeof tc === "number" && Number.isFinite(tc)) totalCount = tc;
+    rows.push(...data);
+
+    if (data.length === 0 || data.length < numOfRows) break;
+    pageNo += 1;
+    if (pageDelayMs > 0) await sleep(pageDelayMs);
+  }
+
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
 // 3) keyColumns → RawRecord 매퍼
 // ---------------------------------------------------------------------------
 

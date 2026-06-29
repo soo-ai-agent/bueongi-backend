@@ -15,6 +15,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AssetType, RawRecord, SourceId } from "../types.js";
 import {
+  fetchDataGoKrStandard,
   fetchOdcloud,
   fetchSeoulOpenApi,
   mapRowsToRaw,
@@ -89,18 +90,28 @@ type SeoulLiveSpec = {
   keyColumns: KeyColumns;
 };
 
-type LiveSpec = OdcloudLiveSpec | SeoulLiveSpec;
+/** data.go.kr 표준 조회서비스(REST). ctx.dataGoKrKey(Encoding 키) 사용. */
+type DataGoKrLiveSpec = {
+  kind: "datagokr";
+  /** 전체 엔드포인트 URL(예: https://api.data.go.kr/openapi/tn_pubr_public_cctv_api). */
+  endpoint: string;
+  type: AssetType;
+  coordSystem: RawRecord["coordSystem"];
+  keyColumns: KeyColumns;
+};
+
+type LiveSpec = OdcloudLiveSpec | SeoulLiveSpec | DataGoKrLiveSpec;
 
 /** source 별 라이브 호출 스펙(키 등록 후 uddi/service 채움). */
 const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
-  // B-1: 전국 CCTV 표준 (WGS84) — catalogId 15013094
+  // B-1: 전국 CCTV — 행정안전부_CCTV정보 조회서비스(apis.data.go.kr/1741000/cctv_info).
+  //  엔드포인트 확정(데이터포털 명시값). ⚠️ keyColumns(원천 필드명)는 키 활성화 후 실응답으로 최종 확정.
   "B-1": {
-    kind: "odcloud",
-    catalogId: "15013094",
-    uddi: "", // TODO(키 등록 후): CCTV 표준데이터 uddi
+    kind: "datagokr",
+    endpoint: "https://apis.data.go.kr/1741000/cctv_info",
     type: "cctv",
     coordSystem: "wgs84",
-    keyColumns: { lat: "위도", lng: "경도", name: "관리기관명", address: "소재지지번주소", sigungu: "시군구코드" },
+    keyColumns: { lat: "latitude", lng: "longitude", name: "institutionNm", address: "rdnmadr", sigungu: "" },
   },
   // B-2: 여성안심지킴이집 (WGS84) — catalogId 15034535
   "B-2": {
@@ -171,7 +182,9 @@ function liveFor(id: SourceId): ((ctx: FetchContext) => Promise<RawRecord[]>) | 
     const rows =
       spec.kind === "odcloud"
         ? await fetchOdcloud({ catalogId: spec.catalogId, uddi: spec.uddi, serviceKey: ctx.dataGoKrKey })
-        : await fetchSeoulOpenApi({ service: spec.service, serviceKey: ctx.seoulKey });
+        : spec.kind === "datagokr"
+          ? await fetchDataGoKrStandard({ endpoint: spec.endpoint, serviceKey: ctx.dataGoKrKey })
+          : await fetchSeoulOpenApi({ service: spec.service, serviceKey: ctx.seoulKey });
     return mapRowsToRaw(rows, {
       source: id,
       type: spec.type,

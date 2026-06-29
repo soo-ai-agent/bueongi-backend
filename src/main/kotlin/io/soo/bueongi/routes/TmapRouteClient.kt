@@ -148,6 +148,16 @@ object TmapGeoJson {
                 "LineString" -> {
                     val coords = geom.get("coordinates") ?: continue
                     for (c in coords) parseLngLat(c)?.let { path.add(it) }
+                    // Tmap 구조상 거리/시간은 Point 가 아니라 그 뒤 LineString 의 properties 에 있다.
+                    // 이 구간값을 직전 안내지점(Point) step 에 부여한다(= 그 지점→다음 지점 구간 거리/시간).
+                    if (steps.isNotEmpty() && props != null) {
+                        val segDist = props.get("distance")?.takeIf { it.isNumber }?.asInt() ?: 0
+                        val segTime = props.get("time")?.takeIf { it.isNumber }?.asInt() ?: 0
+                        if (segDist > 0 || segTime > 0) {
+                            val i = steps.size - 1
+                            steps[i] = steps[i].copy(distanceM = segDist, timeS = segTime)
+                        }
+                    }
                 }
                 "Point" -> {
                     val c = geom.get("coordinates") ?: continue
@@ -159,8 +169,9 @@ object TmapGeoJson {
                             lng = pt.lng,
                             description = props?.get("description")?.asText() ?: "",
                             turnType = props?.get("turnType")?.asInt() ?: 0,
-                            distanceM = props?.get("distance")?.asInt() ?: 0,
-                            timeS = props?.get("time")?.asInt() ?: 0,
+                            // 거리/시간은 뒤따르는 LineString 구간에서 채운다(Point 자체엔 없음).
+                            distanceM = 0,
+                            timeS = 0,
                             pointType = props?.get("pointType")?.asText() ?: "",
                         ),
                     )

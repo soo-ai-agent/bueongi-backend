@@ -15,6 +15,9 @@ bueongi:
     # 안심시설(CDN) 데이터 디렉터리. 미설정이면 backend 실행 경로 기준 ../cdn(= apps/bueongi/cdn).
     # 디렉터리가 없으면 빈 인덱스로 동작하고, safe-compare 는 점수 0/마커 없이 진행된다.
     data-dir: ${BUEONGI_FACILITY_DATA_DIR:../cdn}
+    # 전국 CCTV 실데이터 CSV(CP949/MS949 인코딩). 있으면 JSON CCTV 와 합쳐 적재한다.
+    # 파일이 없으면 경고 로그 후 건너뛴다(죽지 않음).
+    cctv-csv: ${BUEONGI_FACILITY_CCTV_CSV:CCTV정보.csv}
   tmap:
     # Tmap 보행자 경로 AppKey. 미설정(빈 값)이면 safe-compare 가 결정론적 폴백(compare)로 동작한다.
     app-key: ${TMAP_APP_KEY:}
