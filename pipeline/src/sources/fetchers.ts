@@ -158,13 +158,15 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
   },
   // D-1: 전국 비상벨 (EPSG:5174) — catalogId 15028206
+  // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스(apis.data.go.kr/1741000/emergency_call_box_info).
+  //  이 조회서비스는 lat/lon(WGS84)을 직접 제공하므로 좌표변환 불요(기존 odcloud EPSG5174 대비 단순).
+  //  ⚠️ data.go.kr 키 활성화 후 동작(키 미활성 시 liveApi 가 안전 통과). 필드명은 조회서비스 스펙 기준.
   "D-1": {
-    kind: "odcloud",
-    catalogId: "15028206",
-    uddi: "", // TODO(키 등록 후): 안전비상벨 표준데이터 uddi
+    kind: "datagokr",
+    endpoint: "https://apis.data.go.kr/1741000/emergency_call_box_info",
     type: "emergency_bell",
-    coordSystem: "epsg5174",
-    keyColumns: { x: "X좌표", y: "Y좌표", name: "설치장소", address: "소재지지번주소", sigungu: "시군구코드" },
+    coordSystem: "wgs84",
+    keyColumns: { lat: "lat", lng: "lon", name: "mng_inst", address: "rn_adres", sigungu: "sgg_cd" },
   },
   // A-4 / D-2 는 per-district(자치구별 상이) → 라이브 대상 아님. manual 유지.
 };
