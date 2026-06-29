@@ -168,19 +168,32 @@ class FacilityRepository(
 private val CP949: Charset = Charset.forName("MS949")
 
 /**
- * 전국 CCTV CSV 한 줄을 [FacilityPoint](type=CCTV)로 파싱한다. 헤더·빈줄·좌표불량 행은 null.
+ * 안심 귀가에 의미 있는 **방범 성격** 설치목적구분(=용도)만 적재 대상으로 한다.
+ * 전국 CCTV 표준데이터의 설치목적구분 10종 중 — 생활방범/다목적/어린이보호/차량방범(약 84%)은 유지,
+ * 교통단속·시설물관리·재난재해·쓰레기단속·교통정보수집·기타(약 16%)는 안심 시설로 부적합하여 제외.
+ */
+private val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
+
+/**
+ * 전국 CCTV CSV 한 줄을 [FacilityPoint](type=CCTV)로 파싱한다. 헤더·빈줄·좌표불량·비방범 행은 null.
  *
  * 표준 18컬럼이나 약 8.5% 행은 주소에 콤마가 섞여 컬럼이 밀린다(따옴표가 있어도 단순 split 으로 깨짐).
- * 따라서 앞 인덱스 대신 **뒤에서 고정 오프셋**으로 좌표를 읽는다 — 뒤 6컬럼
- * (위도,경도,기준일자,갱신구분,갱신시점,수정시점)은 콤마가 없어 안정적이다.
+ * 따라서 앞 인덱스 대신 **뒤에서 고정 오프셋**으로 읽는다 — 뒤 13컬럼
+ * (설치목적구분,카메라대수,화소수,촬영방면,보관일수,설치연월,전화,위도,경도,기준일자,갱신구분,갱신시점,수정시점)
+ * 중 후행 12컬럼은 콤마가 없어 안정적이다.
  *   - lat = parts[N-6], lng = parts[N-5]  (N = split 결과 크기)
- *   - name = parts[2] (관리기관명; 앞 2컬럼은 숫자코드라 안정적)
+ *   - 설치목적구분(용도) = parts[N-13]; name = parts[2] (관리기관명; 앞 2컬럼은 숫자코드라 안정적)
+ * 방범 성격([CCTV_SECURITY_PURPOSES])이 아니면 적재 제외(null). 후행 필드에 콤마가 섞여
+ * N-13 이 어긋나는 약 0.5% 행은 목적을 신뢰할 수 없어 보수적으로 제외된다(좌표 자체는 영향 없음).
  * lat/lng 는 Double 파싱 + 유효범위(±90/±180, isFinite) 검증, 실패 시 null(조용히 skip).
  */
 internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     val parts = line.split(',')
-    // 최소: 뒤 6컬럼(lat=parts[N-6]) + name=parts[2] 가 모두 존재해야 함(size>=6 이면 둘 다 보장).
-    if (parts.size < 6) return null
+    // 최소: 설치목적구분(parts[N-13]) + 좌표(parts[N-6]) + name(parts[2]) 가 모두 존재해야 함.
+    if (parts.size < 13) return null
+    // 용도(설치목적구분) 필터 — 방범 성격이 아니면 적재 제외.
+    val purpose = parts[parts.size - 13].trim().trim('"')
+    if (purpose !in CCTV_SECURITY_PURPOSES) return null
     val lat = parts[parts.size - 6].trim().toDoubleOrNull()
         ?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
     val lng = parts[parts.size - 5].trim().toDoubleOrNull()

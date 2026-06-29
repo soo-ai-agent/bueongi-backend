@@ -55,4 +55,30 @@ class CctvCsvParseTest {
         assertThat(parseCctvCsvLine("")).isNull()
         assertThat(parseCctvCsvLine("a,b,c")).isNull()
     }
+
+    @Test
+    fun `비방범 설치목적(교통단속·쓰레기단속 등)은 적재 제외(null)`() {
+        val tail = "2,200,360도 전방면,30,202005,02-0000-0000,37.5,127.0," +
+            "2026-05-18,,2026-05-19 22:58:23,2026-05-18 15:24:18"
+        for (purpose in listOf("교통단속", "시설물관리", "재난재해", "쓰레기단속", "교통정보수집", "기타")) {
+            val line = "3000000,id,기관,도로명주소,,$purpose,$tail"
+            assertThat(parseCctvCsvLine(line))
+                .describedAs("설치목적=%s 은 비방범이므로 제외되어야 한다", purpose)
+                .isNull()
+        }
+    }
+
+    @Test
+    fun `방범 성격 설치목적(생활방범·다목적·어린이보호·차량방범)은 적재`() {
+        val tail = "2,200,360도 전방면,30,202005,02-0000-0000,37.5,127.0," +
+            "2026-05-18,,2026-05-19 22:58:23,2026-05-18 15:24:18"
+        for (purpose in listOf("생활방범", "다목적", "어린이보호", "차량방범")) {
+            val line = "3000000,id,기관,도로명주소,,$purpose,$tail"
+            val point = parseCctvCsvLine(line)
+            assertThat(point)
+                .describedAs("설치목적=%s 은 방범 성격이므로 적재되어야 한다", purpose)
+                .isNotNull
+            assertThat(point!!.type).isEqualTo(FacilityType.CCTV)
+        }
+    }
 }
