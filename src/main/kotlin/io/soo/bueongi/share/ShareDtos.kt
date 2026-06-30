@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import java.time.Instant
 
@@ -30,7 +31,14 @@ data class CreateShareRequest(
 
 /** `POST /share/create` 응답: 발급된 토큰 + 외부 메신저로 공유할 URL + 상한 만료 시각. */
 data class CreateShareResponse(
+    /** 공유 URL에 담기는 읽기 전용 토큰(보호자가 위치를 조회). */
     val token: String,
+    /**
+     * 위치 쓰기/종료에 필요한 비밀(앱만 보관, 매 전송/종료에 본문으로 전송). 공유 URL에는 포함하지 않는다.
+     * 이 분리로 공유 URL이 유출돼도 조회만 가능하고 위치 조작·임의 종료는 불가하다.
+     */
+    @JsonProperty("owner_secret")
+    val ownerSecret: String,
     @JsonProperty("share_url")
     val shareUrl: String,
     @JsonProperty("expires_at")
@@ -48,6 +56,10 @@ data class UpdateLocationRequest(
     @field:NotNull
     @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
     val lng: Double?,
+    /** 쓰기 권한 비밀(앱만 보유). 누락 시 400, 불일치 시 404 — 공유 URL만 아는 사람은 위치를 쓸 수 없다. */
+    @field:NotBlank
+    @JsonProperty("owner_secret")
+    val ownerSecret: String? = null,
 )
 
 /** `POST /share/{token}/location` 응답: 갱신 시각 + 공유 상한 만료. */
@@ -70,4 +82,14 @@ data class LocationView(
     @JsonProperty("updated_at")
     val updatedAt: Instant?,
     val expired: Boolean,
+)
+
+/**
+ * `POST /share/{token}/end` 요청. 도착/중단 시 공유를 종료한다.
+ * 쓰기 권한 비밀(owner_secret)이 일치해야 종료할 수 있다 — 공유 URL만 아는 사람의 임의 종료를 막는다.
+ */
+data class EndShareRequest(
+    @field:NotBlank
+    @JsonProperty("owner_secret")
+    val ownerSecret: String? = null,
 )

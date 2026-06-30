@@ -25,13 +25,24 @@ class ShareControllerTest(
     @Autowired private val clock: MutableTestClock,
 ) {
 
-    /** POST 로 공유를 만들고 token 을 돌려준다(헬퍼). */
+    /** POST 로 공유를 만들고 token(읽기 전용)을 돌려준다(조회 전용 테스트 헬퍼). */
     private fun createShare(body: String = "{}"): String {
         val response = mockMvc.post("/share/create") {
             contentType = MediaType.APPLICATION_JSON
             content = body
         }.andReturn().response.contentAsString
         return Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
+    }
+
+    /** 공유를 만들고 (token, owner_secret) 둘 다 돌려준다(위치 쓰기/종료 테스트 헬퍼). */
+    private fun createSharePair(body: String = "{}"): Pair<String, String> {
+        val response = mockMvc.post("/share/create") {
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }.andReturn().response.contentAsString
+        val token = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
+        val secret = Regex("\"owner_secret\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
+        return token to secret
     }
 
     @Test
@@ -42,6 +53,7 @@ class ShareControllerTest(
         }.andExpect {
             status { isOk() }
             jsonPath("$.token") { exists() }
+            jsonPath("$.owner_secret") { exists() }
             jsonPath("$.share_url") { exists() }
             jsonPath("$.expires_at") { exists() }
         }
@@ -69,10 +81,10 @@ class ShareControllerTest(
 
     @Test
     fun `위치 POST 후 GET location 으로 같은 좌표를 200 으로 회수`() {
-        val token = createShare()
+        val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.04}"
+            content = "{\"lat\": 37.5, \"lng\": 127.04, \"owner_secret\": \"$secret\"}"
         }.andExpect {
             status { isOk() }
             jsonPath("$.updated_at") { exists() }
@@ -95,10 +107,10 @@ class ShareControllerTest(
         // 다른 DTO=UpdateLocationResponse 다). 따라서 누가 LocationView 에서 @JsonProperty 를 "정리"로 제거해 서버가
         // camelCase `updatedAt` 으로 직렬화해도 모든 테스트가 통과하지만, 서버가 서빙하는 보호자 페이지의 `data.updated_at`
         // 이 undefined 가 되어 '마지막 갱신' 표시가 조용히 사라진다(backend 가 소유한 client 의 깨진 계약). 이를 고정한다.
-        val token = createShare()
+        val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.04}"
+            content = "{\"lat\": 37.5, \"lng\": 127.04, \"owner_secret\": \"$secret\"}"
         }.andExpect { status { isOk() } }
 
         mockMvc.get("/share/$token/location").andExpect {
@@ -141,13 +153,16 @@ class ShareControllerTest(
 
     @Test
     fun `POST end 후 GET location 은 200 expired=true (도착·중단 시 공유 종료)`() {
-        val token = createShare()
+        val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.04}"
+            content = "{\"lat\": 37.5, \"lng\": 127.04, \"owner_secret\": \"$secret\"}"
         }.andExpect { status { isOk() } }
 
-        mockMvc.post("/share/$token/end").andExpect { status { isOk() } }
+        mockMvc.post("/share/$token/end") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect { status { isOk() } }
 
         mockMvc.get("/share/$token/location").andExpect {
             status { isOk() }
@@ -158,15 +173,18 @@ class ShareControllerTest(
 
     @Test
     fun `없는 token POST end 도 200 (멱등)`() {
-        mockMvc.post("/share/does-not-exist/end").andExpect { status { isOk() } }
+        mockMvc.post("/share/does-not-exist/end") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"x\"}"
+        }.andExpect { status { isOk() } }
     }
 
     @Test
     fun `범위 밖 좌표 POST 는 400 VALIDATION_FAILED`() {
-        val token = createShare()
+        val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 91.0, \"lng\": 127.0}" // lat > 90
+            content = "{\"lat\": 91.0, \"lng\": 127.0, \"owner_secret\": \"$secret\"}" // lat > 90
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }
@@ -189,7 +207,7 @@ class ShareControllerTest(
     fun `없는 token 에 위치 POST 는 404 SHARE_SESSION_NOT_FOUND`() {
         mockMvc.post("/share/does-not-exist/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.0}"
+            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"x\"}"
         }.andExpect {
             status { isNotFound() }
             jsonPath("$.code") { value("SHARE_SESSION_NOT_FOUND") }
@@ -240,6 +258,30 @@ class ShareControllerTest(
             content { string(org.hamcrest.Matchers.containsString("encodeURIComponent(TOKEN)")) }
             // 인코딩 없이 토큰을 URL 에 직접 이어붙이는 회귀 형태가 응답에 없어야 한다.
             content { string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("'/share/' + TOKEN +"))) }
+        }
+    }
+
+    @Test
+    fun `잘못된 owner_secret 으로 위치 POST 는 404(위치 조작 차단)`() {
+        val (token, _) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"wrong-secret\"}"
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("SHARE_SESSION_NOT_FOUND") }
+        }
+    }
+
+    @Test
+    fun `owner_secret 누락 위치 POST 는 400 VALIDATION_FAILED`() {
+        val (token, _) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.5, \"lng\": 127.0}" // owner_secret 없음
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
         }
     }
 

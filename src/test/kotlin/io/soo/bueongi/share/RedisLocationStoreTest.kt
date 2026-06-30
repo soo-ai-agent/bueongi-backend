@@ -41,6 +41,7 @@ class RedisLocationStoreTest {
         store.save(
             ShareSession(
                 token = "tok",
+                ownerSecret = "sek",
                 createdAt = now,
                 expiresAt = expiresAt,
                 location = StoredLocation(37.5, 127.04, now),
@@ -49,7 +50,7 @@ class RedisLocationStoreTest {
 
         verify(hashOps).putAll(
             eq("share:tok"),
-            eq(mapOf("created_at" to now.toString(), "expires_at" to expiresAt.toString())),
+            eq(mapOf("created_at" to now.toString(), "expires_at" to expiresAt.toString(), "owner_secret" to "sek")),
         )
         verify(hashOps).putAll(
             eq("location:tok"),
@@ -62,7 +63,7 @@ class RedisLocationStoreTest {
     @Test
     fun `위치 없는 save 는 location 키를 만들지 않는다`() {
         val now = clock.now
-        store.save(ShareSession("tok", now, now.plusSeconds(3600), location = null))
+        store.save(ShareSession("tok", "sek", now, now.plusSeconds(3600), location = null))
         verify(hashOps).putAll(eq("share:tok"), any())
         verify(hashOps, never()).putAll(eq("location:tok"), any())
     }
@@ -79,7 +80,7 @@ class RedisLocationStoreTest {
         val expiresAt = Instant.parse("2026-06-19T13:00:00Z")
         val updatedAt = Instant.parse("2026-06-19T12:30:00Z")
         whenever(hashOps.entries("share:tok")).thenReturn(
-            mapOf("created_at" to createdAt.toString(), "expires_at" to expiresAt.toString()),
+            mapOf("created_at" to createdAt.toString(), "expires_at" to expiresAt.toString(), "owner_secret" to "sek"),
         )
         whenever(hashOps.entries("location:tok")).thenReturn(
             mapOf("lat" to "37.5", "lng" to "127.04", "updated_at" to updatedAt.toString()),
@@ -87,6 +88,7 @@ class RedisLocationStoreTest {
 
         val session = store.find("tok")!!
         assertEquals("tok", session.token)
+        assertEquals("sek", session.ownerSecret)
         assertEquals(createdAt, session.createdAt)
         assertEquals(expiresAt, session.expiresAt)
         assertEquals(StoredLocation(37.5, 127.04, updatedAt), session.location)
@@ -95,7 +97,11 @@ class RedisLocationStoreTest {
     @Test
     fun `find 는 share 만 있고 location 비면 location=null`() {
         whenever(hashOps.entries("share:tok")).thenReturn(
-            mapOf("created_at" to clock.now.toString(), "expires_at" to clock.now.plusSeconds(3600).toString()),
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
         )
         whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
 

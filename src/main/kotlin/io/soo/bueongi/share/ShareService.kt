@@ -3,6 +3,7 @@ package io.soo.bueongi.share
 import io.soo.bueongi.common.ShareSessionNotFoundException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Clock
 import java.util.Base64
@@ -28,11 +29,15 @@ class ShareService(
     fun create(request: CreateShareRequest?): CreateShareResponse {
         val hours = request?.expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token = newToken()
+        val ownerSecret = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
         val now = clock.instant()
         val expiresAt = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
-        store.save(ShareSession(token = token, createdAt = now, expiresAt = expiresAt, location = null))
+        store.save(
+            ShareSession(token = token, ownerSecret = ownerSecret, createdAt = now, expiresAt = expiresAt, location = null),
+        )
         return CreateShareResponse(
             token = token,
+            ownerSecret = ownerSecret,
             shareUrl = "${baseUrl.trimEnd('/')}/share/$token",
             expiresAt = expiresAt,
         )
@@ -44,6 +49,7 @@ class ShareService(
      */
     fun updateLocation(token: String, request: UpdateLocationRequest): UpdateLocationResponse {
         val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        requireOwner(session, request.ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
         val now = clock.instant()
         val location = StoredLocation(lat = request.lat!!, lng = request.lng!!, updatedAt = now)
         store.save(session.copy(location = location))
@@ -68,11 +74,27 @@ class ShareService(
     }
 
     /**
-     * 공유 종료(사용자 도착/중단). 저장소에서 삭제 → 이후 조회([getLocation])는 만료로 응답(보호자 "공유 종료").
-     * 멱등 — 없는/이미 만료된 토큰을 종료해도 무해(에러 없이 통과).
+     * 공유 종료(사용자 도착/중단). 쓰기 비밀이 일치할 때만 저장소에서 삭제 → 이후 조회는 만료(보호자 "공유 종료").
+     * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
      */
-    fun end(token: String) {
+    fun end(token: String, request: EndShareRequest) {
+        val session = store.find(token) ?: return // 이미 없음/만료 → 멱등.
+        requireOwner(session, request.ownerSecret)
         store.delete(token)
+    }
+
+    /**
+     * 쓰기 권한 비밀 검증. 상수 시간 비교([MessageDigest.isEqual])로 타이밍 누출을 피한다.
+     * 누락/불일치는 [ShareSessionNotFoundException](404)로 처리 — 공유 URL(읽기 토큰)만 아는 사람의
+     * 위치 조작·임의 종료를 막고, 토큰 존재 여부도 드러내지 않는다(불투명 응답).
+     */
+    private fun requireOwner(session: ShareSession, providedSecret: String?) {
+        val provided = providedSecret ?: throw ShareSessionNotFoundException()
+        val matches = MessageDigest.isEqual(
+            provided.toByteArray(Charsets.UTF_8),
+            session.ownerSecret.toByteArray(Charsets.UTF_8),
+        )
+        if (!matches) throw ShareSessionNotFoundException()
     }
 
     /** 추측 불가능한 128-bit URL-safe 랜덤 토큰(22자, 패딩 없음). */

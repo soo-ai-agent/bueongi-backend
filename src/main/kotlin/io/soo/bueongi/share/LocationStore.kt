@@ -10,6 +10,11 @@ import java.time.Instant
  */
 data class ShareSession(
     val token: String,
+    /**
+     * 위치 쓰기/종료 권한을 가르는 비밀(앱만 보유). 보호자에게 가는 공유 URL/조회 응답에는 절대 포함하지 않는다.
+     * 공유 URL의 token(읽기 전용)이 유출돼도 이 비밀이 없으면 위치 조작·임의 종료가 불가하다(읽기/쓰기 분리).
+     */
+    val ownerSecret: String,
     /** 공유 생성 시각(절대). Redis `share:{token}.created_at`. */
     val createdAt: Instant,
     /** 공유 상한 만료(절대). 이 시각 이후의 조회/갱신은 만료로 처리. Redis 는 native TTL 로, 인메모리는 lazy 비교로 강제. */

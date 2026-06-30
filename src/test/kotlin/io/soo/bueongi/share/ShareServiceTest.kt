@@ -19,7 +19,9 @@ class ShareServiceTest {
     private val store = InMemoryLocationStore(clock)
     private val service = ShareService(store, clock, BASE_URL)
 
-    private fun loc(lat: Double = 37.5, lng: Double = 127.0) = UpdateLocationRequest(lat = lat, lng = lng)
+    /** 위치 갱신 요청(쓰기 비밀 포함). secret 은 create 응답의 ownerSecret 을 넘긴다. */
+    private fun loc(secret: String, lat: Double = 37.5, lng: Double = 127.0) =
+        UpdateLocationRequest(lat = lat, lng = lng, ownerSecret = secret)
 
     @Test
     fun `create 는 시간 단위 TTL 뒤 만료, share_url 에 token 포함`() {
@@ -52,9 +54,9 @@ class ShareServiceTest {
 
     @Test
     fun `위치 갱신 후 조회로 같은 좌표 회수(왕복)`() {
-        val token = service.create(null).token
-        service.updateLocation(token, loc(37.5, 127.04))
-        val view = service.getLocation(token)
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret, 37.5, 127.04))
+        val view = service.getLocation(s.token)
         assertEquals(37.5, view.lat)
         assertEquals(127.04, view.lng)
         assertFalse(view.expired)
@@ -74,18 +76,17 @@ class ShareServiceTest {
     @Test
     fun `위치 갱신 응답은 갱신 시각과 공유 만료를 돌려준다`() {
         val created = service.create(CreateShareRequest(expiresInHours = 1))
-        val token = created.token
-        val res = service.updateLocation(token, loc())
+        val res = service.updateLocation(created.token, loc(created.ownerSecret))
         assertEquals(clock.now, res.updatedAt)
         assertEquals(created.expiresAt, res.expiresAt)
     }
 
     @Test
     fun `만료 후 조회는 expired=true 에 좌표 null`() {
-        val token = service.create(CreateShareRequest(expiresInHours = 1)).token
-        service.updateLocation(token, loc())
+        val created = service.create(CreateShareRequest(expiresInHours = 1))
+        service.updateLocation(created.token, loc(created.ownerSecret))
         clock.advanceSeconds(3600) // 정확히 1시간 → 만료
-        val view = service.getLocation(token)
+        val view = service.getLocation(created.token)
         assertTrue(view.expired)
         assertNull(view.lat)
         assertNull(view.lng)
@@ -100,26 +101,65 @@ class ShareServiceTest {
     @Test
     fun `없는 token 에 위치 갱신은 404`() {
         assertThrows(ShareSessionNotFoundException::class.java) {
-            service.updateLocation("nonexistent", loc())
+            service.updateLocation("nonexistent", loc("any-secret"))
         }
     }
 
     @Test
     fun `만료된 공유에 위치 갱신은 404`() {
-        val token = service.create(CreateShareRequest(expiresInHours = 1)).token
+        val created = service.create(CreateShareRequest(expiresInHours = 1))
         clock.advanceSeconds(3600)
-        assertThrows(ShareSessionNotFoundException::class.java) { service.updateLocation(token, loc()) }
+        assertThrows(ShareSessionNotFoundException::class.java) { service.updateLocation(created.token, loc(created.ownerSecret)) }
     }
 
     @Test
     fun `서로 다른 공유는 격리된다`() {
-        val a = service.create(null).token
-        val b = service.create(null).token
-        assertNotEquals(a, b)
-        service.updateLocation(a, loc(37.1, 127.1))
-        service.updateLocation(b, loc(38.2, 128.2))
-        assertEquals(37.1, service.getLocation(a).lat)
-        assertEquals(38.2, service.getLocation(b).lat)
+        val a = service.create(null)
+        val b = service.create(null)
+        assertNotEquals(a.token, b.token)
+        service.updateLocation(a.token, loc(a.ownerSecret, 37.1, 127.1))
+        service.updateLocation(b.token, loc(b.ownerSecret, 38.2, 128.2))
+        assertEquals(37.1, service.getLocation(a.token).lat)
+        assertEquals(38.2, service.getLocation(b.token).lat)
+    }
+
+    @Test
+    fun `잘못된 owner_secret 으로 위치 갱신은 404(위치 조작 차단)`() {
+        val s = service.create(null)
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.updateLocation(s.token, loc("wrong-secret"))
+        }
+    }
+
+    @Test
+    fun `owner_secret 누락(null)이면 위치 갱신은 404`() {
+        val s = service.create(null)
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.updateLocation(s.token, UpdateLocationRequest(lat = 37.5, lng = 127.0, ownerSecret = null))
+        }
+    }
+
+    @Test
+    fun `올바른 secret 으로 end 하면 이후 조회는 expired`() {
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret))
+        service.end(s.token, EndShareRequest(ownerSecret = s.ownerSecret))
+        assertTrue(service.getLocation(s.token).expired)
+    }
+
+    @Test
+    fun `잘못된 secret 으로 end 는 404 이고 공유는 유지된다(임의 종료 차단)`() {
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret, 37.1, 127.1))
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.end(s.token, EndShareRequest(ownerSecret = "wrong"))
+        }
+        assertEquals(37.1, service.getLocation(s.token).lat) // 종료되지 않음
+    }
+
+    @Test
+    fun `없는 token end 는 멱등(no-op)`() {
+        service.end("nonexistent", EndShareRequest(ownerSecret = "x")) // 예외 없이 통과
     }
 
     private companion object {

@@ -51,7 +51,10 @@ class ShareController(
      * 종료 후 보호자의 `GET /{token}/location` 은 `expired:true` 가 되어 "공유 종료" 화면을 그린다.
      */
     @PostMapping("/{token}/end")
-    fun end(@PathVariable token: String) = service.end(token)
+    fun end(
+        @PathVariable token: String,
+        @Valid @RequestBody request: EndShareRequest,
+    ) = service.end(token, request)
 
     /**
      * GET /share/{token} → 보호자 지도 페이지(HTML). 토큰 유효성과 무관하게 페이지를 주고,

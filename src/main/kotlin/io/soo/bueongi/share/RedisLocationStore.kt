@@ -31,6 +31,8 @@ class RedisLocationStore(
             mapOf(
                 FIELD_CREATED_AT to session.createdAt.toString(),
                 FIELD_EXPIRES_AT to session.expiresAt.toString(),
+                // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(LocationView)엔 절대 싣지 않는다.
+                FIELD_OWNER_SECRET to session.ownerSecret,
             ),
         )
         redis.expire(shareKey, ttl)
@@ -55,6 +57,7 @@ class RedisLocationStore(
         if (shareHash.isEmpty()) return null // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
         val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return null
         val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return null
+        val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return null // 비밀 없는 손상 데이터는 미존재 취급.
 
         val locHash = redis.opsForHash<String, String>().entries(locationKey(token))
         val location = if (locHash.isEmpty()) {
@@ -69,7 +72,13 @@ class RedisLocationStore(
                 null
             }
         }
-        return ShareSession(token = token, createdAt = createdAt, expiresAt = expiresAt, location = location)
+        return ShareSession(
+            token = token,
+            ownerSecret = ownerSecret,
+            createdAt = createdAt,
+            expiresAt = expiresAt,
+            location = location,
+        )
     }
 
     override fun delete(token: String) {
@@ -89,6 +98,7 @@ class RedisLocationStore(
 
         const val FIELD_CREATED_AT = "created_at"
         const val FIELD_EXPIRES_AT = "expires_at"
+        const val FIELD_OWNER_SECRET = "owner_secret"
         const val FIELD_LAT = "lat"
         const val FIELD_LNG = "lng"
         const val FIELD_UPDATED_AT = "updated_at"
