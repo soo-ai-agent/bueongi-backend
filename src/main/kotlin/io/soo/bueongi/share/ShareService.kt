@@ -67,6 +67,14 @@ class ShareService(
         )
     }
 
+    /**
+     * 공유 종료(사용자 도착/중단). 저장소에서 삭제 → 이후 조회([getLocation])는 만료로 응답(보호자 "공유 종료").
+     * 멱등 — 없는/이미 만료된 토큰을 종료해도 무해(에러 없이 통과).
+     */
+    fun end(token: String) {
+        store.delete(token)
+    }
+
     /** 추측 불가능한 128-bit URL-safe 랜덤 토큰(22자, 패딩 없음). */
     private fun newToken(): String {
         val bytes = ByteArray(TOKEN_BYTES)

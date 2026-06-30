@@ -140,6 +140,28 @@ class ShareControllerTest(
     }
 
     @Test
+    fun `POST end 후 GET location 은 200 expired=true (도착·중단 시 공유 종료)`() {
+        val token = createShare()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.5, \"lng\": 127.04}"
+        }.andExpect { status { isOk() } }
+
+        mockMvc.post("/share/$token/end").andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/location").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(true) }
+            jsonPath("$.lat") { value(null) }
+        }
+    }
+
+    @Test
+    fun `없는 token POST end 도 200 (멱등)`() {
+        mockMvc.post("/share/does-not-exist/end").andExpect { status { isOk() } }
+    }
+
+    @Test
     fun `범위 밖 좌표 POST 는 400 VALIDATION_FAILED`() {
         val token = createShare()
         mockMvc.post("/share/$token/location") {

@@ -32,4 +32,9 @@ class InMemoryLocationStore(
         }
         return session
     }
+
+    override fun delete(token: String) {
+        // 즉시 종료(도착/중단). 없는 토큰도 무해(멱등) — Redis delete 와 동일 거동.
+        sessions.remove(token)
+    }
 }

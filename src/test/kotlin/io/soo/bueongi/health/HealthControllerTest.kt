@@ -101,4 +101,5 @@ class HealthControllerTest {
 private class StubLocationStore(override val backend: String) : LocationStore {
     override fun save(session: ShareSession) = throw AssertionError("health 는 save 를 호출하지 않는다")
     override fun find(token: String): ShareSession? = throw AssertionError("health 는 find 를 호출하지 않는다")
+    override fun delete(token: String) = throw AssertionError("health 는 delete 를 호출하지 않는다")
 }

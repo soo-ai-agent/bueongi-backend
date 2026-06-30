@@ -102,4 +102,10 @@ class RedisLocationStoreTest {
         val session = store.find("tok")!!
         assertNull(session.location)
     }
+
+    @Test
+    fun `delete 는 share·location 키를 함께 삭제한다(즉시 종료)`() {
+        store.delete("tok")
+        verify(redis).delete(listOf("share:tok", "location:tok"))
+    }
 }

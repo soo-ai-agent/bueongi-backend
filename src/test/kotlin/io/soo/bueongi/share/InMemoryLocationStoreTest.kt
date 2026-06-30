@@ -56,4 +56,18 @@ class InMemoryLocationStoreTest {
         store.save(withLoc)
         assertEquals(withLoc, store.find("abc"))
     }
+
+    @Test
+    fun `delete 는 공유를 즉시 제거한다(도착·중단)`() {
+        store.save(session("abc", clock.now.plusSeconds(3600)))
+        assertNotNull(store.find("abc"))
+        store.delete("abc")
+        assertNull(store.find("abc"))
+    }
+
+    @Test
+    fun `없는 token delete 는 무해(멱등)`() {
+        store.delete("nope") // 예외 없이 통과
+        assertNull(store.find("nope"))
+    }
 }

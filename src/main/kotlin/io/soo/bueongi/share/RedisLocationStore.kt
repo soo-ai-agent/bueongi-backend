@@ -72,6 +72,11 @@ class RedisLocationStore(
         return ShareSession(token = token, createdAt = createdAt, expiresAt = expiresAt, location = location)
     }
 
+    override fun delete(token: String) {
+        // 공유/위치 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
+        redis.delete(listOf(shareKey(token), locationKey(token)))
+    }
+
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {
         val remaining = Duration.between(clock.instant(), expiresAt)

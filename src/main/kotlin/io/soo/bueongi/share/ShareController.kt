@@ -47,6 +47,13 @@ class ShareController(
     fun getLocation(@PathVariable token: String): LocationView = service.getLocation(token)
 
     /**
+     * POST /share/{token}/end → 공유 종료(사용자 도착/중단). 멱등이라 없는/이미 만료된 토큰도 200.
+     * 종료 후 보호자의 `GET /{token}/location` 은 `expired:true` 가 되어 "공유 종료" 화면을 그린다.
+     */
+    @PostMapping("/{token}/end")
+    fun end(@PathVariable token: String) = service.end(token)
+
+    /**
      * GET /share/{token} → 보호자 지도 페이지(HTML). 토큰 유효성과 무관하게 페이지를 주고,
      * 폴링 JS 가 `GET /share/{token}/location` 의 `expired` 로 만료/대기/라이브 상태를 그린다.
      * 토큰은 JS 리터럴로 안전 치환(아래 [escapeJs]) — base64url 문자만이라 실질 위험은 없으나 방어적으로 이스케이프.
