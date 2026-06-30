@@ -2,6 +2,7 @@ package io.soo.bueongi
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 import org.springframework.boot.runApplication
 
 /**
@@ -14,8 +15,12 @@ import org.springframework.boot.runApplication
  * [RedisAutoConfiguration] 제외: 부트 기본 자동설정은 `bueongi.share.redis-url` 미지정 시에도 `localhost:6379` 로
  * 연결을 시도한다. 위치 공유 저장소는 [io.soo.bueongi.share.ShareStoreConfig] 가 URL 주입 시에만 명시적으로
  * Redis 접속 팩토리를 만들고, 미주입(로컬/CI/MVP)이면 인메모리로 폴백하므로 자동설정을 끈다.
+ *
+ * [RedisRepositoriesAutoConfiguration] 도 제외: Redis 모드(접속 팩토리 존재)일 때 이 자동설정이 켜지면
+ * `redisTemplate` 라는 이름의 빈을 요구하는데, 우리는 [org.springframework.data.redis.core.StringRedisTemplate] 만
+ * 직접 쓰고 Redis 리포지토리(@RedisHash 등)는 안 쓴다. 제외하지 않으면 Redis 기동 시 컨텍스트가 깨진다.
  */
-@SpringBootApplication(exclude = [RedisAutoConfiguration::class])
+@SpringBootApplication(exclude = [RedisAutoConfiguration::class, RedisRepositoriesAutoConfiguration::class])
 class BueongiApplication
 
 fun main(args: Array<String>) {
