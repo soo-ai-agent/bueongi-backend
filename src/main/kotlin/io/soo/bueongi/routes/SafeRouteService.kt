@@ -182,6 +182,8 @@ class SafeRouteService(
             "cctv" to FacilityType.CCTV,
             "safehouse" to FacilityType.SAFEHOUSE,
             "bell" to FacilityType.BELL,
+            // 지구대·파출소도 경로변 거점 마커로 표시한다(여성안심지킴이집과 함께 지도에 노출).
+            "police" to FacilityType.POLICE,
         )
         const val MARKER_PADDING = 12.0
     }
