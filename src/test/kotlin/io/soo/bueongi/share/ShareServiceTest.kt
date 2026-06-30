@@ -162,6 +162,37 @@ class ShareServiceTest {
         service.end("nonexistent", EndShareRequest(ownerSecret = "x")) // 예외 없이 통과
     }
 
+    @Test
+    fun `보호자 조회가 있으면 watching=true, 없으면 false`() {
+        val s = service.create(null)
+        assertFalse(service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret)).watching)
+        service.getLocation(s.token) // 보호자 조회 → 시청 기록
+        assertTrue(service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret)).watching)
+    }
+
+    @Test
+    fun `시청 유효시간(12초)이 지나면 watching=false`() {
+        val s = service.create(null)
+        service.getLocation(s.token)
+        clock.advanceSeconds(12)
+        assertFalse(service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret)).watching)
+    }
+
+    @Test
+    fun `watchingStatus 호출 자체는 시청자로 집계되지 않는다(관리자 본인 제외)`() {
+        val s = service.create(null)
+        repeat(3) { service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret)) }
+        assertFalse(service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret)).watching)
+    }
+
+    @Test
+    fun `잘못된 owner_secret 으로 watching 조회는 404`() {
+        val s = service.create(null)
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.watchingStatus(s.token, WatchRequest(ownerSecret = "wrong"))
+        }
+    }
+
     private companion object {
         const val BASE_URL = "http://localhost:8119"
     }

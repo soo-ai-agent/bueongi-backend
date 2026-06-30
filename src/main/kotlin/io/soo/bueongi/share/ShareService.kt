@@ -63,6 +63,9 @@ class ShareService(
     fun getLocation(token: String): LocationView {
         val session = store.find(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
+        // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 사용자 본인(관리자)은 GET location 을 호출하지 않고,
+        // 시청 여부는 owner_secret 이 필요한 POST /watching 으로만 확인하므로 본인 확인은 집계되지 않는다.
+        store.markViewed(token)
         val location = session.location
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false)
         return LocationView(
@@ -81,6 +84,16 @@ class ShareService(
         val session = store.find(token) ?: return // 이미 없음/만료 → 멱등.
         requireOwner(session, request.ownerSecret)
         store.delete(token)
+    }
+
+    /**
+     * '보호자가 보고 있는지' 조회(사용자 본인용). owner_secret 이 맞아야 하고, 이 호출 자체는 시청자로 기록하지 않는다
+     * — 관리자(본인)의 상태 확인이 '시청 중'으로 잘못 잡히지 않게 한다. 없는/만료 토큰은 watching=false.
+     */
+    fun watchingStatus(token: String, request: WatchRequest): WatchResponse {
+        val session = store.find(token) ?: return WatchResponse(watching = false)
+        requireOwner(session, request.ownerSecret)
+        return WatchResponse(watching = store.isWatched(token))
     }
 
     /**

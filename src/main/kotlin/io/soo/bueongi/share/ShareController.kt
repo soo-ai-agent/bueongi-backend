@@ -57,6 +57,16 @@ class ShareController(
     ) = service.end(token, request)
 
     /**
+     * POST /share/{token}/watching → 보호자가 보고 있는지 조회(사용자 본인용, owner_secret 필요).
+     * 이 호출은 시청자로 집계되지 않으므로, 관리자(본인)의 상태 확인은 '시청 중' 알림을 만들지 않는다.
+     */
+    @PostMapping("/{token}/watching")
+    fun watching(
+        @PathVariable token: String,
+        @Valid @RequestBody request: WatchRequest,
+    ): WatchResponse = service.watchingStatus(token, request)
+
+    /**
      * GET /share/{token} → 보호자 지도 페이지(HTML). 토큰 유효성과 무관하게 페이지를 주고,
      * 폴링 JS 가 `GET /share/{token}/location` 의 `expired` 로 만료/대기/라이브 상태를 그린다.
      * 토큰은 JS 리터럴로 안전 치환(아래 [escapeJs]) — base64url 문자만이라 실질 위험은 없으나 방어적으로 이스케이프.

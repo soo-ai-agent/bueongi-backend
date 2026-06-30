@@ -93,3 +93,15 @@ data class EndShareRequest(
     @JsonProperty("owner_secret")
     val ownerSecret: String? = null,
 )
+
+/** `POST /share/{token}/watching` 요청(사용자 본인). owner_secret 으로 본인 확인 — 이 호출은 시청자로 집계하지 않는다. */
+data class WatchRequest(
+    @field:NotBlank
+    @JsonProperty("owner_secret")
+    val ownerSecret: String? = null,
+)
+
+/** 보호자 시청 여부. true면 최근 유효시간 내 보호자 조회가 있었음(누군가 보는 중). */
+data class WatchResponse(
+    val watching: Boolean,
+)

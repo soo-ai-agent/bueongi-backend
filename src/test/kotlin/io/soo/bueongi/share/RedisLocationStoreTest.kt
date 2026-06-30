@@ -2,6 +2,7 @@ package io.soo.bueongi.share
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
@@ -12,6 +13,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.data.redis.core.HashOperations
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.core.ValueOperations
 import java.time.Duration
 import java.time.Instant
 
@@ -110,8 +112,20 @@ class RedisLocationStoreTest {
     }
 
     @Test
-    fun `delete 는 share·location 키를 함께 삭제한다(즉시 종료)`() {
+    fun `delete 는 share·location·viewer 키를 함께 삭제한다(즉시 종료)`() {
         store.delete("tok")
-        verify(redis).delete(listOf("share:tok", "location:tok"))
+        verify(redis).delete(listOf("share:tok", "location:tok", "viewer:tok"))
+    }
+
+    @Test
+    fun `markViewed 는 viewer 키를 짧은 TTL 로 set, isWatched 는 hasKey 로 판정`() {
+        val valueOps = mock<ValueOperations<String, String>>()
+        whenever(redis.opsForValue()).thenReturn(valueOps)
+
+        store.markViewed("tok")
+        verify(valueOps).set(eq("viewer:tok"), eq("1"), eq(Duration.ofSeconds(12)))
+
+        whenever(redis.hasKey("viewer:tok")).thenReturn(true)
+        assertTrue(store.isWatched("tok"))
     }
 }

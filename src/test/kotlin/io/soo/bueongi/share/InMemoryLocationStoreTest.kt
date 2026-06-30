@@ -1,8 +1,10 @@
 package io.soo.bueongi.share
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -69,5 +71,25 @@ class InMemoryLocationStoreTest {
     fun `없는 token delete 는 무해(멱등)`() {
         store.delete("nope") // 예외 없이 통과
         assertNull(store.find("nope"))
+    }
+
+    @Test
+    fun `markViewed 후 isWatched 는 true, 유효시간(12초) 지나면 false`() {
+        store.markViewed("abc")
+        assertTrue(store.isWatched("abc"))
+        clock.advanceSeconds(12) // 유효시간 경계 → 시청 종료
+        assertFalse(store.isWatched("abc"))
+    }
+
+    @Test
+    fun `조회 기록이 없으면 isWatched 는 false`() {
+        assertFalse(store.isWatched("nope"))
+    }
+
+    @Test
+    fun `delete 는 시청 기록도 함께 지운다`() {
+        store.markViewed("abc")
+        store.delete("abc")
+        assertFalse(store.isWatched("abc"))
     }
 }

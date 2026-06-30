@@ -285,6 +285,40 @@ class ShareControllerTest(
         }
     }
 
+    @Test
+    fun `POST watching 은 보호자 GET 전엔 false, 후엔 true (owner_secret 필요)`() {
+        val (token, secret) = createSharePair()
+        // 보호자 조회 전 → 보는 사람 없음
+        mockMvc.post("/share/$token/watching") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.watching") { value(false) }
+        }
+        // 보호자 GET location → 시청 기록
+        mockMvc.get("/share/$token/location").andExpect { status { isOk() } }
+        mockMvc.post("/share/$token/watching") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.watching") { value(true) }
+        }
+    }
+
+    @Test
+    fun `POST watching 잘못된 owner_secret 은 404`() {
+        val (token, _) = createSharePair()
+        mockMvc.post("/share/$token/watching") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"wrong\"}"
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("SHARE_SESSION_NOT_FOUND") }
+        }
+    }
+
     @TestConfiguration
     class ShareTestConfig {
         /** 가변 Clock — 테스트가 주입받아 만료 경계를 전진시킨다. */

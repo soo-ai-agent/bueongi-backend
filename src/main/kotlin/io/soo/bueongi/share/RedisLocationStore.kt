@@ -82,9 +82,16 @@ class RedisLocationStore(
     }
 
     override fun delete(token: String) {
-        // 공유/위치 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
-        redis.delete(listOf(shareKey(token), locationKey(token)))
+        // 공유/위치/시청 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
+        redis.delete(listOf(shareKey(token), locationKey(token), viewerKey(token)))
     }
+
+    override fun markViewed(token: String) {
+        // 보호자 조회 시각을 짧은 TTL 키로 기록 — 폴링이 끊기면(창 닫힘) TTL 로 자동 소멸(시청 종료).
+        redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(VIEWER_WINDOW_SECONDS))
+    }
+
+    override fun isWatched(token: String): Boolean = redis.hasKey(viewerKey(token)) == true
 
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {
@@ -93,8 +100,12 @@ class RedisLocationStore(
     }
 
     private companion object {
+        /** 보호자 조회 후 이 시간(초) 동안 '시청 중'으로 본다 — 보호자 폴링(5초)의 약 2~3배 여유. */
+        const val VIEWER_WINDOW_SECONDS = 12L
+
         fun shareKey(token: String) = "share:$token"
         fun locationKey(token: String) = "location:$token"
+        fun viewerKey(token: String) = "viewer:$token"
 
         const val FIELD_CREATED_AT = "created_at"
         const val FIELD_EXPIRES_AT = "expires_at"

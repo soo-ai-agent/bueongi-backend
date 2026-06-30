@@ -1,6 +1,7 @@
 package io.soo.bueongi.share
 
 import java.time.Clock
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -15,6 +16,8 @@ class InMemoryLocationStore(
 ) : LocationStore {
 
     private val sessions = ConcurrentHashMap<String, ShareSession>()
+    /** 보호자 조회 시각(토큰별). 유효시간이 지나면 lazy 제거 — '시청 중' 판정용. */
+    private val viewers = ConcurrentHashMap<String, Instant>()
 
     override val backend: String = "memory"
 
@@ -36,5 +39,22 @@ class InMemoryLocationStore(
     override fun delete(token: String) {
         // 즉시 종료(도착/중단). 없는 토큰도 무해(멱등) — Redis delete 와 동일 거동.
         sessions.remove(token)
+        viewers.remove(token)
+    }
+
+    override fun markViewed(token: String) {
+        viewers[token] = clock.instant()
+    }
+
+    override fun isWatched(token: String): Boolean {
+        val last = viewers[token] ?: return false
+        if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) return true
+        viewers.remove(token, last) // 유효시간 경과 → lazy 제거(Redis TTL 동치).
+        return false
+    }
+
+    private companion object {
+        /** 보호자 조회 후 이 시간(초) 동안 '시청 중'으로 본다(Redis 와 동일). */
+        const val VIEWER_WINDOW_SECONDS = 12L
     }
 }
