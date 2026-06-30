@@ -121,6 +121,7 @@ class SafeRouteService(
         if (b.lampDensity >= 10) add(RouteTag("밝은 길", "yellow"))
         if (b.safePathOverlap >= 0.2) add(RouteTag("안심귀갓길", "mint"))
         if (b.safehouseCount >= 1) add(RouteTag("안심지킴이집", "outline"))
+        if (b.policeCount >= 1) add(RouteTag("지구대 인접", "blue"))
     }
 
     /**
@@ -133,7 +134,8 @@ class SafeRouteService(
         raw.add(FacilityPoi(type = "start", x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(FacilityPoi(type = "end", x = 0, y = 0, lat = dest.lat, lng = dest.lng))
         for ((markerType, facilityType) in MARKER_TYPES) {
-            for (f in repository.index(facilityType).withinCorridor(path, corridor)) {
+            // 유형별 마커 수 상한 — 가로등처럼 밀집한 시설이 지도를 가리지 않도록 방어(점수 계산은 전체 개수를 그대로 쓴다).
+            for (f in repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)) {
                 raw.add(
                     FacilityPoi(
                         type = markerType,
@@ -184,7 +186,12 @@ class SafeRouteService(
             "bell" to FacilityType.BELL,
             // 지구대·파출소도 경로변 거점 마커로 표시한다(여성안심지킴이집과 함께 지도에 노출).
             "police" to FacilityType.POLICE,
+            // 가로등·조명은 점수(밀도)에도 쓰이고, 지도에도 표시한다(상한으로 밀집 방어).
+            "lamp" to FacilityType.LAMP,
         )
         const val MARKER_PADDING = 12.0
+
+        /** 유형별 마커 수 상한(가로등 등 밀집 시설로 인한 지도 가독성 저하·응답 비대화 방어). */
+        const val MAX_MARKERS_PER_TYPE = 12
     }
 }

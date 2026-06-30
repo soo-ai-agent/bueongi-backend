@@ -33,6 +33,14 @@ class SafetyScorerTest {
     }
 
     @Test
+    fun `회랑 안 지구대·파출소가 점수와 개수에 기여한다`() {
+        val police = listOf(GeoPoint(37.5, 127.005)) // 경로 위 1곳
+        val result = SafetyScorer(FakeFacilitySource.of(FacilityType.POLICE, police)).score(path)
+        assertThat(result.breakdown.policeCount).isEqualTo(1)
+        assertThat(result.score).isGreaterThan(0)
+    }
+
+    @Test
     fun `회랑 밖 시설은 점수에 반영되지 않는다`() {
         val offCorridor = listOf(GeoPoint(37.502, 127.005)) // 경로에서 ~약 222m
         val scorer = SafetyScorer(FakeFacilitySource.of(FacilityType.CCTV, offCorridor))

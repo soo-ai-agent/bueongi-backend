@@ -106,7 +106,9 @@ class SafeDetourPlanner(
         /** 앵커 1개짜리 조합 최대 개수(2~3개 중 3). */
         const val SINGLE_ANCHOR_COMBOS = 3
 
-        val ANCHOR_TYPES = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL)
+        // 우회 거점 후보 시설. 지구대·파출소도 포함하되, 앵커는 directPath 회랑(ANCHOR_RADIUS_METERS=150m)
+        // 안에서만 추출되므로 '가는 길 근처'의 지구대만 우회 거점이 되고, 멀리 떨어진 지구대로는 우회하지 않는다.
+        val ANCHOR_TYPES = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
     }
 }
 
