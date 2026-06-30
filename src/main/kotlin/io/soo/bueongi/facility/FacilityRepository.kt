@@ -229,6 +229,10 @@ data class FacilityItemDto(
     val lng: Double? = null,
     val sigunguCode: String? = null,
     val coords: List<CoordDto>? = null,
+    /** 소재지 주소(파이프라인 산출물 표준 필드). 표시용. */
+    val address: String? = null,
+    /** 전화번호(지구대·파출소 등). 표시·연결용. */
+    val phone: String? = null,
     /** 파이프라인이 채우는 표시 메타(CCTV 용도/카메라대수 등). CSV 경로와 동형으로 적재. */
     val properties: FacilityItemPropertiesDto? = null,
 ) {
@@ -243,6 +247,8 @@ data class FacilityItemDto(
             sigungu = sigunguCode,
             purpose = properties?.purpose,
             cameraCount = properties?.cameraCount,
+            address = address?.trim()?.takeIf { it.isNotEmpty() },
+            phone = phone?.trim()?.takeIf { it.isNotEmpty() },
         )
     }
 

@@ -144,6 +144,8 @@ class SafeRouteService(
                         name = f.name,
                         purpose = f.purpose,
                         cameraCount = f.cameraCount,
+                        address = f.address,
+                        phone = f.phone,
                     ),
                 )
             }

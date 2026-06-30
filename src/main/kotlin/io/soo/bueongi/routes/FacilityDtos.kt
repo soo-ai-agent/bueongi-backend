@@ -18,6 +18,10 @@ data class FacilityPoi(
     /** CCTV 마커 표시용 설치목적구분(용도)·카메라대수. 다른 유형/데이터 결측 시 null. */
     val purpose: String? = null,
     val cameraCount: Int? = null,
+    /** 소재지 주소(마커 클릭 정보 카드 표시용). 데이터 결측 시 null. */
+    val address: String? = null,
+    /** 전화번호(지구대·파출소 등 — 정보 카드에서 전화 연결). 데이터 결측 시 null. */
+    val phone: String? = null,
 )
 
 /**

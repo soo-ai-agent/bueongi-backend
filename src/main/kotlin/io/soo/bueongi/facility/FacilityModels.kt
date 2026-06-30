@@ -40,6 +40,10 @@ data class FacilityPoint(
     val sigungu: String? = null,
     val purpose: String? = null,
     val cameraCount: Int? = null,
+    /** 소재지 주소(표시용). 데이터 결측 시 null. */
+    val address: String? = null,
+    /** 전화번호(지구대·파출소 등 표시·연결용). 데이터 결측 시 null. */
+    val phone: String? = null,
 ) {
     fun toGeoPoint(): GeoPoint = GeoPoint(lat, lng)
 }
