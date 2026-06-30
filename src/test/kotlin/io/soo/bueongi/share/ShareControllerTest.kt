@@ -308,6 +308,28 @@ class ShareControllerTest(
     }
 
     @Test
+    fun `POST watching 은 현재 공유 위치도 함께 돌려준다(관리자 미리보기)`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.55, \"lng\": 127.02, \"owner_secret\": \"$secret\"}"
+        }.andExpect { status { isOk() } }
+
+        mockMvc.post("/share/$token/watching") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.lat") { value(37.55) }
+            jsonPath("$.lng") { value(127.02) }
+            jsonPath("$.updated_at") { exists() }
+            jsonPath("$.expired") { value(false) }
+            // 관리자 미리보기 폴링은 GET /location 과 달리 시청자로 집계되면 안 된다 — 여러 번 봐도 watching=false.
+            jsonPath("$.watching") { value(false) }
+        }
+    }
+
+    @Test
     fun `POST watching 잘못된 owner_secret 은 404`() {
         val (token, _) = createSharePair()
         mockMvc.post("/share/$token/watching") {

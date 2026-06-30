@@ -57,8 +57,9 @@ class ShareController(
     ) = service.end(token, request)
 
     /**
-     * POST /share/{token}/watching → 보호자가 보고 있는지 조회(사용자 본인용, owner_secret 필요).
-     * 이 호출은 시청자로 집계되지 않으므로, 관리자(본인)의 상태 확인은 '시청 중' 알림을 만들지 않는다.
+     * POST /share/{token}/watching → 보호자가 보고 있는지 + 현재 공유 위치 조회(사용자 본인 = 관리자 전용, owner_secret 필요).
+     * 이 호출은 시청자로 집계되지 않으므로, 관리자(본인)의 상태 확인·미리보기는 '시청 중' 알림을 만들지 않는다.
+     * 위치를 함께 실어 관리자가 보호자에게 보이는 화면을 '따로' 미리볼 수 있다(읽기 토큰 GET /location 과 분리).
      */
     @PostMapping("/{token}/watching")
     fun watching(

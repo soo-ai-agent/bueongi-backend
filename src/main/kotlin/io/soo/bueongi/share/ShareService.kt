@@ -87,13 +87,22 @@ class ShareService(
     }
 
     /**
-     * '보호자가 보고 있는지' 조회(사용자 본인용). owner_secret 이 맞아야 하고, 이 호출 자체는 시청자로 기록하지 않는다
-     * — 관리자(본인)의 상태 확인이 '시청 중'으로 잘못 잡히지 않게 한다. 없는/만료 토큰은 watching=false.
+     * '보호자가 보고 있는지' + 현재 공유 위치 조회(사용자 본인 = 관리자 전용). owner_secret 이 맞아야 하고,
+     * 이 호출 자체는 시청자로 기록하지 않는다 — 관리자(본인)의 상태 확인/미리보기가 '시청 중'으로 잘못 잡히지 않게 한다.
+     * 위치를 함께 돌려주므로 관리자가 보호자에게 보이는 화면을 '따로' 미리볼 수 있다(시청자 미집계). 없는/만료 토큰은 expired=true.
      */
     fun watchingStatus(token: String, request: WatchRequest): WatchResponse {
-        val session = store.find(token) ?: return WatchResponse(watching = false)
+        val session = store.find(token)
+            ?: return WatchResponse(watching = false, expired = true)
         requireOwner(session, request.ownerSecret)
-        return WatchResponse(watching = store.isWatched(token))
+        val location = session.location
+        return WatchResponse(
+            watching = store.isWatched(token),
+            lat = location?.lat,
+            lng = location?.lng,
+            updatedAt = location?.updatedAt,
+            expired = false,
+        )
     }
 
     /**

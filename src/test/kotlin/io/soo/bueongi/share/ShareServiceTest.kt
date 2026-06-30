@@ -193,6 +193,37 @@ class ShareServiceTest {
         }
     }
 
+    @Test
+    fun `watching 조회는 현재 공유 위치도 함께 돌려준다(관리자 미리보기)`() {
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret, 37.55, 127.02))
+        val res = service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret))
+        assertEquals(37.55, res.lat)
+        assertEquals(127.02, res.lng)
+        assertEquals(clock.now, res.updatedAt)
+        assertFalse(res.expired)
+    }
+
+    @Test
+    fun `위치 전 watching 조회는 좌표 null 에 expired=false`() {
+        val s = service.create(null)
+        val res = service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret))
+        assertNull(res.lat)
+        assertNull(res.lng)
+        assertFalse(res.expired)
+    }
+
+    @Test
+    fun `만료된 공유의 watching 조회는 expired=true(관리자 미리보기도 종료)`() {
+        val s = service.create(CreateShareRequest(expiresInHours = 1))
+        service.updateLocation(s.token, loc(s.ownerSecret))
+        clock.advanceSeconds(3600)
+        val res = service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret))
+        assertTrue(res.expired)
+        assertNull(res.lat)
+        assertFalse(res.watching)
+    }
+
     private companion object {
         const val BASE_URL = "http://localhost:8119"
     }
