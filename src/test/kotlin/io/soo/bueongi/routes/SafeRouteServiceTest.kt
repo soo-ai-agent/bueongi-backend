@@ -65,6 +65,9 @@ class SafeRouteServiceTest {
         assertThat(result.map { it.type }).containsExactly("safe", "main", "fast")
         assertThat(result.first().score).isNull()
         assertThat(result.first().path).isNull()
+        // 폴백엔 출처(provenance)·근거(breakdown)가 없다 → 프론트가 '예시 데이터'로 표기(P0-1).
+        assertThat(result.first().provenance).isNull()
+        assertThat(result.first().breakdown).isNull()
     }
 
     @Test
@@ -99,6 +102,14 @@ class SafeRouteServiceTest {
         // 마커는 출발/도착 + 회랑 내 CCTV 를 포함.
         val markerTypes = result[0].markers!!.map { it.type }
         assertThat(markerTypes).contains("start", "end", "cctv")
+        // P0-4 점수 근거: 회랑 내 CCTV 4개/0.888km ≈ 4.5/km 가 그대로 노출된다.
+        val breakdown = result[0].breakdown!!
+        assertThat(breakdown.cctvDensity).isGreaterThan(0.0)
+        assertThat(breakdown.routeKm).isGreaterThan(0.0)
+        // P0-1·P0-3 출처: 실데이터 산출엔 provenance(kind=live, origin)가 붙는다.
+        val provenance = result[0].provenance!!
+        assertThat(provenance.kind).isEqualTo("live")
+        assertThat(provenance.origin).isNotBlank()
     }
 
     @Test

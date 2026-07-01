@@ -94,24 +94,48 @@ class SafeRouteService(
     }
 
     /** ScoredRoute → 프론트 계약 RouteOption. 안전 점수 내림차순 정렬(동률은 입력 순서 유지). */
-    private fun toRouteOptions(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, dest: GeoPoint): List<RouteOption> =
-        scoredRoutes
+    private fun toRouteOptions(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, dest: GeoPoint): List<RouteOption> {
+        val provenance = buildProvenance()
+        return scoredRoutes
             .sortedByDescending { it.score.score }
             .mapIndexed { i, sr ->
+                val b = sr.score.breakdown
                 RouteOption(
                     id = "tmap-${sr.route.searchOption}-$i",
                     name = TYPE_NAME.getValue(sr.type),
                     time = "${max(1, (sr.route.timeS / 60.0).roundToInt())}분",
                     dist = Geo.formatDistance(sr.route.distanceM),
-                    desc = "안전 점수 ${sr.score.score}점 · CCTV ${sr.score.breakdown.cctvDensity}/km",
+                    desc = "안전 점수 ${sr.score.score}점 · CCTV ${b.cctvDensity}/km",
                     tags = buildTags(sr),
                     type = sr.type,
                     path = sr.route.path.map { LatLng(it.lat, it.lng) },
                     steps = sr.route.steps,
                     score = sr.score.score,
                     markers = buildMarkers(origin, dest, sr.route.path),
+                    // P0-4 점수 근거 — 프론트가 "CCTV n/km · 비상벨 n …"으로 그대로 렌더한다.
+                    breakdown = ScoreBreakdown(
+                        routeKm = b.routeKm,
+                        cctvDensity = b.cctvDensity,
+                        lampDensity = b.lampDensity,
+                        bellDensity = b.bellDensity,
+                        safehouseCount = b.safehouseCount,
+                        policeCount = b.policeCount,
+                        safePathOverlap = b.safePathOverlap,
+                    ),
+                    provenance = provenance,
                 )
             }
+    }
+
+    /**
+     * 실데이터 출처/기준일(P0-1·P0-3). safe-compare 산출에만 붙는다(폴백엔 없음 → 프론트가 '예시'로 구분).
+     * 기준일은 manifest generatedAt(ISO)의 연·월을 "YYYY.MM"로 표기(미상이면 생략).
+     */
+    private fun buildProvenance(): DataProvenance {
+        val generatedAt = repository.freshness?.generatedAt
+        val basedOn = generatedAt?.takeIf { it.length >= 7 }?.substring(0, 7)?.replace('-', '.')
+        return DataProvenance(kind = "live", basedOn = basedOn, origin = DATA_ORIGIN)
+    }
 
     private fun buildTags(sr: ScoredRoute): List<RouteTag> = buildList {
         if (sr.type == "safe") add(RouteTag("안심", "mint"))
@@ -193,5 +217,8 @@ class SafeRouteService(
 
         /** 유형별 마커 수 상한(가로등 등 밀집 시설로 인한 지도 가독성 저하·응답 비대화 방어). */
         const val MAX_MARKERS_PER_TYPE = 12
+
+        /** 안심시설 데이터 원천 표기(P0-3). 파이프라인 sources.yaml 의 원천 계열. */
+        const val DATA_ORIGIN = "공공데이터포털·서울 열린데이터광장"
     }
 }

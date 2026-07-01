@@ -58,6 +58,17 @@ data class SafePath(
 )
 
 /**
+ * 안심시설 데이터 신선도(P0-3). 파이프라인 산출물 manifest.json 의 생성 시점 —
+ * "이 점수/마커가 언제 기준의 공공데이터로 계산됐는가"를 사용자에게 표기하기 위한 메타.
+ */
+data class FacilityFreshness(
+    /** manifest.generatedAt(ISO-8601). 미상이면 null. */
+    val generatedAt: String? = null,
+    /** manifest.version(예: "2026-06-19"). 미상이면 null. */
+    val version: String? = null,
+)
+
+/**
  * 안심시설 공간 질의 소스(점수/우회/마커가 의존하는 좁은 계약). [FacilityRepository] 가 유일 구현이며,
  * 인터페이스로 분리해 점수·우회 로직을 파일 적재 없이 가짜 소스로 단위 테스트할 수 있게 한다.
  */
@@ -67,4 +78,8 @@ interface FacilitySpatialSource {
 
     /** 적재된 안심귀갓길 좌표열. */
     val safePaths: List<SafePath>
+
+    /** 적재 데이터의 신선도(manifest 기반). 미상이면 null — 표기를 생략할 뿐 기능엔 영향 없다. */
+    val freshness: FacilityFreshness?
+        get() = null
 }

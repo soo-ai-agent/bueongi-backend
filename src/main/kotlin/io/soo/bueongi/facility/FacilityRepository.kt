@@ -33,8 +33,14 @@ class FacilityRepository(
     @Volatile
     private var _safePaths: List<SafePath> = emptyList()
 
+    @Volatile
+    private var _freshness: FacilityFreshness? = null
+
     /** 적재된 안심귀갓길 좌표열(불변 스냅샷). */
     override val safePaths: List<SafePath> get() = _safePaths
+
+    /** manifest.json 기반 데이터 신선도(P0-3). manifest 부재/파싱 실패면 null(표기 생략). */
+    override val freshness: FacilityFreshness? get() = _freshness
 
     /** 시설 종류별 공간 인덱스. 미적재 종류는 빈 인덱스를 돌려준다(NPE 방지). */
     override fun index(type: FacilityType): GridSpatialIndex =
@@ -73,6 +79,20 @@ class FacilityRepository(
             val collection = parseCollection(file) ?: return@forEach
             fileCount++
             collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
+        }
+
+        // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
+        _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
+            try {
+                val m = objectMapper.readTree(file)
+                FacilityFreshness(
+                    generatedAt = m.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
+                    version = m.get("version")?.asText()?.takeIf { it.isNotBlank() },
+                )
+            } catch (e: Exception) {
+                log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
+                null
+            }
         }
 
         // 전국 CCTV 실데이터 CSV(있으면) 적재 — JSON CCTV 포인트와 합쳐 단일 인덱스를 만든다.

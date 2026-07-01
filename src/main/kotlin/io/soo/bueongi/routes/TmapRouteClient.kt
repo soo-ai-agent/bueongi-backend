@@ -35,6 +35,10 @@ class TmapRouteClient(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
+    // P0-2 쿼터 거버넌스: 동일 출발/도착/옵션/경유지 재요청은 TTL(10분) 동안 캐시를 재사용해
+    // Tmap 호출(일 쿼터·요금)을 줄인다. 실패(null)는 캐시하지 않는다.
+    private val cache = TmapRouteCache()
+
     /**
      * searchOption 별 후보 경로를 모은다(추천=0/대로우선=4/최단=10). 일부 옵션이 실패해도 성공한 후보만
      * 반환하고, 같은 경로(거리+좌표수 동일)는 중복 제거한다. 키 미설정이면 빈 목록.
@@ -75,21 +79,26 @@ class TmapRouteClient(
         destName: String?,
         searchOption: String,
         passList: List<GeoPoint>?,
-    ): TmapRoute? = try {
-        val body = buildRequestBody(origin, dest, destName, searchOption, passList)
-        val json = restClient.post()
-            .uri(PEDESTRIAN_ENDPOINT)
-            .header("appKey", appKey)
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .body(body)
-            .retrieve()
-            .body(JsonNode::class.java)
-        json?.let { TmapGeoJson.parse(it, searchOption) }
-    } catch (e: Exception) {
-        // 시크릿(appKey) 비노출 — 메시지만 로깅. 부분 실패는 무시(상위가 폴백 판단).
-        log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, e.message)
-        null
+    ): TmapRoute? {
+        // 캐시 히트면 Tmap 호출 없이 재사용(동일 출발/도착 재요청 — P0-2 AC).
+        cache.get(origin, dest, searchOption, passList)?.let { return it }
+        return try {
+            val body = buildRequestBody(origin, dest, destName, searchOption, passList)
+            val json = restClient.post()
+                .uri(PEDESTRIAN_ENDPOINT)
+                .header("appKey", appKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .body(JsonNode::class.java)
+            json?.let { TmapGeoJson.parse(it, searchOption) }
+                ?.also { cache.put(origin, dest, searchOption, passList, it) }
+        } catch (e: Exception) {
+            // 시크릿(appKey) 비노출 — 메시지만 로깅. 부분 실패는 무시(상위가 폴백 판단).
+            log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, e.message)
+            null
+        }
     }
 
     private fun buildRequestBody(
