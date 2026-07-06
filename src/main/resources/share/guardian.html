@@ -33,11 +33,34 @@
     #overlay .box { max-width: 320px; }
     #overlay h1 { font-size: 20px; margin: 0 0 8px; }
     #overlay p { font-size: 14px; opacity: .85; margin: 0; }
+    /* 지도(Leaflet CDN)를 못 불러온 환경 폴백: 좌표·갱신시각·외부 지도 링크로 위치를 계속 보여준다. */
+    #nomap {
+      position: absolute; inset: 0; display: none;
+      align-items: center; justify-content: center; text-align: center;
+      background: #0f172a; color: #fff; padding: 24px;
+    }
+    #nomap.show { display: flex; }
+    #nomap .box { max-width: 320px; }
+    #nomap .owl { font-size: 44px; margin-bottom: 8px; }
+    #nomap h1 { font-size: 20px; margin: 0 0 10px; }
+    #nomap .coords { font-size: 17px; font-weight: 700; letter-spacing: .3px; margin: 0 0 6px; }
+    #nomap .hint { font-size: 13px; opacity: .7; margin: 0 0 16px; }
+    #nomap a {
+      display: inline-block; padding: 12px 18px; border-radius: 14px;
+      background: #16a34a; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;
+    }
   </style>
 </head>
 <body>
   <div id="status" class="waiting"><span id="state">연결 중…</span><span id="updated"></span></div>
   <div id="map"></div>
+  <div id="nomap"><div class="box">
+    <div class="owl">🦉</div>
+    <h1>실시간 위치 수신 중</h1>
+    <p class="coords" id="nm-coords">—</p>
+    <p class="hint">지도를 불러오지 못해 좌표로 표시하고 있어요.</p>
+    <a id="nm-link" href="#" target="_blank" rel="noopener">카카오맵에서 위치 보기</a>
+  </div></div>
   <div id="overlay"><div class="box"><h1 id="ov-title"></h1><p id="ov-desc"></p></div></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -54,11 +77,22 @@
     var ovTitle = document.getElementById('ov-title');
     var ovDesc = document.getElementById('ov-desc');
 
-    // 서울시청 근처를 초기 중심으로(첫 위치 수신 전 빈 지도 방지).
-    var map = L.map('map', { zoomControl: true }).setView([37.5665, 126.9780], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    var nomap = document.getElementById('nomap');
+    var nmCoords = document.getElementById('nm-coords');
+    var nmLink = document.getElementById('nm-link');
+
+    // 지도 초기화는 실패해도 폴링을 막지 않는다 — Leaflet CDN 이 차단된 네트워크에서도
+    // 보호자는 좌표·갱신시각(폴백 화면)으로 위치를 계속 확인할 수 있어야 한다.
+    var map = null;
+    try {
+      if (window.L) {
+        // 서울시청 근처를 초기 중심으로(첫 위치 수신 전 빈 지도 방지).
+        map = L.map('map', { zoomControl: true }).setView([37.5665, 126.9780], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+      }
+    } catch (e) { map = null; }
     var marker = null;
     var pollTimer = null;
     var centeredOnce = false;
@@ -82,11 +116,19 @@
       hideOverlay();
       setStatus('live', '실시간 위치 공유 중');
       updatedEl.textContent = '마지막 갱신 ' + fmtTime(data.updated_at);
-      var ll = [data.lat, data.lng];
-      if (!marker) { marker = L.marker(ll).addTo(map); }
-      else { marker.setLatLng(ll); }
-      if (!centeredOnce) { map.setView(ll, 16); centeredOnce = true; }
-      else { map.panTo(ll); }
+      if (map) {
+        var ll = [data.lat, data.lng];
+        if (!marker) { marker = L.marker(ll).addTo(map); }
+        else { marker.setLatLng(ll); }
+        if (!centeredOnce) { map.setView(ll, 16); centeredOnce = true; }
+        else { map.panTo(ll); }
+      } else {
+        // 지도 없음 폴백: 좌표 + 외부 지도(카카오맵 웹 링크, 키 불요) 로 위치를 보여준다.
+        nomap.classList.add('show');
+        nmCoords.textContent = data.lat.toFixed(5) + ', ' + data.lng.toFixed(5);
+        nmLink.href = 'https://map.kakao.com/link/map/' +
+          encodeURIComponent('안심귀가 위치') + ',' + data.lat + ',' + data.lng;
+      }
     }
 
     function renderWaiting() {
