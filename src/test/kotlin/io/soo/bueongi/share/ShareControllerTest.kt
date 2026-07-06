@@ -341,6 +341,212 @@ class ShareControllerTest(
         }
     }
 
+    /** 유효한 경로 저장 본문(owner_secret 치환). */
+    private fun routeBody(secret: String) = """
+        {
+          "owner_secret": "$secret",
+          "destination": { "name": "집", "lat": 37.56, "lng": 126.97 },
+          "path": [ {"lat": 37.5, "lng": 127.0}, {"lat": 37.55, "lng": 127.02} ],
+          "markers": [ {"type": "cctv", "lat": 37.5, "lng": 127.0, "x": 50.0, "y": 50.0, "name": "CCTV", "purpose": "생활방범", "camera_count": 2, "address": "서울시", "phone": null} ],
+          "total_distance_m": 1234,
+          "total_time_s": 900
+        }
+    """.trimIndent()
+
+    @Test
+    fun `POST route 후 GET route 로 같은 컨텍스트를 200 으로 회수`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody(secret)
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.updated_at") { exists() }
+            jsonPath("$.expires_at") { exists() }
+        }
+
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(false) }
+            jsonPath("$.route.destination.name") { value("집") }
+            jsonPath("$.route.destination.lat") { value(37.56) }
+            jsonPath("$.route.path.length()") { value(2) }
+            jsonPath("$.route.markers[0].type") { value("cctv") }
+            jsonPath("$.route.markers[0].camera_count") { value(2) }
+            jsonPath("$.route.total_distance_m") { value(1234) }
+            jsonPath("$.route.total_time_s") { value(900) }
+        }
+    }
+
+    @Test
+    fun `경로 미저장 시 GET route 는 200 expired=false 에 route null`() {
+        val token = createShare()
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(false) }
+            jsonPath("$.route") { value(null) }
+        }
+    }
+
+    @Test
+    fun `없는 token GET route 는 200 expired=true 에 route null`() {
+        mockMvc.get("/share/does-not-exist/route").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(true) }
+            jsonPath("$.route") { value(null) }
+        }
+    }
+
+    @Test
+    fun `만료 후 GET route 는 200 expired=true`() {
+        val (token, secret) = createSharePair("{\"expires_in_hours\": 1}")
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody(secret)
+        }.andExpect { status { isOk() } }
+        clock.advanceSeconds(3600)
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(true) }
+            jsonPath("$.route") { value(null) }
+        }
+    }
+
+    @Test
+    fun `없는 token 에 POST route 는 404 SHARE_SESSION_NOT_FOUND`() {
+        mockMvc.post("/share/does-not-exist/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody("x")
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("SHARE_SESSION_NOT_FOUND") }
+        }
+    }
+
+    @Test
+    fun `잘못된 owner_secret 으로 POST route 는 404(경로 조작 차단)`() {
+        val (token, _) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody("wrong-secret")
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("SHARE_SESSION_NOT_FOUND") }
+        }
+    }
+
+    @Test
+    fun `허용되지 않은 마커 type 은 400 VALIDATION_FAILED`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "markers": [ {"type": "start", "lat": 37.5, "lng": 127.0} ]
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
+    @Test
+    fun `범위 밖 경로 좌표는 400 VALIDATION_FAILED`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "path": [ {"lat": 91.0, "lng": 127.0} ]
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
+    @Test
+    fun `destination 누락 POST route 는 400 VALIDATION_FAILED`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
+    @Test
+    fun `음수 total_distance_m POST route 는 400 VALIDATION_FAILED`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "total_distance_m": -1
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
+    @Test
+    fun `GET route 는 시청자로 집계되지 않는다(위치 폴링과 분리)`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody(secret)
+        }.andExpect { status { isOk() } }
+        // 보호자 경로 조회를 여러 번 해도
+        repeat(3) { mockMvc.get("/share/$token/route").andExpect { status { isOk() } } }
+        // 관리자 watching 은 여전히 false(경로 조회는 markViewed 하지 않음).
+        mockMvc.post("/share/$token/watching") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"owner_secret\": \"$secret\"}"
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.watching") { value(false) }
+        }
+    }
+
+    @Test
+    fun `remaining 포함 위치 POST 후 GET location 은 remaining_m·remaining_s 를 돌려준다`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", \"remaining_m\": 500.0, \"remaining_s\": 360.0}"
+        }.andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/location").andExpect {
+            status { isOk() }
+            jsonPath("$.remaining_m") { value(500.0) }
+            jsonPath("$.remaining_s") { value(360.0) }
+        }
+    }
+
+    @Test
+    fun `음수 remaining_m 위치 POST 는 400 VALIDATION_FAILED`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", \"remaining_m\": -1.0}"
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+        }
+    }
+
     @TestConfiguration
     class ShareTestConfig {
         /** 가변 Clock — 테스트가 주입받아 만료 경계를 전진시킨다. */

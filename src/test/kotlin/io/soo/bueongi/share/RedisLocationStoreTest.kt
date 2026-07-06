@@ -26,8 +26,10 @@ class RedisLocationStoreTest {
 
     private val clock = MutableTestClock()
     private val hashOps = mock<HashOperations<String, String, String>>()
+    private val valueOps = mock<ValueOperations<String, String>>()
     private val redis = mock<StringRedisTemplate> {
         on { opsForHash<String, String>() } doReturn hashOps
+        on { opsForValue() } doReturn valueOps
     }
     private val store = RedisLocationStore(redis, clock)
 
@@ -112,20 +114,107 @@ class RedisLocationStoreTest {
     }
 
     @Test
-    fun `delete 는 share·location·viewer 키를 함께 삭제한다(즉시 종료)`() {
+    fun `delete 는 share·location·route·viewer 키를 함께 삭제한다(즉시 종료)`() {
         store.delete("tok")
-        verify(redis).delete(listOf("share:tok", "location:tok", "viewer:tok"))
+        verify(redis).delete(listOf("share:tok", "location:tok", "route:tok", "viewer:tok"))
     }
 
     @Test
     fun `markViewed 는 viewer 키를 짧은 TTL 로 set, isWatched 는 hasKey 로 판정`() {
-        val valueOps = mock<ValueOperations<String, String>>()
-        whenever(redis.opsForValue()).thenReturn(valueOps)
-
         store.markViewed("tok")
         verify(valueOps).set(eq("viewer:tok"), eq("1"), eq(Duration.ofSeconds(12)))
 
         whenever(redis.hasKey("viewer:tok")).thenReturn(true)
         assertTrue(store.isWatched("tok"))
+    }
+
+    @Test
+    fun `remaining 이 있으면 location HASH 에 remaining_m·remaining_s 필드를 함께 쓴다`() {
+        val now = clock.now
+        store.save(
+            ShareSession(
+                token = "tok",
+                ownerSecret = "sek",
+                createdAt = now,
+                expiresAt = now.plusSeconds(3600),
+                location = StoredLocation(37.5, 127.04, now, remainingM = 500.0, remainingS = 360.0),
+            ),
+        )
+        verify(hashOps).putAll(
+            eq("location:tok"),
+            eq(
+                mapOf(
+                    "lat" to "37.5",
+                    "lng" to "127.04",
+                    "updated_at" to now.toString(),
+                    "remaining_m" to "500.0",
+                    "remaining_s" to "360.0",
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `save 는 route 를 JSON 문자열 값 키로 상한 TTL 과 함께 쓴다`() {
+        val now = clock.now
+        store.save(
+            ShareSession(
+                token = "tok",
+                ownerSecret = "sek",
+                createdAt = now,
+                expiresAt = now.plusSeconds(3600),
+                route = SAMPLE_ROUTE,
+            ),
+        )
+        // route:{token} 값 키에 JSON + 상한 TTL(3600s). 위치가 없으므로 location HASH 는 쓰지 않는다.
+        verify(valueOps).set(eq("route:tok"), any(), eq(Duration.ofSeconds(3600)))
+    }
+
+    @Test
+    fun `find 는 route JSON 을 StoredRoute 로 역직렬화한다(왕복)`() {
+        // save 가 쓰는 정확한 JSON 을 캡처해 find 가 되읽도록 연결(실제 직렬화 형식으로 왕복).
+        val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(SAMPLE_ROUTE)
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn(json)
+
+        val session = store.find("tok")!!
+        assertEquals(SAMPLE_ROUTE, session.route)
+    }
+
+    @Test
+    fun `find 는 route 키가 없으면 route=null`() {
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn(null)
+
+        assertNull(store.find("tok")!!.route)
+    }
+
+    private companion object {
+        val SAMPLE_ROUTE = StoredRoute(
+            destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
+            path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),
+            markers = listOf(
+                StoredMarker(
+                    type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
+                    name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
+                ),
+            ),
+            totalDistanceM = 1234,
+            totalTimeS = 900,
+        )
     }
 }

@@ -21,16 +21,65 @@ data class ShareSession(
     val expiresAt: Instant,
     /** 마지막으로 갱신된 위치. 생성됐으나 아직 위치 보고 전이면 null. */
     val location: StoredLocation? = null,
+    /**
+     * 길안내 경로 컨텍스트(목적지·경로선·안심시설 마커·총 거리/시간). 앱이 길안내 시작 시 1회 저장하며,
+     * 위치와 독립이다(경로만·위치만·둘 다 모두 허용). 저장 전이면 null.
+     */
+    val route: StoredRoute? = null,
 )
 
 /**
- * 저장된 위치 1건. MVP 계약(`{lat, lng, updated_at}`)만 담는다 — 정확도/방향 등은 범위 밖.
+ * 저장된 위치 1건. 좌표 + 갱신시각에 더해, 앱이 길안내 중 보고한 목적지까지의 잔여 거리/시간(선택)을 담는다.
  * Redis `location:{token}` HASH 와 1:1 대응하며, 공유 상한 만료(expiresAt)와 동일 TTL 로 함께 사라진다.
  */
 data class StoredLocation(
     val lat: Double,
     val lng: Double,
     val updatedAt: Instant,
+    /** 목적지까지 남은 거리(미터). 앱이 보고했을 때만 채워지고, 아니면 null. */
+    val remainingM: Double? = null,
+    /** 목적지까지 남은 예상 시간(초). 앱이 보고했을 때만 채워지고, 아니면 null. */
+    val remainingS: Double? = null,
+)
+
+/**
+ * 저장된 길안내 경로 컨텍스트. 보호자 페이지가 앱과 동일한 지도를 재구성하는 데 필요한 최소 정보다 —
+ * 목적지·경로선 좌표열·경로변 안심시설 마커·총 거리/시간. 공유 상한 만료(expiresAt)와 동일 TTL 로 함께 사라진다.
+ * (웹 DTO 와 분리된 도메인 표현 — [StoredLocation] 과 동일 철학.)
+ */
+data class StoredRoute(
+    val destination: StoredRouteDestination,
+    val path: List<StoredCoord>,
+    val markers: List<StoredMarker>,
+    val totalDistanceM: Int?,
+    val totalTimeS: Int?,
+)
+
+/** 경로 목적지(좌표 + 표시명). */
+data class StoredRouteDestination(
+    val name: String?,
+    val lat: Double,
+    val lng: Double,
+)
+
+/** 경로선 좌표 1점. */
+data class StoredCoord(
+    val lat: Double,
+    val lng: Double,
+)
+
+/** 경로변 안심시설 마커 1건(좌표 + 표시 힌트 + 정보 카드용 부가 필드). */
+data class StoredMarker(
+    val type: String,
+    val lat: Double,
+    val lng: Double,
+    val x: Double?,
+    val y: Double?,
+    val name: String?,
+    val purpose: String?,
+    val cameraCount: Int?,
+    val address: String?,
+    val phone: String?,
 )
 
 /**

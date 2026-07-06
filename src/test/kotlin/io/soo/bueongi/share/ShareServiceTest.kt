@@ -23,6 +23,21 @@ class ShareServiceTest {
     private fun loc(secret: String, lat: Double = 37.5, lng: Double = 127.0) =
         UpdateLocationRequest(lat = lat, lng = lng, ownerSecret = secret)
 
+    /** 경로 컨텍스트 저장 요청(쓰기 비밀 포함). */
+    private fun route(secret: String) = SaveRouteRequest(
+        ownerSecret = secret,
+        destination = RouteDestination(name = "집", lat = 37.56, lng = 126.97),
+        path = listOf(RoutePoint(37.5, 127.0), RoutePoint(37.55, 127.02)),
+        markers = listOf(
+            RouteMarker(
+                type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
+                name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
+            ),
+        ),
+        totalDistanceM = 1234,
+        totalTimeS = 900,
+    )
+
     @Test
     fun `create 는 시간 단위 TTL 뒤 만료, share_url 에 token 포함`() {
         val res = service.create(CreateShareRequest(expiresInHours = 2))
@@ -222,6 +237,106 @@ class ShareServiceTest {
         assertTrue(res.expired)
         assertNull(res.lat)
         assertFalse(res.watching)
+    }
+
+    @Test
+    fun `경로 저장 후 조회로 같은 컨텍스트 회수(왕복)`() {
+        val s = service.create(null)
+        service.saveRoute(s.token, route(s.ownerSecret))
+        val view = service.getRoute(s.token)
+        assertFalse(view.expired)
+        val r = view.route!!
+        assertEquals("집", r.destination.name)
+        assertEquals(37.56, r.destination.lat)
+        assertEquals(2, r.path.size)
+        assertEquals(1, r.markers.size)
+        assertEquals("cctv", r.markers[0].type)
+        assertEquals(2, r.markers[0].cameraCount)
+        assertEquals(1234, r.totalDistanceM)
+        assertEquals(900, r.totalTimeS)
+    }
+
+    @Test
+    fun `경로 미저장 시 조회는 expired=false 에 route null`() {
+        val s = service.create(null)
+        val view = service.getRoute(s.token)
+        assertFalse(view.expired)
+        assertNull(view.route)
+    }
+
+    @Test
+    fun `만료된 공유의 경로 조회는 expired=true 에 route null`() {
+        val s = service.create(CreateShareRequest(expiresInHours = 1))
+        service.saveRoute(s.token, route(s.ownerSecret))
+        clock.advanceSeconds(3600)
+        val view = service.getRoute(s.token)
+        assertTrue(view.expired)
+        assertNull(view.route)
+    }
+
+    @Test
+    fun `없는 token 경로 조회는 expired=true`() {
+        assertTrue(service.getRoute("nonexistent").expired)
+    }
+
+    @Test
+    fun `없는 token 에 경로 저장은 404`() {
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.saveRoute("nonexistent", route("any-secret"))
+        }
+    }
+
+    @Test
+    fun `잘못된 owner_secret 으로 경로 저장은 404(경로 조작 차단)`() {
+        val s = service.create(null)
+        assertThrows(ShareSessionNotFoundException::class.java) {
+            service.saveRoute(s.token, route("wrong-secret"))
+        }
+    }
+
+    @Test
+    fun `경로와 위치는 독립 저장된다(경로 저장이 위치를 지우지 않고 그 반대도)`() {
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret, 37.1, 127.1))
+        service.saveRoute(s.token, route(s.ownerSecret))
+        // 경로 저장 후에도 위치 유지
+        assertEquals(37.1, service.getLocation(s.token).lat)
+        // 위치 갱신 후에도 경로 유지
+        service.updateLocation(s.token, loc(s.ownerSecret, 37.2, 127.2))
+        assertEquals("집", service.getRoute(s.token).route!!.destination.name)
+    }
+
+    @Test
+    fun `remaining_m·remaining_s 는 위치 조회로 왕복된다`() {
+        val s = service.create(null)
+        service.updateLocation(
+            s.token,
+            UpdateLocationRequest(lat = 37.5, lng = 127.0, ownerSecret = s.ownerSecret, remainingM = 500.0, remainingS = 360.0),
+        )
+        val view = service.getLocation(s.token)
+        assertEquals(500.0, view.remainingM)
+        assertEquals(360.0, view.remainingS)
+    }
+
+    @Test
+    fun `remaining 미보고 시 위치 조회의 remaining 은 null`() {
+        val s = service.create(null)
+        service.updateLocation(s.token, loc(s.ownerSecret))
+        val view = service.getLocation(s.token)
+        assertNull(view.remainingM)
+        assertNull(view.remainingS)
+    }
+
+    @Test
+    fun `watching 조회도 remaining 을 함께 돌려준다(관리자 미리보기 일관성)`() {
+        val s = service.create(null)
+        service.updateLocation(
+            s.token,
+            UpdateLocationRequest(lat = 37.5, lng = 127.0, ownerSecret = s.ownerSecret, remainingM = 250.0, remainingS = 120.0),
+        )
+        val res = service.watchingStatus(s.token, WatchRequest(ownerSecret = s.ownerSecret))
+        assertEquals(250.0, res.remainingM)
+        assertEquals(120.0, res.remainingS)
     }
 
     private companion object {

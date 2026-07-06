@@ -47,6 +47,23 @@ class ShareController(
     fun getLocation(@PathVariable token: String): LocationView = service.getLocation(token)
 
     /**
+     * POST /share/{token}/route → 경로 컨텍스트 저장(앱이 길안내 시작 시 1회). 토큰 없음/만료·비밀 불일치 → 404.
+     * 위치와 독립이라 기존 위치는 보존한다. 응답은 위치 갱신과 동일한 `{updated_at, expires_at}`.
+     */
+    @PostMapping("/{token}/route")
+    fun saveRoute(
+        @PathVariable token: String,
+        @Valid @RequestBody request: SaveRouteRequest,
+    ): UpdateLocationResponse = service.saveRoute(token, request)
+
+    /**
+     * GET /share/{token}/route → 경로 컨텍스트 조회(보호자, 인증 없음·1회 fetch). 항상 200, 상태는 `expired`/`route` null 로 표현.
+     * 위치 폴링(GET /location)과 달리 시청자로 집계하지 않는다.
+     */
+    @GetMapping("/{token}/route")
+    fun getRoute(@PathVariable token: String): RouteView = service.getRoute(token)
+
+    /**
      * POST /share/{token}/end → 공유 종료(사용자 도착/중단). 멱등이라 없는/이미 만료된 토큰도 200.
      * 종료 후 보호자의 `GET /{token}/location` 은 `expired:true` 가 되어 "공유 종료" 화면을 그린다.
      */

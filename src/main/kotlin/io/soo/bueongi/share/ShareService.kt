@@ -51,9 +51,39 @@ class ShareService(
         val session = store.find(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, request.ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
         val now = clock.instant()
-        val location = StoredLocation(lat = request.lat!!, lng = request.lng!!, updatedAt = now)
+        val location = StoredLocation(
+            lat = request.lat!!,
+            lng = request.lng!!,
+            updatedAt = now,
+            remainingM = request.remainingM,
+            remainingS = request.remainingS,
+        )
+        // 위치만 갱신하고 경로 컨텍스트(route)는 보존한다(둘은 독립 — session.copy 가 route 를 그대로 유지).
         store.save(session.copy(location = location))
         return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+    }
+
+    /**
+     * 경로 컨텍스트 저장(앱이 길안내 시작 시 1회). 토큰 없음/만료면 404, 쓰기 비밀 불일치/누락도 404(requireOwner).
+     * 위치와 독립이라 기존 위치는 보존한다(session.copy 가 location 을 유지). @Valid 가 이미 좌표/개수/type 을 400 으로 거른 뒤다.
+     */
+    fun saveRoute(token: String, request: SaveRouteRequest): UpdateLocationResponse {
+        val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        requireOwner(session, request.ownerSecret)
+        val now = clock.instant()
+        store.save(session.copy(route = request.toStoredRoute()))
+        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+    }
+
+    /**
+     * 경로 컨텍스트 조회(보호자, 인증 없음·1회 fetch). 항상 200 으로 응답하고 상태는 [RouteView] 로 표현한다:
+     * 토큰 없음/만료 → `{expired:true, route:null}`, 살아있으나 경로 미저장 → `{expired:false, route:null}`,
+     * 저장됨 → `{expired:false, route:{...}}`. 위치 폴링(GET /location)과 달리 시청자로 집계하지 않는다(markViewed 미호출).
+     */
+    fun getRoute(token: String): RouteView {
+        val session = store.find(token)
+            ?: return RouteView(expired = true, route = null)
+        return RouteView(expired = false, route = session.route?.toRouteContext())
     }
 
     /**
@@ -73,6 +103,8 @@ class ShareService(
             lng = location.lng,
             updatedAt = location.updatedAt,
             expired = false,
+            remainingM = location.remainingM,
+            remainingS = location.remainingS,
         )
     }
 
@@ -102,6 +134,8 @@ class ShareService(
             lng = location?.lng,
             updatedAt = location?.updatedAt,
             expired = false,
+            remainingM = location?.remainingM,
+            remainingS = location?.remainingS,
         )
     }
 
@@ -132,3 +166,53 @@ class ShareService(
         const val SECONDS_PER_HOUR = 3600L
     }
 }
+
+/**
+ * 웹 요청([SaveRouteRequest]) → 도메인([StoredRoute]) 매핑. @Valid 가 좌표/type/개수를 이미 검증했으므로
+ * lat/lng/type 은 non-null 이 보장된다(`!!`).
+ */
+private fun SaveRouteRequest.toStoredRoute(): StoredRoute {
+    val d = destination!!
+    return StoredRoute(
+        destination = StoredRouteDestination(name = d.name, lat = d.lat!!, lng = d.lng!!),
+        path = path.orEmpty().map { StoredCoord(lat = it.lat!!, lng = it.lng!!) },
+        markers = markers.orEmpty().map { m ->
+            StoredMarker(
+                type = m.type!!,
+                lat = m.lat!!,
+                lng = m.lng!!,
+                x = m.x,
+                y = m.y,
+                name = m.name,
+                purpose = m.purpose,
+                cameraCount = m.cameraCount,
+                address = m.address,
+                phone = m.phone,
+            )
+        },
+        totalDistanceM = totalDistanceM,
+        totalTimeS = totalTimeS,
+    )
+}
+
+/** 도메인([StoredRoute]) → 보호자 응답([RouteContext]) 매핑. 요청과 동일 필드명으로 왕복한다. */
+private fun StoredRoute.toRouteContext(): RouteContext = RouteContext(
+    destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),
+    path = path.map { RoutePoint(lat = it.lat, lng = it.lng) },
+    markers = markers.map { m ->
+        RouteMarker(
+            type = m.type,
+            lat = m.lat,
+            lng = m.lng,
+            x = m.x,
+            y = m.y,
+            name = m.name,
+            purpose = m.purpose,
+            cameraCount = m.cameraCount,
+            address = m.address,
+            phone = m.phone,
+        )
+    },
+    totalDistanceM = totalDistanceM,
+    totalTimeS = totalTimeS,
+)
