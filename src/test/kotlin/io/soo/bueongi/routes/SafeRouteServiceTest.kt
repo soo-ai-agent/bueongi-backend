@@ -126,4 +126,43 @@ class SafeRouteServiceTest {
         assertThat(result).hasSize(1)
         assertThat(result.first().dist).isNotEqualTo("2.0km")
     }
+
+    @Test
+    fun `거의 겹치는 후보는 병합되어 유형당 하나씩 정확히 3개로 정규화된다`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        // rA(회랑에 CCTV) 와 rADup 은 같은 도로(37.5)를 90%+ 공유 → 병합 대상. rB/rC 는 서로 다른 길.
+        val rA = TmapRoute("0", listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.005), GeoPoint(37.5, 127.01)), 880.0, 700, emptyList())
+        val rADup = TmapRoute("4", listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01)), 884.0, 690, emptyList())
+        val rB = TmapRoute("10", listOf(GeoPoint(37.51, 127.0), GeoPoint(37.51, 127.01)), 900.0, 600, emptyList())
+        val rC = TmapRoute("0", listOf(GeoPoint(37.52, 127.0), GeoPoint(37.52, 127.01)), 950.0, 800, emptyList())
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(rA, rADup, rB, rC))
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+
+        val result = service(tmap).safeCompare(request)
+
+        // rADup 은 rA 와 병합돼 사라지고, 남은 3개 실경로에 유형이 하나씩 배정된다(중복 라벨 없음).
+        assertThat(result).hasSize(3)
+        assertThat(result.map { it.type }).containsExactlyInAnyOrder("safe", "main", "fast")
+        assertThat(result.map { it.type }).doesNotHaveDuplicates()
+    }
+
+    @Test
+    fun `서로 다른 후보가 4개여도 유형당 하나씩 정확히 3개만 반환한다`() {
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        // 겹치지 않는 4개 후보(위도 상이) → 정규화로 safe/main/fast 3개만.
+        fun line(lat: Double) = listOf(GeoPoint(lat, 127.0), GeoPoint(lat, 127.01))
+        val r0 = TmapRoute("0", line(37.5), 880.0, 700, emptyList()) // 회랑에 CCTV → safe
+        val r1 = TmapRoute("4", line(37.51), 900.0, 600, emptyList()) // 최소시간 → fast
+        val r2 = TmapRoute("10", line(37.52), 920.0, 750, emptyList())
+        val r3 = TmapRoute("0", line(37.53), 940.0, 800, emptyList())
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(r0, r1, r2, r3))
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+
+        val result = service(tmap).safeCompare(request)
+
+        assertThat(result).hasSize(3)
+        assertThat(result.map { it.type }).containsExactlyInAnyOrder("safe", "main", "fast")
+    }
 }

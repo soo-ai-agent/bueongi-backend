@@ -6,6 +6,7 @@ import io.soo.bueongi.facility.GeoPoint
 import io.soo.bueongi.facility.SafetyScore
 import io.soo.bueongi.facility.SafetyScorer
 import io.soo.bueongi.facility.SafeDetourPlanner
+import io.soo.bueongi.facility.SpatialMath
 import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -55,8 +56,9 @@ class SafeRouteService(
             // 과도 우회 차단: 기본 최단거리의 (1+budget) 이내만 채택.
             .filter { it.distanceM <= baseShortest * (1 + budget) }
 
-        val candidates = dedupe(base + detours)
-        val scored = scoreAndType(candidates)
+        // 1) 완전 동일(거리+좌표수) 제거 → 2) 거의 겹치는 경로 병합 → 3) 정확히 유형당 1개(최대 3개)로 정규화.
+        val candidates = mergeNearDuplicates(dedupe(base + detours))
+        val scored = scoreTypeAndLimit(candidates)
         return toRouteOptions(scored, origin, dest)
     }
 
@@ -67,30 +69,58 @@ class SafeRouteService(
     }
 
     /**
-     * 후보에 안전 점수를 매기고 유형을 배정한다. safe=최고점, fast=최소시간, 나머지=main.
-     * 동률은 먼저 나온 후보 우선. 안심과 빠른이 같으면 빠른은 다른 후보로 양보(프론트 scoreAndType 동형).
+     * 거의 같은 길인데 라벨만 다른 후보를 병합한다(예: 최단과 대로우선이 같은 도로를 90%+ 공유).
+     *
+     * 두 경로의 겹침 길이가 (짧은 쪽 길이 × [MERGE_OVERLAP_RATIO]) 이상이면 같은 경로로 보고,
+     * 입력 순서상 먼저 나온 후보(=기본 추천/대로/최단 → 우회 순)를 남긴다. 결정론적.
+     * 이렇게 해야 뒤의 유형 배정(safe/main/fast)이 서로 다른 실제 경로에만 매겨진다.
      */
-    private fun scoreAndType(routes: List<TmapRoute>): List<ScoredRoute> {
+    private fun mergeNearDuplicates(routes: List<TmapRoute>): List<TmapRoute> {
+        val kept = ArrayList<TmapRoute>()
+        for (r in routes) {
+            if (kept.none { isNearDuplicate(it, r) }) kept.add(r)
+        }
+        return kept
+    }
+
+    private fun isNearDuplicate(a: TmapRoute, b: TmapRoute): Boolean {
+        val lenA = SpatialMath.pathLengthMeters(a.path)
+        val lenB = SpatialMath.pathLengthMeters(b.path)
+        val shorter = minOf(lenA, lenB)
+        if (shorter <= 0.0) return false
+        // 양방향 겹침 중 큰 값 — 한 경로가 다른 경로에 거의 포함되면 같은 길로 본다.
+        val overlap = maxOf(
+            SpatialMath.overlapLengthMeters(a.path, b.path, MERGE_CORRIDOR_METERS),
+            SpatialMath.overlapLengthMeters(b.path, a.path, MERGE_CORRIDOR_METERS),
+        )
+        return overlap >= shorter * MERGE_OVERLAP_RATIO
+    }
+
+    /**
+     * 후보를 채점하고 **유형당 정확히 하나씩(최대 3개)** 골라 배정한다.
+     * safe=최고점, fast=최소시간(safe와 다른 후보), main=남은 후보 중 최고점.
+     * 후보가 3개 미만이면 있는 만큼만 반환한다(없는 유형을 억지로 만들지 않음 — 정직).
+     * 동률은 먼저 나온 후보 우선(프론트 scoreAndType 동형).
+     */
+    private fun scoreTypeAndLimit(routes: List<TmapRoute>): List<ScoredRoute> {
         if (routes.isEmpty()) return emptyList()
         val scored = routes.map { it to scorer.score(it.path) }
 
-        var safeIdx = 0
-        var fastIdx = 0
-        scored.forEachIndexed { i, (route, score) ->
-            if (score.score > scored[safeIdx].second.score) safeIdx = i
-            if (route.timeS < scored[fastIdx].first.timeS) fastIdx = i
-        }
-        if (fastIdx == safeIdx && scored.size > 1) {
-            fastIdx = scored.indices.first { it != safeIdx }
-        }
-        return scored.mapIndexed { i, (route, score) ->
-            val type = when (i) {
-                safeIdx -> "safe"
-                fastIdx -> "fast"
-                else -> "main"
-            }
-            ScoredRoute(route, score, type)
-        }
+        // safe: 최고점(동률이면 먼저 나온 후보).
+        val safeIdx = scored.indices.maxByOrNull { scored[it].second.score.toDouble() - it * 1e-9 }!!
+        // fast: safe 제외 최소시간(동률이면 먼저 나온 후보).
+        val fastIdx = scored.indices.filter { it != safeIdx }
+            .minByOrNull { scored[it].first.timeS.toDouble() + it * 1e-9 }
+        val used = setOfNotNull(safeIdx, fastIdx)
+        // main: 남은 후보 중 최고점.
+        val mainIdx = scored.indices.filter { it !in used }
+            .maxByOrNull { scored[it].second.score.toDouble() - it * 1e-9 }
+
+        val picks = LinkedHashMap<Int, String>()
+        picks[safeIdx] = "safe"
+        if (fastIdx != null) picks[fastIdx] = "fast"
+        if (mainIdx != null) picks[mainIdx] = "main"
+        return picks.map { (i, type) -> ScoredRoute(scored[i].first, scored[i].second, type) }
     }
 
     /** ScoredRoute → 프론트 계약 RouteOption. 안전 점수 내림차순 정렬(동률은 입력 순서 유지). */
@@ -214,6 +244,12 @@ class SafeRouteService(
             "lamp" to FacilityType.LAMP,
         )
         const val MARKER_PADDING = 12.0
+
+        /** 근접 경로 병합: 두 경로 점이 이 거리(m) 안이면 같은 도로 위로 본다. */
+        const val MERGE_CORRIDOR_METERS = 25.0
+
+        /** 근접 경로 병합 임계: 짧은 경로의 이 비율 이상이 다른 경로와 겹치면 같은 경로로 병합. */
+        const val MERGE_OVERLAP_RATIO = 0.85
 
         /** 유형별 마커 수 상한(가로등 등 밀집 시설로 인한 지도 가독성 저하·응답 비대화 방어). */
         const val MAX_MARKERS_PER_TYPE = 12
