@@ -1,180 +1,87 @@
 {
   "schemaVersion": 1,
-  "version": "2026-06-19",
-  "generatedAt": "2026-06-19T00:00:00Z",
+  "version": "2026-07-06-mock-removed",
+  "generatedAt": "2026-07-06T11:50:11Z",
   "baseUrl": "https://cdn.example.com/bueongi",
   "files": [
     {
-      "path": "cctv/11680.json",
-      "type": "cctv",
-      "scope": "11680",
-      "sigunguCode": "11680",
-      "count": 2,
-      "bytes": 630,
-      "sha256": "9224c8393905c64b12d9f90cc18eb98a85abb938fe113aa4e2cae2ff23976f55"
-    },
-    {
-      "path": "cctv/11110.json",
-      "type": "cctv",
-      "scope": "11110",
-      "sigunguCode": "11110",
-      "count": 1,
-      "bytes": 374,
-      "sha256": "a0e14ad5019241d5bdf845139045cbe37c0bc360bc4ea4fb0fb8f02ecce55ead"
-    },
-    {
-      "path": "safehouse/all.json",
-      "type": "safehouse",
-      "scope": "all",
-      "count": 2,
-      "bytes": 656,
-      "sha256": "7324924884f71cffa3013f9268dc7335a48a105fdb42bca355b961c1241be8d1"
-    },
-    {
-      "path": "police/all.json",
-      "type": "police",
-      "scope": "all",
-      "count": 3,
-      "bytes": 1053,
-      "sha256": "ea0ec8a5b6f736e0f66b97bae42d59bf63a4a3457f836694c1edf25bf500cb53"
-    },
-    {
-      "path": "lamp/seoul.json",
-      "type": "lamp",
-      "scope": "seoul",
-      "count": 2,
-      "bytes": 586,
-      "sha256": "0357ac28aa4907ea9636df2b09528990d2405c2e396f43d08f5390fa424874de"
+      "path": "emergency_bell/nationwide.json",
+      "type": "emergency_bell",
+      "scope": "nationwide",
+      "count": 88939,
+      "bytes": 20327666,
+      "sha256": "61e8dbadd9b08066297bdde7533112be6f9a0c2da9b6aa5af4708ecbdb266356"
     },
     {
       "path": "lamp/11680.json",
       "type": "lamp",
       "scope": "11680",
-      "sigunguCode": "11680",
-      "count": 1,
-      "bytes": 374,
-      "sha256": "3f8ff4f7635932d10284e0e7f8158b4632db7ea157d4a449c5b8b29fc35fa9fd"
+      "count": 0,
+      "bytes": 227,
+      "sha256": "27cae4487ee1224f6cc1540fb32c139bf38f1e8b22f7eee43c2b235309fdf7a7",
+      "sigunguCode": "11680"
     },
     {
       "path": "lamp/26110.json",
       "type": "lamp",
       "scope": "26110",
-      "sigunguCode": "26110",
-      "count": 1,
-      "bytes": 377,
-      "sha256": "abe0100760eaf66a2c343fa3f9d0005c62f04ba9a2cedde893ba93a2acdb63e1"
+      "count": 0,
+      "bytes": 227,
+      "sha256": "c214fdbdac539620340011032d95101bc45499a092a280ce39e240c72c25a4c8",
+      "sigunguCode": "26110"
     },
     {
-      "path": "emergency_bell/11680.json",
-      "type": "emergency_bell",
+      "path": "lamp/seoul.json",
+      "type": "lamp",
+      "scope": "seoul",
+      "count": 0,
+      "bytes": 227,
+      "sha256": "2be5f8d0633ab423df487d14761b5619673caef4e4dd19451b09b3c9e2ea3cb4"
+    },
+    {
+      "path": "cctv/11110.json",
+      "type": "cctv",
+      "scope": "11110",
+      "count": 0,
+      "bytes": 227,
+      "sha256": "53437adde9ba29dfde32832264acf126f36ee2ba05a72a6d4a23197be8ca0942",
+      "sigunguCode": "11110"
+    },
+    {
+      "path": "cctv/11680.json",
+      "type": "cctv",
       "scope": "11680",
-      "sigunguCode": "11680",
-      "count": 1,
-      "bytes": 456,
-      "sha256": "ee1b339d39a06938263a76f3d5ea4f3bb3742b40e281d37dec66c2bda771bd0b"
-    },
-    {
-      "path": "emergency_bell/41135.json",
-      "type": "emergency_bell",
-      "scope": "41135",
-      "sigunguCode": "41135",
-      "count": 1,
-      "bytes": 457,
-      "sha256": "26be3201657789da8ab6b90ec1dc8b8df3e200d82df0a41e9d73747b58de4749"
-    },
-    {
-      "path": "emergency_bell/26110.json",
-      "type": "emergency_bell",
-      "scope": "26110",
-      "sigunguCode": "26110",
-      "count": 1,
-      "bytes": 435,
-      "sha256": "78a20ec3bffe1747e29cba6ee18b9c6bf31bf9ffb04970a78111972588a62d5e"
+      "count": 0,
+      "bytes": 227,
+      "sha256": "968c61b191b7ad2ffef4295cc521286e406ece4237ef67a1923e66302711f3c6",
+      "sigunguCode": "11680"
     },
     {
       "path": "safepath/all.json",
       "type": "safepath",
       "scope": "all",
-      "count": 2,
-      "bytes": 696,
-      "sha256": "38be60d5a43578c69c387387ba2205542497729201e064dcbb6138383adf5877"
+      "count": 0,
+      "bytes": 229,
+      "sha256": "92a30d0f443ec949b28999fec7634caab148b1ce221ddc47b98080d3bd7b965c"
+    },
+    {
+      "path": "safehouse/all.json",
+      "type": "safehouse",
+      "scope": "all",
+      "count": 0,
+      "bytes": 230,
+      "sha256": "9b5118a4b92f75308d63f7743570aef2851552c3222b4973314075beec6b47b5"
+    },
+    {
+      "path": "police/all.json",
+      "type": "police",
+      "scope": "all",
+      "count": 2041,
+      "bytes": 261079,
+      "sha256": "28c4ca914e6733cd249ad4f254f02089bdd3383ee4824d04f5fbbb89f8ba3491"
     }
   ],
   "stats": {
-    "bySource": {
-      "B-1": {
-        "input": 3,
-        "output": 3,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 0
-      },
-      "B-2": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 0
-      },
-      "B-3": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 1,
-        "quarantined": 0
-      },
-      "B-4": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 0
-      },
-      "C-1": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 0
-      },
-      "C-2": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 0
-      },
-      "D-1": {
-        "input": 2,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 1,
-        "quarantined": 0
-      },
-      "D-2": {
-        "input": 3,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 1
-      },
-      "A-4": {
-        "input": 3,
-        "output": 2,
-        "coordFailed": 0,
-        "outOfRange": 0,
-        "deduped": 0,
-        "quarantined": 1
-      }
-    },
     "reports": {
       "quarantine": "report/quarantine.json",
       "geocodeFailures": "report/geocode-failures.json",

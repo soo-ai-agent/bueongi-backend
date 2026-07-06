@@ -1,1 +1,1 @@
-{"schemaVersion":1,"type":"lamp","scope":"26110","generatedAt":"2026-06-19T00:00:00Z","sources":["C-2"],"count":1,"items":[{"id":"C-2:26110:1","source":"C-2","type":"lamp","name":"부산중구 보안등 001","address":"부산광역시 중구 대청동","lat":35.1018,"lng":129.032,"sigunguCode":"26110","updatedAt":"2026-06-19T00:00:00Z","properties":{"coordOrigin":"wgs84"}}]}
+{"schemaVersion":1,"type":"lamp","scope":"26110","generatedAt":"2026-07-06T11:50:11Z","sources":["C-2"],"count":0,"items":[],"note":"목(샘플) 데이터 제거됨 — 실데이터 수집 전까지 빈 목록(정직한 0건)"}
