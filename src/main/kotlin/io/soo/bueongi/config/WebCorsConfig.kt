@@ -24,5 +24,10 @@ class WebCorsConfig(
         registry.addMapping("/share/**")
             .allowedOrigins(*origins.toTypedArray())
             .allowedMethods("GET", "POST", "OPTIONS")
+        // 정적 안심시설 JSON(/cdn/**)은 전부 공개 공공데이터 산출물 — dev 로컬 CDN 미들웨어와 동일하게
+        // 모든 origin 의 GET 을 허용한다(자격증명 없음 → 와일드카드 무해).
+        registry.addMapping("/cdn/**")
+            .allowedOrigins("*")
+            .allowedMethods("GET")
     }
 }

@@ -1,0 +1,5 @@
+# 자동 HTTPS 리버스 프록시(tls 프로필). {$DOMAIN} 은 compose 환경변수로 주입된다.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy frontend:80
+}
