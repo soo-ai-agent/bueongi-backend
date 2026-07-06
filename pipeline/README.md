@@ -31,13 +31,17 @@
 `config/district-coord-map.yaml` 에서 자치구별 `status`(`verified|quarantined`)와 `coordSystem` 을 둔다.
 `quarantined` 또는 `coordSystem: unknown` 은 변환하지 않고 `cdn/report/quarantine.json` 으로만 보고한다(PM 보고).
 
-## 입력 소스 (fetcher 우선순위)
+## 입력 소스 (fetcher 우선순위 — "CSV 기본, API 폴백")
 
 `sources/fetchers.ts` 는 다음 순서로 원천 `RawRecord[]` 를 확보한다.
 
 1. `ctx.fixtures[id]` — 테스트 인메모리 주입
-2. **`data/raw/{id}.json`** — 오프라인 raw 데이터(운영 수집 산출물 또는 샘플). 키/네트워크 없이 전 구간 결정적 실행.
-3. 라이브 공공데이터 API — `DATA_GO_KR_SERVICE_KEY`/`SEOUL_OPEN_API_KEY` 가 있을 때만. **미구현**(연동 시 `catalogId` 기준 호출 로직 추가). 없으면 `[]` 로 안전 통과.
+2. **`data/csv/{id}.csv`** — 공공데이터포털에서 내려받은 표준데이터 CSV(운영자 투입). CP949/UTF-8(BOM)
+   자동 판별 + `sources.yaml` `keyColumns` 매핑(`sources/csv.ts`). 파일명 대응은 `data/csv/README.md`.
+3. **`data/raw/{id}.json`** — 오프라인 raw 데이터(운영 수집 산출물 또는 샘플). 키/네트워크 없이 전 구간 결정적 실행.
+4. 라이브 공공데이터 API — `DATA_GO_KR_SERVICE_KEY`/`SEOUL_OPEN_API_KEY` 가 있을 때만
+   (`sources/liveApi.ts`: odcloud·data.go.kr 조회서비스·서울 열린데이터, 전체 페이지 순회).
+   B-1/D-1 은 엔드포인트 확정, 나머지는 키 등록 후 uddi/service 값을 채우면 동작. 없으면 `[]` 로 안전 통과.
 
 B-3 지오코딩은 `data/geocode-cache.json`(주소→`{lat,lng}`)을 먼저 보고, 캐시 미스만 `KAKAO_REST_API_KEY` 로 네트워크 호출한다(월1회 운영 시 쿼터 절약 + 오프라인 재현).
 

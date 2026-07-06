@@ -3,17 +3,18 @@
 // 각 fetcher 는 원천 → RawRecord[] 정규화만 책임진다.
 // (좌표 변환/지오코딩/중복 제거는 상위 파이프라인 단계가 수행)
 //
-// 입력 우선순위:
+// 입력 우선순위 ("CSV 기본, API 폴백"):
 //   1) ctx.fixtures[id]              테스트 주입(인메모리)
-//   2) data/raw/{id}.json            오프라인 raw 데이터(RawRecord[]). 운영 수집 산출/샘플.
-//   3) 라이브 공공데이터 API          키가 있을 때만. 미구현 시 빈 배열로 안전 통과.
-//
-// 라이브 API 연동(2단계가 비어 있을 때)은 sources.yaml 의 catalogId/keyColumns/endpoint
-// 로 교체한다. 키/네트워크가 없으면 [] 를 반환해 파이프라인이 깨지지 않는다.
+//   2) data/csv/{id}.csv             운영자가 내려받은 공공데이터 CSV(CP949/UTF-8 자동 판별).
+//                                    sources.yaml 과 동일한 keyColumns 로 매핑한다.
+//   3) data/raw/{id}.json            오프라인 raw 데이터(RawRecord[]). 운영 수집 산출/샘플.
+//   4) 라이브 공공데이터 API          키가 있을 때만(월 1회 워크플로의 자동 수집 경로).
+//                                    키/네트워크가 없으면 [] 로 안전 통과.
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AssetType, RawRecord, SourceId } from "../types.js";
+import { loadCsvFile } from "./csv.js";
 import {
   fetchDataGoKrStandard,
   fetchOdcloud,
@@ -29,9 +30,84 @@ export interface FetchContext {
   fixtures?: Partial<Record<string, RawRecord[]>>;
   /** raw 데이터 디렉터리 override (기본 pipeline/data/raw). */
   rawDir?: string;
+  /** CSV 데이터 디렉터리 override (기본 pipeline/data/csv). */
+  csvDir?: string;
 }
 
 const DEFAULT_RAW_DIR = join(import.meta.dirname, "..", "..", "data", "raw");
+const DEFAULT_CSV_DIR = join(import.meta.dirname, "..", "..", "data", "csv");
+
+// ---------------------------------------------------------------------------
+// CSV 입력 스펙 — sources.yaml 의 keyColumns(한글 원천 컬럼명)와 1:1.
+// 공공데이터포털에서 내려받은 표준데이터 CSV 를 data/csv/{id}.csv 로 두면
+// 이 스펙으로 RawRecord 매핑된다. A-4/D-2(자치구별 좌표계 상이·per-district)는
+// CSV 일괄 매핑 대상이 아니다(기존 manual 경로 유지).
+// ---------------------------------------------------------------------------
+
+type CsvSpec = {
+  type: AssetType;
+  coordSystem: RawRecord["coordSystem"];
+  keyColumns: KeyColumns;
+};
+
+const CSV_SPEC: Partial<Record<SourceId, CsvSpec>> = {
+  "B-1": {
+    type: "cctv",
+    coordSystem: "wgs84",
+    keyColumns: {
+      lat: "위도",
+      lng: "경도",
+      name: "관리기관명",
+      address: "소재지지번주소",
+      sigungu: "시군구코드",
+      purpose: "설치목적구분",
+      cameraCount: "카메라대수",
+    },
+  },
+  "B-2": {
+    type: "safehouse",
+    coordSystem: "wgs84",
+    keyColumns: { lat: "위도", lng: "경도", name: "업소명", address: "소재지도로명주소" },
+  },
+  "B-3": {
+    type: "police",
+    coordSystem: "address",
+    keyColumns: { name: "관서명", address: "소재지도로명주소", phone: "전화번호" },
+  },
+  "B-4": {
+    type: "police",
+    coordSystem: "epsg5179",
+    keyColumns: { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" },
+  },
+  "C-1": {
+    type: "lamp",
+    coordSystem: "wgs84",
+    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" },
+  },
+  "C-2": {
+    type: "lamp",
+    coordSystem: "wgs84",
+    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
+  },
+  "D-1": {
+    type: "emergency_bell",
+    coordSystem: "epsg5174",
+    keyColumns: { x: "X좌표", y: "Y좌표", name: "설치장소", address: "소재지지번주소" },
+  },
+};
+
+/** data/csv/{id}.csv 가 있으면 sources.yaml 컬럼 계약으로 RawRecord[] 매핑. 없으면 null. */
+export function loadCsvRecords(id: SourceId, csvDir = DEFAULT_CSV_DIR): RawRecord[] | null {
+  const spec = CSV_SPEC[id];
+  const rows = loadCsvFile(id, csvDir);
+  if (!rows) return null;
+  if (!spec) {
+    console.warn(`[csv] ${id}.csv 발견 — 그러나 ${id} 는 CSV 일괄 매핑 대상이 아님(per-district). 무시.`);
+    return null;
+  }
+  console.log(`[csv] ${id}: data/csv/${id}.csv ${rows.length}행 사용(최우선 입력)`);
+  return mapRowsToRaw(rows, { source: id, type: spec.type, coordSystem: spec.coordSystem, keyColumns: spec.keyColumns });
+}
 
 /** data/raw/{id}.json 을 읽어 RawRecord[] 로 반환. 없으면 null. */
 export function loadRawFile(id: SourceId, rawDir = DEFAULT_RAW_DIR): RawRecord[] | null {
@@ -45,7 +121,7 @@ export function loadRawFile(id: SourceId, rawDir = DEFAULT_RAW_DIR): RawRecord[]
 }
 
 /**
- * 공통 수집 경로. fixtures → data/raw 파일 → 라이브 API(미구현) 순.
+ * 공통 수집 경로. fixtures → data/csv CSV(최우선 오프라인 실데이터) → data/raw 파일 → 라이브 API 순.
  * @param live 라이브 API 호출 구현(키가 있을 때만). 없으면 [] 반환.
  */
 async function collect(
@@ -54,6 +130,8 @@ async function collect(
   live?: (ctx: FetchContext) => Promise<RawRecord[]>,
 ): Promise<RawRecord[]> {
   if (ctx.fixtures?.[id]) return ctx.fixtures[id]!;
+  const csv = loadCsvRecords(id, ctx.csvDir ?? DEFAULT_CSV_DIR);
+  if (csv) return csv;
   const file = loadRawFile(id, ctx.rawDir ?? DEFAULT_RAW_DIR);
   if (file) return file;
   if (live) return live(ctx);
