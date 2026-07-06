@@ -112,9 +112,19 @@
       try { return new Date(iso).toLocaleTimeString('ko-KR'); } catch (e) { return iso || ''; }
     }
 
+    // 마지막 갱신이 이 시간(ms)을 넘으면 '실시간'을 자처하지 않는다 — 전송이 끊겼는데(앱 종료·통신 두절)
+    // 초록 '실시간 공유 중'이 유지되면 보호자가 멈춘 위치를 현재 위치로 오해한다(안전 거짓확신 방지).
+    var STALE_MS = 90 * 1000;
+
     function renderLive(data) {
       hideOverlay();
-      setStatus('live', '실시간 위치 공유 중');
+      var ageMs = NaN;
+      try { ageMs = Date.now() - new Date(data.updated_at).getTime(); } catch (e) { /* 파싱 실패 시 강등하지 않음 */ }
+      if (isFinite(ageMs) && ageMs > STALE_MS) {
+        setStatus('waiting', '위치가 한동안 갱신되지 않았어요');
+      } else {
+        setStatus('live', '실시간 위치 공유 중');
+      }
       updatedEl.textContent = '마지막 갱신 ' + fmtTime(data.updated_at);
       if (map) {
         var ll = [data.lat, data.lng];
