@@ -39,7 +39,7 @@ App Factory 독립 프로젝트(`projectId=bueongi`)로, 별도 경로/포트/ka
 ./gradlew build
 
 # 빌드된 jar 직접 실행
-java -jar build/libs/bueongi-backend-0.0.1-SNAPSHOT.jar
+java -jar core/core-api/build/libs/core-api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(core:core-api) 산출물
 ```
 
 서버 포트는 **8119** 고정(`application.yml`의 `server.port`). 프론트 dev 서버는 3619(strictPort).

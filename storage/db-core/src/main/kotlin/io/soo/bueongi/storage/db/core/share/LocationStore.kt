@@ -95,7 +95,7 @@ data class StoredMarker(
 )
 
 /**
- * 공유 저장소 추상화. 장소 검색의 [io.soo.bueongi.domain.place.PlaceProvider] 패턴을 차용해 Redis 구현([RedisLocationStore])과
+ * 공유 저장소 추상화. 장소 검색 소스 추상화(상위 도메인의 PlaceProvider)와 같은 패턴으로 Redis 구현([RedisLocationStore])과
  * 인메모리 폴백([InMemoryLocationStore])을 교체 가능하게 한다 — Redis 미주입(로컬/CI/MVP 기본)이면 인메모리가 동작하므로
  * 외부 인프라 없이 전 기능을 동일 계약으로 테스트할 수 있다(장소 SeedPlaceProvider 와 동일 철학).
  *

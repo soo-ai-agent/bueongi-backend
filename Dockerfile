@@ -28,7 +28,7 @@ COPY backend/clients/client-kakao/build.gradle.kts ./clients/client-kakao/
 COPY backend/support/logging/build.gradle.kts ./support/logging/
 COPY backend/support/monitoring/build.gradle.kts ./support/monitoring/
 RUN ./gradlew --no-daemon --version \
-    && (./gradlew --no-daemon dependencies --configuration runtimeClasspath > /dev/null 2>&1 || true)
+    && (./gradlew --no-daemon :core:core-api:dependencies > /dev/null 2>&1 || true)
 
 COPY backend/core ./core
 COPY backend/storage ./storage

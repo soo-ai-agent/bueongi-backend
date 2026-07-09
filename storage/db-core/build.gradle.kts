@@ -3,6 +3,6 @@
 dependencies {
     implementation(project(":core:core-enum"))
 
-    // api: 상위(core-api)가 LocationStore 조건부 배선에서 Redis 타입(StringRedisTemplate 등)을 보게 노출.
-    api("org.springframework.boot:spring-boot-starter-data-redis")
+    // Redis 배선(ShareStoreConfig)이 이 모듈 안에 있으므로 저장 기술 타입을 상위에 노출하지 않는다(implementation).
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }

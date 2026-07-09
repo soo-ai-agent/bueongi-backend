@@ -8,7 +8,11 @@ import io.soo.bueongi.core.enums.FacilityType
  * (시설 종류 어휘는 core-enum 의 [FacilityType] — 전 계층 공용.)
  */
 
-/** 위경도 한 점(비null 보장 — 공간 인덱스/점수/우회 내부 계산용). */
+/**
+ * 위경도 한 점(비null 보장 — 공간 인덱스/점수/우회 내부 계산용).
+ * 주의: 상위(core-api)의 RouteOption.path 가 이 타입을 그대로 직렬화한다 — 프로퍼티명(lat/lng)은
+ * 프론트 응답 계약이므로 리네임 금지(계약 고정 테스트: core-api RouteOptionWireContractTest).
+ */
 data class GeoPoint(val lat: Double, val lng: Double)
 
 /**

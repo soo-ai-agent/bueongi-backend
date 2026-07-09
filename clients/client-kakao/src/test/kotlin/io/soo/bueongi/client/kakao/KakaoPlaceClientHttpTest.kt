@@ -27,7 +27,7 @@ import org.springframework.web.client.RestClient
  *
  * 한글 검색어는 와이어에서 percent-encoding 되므로 URI 문자열 비교 대신 [queryParam] 디코딩 매처로 검증한다.
  */
-class KakaoPlaceProviderHttpTest {
+class KakaoPlaceClientHttpTest {
 
     private val apiKey = "test-rest-key"
 

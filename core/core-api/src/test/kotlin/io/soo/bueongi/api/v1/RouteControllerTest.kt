@@ -127,6 +127,16 @@ class RouteControllerTest(
     }
 
     @Test
+    fun `facilities 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
+        // 세 엔드포인트가 같은 경계 가드(toValidatedQuery)를 쓰는 계약을 facilities 대상으로도 직접 고정
+        // (구 FacilityServiceTest 의 alongRoute 원거리 단언 대체 — 가드가 컨트롤러 경계로 이동).
+        mockMvc.post("/api/routes/facilities") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"origin":{"lat":37.0,"lng":127.0},"destination":{"lat":38.5,"lng":127.0},"routeType":"safe"}"""
+        }.andExpect { status { isUnprocessableEntity() } }
+    }
+
+    @Test
     fun `destination 좌표 누락이면 400`() {
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON

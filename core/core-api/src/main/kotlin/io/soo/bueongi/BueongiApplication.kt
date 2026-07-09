@@ -1,5 +1,4 @@
 package io.soo.bueongi
-import io.soo.bueongi.storage.db.core.share.ShareStoreConfig
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
