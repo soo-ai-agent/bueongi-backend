@@ -1,0 +1,5 @@
+# clients:client-kakao 소유 설정 — Kakao Local REST 키.
+bueongi:
+  places:
+    # 미설정(빈 값)이면 내장 시드 카탈로그로 검색한다.
+    kakao-rest-api-key: ${KAKAO_REST_API_KEY:}

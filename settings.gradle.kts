@@ -1,3 +1,17 @@
+rootProject.name = "bueongi-backend"
+
+// soo-spring-kotlin-starter 와 동일한 모듈 지형:
+// core(부팅·도메인) · storage(저장 격리) · clients(외부 API) · support(로깅/관측).
+include(
+    "core:core-enum",
+    "core:core-api",
+    "storage:db-core",
+    "clients:client-tmap",
+    "clients:client-kakao",
+    "support:logging",
+    "support:monitoring",
+)
+
 pluginManagement {
     val kotlinVersion: String by settings
     val springBootVersion: String by settings
@@ -19,5 +33,3 @@ pluginManagement {
         }
     }
 }
-
-rootProject.name = "bueongi-backend"

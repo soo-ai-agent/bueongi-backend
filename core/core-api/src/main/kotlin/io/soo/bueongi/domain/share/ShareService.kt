@@ -1,0 +1,180 @@
+package io.soo.bueongi.domain.share
+
+import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.storage.db.core.share.ShareSession
+import io.soo.bueongi.storage.db.core.share.StoredLocation
+import io.soo.bueongi.storage.db.core.share.StoredRoute
+import io.soo.bueongi.support.error.ShareSessionNotFoundException
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.time.Clock
+import java.util.Base64
+
+/**
+ * 위치 공유 생명주기(생성 / 위치 갱신 / 조회) 오케스트레이션. 저장은 [LocationStore](Redis/인메모리)에 위임하고,
+ * 입력은 API 경계에서 검증·변환된 도메인 값([LocationReport]/[StoredRoute]/원시값)만 받는다(웹 DTO 미인지).
+ *
+ * 안심앱 프라이버시 원칙을 코드로 강제한다:
+ * - token 은 추측 불가능한 128-bit URL-safe 랜덤(링크 공유 모델, PII 미저장).
+ * - 공유는 1~3시간 상한 TTL 로 자동 만료(무기한 추적 금지) — Redis native TTL 또는 인메모리 lazy 비교.
+ * - 모든 시각은 주입된 [clock] 기준이라 만료 거동을 결정론적으로 테스트한다.
+ */
+@Service
+class ShareService(
+    private val store: LocationStore,
+    private val clock: Clock,
+    @Value("\${bueongi.share.base-url}") private val baseUrl: String,
+) {
+    private val random = SecureRandom()
+    private val tokenEncoder = Base64.getUrlEncoder().withoutPadding()
+
+    /** 공유 생성 → token·share_url·상한 만료 반환. expiresInHours 미지정이면 [DEFAULT_EXPIRES_HOURS]. */
+    fun create(expiresInHours: Int?): CreateShareResponse {
+        val hours = expiresInHours ?: DEFAULT_EXPIRES_HOURS
+        val token = newToken()
+        val ownerSecret = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
+        val now = clock.instant()
+        val expiresAt = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
+        store.save(
+            ShareSession(token = token, ownerSecret = ownerSecret, createdAt = now, expiresAt = expiresAt, location = null),
+        )
+        return CreateShareResponse(
+            token = token,
+            ownerSecret = ownerSecret,
+            shareUrl = "${baseUrl.trimEnd('/')}/share/$token",
+            expiresAt = expiresAt,
+        )
+    }
+
+    /**
+     * 위치 갱신(사용자 단말, 5초마다). 토큰 없음/만료면 [ShareSessionNotFoundException]→404.
+     * 경로 컨텍스트는 [ShareSession.withLocation] 이 보존한다(위치와 경로는 독립 — 엔티티 불변식).
+     */
+    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
+        val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        requireOwner(session, ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
+        val now = clock.instant()
+        val location = StoredLocation(
+            lat = report.lat,
+            lng = report.lng,
+            updatedAt = now,
+            remainingM = report.remainingM,
+            remainingS = report.remainingS,
+        )
+        store.save(session.withLocation(location))
+        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+    }
+
+    /**
+     * 경로 컨텍스트 저장(앱이 길안내 시작 시 1회). 토큰 없음/만료면 404, 쓰기 비밀 누락/불일치도 404(requireOwner).
+     * 기존 위치는 [ShareSession.withRoute] 가 보존한다(위치와 경로는 독립 — 엔티티 불변식).
+     */
+    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
+        val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        requireOwner(session, ownerSecret)
+        val now = clock.instant()
+        store.save(session.withRoute(route))
+        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+    }
+
+    /**
+     * 경로 컨텍스트 조회(보호자, 인증 없음·1회 fetch). 항상 200 으로 응답하고 상태는 [RouteView] 로 표현한다:
+     * 토큰 없음/만료 → `{expired:true, route:null}`, 살아있으나 경로 미저장 → `{expired:false, route:null}`,
+     * 저장됨 → `{expired:false, route:{...}}`. 위치 폴링(GET /location)과 달리 시청자로 집계하지 않는다(markViewed 미호출).
+     */
+    fun getRoute(token: String): RouteView {
+        val session = store.find(token)
+            ?: return RouteView(expired = true, route = null)
+        return RouteView(expired = false, route = session.route?.toRouteContext())
+    }
+
+    /**
+     * 위치 조회(보호자 웹 5초 폴링). 항상 200 으로 응답하고 상태는 [LocationView] 로 표현한다:
+     * 토큰 없음/만료 → `expired:true`(좌표 null), 살아있으나 첫 위치 전 → `expired:false`+좌표 null, 위치 있음 → 좌표.
+     */
+    fun getLocation(token: String): LocationView {
+        val session = store.find(token)
+            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
+        // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 사용자 본인(관리자)은 GET location 을 호출하지 않고,
+        // 시청 여부는 owner_secret 이 필요한 POST /watching 으로만 확인하므로 본인 확인은 집계되지 않는다.
+        store.markViewed(token)
+        val location = session.location
+            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false)
+        return LocationView(
+            lat = location.lat,
+            lng = location.lng,
+            updatedAt = location.updatedAt,
+            expired = false,
+            remainingM = location.remainingM,
+            remainingS = location.remainingS,
+        )
+    }
+
+    /**
+     * 공유 종료(사용자 도착/중단). 쓰기 비밀이 일치할 때만 저장소에서 삭제 → 이후 조회는 만료(보호자 "공유 종료").
+     * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
+     */
+    fun end(token: String, ownerSecret: String?) {
+        val session = store.find(token) ?: return // 이미 없음/만료 → 멱등.
+        requireOwner(session, ownerSecret)
+        store.delete(token)
+    }
+
+    /**
+     * '보호자가 보고 있는지' + 현재 공유 위치 조회(사용자 본인 = 관리자 전용). owner_secret 이 맞아야 하고,
+     * 이 호출 자체는 시청자로 기록하지 않는다 — 관리자(본인)의 상태 확인/미리보기가 '시청 중'으로 잘못 잡히지 않게 한다.
+     * 위치를 함께 돌려주므로 관리자가 보호자에게 보이는 화면을 '따로' 미리볼 수 있다(시청자 미집계). 없는/만료 토큰은 expired=true.
+     */
+    fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
+        val session = store.find(token)
+            ?: return WatchResponse(watching = false, expired = true)
+        requireOwner(session, ownerSecret)
+        val location = session.location
+        return WatchResponse(
+            watching = store.isWatched(token),
+            lat = location?.lat,
+            lng = location?.lng,
+            updatedAt = location?.updatedAt,
+            expired = false,
+            remainingM = location?.remainingM,
+            remainingS = location?.remainingS,
+        )
+    }
+
+    /**
+     * 쓰기 권한 비밀 검증. 상수 시간 비교([MessageDigest.isEqual])로 타이밍 누출을 피한다.
+     * 누락/불일치는 [ShareSessionNotFoundException](404)로 처리 — 공유 URL(읽기 토큰)만 아는 사람의
+     * 위치 조작·임의 종료를 막고, 토큰 존재 여부도 드러내지 않는다(불투명 응답).
+     */
+    private fun requireOwner(session: ShareSession, providedSecret: String?) {
+        val provided = providedSecret ?: throw ShareSessionNotFoundException()
+        val matches = MessageDigest.isEqual(
+            provided.toByteArray(Charsets.UTF_8),
+            session.ownerSecret.toByteArray(Charsets.UTF_8),
+        )
+        if (!matches) throw ShareSessionNotFoundException()
+    }
+
+    /** 추측 불가능한 128-bit URL-safe 랜덤 토큰(22자, 패딩 없음). */
+    private fun newToken(): String {
+        val bytes = ByteArray(TOKEN_BYTES)
+        random.nextBytes(bytes)
+        return tokenEncoder.encodeToString(bytes)
+    }
+
+    private companion object {
+        /** token 엔트로피(바이트). 16바이트 = 128-bit. */
+        const val TOKEN_BYTES = 16
+        const val SECONDS_PER_HOUR = 3600L
+    }
+}
+
+/** 위치 보고(도메인 입력) — API 경계 검증을 통과한 비null 좌표 + 선택 잔여 거리/시간. */
+data class LocationReport(
+    val lat: Double,
+    val lng: Double,
+    val remainingM: Double? = null,
+    val remainingS: Double? = null,
+)

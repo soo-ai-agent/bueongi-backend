@@ -1,0 +1,7 @@
+# support:logging 소유 설정 — 로그 레벨/문자셋. 외부 수집기 연동 시 이 파일에서 확장한다.
+logging:
+  charset:
+    console: UTF-8
+  level:
+    root: info
+    io.soo.bueongi: info

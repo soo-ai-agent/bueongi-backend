@@ -1,0 +1,5 @@
+# clients:client-tmap 소유 설정 — Tmap 보행자 경로 AppKey.
+bueongi:
+  tmap:
+    # 미설정(빈 값)이면 safe-compare 가 결정론적 폴백(compare)로 동작한다.
+    app-key: ${TMAP_APP_KEY:}

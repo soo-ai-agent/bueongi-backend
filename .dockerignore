@@ -4,7 +4,7 @@
 docs
 frontend-src
 pipeline
-backend/build
+backend/**/build
 backend/.gradle
 backend/.env.local
 backend/docs
