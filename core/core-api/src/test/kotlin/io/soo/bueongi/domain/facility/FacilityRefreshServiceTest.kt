@@ -7,6 +7,7 @@ import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
@@ -26,10 +27,19 @@ class FacilityRefreshServiceTest {
         }
     }
 
+    private class RecordingNotifier : AlertNotifier {
+        val keys = ArrayList<String>()
+        override val isEnabled = true
+        override fun notify(key: String, title: String, detail: String) {
+            keys.add(key)
+        }
+    }
+
     private val dataGoKr: DataGoKrFacilityClient = mock()
     private val safemap: SafemapPoliceClient = mock()
     private val store = FakeStore()
-    private val service = FacilityRefreshService(dataGoKr, safemap, store)
+    private val notifier = RecordingNotifier()
+    private val service = FacilityRefreshService(dataGoKr, safemap, store, notifier)
 
     private fun enableDataGoKr() = whenever(dataGoKr.isEnabled).thenReturn(true)
     private fun enableSafemap() = whenever(safemap.isEnabled).thenReturn(true)
@@ -71,6 +81,7 @@ class FacilityRefreshServiceTest {
         // 치안시설은 전화번호까지 저장돼야 한다(긴급 시트 파출소 연결).
         assertThat(store.replaced[FacilityType.POLICE]!![0].phone).isEqualTo("02-123-4567")
         assertThat(store.replaced[FacilityType.POLICE]!![0].name).isEqualTo("역삼지구대")
+        assertThat(notifier.keys).isEmpty() // 전부 성공 → 운영 알림 없음
     }
 
     @Test
@@ -104,6 +115,10 @@ class FacilityRefreshServiceTest {
         assertThat(result[FacilityType.POLICE]).isNull()
         assertThat(store.replaced.keys).containsExactly(FacilityType.BELL)
         assertThat(result[FacilityType.BELL]).isEqualTo(1)
+        // 실패한 종류(cctv·safehouse·police)만 알림 — 성공한 bell 은 미포함.
+        assertThat(notifier.keys).containsExactlyInAnyOrder(
+            "facility-refresh:cctv", "facility-refresh:safehouse", "facility-refresh:police",
+        )
     }
 
     @Test
@@ -122,6 +137,7 @@ class FacilityRefreshServiceTest {
         assertThat(result[FacilityType.BELL]).isNull()
         assertThat(result[FacilityType.SAFEHOUSE]).isNull()
         assertThat(store.replaced).isEmpty()
+        assertThat(notifier.keys).hasSize(3) // 0건 이상 신호도 종류별 알림
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.soo.bueongi.domain.place
 
 import io.soo.bueongi.support.error.InvalidKeywordException
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service
 class PlaceSearchService(
     private val seedProvider: SeedPlaceProvider,
     private val remoteProvider: RemotePlaceProvider,
+    /** 운영 알림(없으면 null 무해) — 실연동 검색이 켜져 있는데 실패해 시드로 폴백할 때만 쓴다. */
+    private val alertNotifier: AlertNotifier? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -37,6 +40,12 @@ class PlaceSearchService(
             remoteProvider.search(trimmed)
         } catch (e: Exception) {
             log.warn("외부 장소 검색 실패 → 시드 폴백 (keyword='{}'): {}", trimmed, e.message)
+            // 검색어는 사용자 입력이라 알림에 싣지 않는다(개인정보 최소화) — 원인만.
+            alertNotifier?.notify(
+                key = "kakao-place-fallback",
+                title = "Kakao 장소검색 실패",
+                detail = "${e.javaClass.simpleName}: ${e.message ?: "메시지 없음"} — 시드 카탈로그로 폴백 중",
+            )
             seedProvider.search(trimmed)
         }
     }

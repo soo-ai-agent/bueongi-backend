@@ -7,6 +7,7 @@ import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -30,6 +31,8 @@ class FacilityRefreshService(
     private val dataGoKrClient: DataGoKrFacilityClient,
     private val safemapClient: SafemapPoliceClient,
     private val liveStore: FacilityLiveStore,
+    /** 운영 알림(없으면 null 무해) — 키가 있는 원천의 갱신 실패/0건만 알린다(미설정 건너뜀은 정상이라 제외). */
+    private val alertNotifier: AlertNotifier? = null,
 ) {
     private val log = LoggerFactory.getLogger(FacilityRefreshService::class.java)
 
@@ -75,10 +78,20 @@ class FacilityRefreshService(
         val points = fetch()
         if (points == null) {
             log.warn("안심시설 라이브 갱신 실패(type={}) — 기존 데이터 유지", type)
+            alertNotifier?.notify(
+                key = "facility-refresh:${type.cdnType}",
+                title = "안심시설 라이브 갱신 실패",
+                detail = "type=${type.cdnType} — 수집 실패, 기존 데이터 유지",
+            )
             return null
         }
         if (points.isEmpty()) {
             log.warn("안심시설 라이브 갱신 결과 0건(type={}) — 교체하지 않음(기존 데이터 유지)", type)
+            alertNotifier?.notify(
+                key = "facility-refresh:${type.cdnType}",
+                title = "안심시설 라이브 갱신 이상(0건)",
+                detail = "type=${type.cdnType} — 유효 좌표 0건, 교체하지 않고 기존 데이터 유지",
+            )
             return null
         }
         return liveStore.replace(type, points)

@@ -9,6 +9,7 @@ import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import org.springframework.stereotype.Service
@@ -36,6 +37,8 @@ class SafeRouteService(
     private val scorer: SafetyScorer,
     private val detourPlanner: SafeDetourPlanner,
     private val repository: FacilitySpatialSource,
+    /** 운영 알림(없으면 null 무해) — Tmap 키가 있는데도 전부 실패해 폴백으로 전환될 때만 쓴다. */
+    private val alertNotifier: AlertNotifier? = null,
 ) {
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
@@ -47,8 +50,15 @@ class SafeRouteService(
         val budget = query.safetyPreference.detourBudget
 
         val base = tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
-        // Tmap 전부 실패 → 폴백(추천 끊김 방지).
-        if (base.isEmpty()) return routeService.compare(query)
+        // Tmap 전부 실패 → 폴백(추천 끊김 방지). 키가 설정된 상태의 전면 실패는 운영 이상 신호라 알린다.
+        if (base.isEmpty()) {
+            alertNotifier?.notify(
+                key = "tmap-route-fallback",
+                title = "Tmap 경로 API 실패",
+                detail = "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)",
+            )
+            return routeService.compare(query)
+        }
 
         val baseShortestM = base.minOf { it.distanceM }
 

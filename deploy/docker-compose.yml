@@ -24,6 +24,8 @@ services:
       # 공공데이터포털 키(없으면 시설 라이브 갱신 비활성 — 이미지에 구운 cdn/ 데이터로 동작)
       DATA_GO_KR_SERVICE_KEY: ${DATA_GO_KR_SERVICE_KEY:-}
       SAFEMAP_SERVICE_KEY: ${SAFEMAP_SERVICE_KEY:-}
+      # 운영 알림(Slack webhook, 없으면 비활성)
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
       # 보호자 공유 URL base = 사용자에게 보이는 공개 origin (share_url = {base}/share/{token})
       BUEONGI_SHARE_BASE_URL: ${PUBLIC_ORIGIN:-http://localhost:8080}
       BUEONGI_CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:8080}

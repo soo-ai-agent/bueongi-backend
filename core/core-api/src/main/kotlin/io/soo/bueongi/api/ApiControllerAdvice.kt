@@ -8,6 +8,7 @@ import io.soo.bueongi.support.error.OriginRequiredException
 import io.soo.bueongi.support.error.SameOriginDestinationException
 import io.soo.bueongi.support.error.ShareSessionNotFoundException
 import io.soo.bueongi.support.error.TripTooFarException
+import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -30,7 +31,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
  * 응답 content-type 은 `application/problem+json`(Spring 표준).
  */
 @RestControllerAdvice
-class ApiControllerAdvice {
+class ApiControllerAdvice(
+    /** 운영 알림(없으면 null 무해) — @WebMvcTest 슬라이스엔 알림 빈이 없어 nullable 로 받는다. */
+    private val alertNotifier: AlertNotifier? = null,
+) {
 
     private val log = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
@@ -268,6 +272,12 @@ class ApiControllerAdvice {
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
         log.error("처리되지 않은 예외 — 500 INTERNAL_ERROR 로 응답합니다.", ex)
+        // 서비스 이상 운영 알림 — 예외 클래스별로 스로틀(같은 원인 폭주 방지). 응답 본문 비노출 원칙은 그대로.
+        alertNotifier?.notify(
+            key = "api-500:${ex.javaClass.simpleName}",
+            title = "처리되지 않은 서버 오류(500)",
+            detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
+        )
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
