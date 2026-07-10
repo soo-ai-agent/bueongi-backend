@@ -79,33 +79,71 @@ BUEONGI_SHARE_BASE_URL=https://bueongi.example.com \
 ./gradlew bootRun
 ```
 
-## 프로젝트 구조
+## 프로젝트 구조 (멀티모듈 — soo-spring-kotlin-starter 규약)
 
 ```
-src/main/kotlin/io/soo/bueongi/
-├── BueongiApplication.kt        # Spring Boot 진입점
-├── common/ApiExceptionHandler   # 표준 에러 응답(RFC 7807 ProblemDetail + code)
-├── config/WebCorsConfig         # CORS 정책(/api/**·/share/** allowed-origins)
-├── config/ClockConfig           # 주입형 Clock(위치 공유 TTL 결정론 테스트)
-├── health/HealthController       # GET /api/health (운영 readiness + placeSource·locationStore)
-├── places/                       # 장소 검색
-│   ├── PlaceController            #   GET /api/places/search
-│   ├── PlaceSearchService         #   소스 선택(시드 ↔ Kakao 폴백)
-│   ├── PlaceProvider / SeedPlaceProvider / KakaoPlaceProvider / RemotePlaceProvider
-│   └── PlaceCatalog               #   내장 시드 카탈로그
-├── routes/                       # 경로·안심시설
-│   ├── RouteController            #   POST /api/routes/compare, /api/routes/facilities
-│   ├── RouteService / FacilityService
-│   ├── RouteType / Geo            #   유형별 계수·haversine 거리
-│   └── RouteDtos / FacilityDtos / PlaceDtos
-└── share/                        # 위치 공유(보호자, stateful·TTL)
-    ├── ShareController            #   POST /share/create, POST·GET /share/{token}/location, GET /share/{token}(HTML)
-    ├── ShareService               #   토큰 발급·위치 갱신·조회 + 1~3h TTL
-    ├── LocationStore              #   저장소 추상화 + ShareSession/StoredLocation 모델
-    ├── RedisLocationStore / InMemoryLocationStore  #   Redis(share:{token}/location:{token} HASH+TTL) ↔ 인메모리 폴백
-    └── ShareStoreConfig           #   redis-url 유무로 저장소 택1(상호배타 Condition)
-        (resources/share/guardian.html  # 보호자 지도 HTML: Leaflet+OSM, 5초 폴링)
+backend/
+├── core/
+│   ├── core-api/                # 부팅 모듈(유일한 bootJar/bootRun) — 컨트롤러·도메인
+│   │   └── src/main/kotlin/io/soo/bueongi/
+│   │       ├── api/              #   컨트롤러(v1)·요청 DTO(request)·에러 어드바이스·config
+│   │       ├── domain/           #   route·place·share·facility — 유스케이스 오케스트레이션
+│   │       └── support/error/    #   도메인 예외(에러 계약)
+│   └── core-enum/               # 전 계층 공용 어휘(FacilityType·SafetyPreference)
+├── storage/
+│   └── db-core/                 # 저장 격리 — 위치공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
+├── clients/                      # 외부 API 어댑터(자립 모듈 — 프로젝트 모듈 미의존)
+│   ├── client-tmap/              #   Tmap 보행자 경로(+10분 캐시)
+│   ├── client-kakao/             #   Kakao Local 장소검색
+│   ├── client-datagokr/          #   공공데이터포털 조회서비스(CCTV·비상벨·안심지킴이집)
+│   └── client-safemap/           #   생활안전지도 치안시설(+EPSG:5179 좌표 변환)
+└── support/
+    ├── logging/                  # 로깅 설정 소유
+    └── monitoring/               # actuator + 운영 알림(Slack AlertNotifier)
 ```
+
+- 부팅 모듈이 core-api 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
+- 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
+
+## 코드 작성 규칙
+
+모든 백엔드 코드는 아래 규칙을 따른다. 신규 코드·리뷰·감사의 판정 기준이며,
+위반은 리팩터링 대상이다(감사 이력: CLAUDE.md 변경 이력 2026-07-09·07-10).
+
+### 레이어·모듈
+1. **Controller 는 요청/응답 변환과 인증 정보 추출만** 담당한다. 검증은 스키마 계층
+   (본문 DTO `@Valid`·`toValidatedQuery`, 쿼리 파라미터 `toValidatedGeoPoint`)에서 한다.
+2. **Business 흐름은 각 도메인 모듈의 `domain/*`** 에서 오케스트레이션한다.
+3. **상세 구현은 구현 레이어로 분리**하고 재사용 가능한 단위로 작성한다
+   (예: `SafetyScorer`·`SafeDetourPlanner`·`NearestPoliceFinder`·`SlackAlertNotifier`).
+4. **저장소 접근은 `storage:db-core` 로 격리**한다 — 파일/Redis 접근 코드는 storage 밖에 두지 않는다.
+5. **레이어 참조는 상위 → 하위 단방향**: core-api → (storage·clients·support·core-enum).
+   storage/clients/support 는 서로도, 상위도 참조하지 않는다(clients 는 완전 자립).
+6. **외부 시스템/DB/프레임워크 의존 로직은 도메인 모델 밖**(clients 어댑터·storage)으로 분리한다.
+
+### 명명
+7. **클래스명은 대상**(도메인/역할/책임)을 나타낸다. 구현 레이어는 `~Finder`·`~Scorer`·`~Planner`·
+   `~Notifier` 처럼 재사용 역할이 드러나게 짓는다.
+8. **메서드명은 그 클래스 맥락에서 수행 동작**을 나타낸다. 클래스가 대상을 충분히 설명하면
+   `list`·`create`·`update` 같은 행위 중심, 모호하면 `getById`·`listActive` 처럼 조건/목적/대상을 보강한다.
+9. **저장소 계층은 `findBy...`·`existsBy...`·`save`·`deleteBy...`** 등 의도가 드러나는 이름을 쓴다
+   (예: `LocationStore.findByToken`/`deleteByToken`).
+10. **도메인 용어(route·place·share·facility)를 클래스/메서드명에 일관** 반영한다.
+
+### 도메인 모델
+11. **상태 변경 규칙/불변식은 엔티티 메서드에 캡슐화**한다
+    (예: `ShareSession.withLocation()`·`withRoute()`·`isExpired()` — 외부에서 필드 조작 금지).
+12. **애그리게이트 경계를 넘는 상태 변경은 루트 엔티티를 통해** 수행한다.
+13. **Domain Service 는 유스케이스 오케스트레이션/트랜잭션 경계에 집중**한다
+    (예: `ShareService`·`SafeRouteService`·`FacilityRefreshService`).
+
+### 기초 문법·가독성
+14. 코드를 모르는 사람이 봐도 흐름을 따라갈 수 있게 **기초 문법에 충실**하게 쓴다 —
+    data class·if/when/for·널 안전(`?.`/`?:`)·표준 컬렉션 함수 범위. 널 단언(`!!`)·리플렉션·기교 금지.
+15. 모든 클래스 상단 KDoc 에 **"왜 이렇게 했는지"** 를 한국어로 남긴다. 수학·동시성처럼 본질적으로
+    어려운 코드는 한 파일에 격리하고 테스트(앵커·왕복 등)로 정답을 보증한다.
+16. 웹 DTO ↔ 도메인 입력 ↔ 저장 모델을 계층별로 분리하고, **변환 메서드(`toReport`·`toStoredRoute` 등)를
+    DTO 안 한 곳에** 모은다. 저장 모델은 불변 data class 로 둔다.
 
 ## API 계약
 
