@@ -128,8 +128,8 @@ class SafeRouteService(
         if (candidates.isEmpty()) return emptyList()
         val scored = candidates.map { it to scorer.score(it.path) }
 
-        // safe: 최고점(동률이면 먼저 나온 후보).
-        val safeIdx = scored.indices.maxByOrNull { scored[it].second.score.toDouble() - it * TIE_BREAK_EPSILON }!!
+        // safe: 최고점(동률이면 먼저 나온 후보). 위 isEmpty 가드로 비어있지 않음이 보장되므로 비-널 maxBy.
+        val safeIdx = scored.indices.maxBy { scored[it].second.score.toDouble() - it * TIE_BREAK_EPSILON }
         // fast: safe 제외 최소시간(동률이면 먼저 나온 후보).
         val fastIdx = scored.indices.filter { it != safeIdx }
             .minByOrNull { scored[it].first.timeS.toDouble() + it * TIE_BREAK_EPSILON }

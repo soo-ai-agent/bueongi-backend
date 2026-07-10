@@ -75,7 +75,7 @@ class RedisLocationStoreTest {
     @Test
     fun `find 는 빈 share HASH 면 null(키 만료·미존재)`() {
         whenever(hashOps.entries("share:tok")).thenReturn(emptyMap())
-        assertNull(store.find("tok"))
+        assertNull(store.findByToken("tok"))
     }
 
     @Test
@@ -90,7 +90,7 @@ class RedisLocationStoreTest {
             mapOf("lat" to "37.5", "lng" to "127.04", "updated_at" to updatedAt.toString()),
         )
 
-        val session = store.find("tok")!!
+        val session = store.findByToken("tok")!!
         assertEquals("tok", session.token)
         assertEquals("sek", session.ownerSecret)
         assertEquals(createdAt, session.createdAt)
@@ -109,13 +109,13 @@ class RedisLocationStoreTest {
         )
         whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
 
-        val session = store.find("tok")!!
+        val session = store.findByToken("tok")!!
         assertNull(session.location)
     }
 
     @Test
     fun `delete 는 share·location·route·viewer 키를 함께 삭제한다(즉시 종료)`() {
-        store.delete("tok")
+        store.deleteByToken("tok")
         verify(redis).delete(listOf("share:tok", "location:tok", "route:tok", "viewer:tok"))
     }
 
@@ -184,7 +184,7 @@ class RedisLocationStoreTest {
         whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
         whenever(valueOps.get("route:tok")).thenReturn(json)
 
-        val session = store.find("tok")!!
+        val session = store.findByToken("tok")!!
         assertEquals(SAMPLE_ROUTE, session.route)
     }
 
@@ -200,7 +200,7 @@ class RedisLocationStoreTest {
         whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
         whenever(valueOps.get("route:tok")).thenReturn(null)
 
-        assertNull(store.find("tok")!!.route)
+        assertNull(store.findByToken("tok")!!.route)
     }
 
     private companion object {

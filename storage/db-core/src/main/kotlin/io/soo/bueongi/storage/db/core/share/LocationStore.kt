@@ -120,10 +120,10 @@ interface LocationStore {
     fun save(session: ShareSession)
 
     /** token 으로 공유 조회. 없거나 상한 만료가 지났으면 null. */
-    fun find(token: String): ShareSession?
+    fun findByToken(token: String): ShareSession?
 
     /** 공유를 즉시 종료(삭제). 도착/공유 중단 시 호출 — 이후 [find] 는 null(보호자는 "공유 종료"). 멱등(없는 토큰도 무해). */
-    fun delete(token: String)
+    fun deleteByToken(token: String)
 
     /**
      * 보호자(뷰어)가 위치를 조회했음을 짧은 유효시간 동안 기록한다(시청 중 표시용).

@@ -23,11 +23,20 @@ class SlackAlertNotifierTest {
 
     private val webhook = "https://hooks.slack.com/services/T000/B000/XXXX"
 
+    /** 스로틀 검증용 가변 시계 — 테스트가 now 를 직접 진행시킨다. */
+    private var now = 1_000_000L
+
     private fun bind(url: String = webhook, throttleMinutes: Long = 10): Pair<SlackAlertNotifier, MockRestServiceServer> {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
-        val notifier = SlackAlertNotifier(webhookUrl = url, throttleMinutes = throttleMinutes, restClientBuilder = builder, objectMapper = ObjectMapper())
-        notifier.executor = Executor { it.run() } // 테스트: 동기 발송
+        val notifier = SlackAlertNotifier(
+            webhookUrl = url,
+            throttleMinutes = throttleMinutes,
+            restClientBuilder = builder,
+            objectMapper = ObjectMapper(),
+            executor = Executor { it.run() }, // 테스트: 동기 발송
+            nowMs = { now },
+        )
         return notifier to server
     }
 
@@ -58,8 +67,6 @@ class SlackAlertNotifierTest {
     @Test
     fun `스로틀 - 같은 key 는 창 안에서 1회만, 다른 key 는 발송, 창 경과 후 재발송`() {
         val (notifier, server) = bind(throttleMinutes = 10)
-        var now = 1_000_000L
-        notifier.nowMs = { now }
         // 발송 3회만 기대: key-a(최초) + key-b + key-a(창 경과 후).
         server.expect(ExpectedCount.times(3), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
 

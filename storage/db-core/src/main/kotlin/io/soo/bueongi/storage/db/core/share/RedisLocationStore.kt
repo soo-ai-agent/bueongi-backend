@@ -67,7 +67,7 @@ class RedisLocationStore(
         }
     }
 
-    override fun find(token: String): ShareSession? {
+    override fun findByToken(token: String): ShareSession? {
         val shareHash = redis.opsForHash<String, String>().entries(shareKey(token))
         if (shareHash.isEmpty()) return null // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
         val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return null
@@ -109,7 +109,7 @@ class RedisLocationStore(
         )
     }
 
-    override fun delete(token: String) {
+    override fun deleteByToken(token: String) {
         // 공유/위치/경로/시청 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
         redis.delete(listOf(shareKey(token), locationKey(token), routeKey(token), viewerKey(token)))
     }

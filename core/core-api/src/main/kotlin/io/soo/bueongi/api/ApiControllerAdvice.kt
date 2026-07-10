@@ -109,11 +109,6 @@ class ApiControllerAdvice(
         }
 
     /**
-     * 출발지와 도착지가 사실상 같은 지점 → 422 + `code:"SAME_ORIGIN_DESTINATION"` + `errors[{field:"destination"}]`.
-     * 좌표 자체는 유효하지만(400 아님) 같은 지점으로의 "귀가 경로"는 의미가 없는 복구 가능 상태다 —
-     * 프론트는 이 코드로 도착지 재선택을 유도한다(원인이 destination 이므로 ORIGIN_REQUIRED 와 달리 errors 를 담는다).
-     */
-    /**
      * 쿼리 파라미터 좌표 범위 오류 → 400 `code:"INVALID_COORDINATE"`. 본문 좌표 검증(400 VALIDATION_FAILED)과
      * 같은 의미의 입력 오류를 GET 계열(최근접 파출소 등)에서도 동일 에러 계약으로 표면화한다.
      */
@@ -127,6 +122,11 @@ class ApiControllerAdvice(
             setProperty("code", "INVALID_COORDINATE")
         }
 
+    /**
+     * 출발지와 도착지가 사실상 같은 지점 → 422 + `code:"SAME_ORIGIN_DESTINATION"` + `errors[{field:"destination"}]`.
+     * 좌표 자체는 유효하지만(400 아님) 같은 지점으로의 "귀가 경로"는 의미가 없는 복구 가능 상태다 —
+     * 프론트는 이 코드로 도착지 재선택을 유도한다(원인이 destination 이므로 ORIGIN_REQUIRED 와 달리 errors 를 담는다).
+     */
     @ExceptionHandler(SameOriginDestinationException::class)
     fun handleSameOriginDestination(ex: SameOriginDestinationException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(

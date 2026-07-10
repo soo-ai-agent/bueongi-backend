@@ -3,8 +3,7 @@ package io.soo.bueongi.api.v1
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.domain.facility.NearestPolice
 import io.soo.bueongi.domain.facility.NearestPoliceFinder
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.support.error.InvalidCoordinateException
+import io.soo.bueongi.api.v1.request.toValidatedGeoPoint
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -31,8 +30,8 @@ class FacilityController(
         @RequestParam(name = "radius_m", required = false) radiusM: Double?,
         @RequestParam(required = false) limit: Int?,
     ): NearestPoliceResponse {
-        if (lat !in -90.0..90.0 || lng !in -180.0..180.0) throw InvalidCoordinateException(lat, lng)
-        val items = nearestPoliceFinder.findNearest(GeoPoint(lat, lng), radiusM, limit)
+        val origin = toValidatedGeoPoint(lat, lng) // 경계 검증(본문 DTO 의 @Valid 와 같은 역할, 400 INVALID_COORDINATE)
+        val items = nearestPoliceFinder.findNearest(origin, radiusM, limit)
         return NearestPoliceResponse(items.map { it.toItem() })
     }
 }

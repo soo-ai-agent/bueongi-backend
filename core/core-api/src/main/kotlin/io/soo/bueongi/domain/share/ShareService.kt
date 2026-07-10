@@ -53,7 +53,7 @@ class ShareService(
      * 경로 컨텍스트는 [ShareSession.withLocation] 이 보존한다(위치와 경로는 독립 — 엔티티 불변식).
      */
     fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
-        val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        val session = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
         val now = clock.instant()
         val location = StoredLocation(
@@ -72,7 +72,7 @@ class ShareService(
      * 기존 위치는 [ShareSession.withRoute] 가 보존한다(위치와 경로는 독립 — 엔티티 불변식).
      */
     fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
-        val session = store.find(token) ?: throw ShareSessionNotFoundException()
+        val session = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now = clock.instant()
         store.save(session.withRoute(route))
@@ -85,7 +85,7 @@ class ShareService(
      * 저장됨 → `{expired:false, route:{...}}`. 위치 폴링(GET /location)과 달리 시청자로 집계하지 않는다(markViewed 미호출).
      */
     fun getRoute(token: String): RouteView {
-        val session = store.find(token)
+        val session = store.findByToken(token)
             ?: return RouteView(expired = true, route = null)
         return RouteView(expired = false, route = session.route?.toRouteContext())
     }
@@ -95,7 +95,7 @@ class ShareService(
      * 토큰 없음/만료 → `expired:true`(좌표 null), 살아있으나 첫 위치 전 → `expired:false`+좌표 null, 위치 있음 → 좌표.
      */
     fun getLocation(token: String): LocationView {
-        val session = store.find(token)
+        val session = store.findByToken(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
         // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 사용자 본인(관리자)은 GET location 을 호출하지 않고,
         // 시청 여부는 owner_secret 이 필요한 POST /watching 으로만 확인하므로 본인 확인은 집계되지 않는다.
@@ -117,9 +117,9 @@ class ShareService(
      * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
      */
     fun end(token: String, ownerSecret: String?) {
-        val session = store.find(token) ?: return // 이미 없음/만료 → 멱등.
+        val session = store.findByToken(token) ?: return // 이미 없음/만료 → 멱등.
         requireOwner(session, ownerSecret)
-        store.delete(token)
+        store.deleteByToken(token)
     }
 
     /**
@@ -128,7 +128,7 @@ class ShareService(
      * 위치를 함께 돌려주므로 관리자가 보호자에게 보이는 화면을 '따로' 미리볼 수 있다(시청자 미집계). 없는/만료 토큰은 expired=true.
      */
     fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
-        val session = store.find(token)
+        val session = store.findByToken(token)
             ?: return WatchResponse(watching = false, expired = true)
         requireOwner(session, ownerSecret)
         val location = session.location

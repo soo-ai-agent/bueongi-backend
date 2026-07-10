@@ -25,7 +25,7 @@ class InMemoryLocationStore(
         sessions[session.token] = session
     }
 
-    override fun find(token: String): ShareSession? {
+    override fun findByToken(token: String): ShareSession? {
         val session = sessions[token] ?: return null
         if (session.isExpired(clock.instant())) {
             // 상한 만료 — lazy 제거 후 "없음"으로 응답(Redis TTL 과 동일 거동).
@@ -36,7 +36,7 @@ class InMemoryLocationStore(
         return session
     }
 
-    override fun delete(token: String) {
+    override fun deleteByToken(token: String) {
         // 즉시 종료(도착/중단). 없는 토큰도 무해(멱등) — Redis delete 와 동일 거동.
         sessions.remove(token)
         viewers.remove(token)
