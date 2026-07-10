@@ -201,14 +201,15 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
       cameraCount: "", // TODO(키 활성 후): 카메라대수 영문 필드명 확정
     },
   },
-  // B-2: 여성안심지킴이집 (WGS84) — catalogId 15034535
+  // B-2: 여성안심지킴이집 (WGS84) — 표준데이터 조회서비스(활용신청 승인 2026-06-30, 일일 트래픽 1000).
+  //  odcloud(uddi 미확정) 대신 REST 조회서비스로 전환 — 백엔드 라이브 갱신(client-datagokr)과 동일 원천.
+  //  keyColumns 는 표준데이터 영문 규격 1순위(키 활성 후 실응답으로 확정; 백엔드 클라이언트는 한글 폴백도 가짐).
   "B-2": {
-    kind: "odcloud",
-    catalogId: "15034535",
-    uddi: "", // TODO(키 등록 후): 여성안심지킴이집 uddi
+    kind: "datagokr",
+    endpoint: "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api",
     type: "safehouse",
     coordSystem: "wgs84",
-    keyColumns: { lat: "위도", lng: "경도", name: "업소명", address: "소재지도로명주소" },
+    keyColumns: { lat: "latitude", lng: "longitude", name: "storNm", address: "rdnmadr" },
   },
   // B-3: 지구대·파출소 (주소만 → 지오코딩 필요) — catalogId 15077036
   "B-3": {

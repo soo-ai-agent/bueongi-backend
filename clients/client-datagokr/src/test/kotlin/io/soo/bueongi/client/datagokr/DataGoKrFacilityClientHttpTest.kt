@@ -86,6 +86,42 @@ class DataGoKrFacilityClientHttpTest {
     }
 
     @Test
+    fun `정상 - 여성안심지킴이집 표준 필드(storNm·latitude·rdnmadr) 매핑`() {
+        val (client, server) = bind()
+        val body = envelope(
+            """{"storNm":"GS25 강남점","latitude":"37.498","longitude":"127.027","rdnmadr":"강남대로 396"}""",
+            1,
+        )
+        server.expect(requestTo(containsString(DataGoKrFacilityClient.SAFEHOUSE_ENDPOINT)))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
+
+        val points = client.fetchSafehouses()
+
+        assertThat(points).hasSize(1)
+        assertThat(points!![0].name).isEqualTo("GS25 강남점")
+        assertThat(points[0].lat).isEqualTo(37.498)
+        assertThat(points[0].address).isEqualTo("강남대로 396")
+    }
+
+    @Test
+    fun `정상 - 여성안심지킴이집 한글 컬럼 응답도 후보 폴백으로 매핑`() {
+        val (client, server) = bind()
+        val body = envelope(
+            """{"업소명":"세븐일레븐 서초점","위도":"37.49","경도":"127.01","소재지도로명주소":"서초대로 11"}""",
+            1,
+        )
+        server.expect(requestTo(containsString(DataGoKrFacilityClient.SAFEHOUSE_ENDPOINT)))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
+
+        val points = client.fetchSafehouses()
+
+        assertThat(points).hasSize(1)
+        assertThat(points!![0].name).isEqualTo("세븐일레븐 서초점")
+        assertThat(points[0].lng).isEqualTo(127.01)
+        assertThat(points[0].address).isEqualTo("서초대로 11")
+    }
+
+    @Test
     fun `에러 - resultCode가 00이 아니면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
         server.expect(requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))

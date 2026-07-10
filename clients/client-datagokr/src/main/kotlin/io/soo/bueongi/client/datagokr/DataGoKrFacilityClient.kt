@@ -11,10 +11,11 @@ import java.net.URI
 /**
  * 공공데이터포털(data.go.kr) 행안부 표준 조회서비스 클라이언트 — 시설 데이터의 **라이브 갱신** 원천.
  *
- * 지원 서비스(둘 다 WGS84 좌표를 직접 제공해 좌표 변환이 불필요한 것만 라이브 대상으로 한다):
+ * 지원 서비스(모두 WGS84 좌표를 직접 제공해 좌표 변환이 불필요한 것만 라이브 대상으로 한다):
  * - CCTV: `/1741000/cctv_info` (파이프라인 소스 B-1과 동일 엔드포인트)
  * - 안전비상벨: `/1741000/emergency_call_box_info` (D-1과 동일)
- * 좌표 변환·지오코딩이 필요한 나머지 종류(odcloud 계열 등)는 파이프라인(월 1회 CSV/CDN 산출) 담당으로 남긴다.
+ * - 여성안심지킴이집: `openapi/tn_pubr_public_female_safety_prtchouse_api` (표준데이터, B-2)
+ * 좌표 변환·지오코딩이 필요한 나머지 종류(주소만 주는 B-3 등)는 파이프라인(월 1회 CSV/CDN 산출) 담당으로 남긴다.
  *
  * `DATA_GO_KR_SERVICE_KEY`(client-datagokr.yml: `bueongi.datagokr.service-key`)가 설정되면 [isEnabled]=true.
  * 키는 **Encoding(URL-인코딩된) 형태**를 그대로 받으며 재인코딩하지 않는다(이중 인코딩 시 키 거부됨) —
@@ -43,6 +44,9 @@ class DataGoKrFacilityClient(
 
     /** 전국 안전비상벨 전량. 실패 시 null(기존 데이터 유지 신호). */
     fun fetchEmergencyBells(): List<DataGoKrPoint>? = fetchAll(BELL_ENDPOINT, BELL_FIELDS)
+
+    /** 전국 여성안심지킴이집 전량. 실패 시 null(기존 데이터 유지 신호). */
+    fun fetchSafehouses(): List<DataGoKrPoint>? = fetchAll(SAFEHOUSE_ENDPOINT, SAFEHOUSE_FIELDS)
 
     /**
      * pageNo 순회로 전량 수집한다: `{endpoint}?serviceKey=&pageNo=&numOfRows=1000&type=json`.
@@ -114,6 +118,7 @@ class DataGoKrFacilityClient(
     companion object {
         const val CCTV_ENDPOINT = "https://apis.data.go.kr/1741000/cctv_info"
         const val BELL_ENDPOINT = "https://apis.data.go.kr/1741000/emergency_call_box_info"
+        const val SAFEHOUSE_ENDPOINT = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
         /** 표준 조회서비스 페이지당 최대 건수. */
         const val PAGE_SIZE = 1000
@@ -121,9 +126,27 @@ class DataGoKrFacilityClient(
         /** 폭주 방지 상한(1000행 × 1000페이지 = 100만 행) — 전국 CCTV(약 37만행)에 충분한 여유. */
         const val MAX_PAGES = 1000
 
-        // 서비스별 원천 필드명(파이프라인 LIVE_SPEC B-1/D-1과 동일 매핑).
-        private val CCTV_FIELDS = FieldNames(lat = "latitude", lng = "longitude", name = "institutionNm", address = "rdnmadr", sigungu = null)
-        private val BELL_FIELDS = FieldNames(lat = "lat", lng = "lon", name = "mng_inst", address = "rn_adres", sigungu = "sgg_cd")
+        // 서비스별 원천 필드명(파이프라인 LIVE_SPEC B-1/D-1/B-2와 동일 매핑). 각 필드는 후보를 순서대로
+        // 시도한다 — 표준데이터 계열은 영문 camelCase 가 규격이지만 서비스·시기별 편차가 있어 폴백을 둔다.
+        private val CCTV_FIELDS = FieldNames(
+            lat = listOf("latitude"), lng = listOf("longitude"),
+            name = listOf("institutionNm"), address = listOf("rdnmadr"), sigungu = emptyList(),
+        )
+        private val BELL_FIELDS = FieldNames(
+            lat = listOf("lat"), lng = listOf("lon"),
+            name = listOf("mng_inst"), address = listOf("rn_adres"), sigungu = listOf("sgg_cd"),
+        )
+
+        /**
+         * 여성안심지킴이집 표준데이터. 점포명(storNm)이 대표 표기이고, 표준데이터 공통 규격인
+         * latitude/longitude/rdnmadr 를 1순위로 하되 한글 컬럼 응답(위도/경도 등) 폴백을 둔다
+         * (키 활성화 후 실응답으로 1순위 확정 예정 — 폴백이 있어 어느 쪽이든 동작).
+         */
+        private val SAFEHOUSE_FIELDS = FieldNames(
+            lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
+            name = listOf("storNm", "institutionNm", "업소명", "점포명"),
+            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"), sigungu = emptyList(),
+        )
     }
 }
 
@@ -136,13 +159,13 @@ data class DataGoKrPoint(
     val sigungu: String? = null,
 )
 
-/** 서비스별 원천 필드명 집합. */
+/** 서비스별 원천 필드명 집합 — 필드마다 후보 목록을 순서대로 시도한다(빈 목록 = 미제공). */
 private data class FieldNames(
-    val lat: String,
-    val lng: String,
-    val name: String,
-    val address: String,
-    val sigungu: String?,
+    val lat: List<String>,
+    val lng: List<String>,
+    val name: List<String>,
+    val address: List<String>,
+    val sigungu: List<String>,
 )
 
 /** 행 JsonNode → [DataGoKrPoint]. 좌표가 숫자로 안 읽히면 null(건너뜀). */
@@ -154,12 +177,15 @@ private fun JsonNode.toPoint(fields: FieldNames): DataGoKrPoint? {
         lng = lng,
         name = text(fields.name),
         address = text(fields.address),
-        sigungu = fields.sigungu?.let { text(it) },
+        sigungu = text(fields.sigungu),
     )
 }
 
-private fun JsonNode.text(field: String): String? =
-    get(field)?.asText()?.trim()?.takeIf { it.isNotEmpty() && it != "null" }
+/** 후보 필드명 중 첫 번째로 값이 있는 것을 돌려준다. */
+private fun JsonNode.text(candidates: List<String>): String? =
+    candidates.firstNotNullOfOrNull { field ->
+        get(field)?.asText()?.trim()?.takeIf { it.isNotEmpty() && it != "null" }
+    }
 
 // ---- 응답 DTO (표준 조회서비스 공통 envelope) ----
 

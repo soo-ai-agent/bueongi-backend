@@ -39,11 +39,16 @@ class FacilityRefreshServiceTest {
                 DataGoKrPoint(lat = 37.52, lng = 127.03, name = "서초구청"),
             ),
         )
+        whenever(client.fetchSafehouses()).thenReturn(
+            listOf(DataGoKrPoint(lat = 37.498, lng = 127.027, name = "GS25 강남점", address = "강남대로 396")),
+        )
 
         val result = service.refreshAll()
 
         assertThat(result[FacilityType.CCTV]).isEqualTo(1)
         assertThat(result[FacilityType.BELL]).isEqualTo(2)
+        assertThat(result[FacilityType.SAFEHOUSE]).isEqualTo(1)
+        assertThat(store.replaced[FacilityType.SAFEHOUSE]!![0].name).isEqualTo("GS25 강남점")
         assertThat(store.replaced[FacilityType.CCTV]!![0].name).isEqualTo("기관")
         assertThat(store.replaced[FacilityType.CCTV]!![0].type).isEqualTo(FacilityType.CCTV)
         assertThat(store.replaced[FacilityType.BELL]!![0].sigungu).isEqualTo("11680")
@@ -55,6 +60,7 @@ class FacilityRefreshServiceTest {
         whenever(client.fetchEmergencyBells()).thenReturn(
             listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)),
         )
+        whenever(client.fetchSafehouses()).thenReturn(null)
 
         val result = service.refreshAll()
 
@@ -70,11 +76,13 @@ class FacilityRefreshServiceTest {
         whenever(client.fetchEmergencyBells()).thenReturn(
             listOf(DataGoKrPoint(lat = 95.0, lng = 127.0), DataGoKrPoint(lat = 37.5, lng = 200.0)),
         )
+        whenever(client.fetchSafehouses()).thenReturn(emptyList())
 
         val result = service.refreshAll()
 
         assertThat(result[FacilityType.CCTV]).isNull()
         assertThat(result[FacilityType.BELL]).isNull()
+        assertThat(result[FacilityType.SAFEHOUSE]).isNull()
         assertThat(store.replaced).isEmpty()
     }
 
@@ -87,6 +95,7 @@ class FacilityRefreshServiceTest {
             ),
         )
         whenever(client.fetchEmergencyBells()).thenReturn(null)
+        whenever(client.fetchSafehouses()).thenReturn(null)
 
         val result = service.refreshAll()
 

@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service
  * - 유효 좌표 0건: 교체하지 않는다 — 빈 응답으로 기존 데이터가 소리 없이 사라지는 것 방지.
  * - 종류별 독립: CCTV 실패가 비상벨 갱신을 막지 않는다.
  *
- * 라이브 대상은 WGS84 를 직접 주는 조회서비스 2종(CCTV·비상벨)뿐이다 — 좌표 변환·지오코딩이 필요한
- * 나머지 종류는 파이프라인(월 1회 cdn/ 산출) 담당으로 남긴다(중복 구현 방지).
+ * 라이브 대상은 WGS84 를 직접 주는 서비스 3종(CCTV·비상벨·여성안심지킴이집)이다 — 좌표 변환·지오코딩이
+ * 필요한 나머지 종류는 파이프라인(월 1회 cdn/ 산출) 담당으로 남긴다(중복 구현 방지).
  */
 @Service
 class FacilityRefreshService(
@@ -38,11 +38,13 @@ class FacilityRefreshService(
         val result = mapOf(
             FacilityType.CCTV to refresh(FacilityType.CCTV) { dataGoKrClient.fetchCctv() },
             FacilityType.BELL to refresh(FacilityType.BELL) { dataGoKrClient.fetchEmergencyBells() },
+            FacilityType.SAFEHOUSE to refresh(FacilityType.SAFEHOUSE) { dataGoKrClient.fetchSafehouses() },
         )
         log.info(
-            "안심시설 라이브 갱신 완료: cctv={}, bell={}",
+            "안심시설 라이브 갱신 완료: cctv={}, bell={}, safehouse={}",
             result[FacilityType.CCTV] ?: "유지",
             result[FacilityType.BELL] ?: "유지",
+            result[FacilityType.SAFEHOUSE] ?: "유지",
         )
         return result
     }
