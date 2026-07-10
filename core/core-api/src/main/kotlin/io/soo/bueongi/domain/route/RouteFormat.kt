@@ -11,9 +11,12 @@ object RouteFormat {
 
     /** 미터를 표시문자열로. 1km 미만은 "850m", 이상은 "1.2km"(프론트 dist 표기 형식). */
     fun formatDistance(meters: Double): String {
-        val m = max(0.0, meters)
-        return if (m < 1000) "${(m / 10).roundToInt() * 10}m"
-        else "%.1fkm".format(m / 1000.0)
+        val clampedMeters = max(0.0, meters)
+        return if (clampedMeters < 1000) {
+            "${(clampedMeters / 10).roundToInt() * 10}m"
+        } else {
+            "%.1fkm".format(clampedMeters / 1000.0)
+        }
     }
 
     /** 도보 소요(분). 평균 67m/분(≈4km/h). 최소 1분(0거리 방어). */

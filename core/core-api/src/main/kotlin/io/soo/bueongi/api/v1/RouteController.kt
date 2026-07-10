@@ -3,7 +3,7 @@ package io.soo.bueongi.api.v1
 import io.soo.bueongi.api.v1.request.RouteRequest
 import io.soo.bueongi.api.v1.request.toValidatedQuery
 import io.soo.bueongi.domain.route.FacilitiesResponse
-import io.soo.bueongi.domain.route.FacilityService
+import io.soo.bueongi.domain.route.RouteFacilityService
 import io.soo.bueongi.domain.route.RouteOption
 import io.soo.bueongi.domain.route.RouteService
 import io.soo.bueongi.domain.route.SafeRouteService
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/routes")
 class RouteController(
     private val routeService: RouteService,
-    private val facilityService: FacilityService,
+    private val routeFacilityService: RouteFacilityService,
     private val safeRouteService: SafeRouteService,
 ) {
 
@@ -45,5 +45,5 @@ class RouteController(
      */
     @PostMapping("/facilities")
     fun facilities(@Valid @RequestBody request: RouteRequest): FacilitiesResponse =
-        facilityService.alongRoute(request.toValidatedQuery())
+        routeFacilityService.alongRoute(request.toValidatedQuery())
 }

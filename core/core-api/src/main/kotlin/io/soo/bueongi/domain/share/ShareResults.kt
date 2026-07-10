@@ -2,11 +2,6 @@ package io.soo.bueongi.domain.share
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.storage.db.core.share.StoredRoute
-import jakarta.validation.constraints.DecimalMax
-import jakarta.validation.constraints.DecimalMin
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Pattern
 import java.time.Instant
 
 /**
@@ -111,44 +106,30 @@ data class WatchResponse(
 )
 
 /**
- * 경로 좌표 1점(경로선). 요청 검증(@Valid 캐스케이드)과 응답 직렬화가 공유하는 값 타입 —
- * 범위(@DecimalMin/@DecimalMax) + 비유한(NaN/±Inf) 거부(Jackson 기본).
+ * 경로 좌표 1점(경로선) — 보호자 응답 전용 값 타입. 저장 모델([StoredRoute])의 비null 좌표를 그대로 실으므로
+ * 검증 어노테이션이 없다(요청 검증은 api/v1/request 의 LatLng 이 담당 — 웹 검증 관심사를 도메인에 두지 않는다).
  */
 data class RoutePoint(
-    @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
-    val lat: Double?,
-    @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
-    val lng: Double?,
+    val lat: Double,
+    val lng: Double,
 )
 
-/** 경로 목적지(좌표 + 표시명). name 은 선택(집·회사 등 라벨), 좌표는 필수·범위 검증. */
+/** 경로 목적지(좌표 + 표시명) — 보호자 응답 전용. name 은 선택(집·회사 등 라벨). */
 data class RouteDestination(
     val name: String? = null,
-    @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
-    val lat: Double?,
-    @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
-    val lng: Double?,
+    val lat: Double,
+    val lng: Double,
 )
 
 /**
- * 경로변 안심시설 마커. 앱 지도에 찍힌 시설(CCTV·비상벨·안심상점·지구대/파출소·여성안심지킴이집·가로등)을
- * 보호자 페이지가 그대로 그릴 수 있게 좌표 + 표시 힌트(x/y %)와 정보 카드용 부가 필드를 담는다.
- * type 은 허용 집합만(@Pattern) — start/end 는 프론트가 이미 걸러 보낸다.
+ * 경로변 안심시설 마커 — 보호자 응답 전용. 앱 지도에 찍힌 시설(CCTV·비상벨·안심상점·지구대/파출소·
+ * 여성안심지킴이집·가로등)을 보호자 페이지가 그대로 그릴 수 있게 좌표 + 표시 힌트(x/y %)와
+ * 정보 카드용 부가 필드를 담는다(요청 검증은 api/v1/request 의 RouteMarkerRequest 가 담당).
  */
 data class RouteMarker(
-    @field:NotBlank
-    @field:Pattern(regexp = ROUTE_MARKER_TYPE_PATTERN)
-    val type: String?,
-    @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
-    val lat: Double?,
-    @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
-    val lng: Double?,
+    val type: String,
+    val lat: Double,
+    val lng: Double,
     /** 화면 표시 힌트(%). 앱이 계산한 미니맵 좌표를 그대로 재현하기 위한 선택 값. */
     val x: Double? = null,
     val y: Double? = null,

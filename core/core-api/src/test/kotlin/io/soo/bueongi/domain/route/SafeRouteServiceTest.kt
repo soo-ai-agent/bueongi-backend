@@ -62,7 +62,15 @@ class SafeRouteServiceTest {
     )
 
     private fun service(tmap: TmapRouteClient) =
-        SafeRouteService(routeService, tmap, scorer, detourPlanner, source)
+        SafeRouteService(
+            routeService,
+            tmap,
+            scorer,
+            detourPlanner,
+            source,
+            RouteMarkerBuilder(source),
+            RouteCandidateMerger(),
+        )
 
     @Test
     fun `Tmap 키 미설정이면 compare 폴백(3개, 점수 없음)`() {
@@ -82,7 +90,7 @@ class SafeRouteServiceTest {
     fun `Tmap 전부 실패(빈 후보)면 compare 폴백`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(emptyList())
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
         val result = service(tmap).safeCompare(request)
         assertThat(result).hasSize(3)
         assertThat(result.first().score).isNull()
@@ -92,9 +100,9 @@ class SafeRouteServiceTest {
     fun `Tmap 후보를 채점해 안전점수 내림차순과 유형을 배정하고 마커를 포함`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(routeA, routeB))
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
         // 우회 호출은 후보를 늘리지 않게 null(없음)로 둔다 — 기본 후보 채점만 검증.
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
 
         val result = service(tmap).safeCompare(request)
 
@@ -124,10 +132,10 @@ class SafeRouteServiceTest {
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(routeA))
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA))
         // 기본 최단 880m, safe budget 0.35 → 1188m 초과 우회는 제외. 2000m 우회 반환.
         val longDetour = routeA.copy(searchOption = "0", distanceM = 2000.0, timeS = 1500)
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(longDetour)
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(longDetour)
 
         val result = service(tmap).safeCompare(request)
         // 과도 우회는 채택되지 않아 기본 후보 1개만 남는다.
@@ -144,8 +152,8 @@ class SafeRouteServiceTest {
         val rADup = TmapRoute("4", listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)), 884.0, 690, emptyList())
         val rB = TmapRoute("10", listOf(TmapCoord(37.51, 127.0), TmapCoord(37.51, 127.01)), 900.0, 600, emptyList())
         val rC = TmapRoute("0", listOf(TmapCoord(37.52, 127.0), TmapCoord(37.52, 127.01)), 950.0, 800, emptyList())
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(rA, rADup, rB, rC))
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(rA, rADup, rB, rC))
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
 
         val result = service(tmap).safeCompare(request)
 
@@ -165,8 +173,8 @@ class SafeRouteServiceTest {
         val r1 = TmapRoute("4", line(37.51), 900.0, 600, emptyList()) // 최소시간 → fast
         val r2 = TmapRoute("10", line(37.52), 920.0, 750, emptyList())
         val r3 = TmapRoute("0", line(37.53), 940.0, 800, emptyList())
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull(), any())).thenReturn(listOf(r0, r1, r2, r3))
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull(), any())).thenReturn(null)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(r0, r1, r2, r3))
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
 
         val result = service(tmap).safeCompare(request)
 

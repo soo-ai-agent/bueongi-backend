@@ -1,8 +1,7 @@
 package io.soo.bueongi.api.v1
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.domain.facility.NearestPolice
 import io.soo.bueongi.domain.facility.NearestPoliceFinder
+import io.soo.bueongi.domain.facility.NearestPoliceResponse
 import io.soo.bueongi.api.v1.request.toValidatedGeoPoint
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -31,23 +30,6 @@ class FacilityController(
         @RequestParam(required = false) limit: Int?,
     ): NearestPoliceResponse {
         val origin = toValidatedGeoPoint(lat, lng) // 경계 검증(본문 DTO 의 @Valid 와 같은 역할, 400 INVALID_COORDINATE)
-        val items = nearestPoliceFinder.findNearest(origin, radiusM, limit)
-        return NearestPoliceResponse(items.map { it.toItem() })
+        return NearestPoliceResponse(nearestPoliceFinder.findNearest(origin, radiusM, limit))
     }
 }
-
-/** 최근접 파출소 응답 — 프론트 NearbyPolice 계약(거리순 정렬)과 동형. */
-data class NearestPoliceResponse(val items: List<NearestPoliceItem>)
-
-data class NearestPoliceItem(
-    val name: String?,
-    val address: String?,
-    val tel: String?,
-    val lat: Double,
-    val lng: Double,
-    @JsonProperty("distance_m")
-    val distanceM: Int,
-)
-
-private fun NearestPolice.toItem(): NearestPoliceItem =
-    NearestPoliceItem(name = name, address = address, tel = tel, lat = lat, lng = lng, distanceM = distanceM)

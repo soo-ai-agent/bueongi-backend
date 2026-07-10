@@ -13,8 +13,8 @@ enum class SafetyPreference(val requestValue: String, val detourBudget: Double) 
     companion object {
         /** 요청 문자열 → 선호. 미상/누락이면 [SAFE]. */
         fun from(value: String?): SafetyPreference {
-            val v = value?.trim()?.lowercase() ?: return SAFE
-            return entries.firstOrNull { it.requestValue == v } ?: SAFE
+            val normalized = value?.trim()?.lowercase() ?: return SAFE
+            return entries.firstOrNull { it.requestValue == normalized } ?: SAFE
         }
     }
 }

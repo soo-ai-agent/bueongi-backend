@@ -21,8 +21,9 @@ class SafetyScorer(
     private val repository: FacilitySpatialSource,
 ) {
 
-    /** 한 경로의 안전 점수와 세부 지표를 계산한다. */
-    fun score(path: List<GeoPoint>, corridorMeters: Double = DEFAULT_CORRIDOR_METERS): SafetyScore {
+    /** 한 경로의 안전 점수와 세부 지표를 계산한다. 회랑 폭은 [DEFAULT_CORRIDOR_METERS] 고정(조절 요구 없음). */
+    fun score(path: List<GeoPoint>): SafetyScore {
+        val corridorMeters = DEFAULT_CORRIDOR_METERS
         val lengthM = SpatialMath.pathLengthMeters(path)
         val routeKm = lengthM / 1000.0
         // 0 길이 경로 방어: 밀도 분모를 최소 1m(0.001km)로 잡아 폭주를 막는다.
@@ -46,11 +47,10 @@ class SafetyScorer(
         // 안심귀갓길 겹침 비율(0~1): 후보 경로 길이 대비 겹침 길이의 최댓값.
         var safePathOverlap = 0.0
         if (lengthM > 0 && repository.safePaths.isNotEmpty()) {
-            for (sp in repository.safePaths) {
-                if (sp.coords.size < 2) continue
-                val overlap = SpatialMath.overlapLengthMeters(path, sp.coords, corridorMeters)
-                val ratio = overlap / lengthM
-                if (ratio > safePathOverlap) safePathOverlap = ratio
+            for (safePath in repository.safePaths) {
+                if (safePath.coords.size < 2) continue
+                val overlap = SpatialMath.overlapLengthMeters(path, safePath.coords, corridorMeters)
+                safePathOverlap = maxOf(safePathOverlap, overlap / lengthM)
             }
             safePathOverlap = min(1.0, safePathOverlap)
         }
@@ -77,9 +77,10 @@ class SafetyScorer(
         )
     }
 
-    private fun saturate(value: Double, max: Double): Double {
-        if (max <= 0) return 0.0
-        return max(0.0, min(1.0, value / max))
+    /** [value] 를 [saturationCeiling](만점=정규화 1.0 에 이르는 기준값, SAT_* 상수) 대비 0~1 로 정규화한다. */
+    private fun saturate(value: Double, saturationCeiling: Double): Double {
+        if (saturationCeiling <= 0) return 0.0
+        return max(0.0, min(1.0, value / saturationCeiling))
     }
 
     private fun round2(v: Double): Double = (v * 100).roundToInt() / 100.0

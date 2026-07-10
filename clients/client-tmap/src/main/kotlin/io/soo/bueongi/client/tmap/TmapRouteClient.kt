@@ -50,12 +50,11 @@ class TmapRouteClient(
         origin: TmapCoord,
         dest: TmapCoord,
         destName: String? = null,
-        searchOptions: List<String> = DEFAULT_SEARCH_OPTIONS,
     ): List<TmapRoute> {
         if (!isEnabled) return emptyList()
         val routes = ArrayList<TmapRoute>()
         val seen = HashSet<Long>()
-        for (option in searchOptions) {
+        for (option in DEFAULT_SEARCH_OPTIONS) {
             val route = call(origin, dest, destName, option, passList = null) ?: continue
             if (!seen.add(route.identityKey)) continue
             routes.add(route)
@@ -63,16 +62,15 @@ class TmapRouteClient(
         return routes
     }
 
-    /** 경유지(passList)를 통과하는 단일 후보. 실패면 null. passList 가 비면 직선 호출과 같다. */
+    /** 경유지(passList)를 통과하는 단일 후보(추천 옵션 고정). 실패면 null. passList 가 비면 직선 호출과 같다. */
     fun fetchRouteVia(
         origin: TmapCoord,
         dest: TmapCoord,
         passList: List<TmapCoord>,
         destName: String? = null,
-        searchOption: String = "0",
     ): TmapRoute? {
         if (!isEnabled) return null
-        return call(origin, dest, destName, searchOption, passList.ifEmpty { null })
+        return call(origin, dest, destName, VIA_SEARCH_OPTION, passList.ifEmpty { null })
     }
 
     private fun call(
@@ -129,7 +127,12 @@ class TmapRouteClient(
 
     companion object {
         const val PEDESTRIAN_ENDPOINT = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
+
+        /** 기본 후보 수집 옵션(추천=0/대로우선=4/최단=10) — 실제 요구가 생기기 전까지 조합은 고정한다. */
         val DEFAULT_SEARCH_OPTIONS = listOf("0", "4", "10")
+
+        /** 경유지(passList) 호출의 탐색 옵션 — 추천(0) 고정(경유지 자체가 우회를 표현하므로 옵션 조합 불필요). */
+        const val VIA_SEARCH_OPTION = "0"
     }
 }
 
@@ -151,8 +154,15 @@ object TmapGeoJson {
         for (feature in features) {
             val props = feature.get("properties")
             if (props != null) {
-                if (distanceM == 0.0) props.get("totalDistance")?.takeIf { it.isNumber }?.let { distanceM = it.asDouble() }
-                if (timeS == 0) props.get("totalTime")?.takeIf { it.isNumber }?.let { timeS = it.asInt() }
+                // 총 거리/시간은 첫 유효값만 채택한다(첫 Point 의 totalDistance/totalTime).
+                val totalDistance = props.get("totalDistance")
+                if (distanceM == 0.0 && totalDistance != null && totalDistance.isNumber) {
+                    distanceM = totalDistance.asDouble()
+                }
+                val totalTime = props.get("totalTime")
+                if (timeS == 0 && totalTime != null && totalTime.isNumber) {
+                    timeS = totalTime.asInt()
+                }
             }
             val geom = feature.get("geometry") ?: continue
             when (geom.get("type")?.asText()) {
@@ -249,9 +259,17 @@ data class TmapRoute(
      * 같은 경로 판정 키(거리 + 좌표수). 옵션만 다르고 실제로 같은 길인 후보의 중복 제거에 쓴다 —
      * 클라이언트 수집([TmapRouteClient.fetchRoutes])과 도메인 후보 합류(SafeRouteService)가
      * 동일 판정을 공유하는 단일 출처.
+     *
+     * 거리(m)를 [PATH_SIZE_SLOT] 배로 밀어 하위 자리에 좌표수를 담는다 — 좌표수가 슬롯(1000) 미만이라는
+     * 전제이며, 초과 시 거리 슬롯과 겹쳐 다른 경로가 같은 키를 가질 수 있다(도보 경로에선 충분한 여유).
      */
     val identityKey: Long
-        get() = (distanceM.roundToLong() * 1000) + path.size
+        get() = (distanceM.roundToLong() * PATH_SIZE_SLOT) + path.size
+
+    companion object {
+        /** identityKey 의 좌표수 슬롯 크기 — 거리와 좌표수를 한 Long 에 패킹하는 자릿수 기준. */
+        const val PATH_SIZE_SLOT = 1_000L
+    }
 }
 
 /**

@@ -54,8 +54,8 @@ enum class RouteType(
     companion object {
         /** 요청 routeType(문자열/지정 id) → 유형. 미상/누락이면 SAFE(안전 우선 기본). */
         fun from(value: String?): RouteType {
-            val v = value?.trim()?.lowercase() ?: return SAFE
-            return entries.firstOrNull { it.apiType == v || it.id == v } ?: SAFE
+            val normalized = value?.trim()?.lowercase() ?: return SAFE
+            return entries.firstOrNull { it.apiType == normalized || it.id == normalized } ?: SAFE
         }
     }
 }

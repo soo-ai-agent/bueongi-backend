@@ -45,11 +45,17 @@ class ShareStoreConfig {
         @Bean(destroyMethod = "destroy")
         fun shareRedisConnectionFactory(): LettuceConnectionFactory {
             val uri = URI(redisUrl)
-            val config = RedisStandaloneConfiguration(
-                uri.host ?: "localhost",
-                if (uri.port > 0) uri.port else DEFAULT_REDIS_PORT,
-            )
-            uri.userInfo?.substringAfter(':', "")?.takeIf { it.isNotEmpty() }?.let { config.setPassword(it) }
+            val port = if (uri.port > 0) {
+                uri.port
+            } else {
+                DEFAULT_REDIS_PORT
+            }
+            val config = RedisStandaloneConfiguration(uri.host ?: "localhost", port)
+            // userInfo("user:password")에서 비밀번호만 추출 — 구분자가 없거나 비어 있으면 무인증 접속.
+            val password = uri.userInfo?.substringAfter(':', "").orEmpty()
+            if (password.isNotEmpty()) {
+                config.setPassword(password)
+            }
             return LettuceConnectionFactory(config).apply { afterPropertiesSet() }
         }
 

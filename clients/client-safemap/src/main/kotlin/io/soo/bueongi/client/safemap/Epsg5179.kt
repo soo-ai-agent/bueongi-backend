@@ -68,7 +68,11 @@ object Epsg5179 {
 
         val latDeg = Math.toDegrees(lat)
         val lngDeg = Math.toDegrees(lon)
-        return if (inKoreaBounds(latDeg, lngDeg)) Wgs84Point(latDeg, lngDeg) else null
+        return if (inKoreaBounds(latDeg, lngDeg)) {
+            Wgs84Point(latDeg, lngDeg)
+        } else {
+            null
+        }
     }
 
     /** WGS84 → EPSG:5179. 왕복 테스트(변환 자기일관성 검증)용. */

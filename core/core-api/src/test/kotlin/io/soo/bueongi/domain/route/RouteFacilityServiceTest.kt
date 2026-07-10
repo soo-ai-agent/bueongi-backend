@@ -8,12 +8,12 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 /**
- * [FacilityService.alongRoute] 단위 테스트. 핵심 계약: 요약(summary)은 생성된 POI 를 실제로 집계하므로
+ * [RouteFacilityService.alongRoute] 단위 테스트. 핵심 계약: 요약(summary)은 생성된 POI 를 실제로 집계하므로
  * 항상 지도 표시(POI)와 일치한다. 좌표/개수는 결정론적이며 유형별 상한(MAX_PER_TYPE=8)을 넘지 않는다.
  */
-class FacilityServiceTest {
+class RouteFacilityServiceTest {
 
-    private val service = FacilityService()
+    private val service = RouteFacilityService()
 
     private fun request(routeType: String?) = RouteQuery(
         origin = GeoPoint(37.4979, 127.0276), // 강남역

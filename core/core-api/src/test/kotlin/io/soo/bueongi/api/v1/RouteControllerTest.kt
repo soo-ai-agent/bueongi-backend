@@ -2,10 +2,12 @@ package io.soo.bueongi.api.v1
 import io.soo.bueongi.api.v1.request.requireDistinctEndpoints
 import io.soo.bueongi.api.v1.request.requireWithinReach
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.domain.route.FacilityService
+import io.soo.bueongi.domain.route.RouteFacilityService
 import io.soo.bueongi.domain.route.RouteOption
 import io.soo.bueongi.domain.route.RouteService
 import io.soo.bueongi.domain.route.SafeRouteService
+import io.soo.bueongi.domain.route.RouteCandidateMerger
+import io.soo.bueongi.domain.route.RouteMarkerBuilder
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
@@ -20,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
 /**
- * [RouteController] 슬라이스 테스트(@WebMvcTest). 실 서비스([RouteService]/[FacilityService]/[SafeRouteService]) 를
+ * [RouteController] 슬라이스 테스트(@WebMvcTest). 실 서비스([RouteService]/[RouteFacilityService]/[SafeRouteService]) 를
  * import 해 compare/facilities/safe-compare 의 HTTP 계약을 고정한다:
  *  - 정상 요청 → 200 + 프론트 계약 JSON shape
  *  - destination null → 400 / origin 누락 → 422 ORIGIN_REQUIRED(복구 가능 상태로 구분)
@@ -32,8 +34,10 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(RouteController::class)
 @Import(
     RouteService::class,
-    FacilityService::class,
+    RouteFacilityService::class,
     SafeRouteService::class,
+    RouteMarkerBuilder::class,
+    RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeDetourPlanner::class,
     FacilityRepository::class,
@@ -129,7 +133,7 @@ class RouteControllerTest(
     @Test
     fun `facilities 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
         // 세 엔드포인트가 같은 경계 가드(toValidatedQuery)를 쓰는 계약을 facilities 대상으로도 직접 고정
-        // (구 FacilityServiceTest 의 alongRoute 원거리 단언 대체 — 가드가 컨트롤러 경계로 이동).
+        // (구 RouteFacilityServiceTest 의 alongRoute 원거리 단언 대체 — 가드가 컨트롤러 경계로 이동).
         mockMvc.post("/api/routes/facilities") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.0,"lng":127.0},"destination":{"lat":38.5,"lng":127.0},"routeType":"safe"}"""

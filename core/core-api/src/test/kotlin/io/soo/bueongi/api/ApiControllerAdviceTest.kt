@@ -3,10 +3,12 @@ package io.soo.bueongi.api
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScorer
-import io.soo.bueongi.domain.route.FacilityService
+import io.soo.bueongi.domain.route.RouteFacilityService
 import io.soo.bueongi.api.v1.RouteController
 import io.soo.bueongi.domain.route.RouteService
 import io.soo.bueongi.domain.route.SafeRouteService
+import io.soo.bueongi.domain.route.RouteCandidateMerger
+import io.soo.bueongi.domain.route.RouteMarkerBuilder
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,9 +28,11 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(RouteController::class)
 @Import(
     RouteService::class,
-    FacilityService::class,
+    RouteFacilityService::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,
+    RouteMarkerBuilder::class,
+    RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeDetourPlanner::class,
     FacilityRepository::class,

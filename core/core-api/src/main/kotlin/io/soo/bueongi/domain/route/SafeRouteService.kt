@@ -4,14 +4,12 @@ import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -37,6 +35,8 @@ class SafeRouteService(
     private val scorer: SafetyScorer,
     private val detourPlanner: SafeDetourPlanner,
     private val repository: FacilitySpatialSource,
+    private val markerBuilder: RouteMarkerBuilder,
+    private val candidateMerger: RouteCandidateMerger,
     /** 운영 알림(없으면 null 무해) — Tmap 키가 있는데도 전부 실패해 폴백으로 전환될 때만 쓴다. */
     private val alertNotifier: AlertNotifier? = null,
 ) {
@@ -79,7 +79,9 @@ class SafeRouteService(
 
         // 1) 완전 동일(identityKey) 제거 → 2) 도메인 후보로 매핑 → 3) 거의 겹치는 경로 병합 →
         // 4) 정확히 유형당 1개(최대 3개)로 정규화.
-        val candidates = mergeNearDuplicates(dedupeByIdentity(base + detours).map { it.toCandidate() })
+        val candidates = candidateMerger.mergeNearDuplicates(
+            dedupeByIdentity(base + detours).map { it.toCandidate() },
+        )
         val scored = scoreTypeAndLimit(candidates)
         return toRouteOptions(scored, origin, destination)
     }
@@ -88,34 +90,6 @@ class SafeRouteService(
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
         val seen = HashSet<Long>()
         return routes.filter { seen.add(it.identityKey) }
-    }
-
-    /**
-     * 거의 같은 길인데 라벨만 다른 후보를 병합한다(예: 최단과 대로우선이 같은 도로를 90%+ 공유).
-     *
-     * 두 경로의 겹침 길이가 (짧은 쪽 길이 × [MERGE_OVERLAP_RATIO]) 이상이면 같은 경로로 보고,
-     * 입력 순서상 먼저 나온 후보(=기본 추천/대로/최단 → 우회 순)를 남긴다. 결정론적.
-     * 이렇게 해야 뒤의 유형 배정(safe/main/fast)이 서로 다른 실제 경로에만 매겨진다.
-     */
-    private fun mergeNearDuplicates(candidates: List<RouteCandidate>): List<RouteCandidate> {
-        val kept = ArrayList<RouteCandidate>()
-        for (candidate in candidates) {
-            if (kept.none { isNearDuplicate(it, candidate) }) kept.add(candidate)
-        }
-        return kept
-    }
-
-    private fun isNearDuplicate(a: RouteCandidate, b: RouteCandidate): Boolean {
-        val lengthA = SpatialMath.pathLengthMeters(a.path)
-        val lengthB = SpatialMath.pathLengthMeters(b.path)
-        val shorter = minOf(lengthA, lengthB)
-        if (shorter <= 0.0) return false
-        // 양방향 겹침 중 큰 값 — 한 경로가 다른 경로에 거의 포함되면 같은 길로 본다.
-        val overlap = maxOf(
-            SpatialMath.overlapLengthMeters(a.path, b.path, MERGE_CORRIDOR_METERS),
-            SpatialMath.overlapLengthMeters(b.path, a.path, MERGE_CORRIDOR_METERS),
-        )
-        return overlap >= shorter * MERGE_OVERLAP_RATIO
     }
 
     /**
@@ -168,7 +142,7 @@ class SafeRouteService(
                     path = candidate.path,
                     steps = candidate.steps,
                     score = scoredRoute.score.score,
-                    markers = buildMarkers(origin, destination, candidate.path),
+                    markers = markerBuilder.buildMarkers(origin, destination, candidate.path),
                     // P0-4 점수 근거 — 프론트가 "CCTV n/km · 비상벨 n …"으로 그대로 렌더한다.
                     breakdown = ScoreBreakdown(
                         routeKm = breakdown.routeKm,
@@ -190,7 +164,11 @@ class SafeRouteService(
      */
     private fun buildProvenance(): DataProvenance {
         val generatedAt = repository.freshness?.generatedAt
-        val basedOn = generatedAt?.takeIf { it.length >= 7 }?.substring(0, 7)?.replace('-', '.')
+        val basedOn = if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
+            generatedAt.substring(0, YEAR_MONTH_LENGTH).replace('-', '.')
+        } else {
+            null
+        }
         return DataProvenance(kind = "live", basedOn = basedOn, origin = DATA_ORIGIN)
     }
 
@@ -198,93 +176,34 @@ class SafeRouteService(
         if (scoredRoute.type == "safe") add(RouteTag("안심", "mint"))
         if (scoredRoute.type == "fast") add(RouteTag("빠른길", "blue"))
         val breakdown = scoredRoute.score.breakdown
-        if (breakdown.cctvDensity >= 5) add(RouteTag("CCTV 많음", "mint"))
-        if (breakdown.lampDensity >= 10) add(RouteTag("밝은 길", "yellow"))
-        if (breakdown.safePathOverlap >= 0.2) add(RouteTag("안심귀갓길", "mint"))
+        if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) add(RouteTag("CCTV 많음", "mint"))
+        if (breakdown.lampDensity >= TAG_LAMP_DENSITY_MIN_PER_KM) add(RouteTag("밝은 길", "yellow"))
+        if (breakdown.safePathOverlap >= TAG_SAFE_PATH_OVERLAP_MIN) add(RouteTag("안심귀갓길", "mint"))
         if (breakdown.safehouseCount >= 1) add(RouteTag("안심지킴이집", "outline"))
         if (breakdown.policeCount >= 1) add(RouteTag("지구대 인접", "blue"))
     }
 
-    /**
-     * 경로변 거점 마커: 출발/도착 + 회랑 내 CCTV/안심집/비상벨. 실지도용 lat/lng 는 그대로 두고,
-     * MapMock 폴백용 정규화 x/y(0~100, 여백 12%)는 전 마커 경계상자에 투영한다(프론트 buildRouteMarkers 동형).
-     */
-    private fun buildMarkers(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>): List<FacilityPoi> {
-        val corridor = SafetyScorer.DEFAULT_CORRIDOR_METERS
-        val raw = ArrayList<FacilityPoi>()
-        raw.add(FacilityPoi(type = "start", x = 0, y = 0, lat = origin.lat, lng = origin.lng))
-        raw.add(FacilityPoi(type = "end", x = 0, y = 0, lat = destination.lat, lng = destination.lng))
-        for ((markerType, facilityType) in MARKER_TYPES) {
-            // 유형별 마커 수 상한 — 가로등처럼 밀집한 시설이 지도를 가리지 않도록 방어(점수 계산은 전체 개수를 그대로 쓴다).
-            for (facility in repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)) {
-                raw.add(
-                    FacilityPoi(
-                        type = markerType,
-                        x = 0,
-                        y = 0,
-                        lat = facility.lat,
-                        lng = facility.lng,
-                        name = facility.name,
-                        purpose = facility.purpose,
-                        cameraCount = facility.cameraCount,
-                        address = facility.address,
-                        phone = facility.phone,
-                    ),
-                )
-            }
-        }
-
-        val minLat = raw.minOf { it.lat }
-        val maxLat = raw.maxOf { it.lat }
-        val minLng = raw.minOf { it.lng }
-        val maxLng = raw.maxOf { it.lng }
-        val range = 100.0 - 2 * MARKER_PADDING
-        val spanLat = maxLat - minLat
-        val spanLng = maxLng - minLng
-        return raw.map { marker ->
-            // 한 축이 퇴화(모든 좌표 동일)하면 가운데(50). 위도는 위쪽이 큰 값이라 y축을 뒤집는다.
-            val x = if (spanLng == 0.0) {
-                50
-            } else {
-                (MARKER_PADDING + (marker.lng - minLng) / spanLng * range).roundToInt()
-            }
-            val y = if (spanLat == 0.0) {
-                50
-            } else {
-                (MARKER_PADDING + (maxLat - marker.lat) / spanLat * range).roundToInt()
-            }
-            marker.copy(x = x.coerceIn(0, 100), y = y.coerceIn(0, 100))
-        }
-    }
-
     private companion object {
         val TYPE_NAME = mapOf("safe" to "안심 경로", "main" to "기본 경로", "fast" to "빠른 경로")
-        // 마커 표시 종류 → 시설 인덱스(조명은 점수에만 반영, 마커 제외 — 프론트 MVP 기본 마커 3종).
-        val MARKER_TYPES = listOf(
-            "cctv" to FacilityType.CCTV,
-            "safehouse" to FacilityType.SAFEHOUSE,
-            "bell" to FacilityType.BELL,
-            // 지구대·파출소도 경로변 거점 마커로 표시한다(여성안심지킴이집과 함께 지도에 노출).
-            "police" to FacilityType.POLICE,
-            // 가로등·조명은 점수(밀도)에도 쓰이고, 지도에도 표시한다(상한으로 밀집 방어).
-            "lamp" to FacilityType.LAMP,
-        )
-        const val MARKER_PADDING = 12.0
-
-        /** 근접 경로 병합: 두 경로 점이 이 거리(m) 안이면 같은 도로 위로 본다. */
-        const val MERGE_CORRIDOR_METERS = 25.0
-
-        /** 근접 경로 병합 임계: 짧은 경로의 이 비율 이상이 다른 경로와 겹치면 같은 경로로 병합. */
-        const val MERGE_OVERLAP_RATIO = 0.85
-
-        /** 유형별 마커 수 상한(가로등 등 밀집 시설로 인한 지도 가독성 저하·응답 비대화 방어). */
-        const val MAX_MARKERS_PER_TYPE = 12
 
         /** 동률 처리용 인덱스 미세 가중 — "먼저 나온 후보 우선"을 점수 비교 한 번으로 표현한다. */
         const val TIE_BREAK_EPSILON = 1e-9
 
         /** 안심시설 데이터 원천 표기(P0-3). 파이프라인 sources.yaml 의 원천 계열. */
         const val DATA_ORIGIN = "공공데이터포털·서울 열린데이터광장"
+
+        /** 기준일 표기용 "YYYY-MM" 길이 — generatedAt(ISO)에서 연·월만 잘라 쓴다. */
+        const val YEAR_MONTH_LENGTH = 7
+
+        // 태그 부여 임계(MVP 캘리브레이션) — 점수 SAT_* 상수와 별개로, "표시할 만큼 두드러진가"의 기준.
+        /** "CCTV 많음" 태그: 회랑 내 CCTV 밀도(개/km)가 이 값 이상. */
+        const val TAG_CCTV_DENSITY_MIN_PER_KM = 5.0
+
+        /** "밝은 길" 태그: 가로등 밀도(개/km)가 이 값 이상. */
+        const val TAG_LAMP_DENSITY_MIN_PER_KM = 10.0
+
+        /** "안심귀갓길" 태그: 경로 길이 대비 안심귀갓길 겹침 비율(0~1)이 이 값 이상. */
+        const val TAG_SAFE_PATH_OVERLAP_MIN = 0.2
     }
 }
 
@@ -300,6 +219,10 @@ data class RouteCandidate(
     val steps: List<NavStep>,
 )
 
+/**
+ * 채점·유형 배정이 끝난 후보(응답 변환 직전의 중간 표현).
+ * [type] 은 "safe"|"fast"|"main" — TYPE_NAME 키 집합과 일치해야 한다(toRouteOptions 의 getValue 전제).
+ */
 private data class ScoredRoute(val candidate: RouteCandidate, val score: SafetyScore, val type: String)
 
 private fun TmapRoute.toCandidate(): RouteCandidate =

@@ -88,14 +88,17 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         return result
     }
 
-    private companion object {
-        const val CELL_DEG = 0.001
+    companion object {
+        private const val CELL_DEG = 0.001
         /** 경도 1°의 보수적(최소) 폭(m). 위도가 높을수록 좁아지므로 한국 최북단 기준으로 잡아 누락 방지. */
-        const val MIN_LNG_DEG_METERS = 86_000.0
+        private const val MIN_LNG_DEG_METERS = 86_000.0
 
-        fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
+        private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
 
-        /** 두 셀 좌표를 64비트 키로 패킹(해시 충돌 없이). */
+        /**
+         * 두 셀 좌표를 64비트 키로 패킹(해시 충돌 없이) — 그리드 셀 키 규약의 단일 출처.
+         * 도메인 클러스터링(core-api SafeDetourPlanner)도 이 패킹을 재사용한다(같은 계산 이중 정의 방지).
+         */
         fun cellKey(cx: Int, cy: Int): Long = (cx.toLong() shl 32) xor (cy.toLong() and 0xffffffffL)
     }
 }

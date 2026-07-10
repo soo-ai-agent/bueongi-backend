@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Redis 미주입(로컬/CI/MVP 기본) 시 동작하는 인메모리 공유 저장소. 장소 검색의 SeedPlaceProvider 와 동일 철학 —
  * 외부 인프라 없이 전 기능이 동작하고 동일 [LocationStore] 계약으로 테스트된다. 단일 인스턴스 가정(재시작 시 휘발).
  *
- * 공유 상한 만료는 [find] 가 주입된 [clock] 기준으로 lazy 하게 적용·제거한다(Redis EXPIRE 와 동치 거동) —
+ * 공유 상한 만료는 [findByToken] 이 주입된 [clock] 기준으로 lazy 하게 적용·제거한다(Redis EXPIRE 와 동치 거동) —
  * 별도 스위퍼 스레드 없이 접근 시점에 만료된 토큰을 정리한다.
  */
 class InMemoryLocationStore(
@@ -51,10 +51,5 @@ class InMemoryLocationStore(
         if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) return true
         viewers.remove(token, last) // 유효시간 경과 → lazy 제거(Redis TTL 동치).
         return false
-    }
-
-    private companion object {
-        /** 보호자 조회 후 이 시간(초) 동안 '시청 중'으로 본다(Redis 와 동일). */
-        const val VIEWER_WINDOW_SECONDS = 12L
     }
 }

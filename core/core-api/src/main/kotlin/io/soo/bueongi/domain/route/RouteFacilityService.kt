@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
  * 외부 공공데이터(실 CCTV/비상벨 위치) 연동 시 POI 생성부만 교체하면 되고 응답 계약은 동일하다.
  */
 @Service
-class FacilityService {
+class RouteFacilityService {
 
     private companion object {
         /** 유형별 시설 개수 상한(응답 크기·지도 가독성 방어). */

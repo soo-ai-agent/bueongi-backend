@@ -11,12 +11,4 @@ enum class FacilityType(val cdnType: String) {
     BELL("emergency_bell"),
     SAFEHOUSE("safehouse"),
     POLICE("police"),
-    ;
-
-    companion object {
-        private val byCdnType = entries.associateBy { it.cdnType }
-
-        /** CDN type 문자열 → 시설 종류. 미상이면 null(적재 시 건너뜀). */
-        fun fromCdnType(value: String?): FacilityType? = value?.let { byCdnType[it] }
-    }
 }

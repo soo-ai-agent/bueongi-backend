@@ -48,7 +48,7 @@ class RouteTypeTest {
         // 앱의 핵심 가치 약속(RouteType doc): safe→main→fast 로 갈수록 안심시설이 준다.
         // 즉 '추천 경로(SAFE)'는 per-km 안심시설(CCTV·비상벨·경찰) 밀도가 항상 가장 높아야 한다 — SAFE 의
         // 설명("가장 밝고 안심 시설이 잘 갖춰진 길")·태그("CCTV 많음")가 곧 이 단조성이다.
-        // 기존 테스트는 distanceFactor 단조성만, FacilityServiceTest 는 total 기준 SAFE>FAST(MAIN 누락) 만 고정한다.
+        // 기존 테스트는 distanceFactor 단조성만, RouteFacilityServiceTest 는 total 기준 SAFE>FAST(MAIN 누락) 만 고정한다.
         // total 은 storePerKm(MAIN 최대)·distanceFactor 가 부풀리므로 cctv 밀도가 역전돼도 SAFE>FAST total 은 통과할 수 있어,
         // 안심시설 밀도 자체의 SAFE>MAIN>FAST 단조성은 상수 레벨에서 미고정이었다. 밀도 상수 튜닝 시 핵심 안전 순서가
         // 조용히 깨지는 것(예: FAST.cctvPerKm > SAFE.cctvPerKm)을 막기 위해 상수 원천에서 직접 봉인한다.

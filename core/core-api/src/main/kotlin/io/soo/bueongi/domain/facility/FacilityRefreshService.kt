@@ -7,6 +7,7 @@ import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -98,13 +99,13 @@ class FacilityRefreshService(
     }
 }
 
-/** data.go.kr 행 → 저장 모델. 좌표 범위(±90/±180)를 여기(도메인 경계)서 검증하고 벗어나면 버린다. */
+/** data.go.kr 행 → 저장 모델. 좌표 불변식([GeoPoint.orNull])을 여기(도메인 경계)서 검증하고 벗어나면 버린다. */
 private fun DataGoKrPoint.toFacilityPoint(type: FacilityType): FacilityPoint? {
-    if (lat !in -90.0..90.0 || lng !in -180.0..180.0) return null
+    val point = GeoPoint.orNull(lat, lng) ?: return null
     return FacilityPoint(
         type = type,
-        lat = lat,
-        lng = lng,
+        lat = point.lat,
+        lng = point.lng,
         name = name,
         sigungu = sigungu,
         address = address,

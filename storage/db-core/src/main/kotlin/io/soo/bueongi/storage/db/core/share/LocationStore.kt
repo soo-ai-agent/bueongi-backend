@@ -109,8 +109,8 @@ data class StoredMarker(
  * 인메모리 폴백([InMemoryLocationStore])을 교체 가능하게 한다 — Redis 미주입(로컬/CI/MVP 기본)이면 인메모리가 동작하므로
  * 외부 인프라 없이 전 기능을 동일 계약으로 테스트할 수 있다(장소 SeedPlaceProvider 와 동일 철학).
  *
- * 공유 상한 만료(expiresAt)는 **저장소가 책임진다**([find] 가 만료된 토큰엔 null 반환) —
- * Redis 는 native TTL, 인메모리는 [find] 시점의 lazy 비교로 동치 거동을 보장한다.
+ * 공유 상한 만료(expiresAt)는 **저장소가 책임진다**([findByToken] 이 만료된 토큰엔 null 반환) —
+ * Redis 는 native TTL, 인메모리는 [findByToken] 시점의 lazy 비교로 동치 거동을 보장한다.
  */
 interface LocationStore {
     /** health 라벨용 백엔드 식별자. "redis" | "memory"(자격증명·주소는 노출하지 않는 불리언 파생 라벨). */
@@ -122,7 +122,7 @@ interface LocationStore {
     /** token 으로 공유 조회. 없거나 상한 만료가 지났으면 null. */
     fun findByToken(token: String): ShareSession?
 
-    /** 공유를 즉시 종료(삭제). 도착/공유 중단 시 호출 — 이후 [find] 는 null(보호자는 "공유 종료"). 멱등(없는 토큰도 무해). */
+    /** 공유를 즉시 종료(삭제). 도착/공유 중단 시 호출 — 이후 [findByToken] 은 null(보호자는 "공유 종료"). 멱등(없는 토큰도 무해). */
     fun deleteByToken(token: String)
 
     /**
@@ -134,3 +134,10 @@ interface LocationStore {
     /** 최근 유효시간 내에 보호자 조회가 있었는지(=현재 누군가 보고 있는지). */
     fun isWatched(token: String): Boolean
 }
+
+/**
+ * 보호자 조회 후 이 시간(초) 동안 '시청 중'으로 본다 — 보호자 폴링(5초)의 약 2~3배 여유.
+ * 두 구현(Redis TTL / 인메모리 lazy 비교)의 동치 거동은 이 계약의 불변식이므로,
+ * 값을 구현마다 두지 않고 계약 파일의 단일 상수로 공유한다(한쪽만 바뀌는 드리프트 방지).
+ */
+const val VIEWER_WINDOW_SECONDS = 12L

@@ -1,7 +1,7 @@
 package io.soo.bueongi.api.v1
 
 import io.soo.bueongi.domain.place.RemotePlaceProvider
-import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.domain.share.ShareService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -16,13 +16,14 @@ import org.springframework.web.bind.annotation.RestController
  * ops/오케스트레이터는 `placeSource="live"` 로 키 배선을, `"seed"` 로 폴백 동작을 검증한다.
  *
  * [HealthStatus.locationStore] 도 같은 패턴이다 — 위치 공유 세션 저장소가 Redis("redis")인지 인메모리 폴백("memory")인지를
- * [LocationStore.backend] 라는 불리언/식별자 파생 라벨로만 노출하고, Redis URL·자격증명은 절대 응답에 싣지 않는다.
+ * [ShareService.storeBackendLabel] 이 중계하는 식별자 파생 라벨로만 노출하고(컨트롤러가 storage 계층을
+ * 직접 만지지 않는다 — 레이어 규칙), Redis URL·자격증명은 절대 응답에 싣지 않는다.
  */
 @RestController
 @RequestMapping("/api/health")
 class HealthController(
     private val remoteProvider: RemotePlaceProvider,
-    private val locationStore: LocationStore,
+    private val shareService: ShareService,
 ) {
 
     /** GET /api/health → 가동 상태 + 활성 장소 소스 + 위치공유 저장소(시크릿 비노출). */
@@ -37,7 +38,7 @@ class HealthController(
             status = STATUS_UP,
             service = SERVICE_NAME,
             placeSource = placeSource,
-            locationStore = locationStore.backend,
+            locationStore = shareService.storeBackendLabel(),
         )
     }
 

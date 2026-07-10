@@ -2,6 +2,7 @@ package io.soo.bueongi.domain.facility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
 
 import org.springframework.stereotype.Component
@@ -20,32 +21,37 @@ class SafeDetourPlanner(
 ) {
 
     /**
-     * 직접 경로 주변 반경 [radiusMeters] 안의 CCTV/안심집/비상벨을 ~80m 그리드로 클러스터링해
+     * 직접 경로 주변 반경 [ANCHOR_RADIUS_METERS] 안의 CCTV/안심집/비상벨을 ~80m 그리드로 클러스터링해
      * 버킷별 시설수를 weight 로 한 클러스터 중심 앵커 목록을 만든다(weight 내림차순 상위 [MAX_ANCHORS]).
      */
-    fun extractSafeAnchors(
-        directPath: List<GeoPoint>,
-        radiusMeters: Double = ANCHOR_RADIUS_METERS,
-    ): List<SafeAnchor> {
+    fun extractSafeAnchors(directPath: List<GeoPoint>): List<SafeAnchor> {
         if (directPath.size < 2) return emptyList()
-        val facilities = ANCHOR_TYPES.flatMap { repository.index(it).withinCorridor(directPath, radiusMeters) }
+        val facilities = ANCHOR_TYPES.flatMap {
+            repository.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
+        }
         if (facilities.isEmpty()) return emptyList()
 
         // ~80m 그리드 버킷으로 클러스터링. 버킷 중심 = 구성 시설 좌표 평균.
-        data class Acc(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var n: Int = 0)
-        val clusters = LinkedHashMap<Long, Acc>()
-        for (f in facilities) {
-            val cx = floor(f.lat / CLUSTER_CELL_DEG).toInt()
-            val cy = floor(f.lng / CLUSTER_CELL_DEG).toInt()
-            val key = (cx.toLong() shl 32) xor (cy.toLong() and 0xffffffffL)
-            val acc = clusters.getOrPut(key) { Acc() }
-            acc.sumLat += f.lat
-            acc.sumLng += f.lng
-            acc.n += 1
+        data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
+        val clusters = LinkedHashMap<Long, ClusterAccumulator>()
+        for (facility in facilities) {
+            val cx = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
+            val cy = floor(facility.lng / CLUSTER_CELL_DEG).toInt()
+            // 셀 키 패킹은 storage 그리드 인덱스와 동일 규약(단일 출처 재사용).
+            val key = GridSpatialIndex.cellKey(cx, cy)
+            val cluster = clusters.getOrPut(key) { ClusterAccumulator() }
+            cluster.sumLat += facility.lat
+            cluster.sumLng += facility.lng
+            cluster.facilityCount += 1
         }
 
         return clusters.values
-            .map { SafeAnchor(GeoPoint(it.sumLat / it.n, it.sumLng / it.n), weight = it.n) }
+            .map {
+                SafeAnchor(
+                    GeoPoint(it.sumLat / it.facilityCount, it.sumLng / it.facilityCount),
+                    weight = it.facilityCount,
+                )
+            }
             // weight 내림차순, 동률은 좌표로 결정론적 정렬.
             .sortedWith(compareByDescending<SafeAnchor> { it.weight }.thenBy { it.center.lat }.thenBy { it.center.lng })
             .take(MAX_ANCHORS)
@@ -55,16 +61,16 @@ class SafeDetourPlanner(
      * 진행방향 중간 구간의 고가중 앵커로 경유지 조합 여러 개를 만든다.
      * - 앵커 1개짜리 조합 2~3개(weight 상위)
      * - 앵커 2개짜리 조합 1개(상위 2개를 출발거리순 정렬)
-     * 과도한 측방이탈(직선상 수직거리 > [maxLateralMeters])과 양 끝(중간 구간 밖)은 제외하고,
+     * 과도한 측방이탈(직선상 수직거리 > 직선거리×[DEFAULT_LATERAL_RATIO])과 양 끝(중간 구간 밖)은 제외하고,
      * 각 조합의 경유지는 출발거리순(직선 투영 t 오름차순)으로 정렬한다.
      */
     fun pickDetourWaypoints(
         origin: GeoPoint,
         dest: GeoPoint,
         anchors: List<SafeAnchor>,
-        maxLateralMeters: Double = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO,
     ): List<List<GeoPoint>> {
         if (anchors.isEmpty()) return emptyList()
+        val maxLateralMeters = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
 
         // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
         data class Placed(val anchor: SafeAnchor, val t: Double)
@@ -100,7 +106,7 @@ class SafeDetourPlanner(
         /** 클러스터 그리드 셀(~80m). 위도 0.0008°≈89m, 경도 0.0008°≈71m(한국). */
         const val CLUSTER_CELL_DEG = 0.0008
 
-        /** 직선 길이 대비 허용 측방이탈 비율(maxLateral 기본값). */
+        /** 직선 길이 대비 허용 측방이탈 비율 — maxLateralMeters = 직선거리 × 이 값. */
         const val DEFAULT_LATERAL_RATIO = 0.25
 
         /** 진행방향 중간 구간(끝점 근처 제외) 경계. */

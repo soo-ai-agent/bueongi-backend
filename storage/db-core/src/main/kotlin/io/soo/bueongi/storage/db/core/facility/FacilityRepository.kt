@@ -95,10 +95,10 @@ class FacilityRepository(
         // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
         _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
             try {
-                val m = objectMapper.readTree(file)
+                val manifestJson = objectMapper.readTree(file)
                 FacilityFreshness(
-                    generatedAt = m.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
-                    version = m.get("version")?.asText()?.takeIf { it.isNotBlank() },
+                    generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
+                    version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
                 )
             } catch (e: Exception) {
                 log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
@@ -216,7 +216,7 @@ private val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목�
  *   - 설치목적구분(용도) = parts[N-13]; name = parts[2] (관리기관명; 앞 2컬럼은 숫자코드라 안정적)
  * 방범 성격([CCTV_SECURITY_PURPOSES])이 아니면 적재 제외(null). 후행 필드에 콤마가 섞여
  * N-13 이 어긋나는 약 0.5% 행은 목적을 신뢰할 수 없어 보수적으로 제외된다(좌표 자체는 영향 없음).
- * lat/lng 는 Double 파싱 + 유효범위(±90/±180, isFinite) 검증, 실패 시 null(조용히 skip).
+ * lat/lng 는 Double 파싱 + 좌표 불변식([GeoPoint.orNull]) 검증, 실패 시 null(조용히 skip).
  */
 internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     val parts = line.split(',')
@@ -225,17 +225,17 @@ internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     // 용도(설치목적구분) 필터 — 방범 성격이 아니면 적재 제외.
     val purpose = parts[parts.size - 13].trim().trim('"')
     if (purpose !in CCTV_SECURITY_PURPOSES) return null
-    val lat = parts[parts.size - 6].trim().toDoubleOrNull()
-        ?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
-    val lng = parts[parts.size - 5].trim().toDoubleOrNull()
-        ?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
+    val point = GeoPoint.orNull(
+        lat = parts[parts.size - 6].trim().toDoubleOrNull(),
+        lng = parts[parts.size - 5].trim().toDoubleOrNull(),
+    ) ?: return null
     val name = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     // 카메라대수(N-12) — 적재 대상(목적 정상 판독) 행은 후행 구조가 안정적이라 신뢰 가능. 표시용.
     val cameraCount = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     return FacilityPoint(
         type = FacilityType.CCTV,
-        lat = lat,
-        lng = lng,
+        lat = point.lat,
+        lng = point.lng,
         name = name,
         purpose = purpose,
         cameraCount = cameraCount,
@@ -268,12 +268,11 @@ data class FacilityItemDto(
     val properties: FacilityItemPropertiesDto? = null,
 ) {
     fun toFacilityPoint(type: FacilityType): FacilityPoint? {
-        val la = lat?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
-        val ln = lng?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
+        val point = GeoPoint.orNull(lat, lng) ?: return null
         return FacilityPoint(
             type = type,
-            lat = la,
-            lng = ln,
+            lat = point.lat,
+            lng = point.lng,
             name = name,
             sigungu = sigunguCode,
             purpose = properties?.purpose,
@@ -287,9 +286,8 @@ data class FacilityItemDto(
         val coordList = coords?.mapNotNull { it.toGeoPoint() }
         if (!coordList.isNullOrEmpty()) return SafePath(coords = coordList, name = name)
         // coords 없으면 단일 점 폴백.
-        val la = lat?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
-        val ln = lng?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
-        return SafePath(coords = listOf(GeoPoint(la, ln)), name = name)
+        val point = GeoPoint.orNull(lat, lng) ?: return null
+        return SafePath(coords = listOf(point), name = name)
     }
 }
 
@@ -306,9 +304,5 @@ data class CoordDto(
     val lat: Double? = null,
     val lng: Double? = null,
 ) {
-    fun toGeoPoint(): GeoPoint? {
-        val la = lat?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
-        val ln = lng?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
-        return GeoPoint(la, ln)
-    }
+    fun toGeoPoint(): GeoPoint? = GeoPoint.orNull(lat, lng)
 }

@@ -7,10 +7,8 @@ import io.soo.bueongi.domain.share.MAX_ROUTE_MARKERS
 import io.soo.bueongi.domain.share.MAX_ROUTE_PATH_POINTS
 import io.soo.bueongi.domain.share.MAX_ROUTE_PROVENANCE_LENGTH
 import io.soo.bueongi.domain.share.MIN_EXPIRES_HOURS
+import io.soo.bueongi.domain.share.ROUTE_MARKER_TYPE_PATTERN
 import io.soo.bueongi.domain.share.ROUTE_TYPE_VALUES
-import io.soo.bueongi.domain.share.RouteDestination
-import io.soo.bueongi.domain.share.RouteMarker
-import io.soo.bueongi.domain.share.RoutePoint
 import io.soo.bueongi.support.error.InvalidRouteMetaException
 import io.soo.bueongi.storage.db.core.share.StoredCoord
 import io.soo.bueongi.storage.db.core.share.StoredMarker
@@ -23,6 +21,7 @@ import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 /**
@@ -100,18 +99,21 @@ data class WatchRequest(
  *
  * owner_secret 은 위치 갱신과 동일한 쓰기 권한 검증(requireOwner)을 쓴다 — @NotBlank 를 걸지 않고 서비스에서
  * 누락/불일치 모두 404 로 처리한다(공유 URL만 아는 사람의 경로 조작 차단, 토큰 존재 여부 비노출).
+ *
+ * 좌표 검증 타입은 routes 요청과 공유한다 — 목적지는 [NamedLatLng], 경로선 점은 [LatLng](동일 필드명·검증 규약).
+ * 마커만 이 API 고유라 [RouteMarkerRequest] 를 둔다. 응답 쪽 표현은 도메인(ShareResults의 RouteContext)이 소유.
  */
 data class SaveRouteRequest(
     @JsonProperty("owner_secret")
     val ownerSecret: String? = null,
     @field:NotNull @field:Valid
-    val destination: RouteDestination?,
+    val destination: NamedLatLng?,
     @field:Valid
     @field:Size(max = MAX_ROUTE_PATH_POINTS)
-    val path: List<@Valid RoutePoint>? = null,
+    val path: List<@Valid LatLng>? = null,
     @field:Valid
     @field:Size(max = MAX_ROUTE_MARKERS)
-    val markers: List<@Valid RouteMarker>? = null,
+    val markers: List<@Valid RouteMarkerRequest>? = null,
     /** 총 이동 거리(미터). 선택(null 허용) — 음수는 400 으로 거부. */
     @field:Min(0)
     @JsonProperty("total_distance_m")
@@ -196,3 +198,28 @@ data class SaveRouteRequest(
         }
     }
 }
+
+/**
+ * 경로변 안심시설 마커 요청(검증 계층). 좌표 규약은 [LatLng] 와 동일(범위 + 비유한 거부)이고,
+ * type 은 허용 집합만(@Pattern — start/end 는 프론트가 이미 걸러 보낸다). 나머지는 표시용 선택 필드.
+ */
+data class RouteMarkerRequest(
+    @field:NotBlank
+    @field:Pattern(regexp = ROUTE_MARKER_TYPE_PATTERN)
+    val type: String?,
+    @field:NotNull
+    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
+    val lat: Double?,
+    @field:NotNull
+    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
+    val lng: Double?,
+    /** 화면 표시 힌트(%). 앱이 계산한 미니맵 좌표를 그대로 재현하기 위한 선택 값. */
+    val x: Double? = null,
+    val y: Double? = null,
+    val name: String? = null,
+    val purpose: String? = null,
+    @JsonProperty("camera_count")
+    val cameraCount: Int? = null,
+    val address: String? = null,
+    val phone: String? = null,
+)

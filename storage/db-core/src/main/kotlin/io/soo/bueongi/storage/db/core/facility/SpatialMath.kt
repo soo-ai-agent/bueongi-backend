@@ -8,9 +8,9 @@ import kotlin.math.min
 /**
  * 안전 점수/우회 계산에 쓰는 순수 지오메트리 유틸(프론트 geo.ts 의 Kotlin 이식).
  *
- * 대권거리는 [Geo.haversineMeters] 를 재사용하고, 점-선분 최단거리처럼 평면 기하가 필요한 계산은
- * 기준 위도 근처 국소 평면(equirectangular) 투영으로 근사한다 — 도심 규모(수 km)에서 회랑(30m) 판정과
- * 우회 측방거리 산정에 충분하다. 외부 의존 없이 결정론적.
+ * 대권거리(haversine)는 이 object 의 [haversineMeters] 가 프로젝트 전체의 단일 출처로 구현하고,
+ * 점-선분 최단거리처럼 평면 기하가 필요한 계산은 기준 위도 근처 국소 평면(equirectangular) 투영으로
+ * 근사한다 — 도심 규모(수 km)에서 회랑(30m) 판정과 우회 측방거리 산정에 충분하다. 외부 의존 없이 결정론적.
  */
 object SpatialMath {
 
@@ -81,10 +81,6 @@ object SpatialMath {
         }
         return minD
     }
-
-    /** 점이 경로 버퍼(corridor) 안에 있는지. */
-    fun isWithinCorridor(p: GeoPoint, path: List<GeoPoint>, meters: Double): Boolean =
-        minDistanceToPathMeters(p, path) <= meters
 
     /**
      * 두 경로의 겹침 길이(m) 근사. 기준 경로(base)의 각 선분 중점이 다른 경로(other) 버퍼 안에 들면

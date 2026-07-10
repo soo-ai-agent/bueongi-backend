@@ -113,6 +113,13 @@ class ShareService(
     }
 
     /**
+     * 운영 헬스 라벨용 저장소 백엔드 식별자("redis"|"memory"). 컨트롤러(HealthController)가 storage 계층
+     * ([LocationStore])을 직접 주입받지 않도록 도메인이 라벨만 중계한다(Controller 의존은 domain 까지 —
+     * 레이어 규칙). 저장소 종류에서 파생한 라벨일 뿐, Redis URL·자격증명은 절대 노출하지 않는다.
+     */
+    fun storeBackendLabel(): String = store.backend
+
+    /**
      * 공유 종료(사용자 도착/중단). 쓰기 비밀이 일치할 때만 저장소에서 삭제 → 이후 조회는 만료(보호자 "공유 종료").
      * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
      */

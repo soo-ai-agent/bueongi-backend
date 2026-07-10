@@ -2,8 +2,10 @@ package io.soo.bueongi.api.v1
 
 import io.soo.bueongi.domain.place.PlaceItem
 import io.soo.bueongi.domain.place.RemotePlaceProvider
+import io.soo.bueongi.domain.share.ShareService
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
+import java.time.Clock
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -51,7 +53,7 @@ class HealthControllerTest {
             }
 
             @Bean
-            fun locationStore(): LocationStore = StubLocationStore("memory")
+            fun shareService(): ShareService = stubShareService()
         }
     }
 
@@ -84,7 +86,7 @@ class HealthControllerTest {
             }
 
             @Bean
-            fun locationStore(): LocationStore = StubLocationStore("memory")
+            fun shareService(): ShareService = stubShareService()
         }
 
         companion object {
@@ -94,13 +96,17 @@ class HealthControllerTest {
     }
 }
 
+/** health 는 [ShareService.storeBackendLabel] 라벨만 쓰므로 스텁 저장소("memory") 위의 실 서비스면 충분하다. */
+private fun stubShareService(): ShareService =
+    ShareService(StubLocationStore("memory"), Clock.systemUTC(), "http://localhost:3619")
+
 /**
- * health 슬라이스 테스트용 [LocationStore] 스텁. health 는 [LocationStore.backend] 라벨만 읽으므로
+ * health 슬라이스 테스트용 [LocationStore] 스텁. health 는 backend 라벨만 읽으므로
  * 저장 동작은 사용되지 않는다(호출 시 단언 실패로 오용을 드러냄).
  */
 private class StubLocationStore(override val backend: String) : LocationStore {
     override fun save(session: ShareSession) = throw AssertionError("health 는 save 를 호출하지 않는다")
-    override fun findByToken(token: String): ShareSession? = throw AssertionError("health 는 find 를 호출하지 않는다")
+    override fun findByToken(token: String): ShareSession? = throw AssertionError("health 는 findByToken 을 호출하지 않는다")
     override fun deleteByToken(token: String) = throw AssertionError("health 는 delete 를 호출하지 않는다")
     override fun markViewed(token: String) = throw AssertionError("health 는 markViewed 를 호출하지 않는다")
     override fun isWatched(token: String): Boolean = throw AssertionError("health 는 isWatched 를 호출하지 않는다")

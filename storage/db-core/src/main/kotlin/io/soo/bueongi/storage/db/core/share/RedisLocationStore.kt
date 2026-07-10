@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.share
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Clock
 import java.time.Duration
@@ -16,7 +17,7 @@ import java.time.Instant
  * - `share:{token}` HASH `{ created_at, expires_at }` — 공유 메타. EXPIRE = 상한 TTL(1~3h).
  * - `location:{token}` HASH `{ lat, lng, updated_at }` — 마지막 위치. 동일 상한 TTL 로 함께 만료된다.
  *
- * 상한 만료는 Redis native TTL 이 강제한다 — [find] 는 `share:{token}` 키 존재 여부만 보면 되고(키가 없으면
+ * 상한 만료는 Redis native TTL 이 강제한다 — [findByToken] 은 `share:{token}` 키 존재 여부만 보면 되고(키가 없으면
  * 만료/미존재), 별도 시각 비교가 필요 없다(인메모리 폴백의 lazy 비교와 동치 결과).
  */
 class RedisLocationStore(
@@ -28,6 +29,8 @@ class RedisLocationStore(
      */
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : LocationStore {
+
+    private val log = LoggerFactory.getLogger(RedisLocationStore::class.java)
 
     override val backend: String = "redis"
 
@@ -97,7 +100,14 @@ class RedisLocationStore(
 
         // 경로 컨텍스트: JSON 값 키. 없으면(미저장/구세션) null. 손상 JSON 은 미존재 취급(경로만 없는 것으로, 위치는 살린다).
         val route = redis.opsForValue().get(routeKey(token))?.let { json ->
-            runCatching { objectMapper.readValue<StoredRoute>(json) }.getOrNull()
+            try {
+                objectMapper.readValue<StoredRoute>(json)
+            } catch (e: Exception) {
+                // 다른 파싱 실패 지점(FacilityRepository·클라이언트)과 동일하게 경고를 남긴다 —
+                // 모델 변경/데이터 손상으로 보호자 경로 표시가 조용히 사라지는 것을 관측 가능하게(token 은 비로깅).
+                log.warn("공유 경로 JSON 역직렬화 실패(경로 표시 생략): {}", e.message)
+                null
+            }
         }
         return ShareSession(
             token = token,
@@ -124,13 +134,14 @@ class RedisLocationStore(
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {
         val remaining = Duration.between(clock.instant(), expiresAt)
-        return if (remaining.isNegative || remaining.isZero) Duration.ofSeconds(1) else remaining
+        return if (remaining.isNegative || remaining.isZero) {
+            Duration.ofSeconds(1)
+        } else {
+            remaining
+        }
     }
 
     private companion object {
-        /** 보호자 조회 후 이 시간(초) 동안 '시청 중'으로 본다 — 보호자 폴링(5초)의 약 2~3배 여유. */
-        const val VIEWER_WINDOW_SECONDS = 12L
-
         fun shareKey(token: String) = "share:$token"
         fun locationKey(token: String) = "location:$token"
         fun routeKey(token: String) = "route:$token"
