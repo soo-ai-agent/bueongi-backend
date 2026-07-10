@@ -61,7 +61,8 @@ curl http://localhost:8119/api/health
 | --- | --- | --- |
 | `KAKAO_REST_API_KEY` | (빈 값) | Kakao Local REST 키. **미설정이면 내장 시드 카탈로그**로 장소 검색. 주입 시 실연동을 시도하되 실패하면 시드로 폴백(안심앱: 검색 불능보다 근사 결과가 안전). |
 | `DATA_GO_KR_SERVICE_KEY` | (빈 값) | 공공데이터포털(행안부 조회서비스) Encoding 키. **미설정이면 시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 CCTV·안전비상벨·여성안심지킴이집을 기동 직후 1회 + `BUEONGI_FACILITY_REFRESH_CRON`(기본 매월 1일 04:00 KST) 주기로 재수집해 인덱스를 무중단 교체. 수집 실패/0건이면 교체하지 않는다. |
-| `BUEONGI_FACILITY_REFRESH_CRON` | `0 0 4 1 * *` | 시설 라이브 갱신 cron(Asia/Seoul). `DATA_GO_KR_SERVICE_KEY` 가 있을 때만 동작. |
+| `SAFEMAP_SERVICE_KEY` | (빈 값) | 생활안전지도(safemap.go.kr) 인증키. **미설정이면 치안시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 전국 지역경찰관서(지구대·파출소·치안센터)를 같은 스케줄로 재수집 — 좌표는 EPSG:5179/WGS84 자동판별 후 WGS84 로 변환·검증. |
+| `BUEONGI_FACILITY_REFRESH_CRON` | `0 0 4 1 * *` | 시설 라이브 갱신 cron(Asia/Seoul). 위 두 키 중 하나라도 있을 때만 동작. |
 | `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**`에 허용할 CORS origin(콤마 구분). 운영 도메인은 여기에 덧붙인다. 허용 메서드는 GET/POST/OPTIONS 고정. |
 | `BUEONGI_REDIS_URL` | (빈 값) | 위치 공유 저장 Redis(예 `redis://localhost:6379`). **미설정이면 인메모리 폴백**(단일 인스턴스, 재시작 시 휘발). 운영 다중 인스턴스·내구성이 필요하면 주입. |
 | `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | 공유 URL(`share_url`)의 base. 운영은 보호자가 접근 가능한 공개 도메인으로 덮어쓴다. |

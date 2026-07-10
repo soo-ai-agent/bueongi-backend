@@ -14,7 +14,8 @@ import kotlin.concurrent.thread
  *    데몬 스레드에서 돌린다(수십만 행 페이지 순회가 수 분 걸릴 수 있음).
  * 2. 주기(cron, 기본 매월 1일 04:00 KST): 공공데이터 갱신 주기(월 단위)에 맞춘 재수집.
  *
- * 키(`DATA_GO_KR_SERVICE_KEY`) 미설정이면 두 트리거 모두 건너뛴다(파일 적재분 유지) — 실패 전이 없음.
+ * 키(`DATA_GO_KR_SERVICE_KEY`·`SAFEMAP_SERVICE_KEY`)가 모두 미설정이면 두 트리거 모두 건너뛴다
+ * (파일 적재분 유지) — 실패 전이 없음. 한쪽만 있으면 그 원천의 종류만 갱신한다(소스별 게이트는 서비스가 담당).
  */
 @Component
 class FacilityRefreshScheduler(
@@ -25,7 +26,7 @@ class FacilityRefreshScheduler(
     @EventListener(ApplicationReadyEvent::class)
     fun onApplicationReady() {
         if (!refreshService.isEnabled) {
-            log.info("안심시설 라이브 갱신 비활성(DATA_GO_KR_SERVICE_KEY 미설정) — 파일 적재분으로 동작")
+            log.info("안심시설 라이브 갱신 비활성(DATA_GO_KR_SERVICE_KEY·SAFEMAP_SERVICE_KEY 미설정) — 파일 적재분으로 동작")
             return
         }
         thread(name = "facility-initial-refresh", isDaemon = true) {
