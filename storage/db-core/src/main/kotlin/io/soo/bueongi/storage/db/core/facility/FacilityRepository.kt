@@ -25,7 +25,7 @@ class FacilityRepository(
     @Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
     @Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
-) : FacilitySpatialSource {
+) : FacilitySpatialSource, FacilityLiveStore {
     private val log = LoggerFactory.getLogger(FacilityRepository::class.java)
 
     @Volatile
@@ -46,6 +46,16 @@ class FacilityRepository(
     /** 시설 종류별 공간 인덱스. 미적재 종류는 빈 인덱스를 돌려준다(NPE 방지). */
     override fun index(type: FacilityType): GridSpatialIndex =
         indexByType[type] ?: EMPTY_INDEX
+
+    /**
+     * 라이브 갱신(도메인 갱신 서비스 주도) — [type] 인덱스만 새 스냅샷으로 교체한다.
+     * copy-on-write + @Volatile 재대입이라 재기동 없이 원자적이고, 조회 스레드는 전/후 어느 한쪽만 본다.
+     */
+    override fun replace(type: FacilityType, points: List<FacilityPoint>): Int {
+        indexByType = indexByType + (type to GridSpatialIndex(points))
+        log.info("안심시설 라이브 교체: type={}, count={}", type, points.size)
+        return points.size
+    }
 
     @PostConstruct
     fun load() {

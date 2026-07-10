@@ -124,6 +124,38 @@ class FacilityRepositoryTest {
     }
 
     @Test
+    fun `replace 는 해당 종류 인덱스만 원자 교체하고 다른 종류·safepath·신선도는 불변`(@TempDir tmp: Path) {
+        val dir = tmp.toFile()
+        write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
+        write(dir, "police/all.json", """{"items":[{"name":"파출소","lat":37.51,"lng":127.01}]}""")
+        write(dir, "safepath/all.json", """{"items":[{"name":"p","lat":37.5,"lng":127.0}]}""")
+        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        repo.load()
+
+        val replaced = repo.replace(
+            FacilityType.CCTV,
+            listOf(
+                FacilityPoint(type = FacilityType.CCTV, lat = 37.6, lng = 127.1, name = "live1"),
+                FacilityPoint(type = FacilityType.CCTV, lat = 37.61, lng = 127.11, name = "live2"),
+            ),
+        )
+
+        assertThat(replaced).isEqualTo(2)
+        assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(2) // 파일 1건 → 라이브 2건 교체
+        assertThat(repo.index(FacilityType.POLICE).size).isEqualTo(1) // 다른 종류 불변
+        assertThat(repo.safePaths).hasSize(1) // 안심귀갓길 불변
+    }
+
+    @Test
+    fun `replace 는 load 전(빈 인덱스)에도 동작한다`(@TempDir tmp: Path) {
+        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, "")
+
+        repo.replace(FacilityType.BELL, listOf(FacilityPoint(type = FacilityType.BELL, lat = 37.5, lng = 127.0)))
+
+        assertThat(repo.index(FacilityType.BELL).size).isEqualTo(1)
+    }
+
+    @Test
     fun `CCTV CSV 설정이 비어 있으면 적재 비활성(JSON CCTV 만)`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")

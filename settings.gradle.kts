@@ -8,6 +8,7 @@ include(
     "storage:db-core",
     "clients:client-tmap",
     "clients:client-kakao",
+    "clients:client-datagokr",
     "support:logging",
     "support:monitoring",
 )

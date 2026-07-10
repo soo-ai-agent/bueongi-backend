@@ -25,6 +25,7 @@ COPY backend/core/core-api/build.gradle.kts ./core/core-api/
 COPY backend/storage/db-core/build.gradle.kts ./storage/db-core/
 COPY backend/clients/client-tmap/build.gradle.kts ./clients/client-tmap/
 COPY backend/clients/client-kakao/build.gradle.kts ./clients/client-kakao/
+COPY backend/clients/client-datagokr/build.gradle.kts ./clients/client-datagokr/
 COPY backend/support/logging/build.gradle.kts ./support/logging/
 COPY backend/support/monitoring/build.gradle.kts ./support/monitoring/
 RUN ./gradlew --no-daemon --version \

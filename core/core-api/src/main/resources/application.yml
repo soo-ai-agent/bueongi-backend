@@ -12,6 +12,7 @@ spring:
       - db-core.yml
       - client-tmap.yml
       - client-kakao.yml
+      - client-datagokr.yml
 
 # 안심 귀가 도메인 설정(부팅 모듈 소유분 — API 계층·공유 URL).
 bueongi:
@@ -19,6 +20,9 @@ bueongi:
     # 프론트 dev 서버(strictPort=3619). dev 가 https(자체서명)로 전환되어 https origin 이 기본이고,
     # 과거 http dev 도 함께 허용한다. 운영 도메인은 환경변수로 덮어쓴다.
     allowed-origins: ${BUEONGI_CORS_ORIGINS:https://localhost:3619,http://localhost:3619}
+  facility:
+    # 안심시설 라이브 갱신 주기(cron, Asia/Seoul). 기본 매월 1일 04:00 — DATA_GO_KR_SERVICE_KEY 가 있을 때만 동작.
+    refresh-cron: ${BUEONGI_FACILITY_REFRESH_CRON:0 0 4 1 * *}
   share:
     # 보호자 공유 URL 의 base. 앱이 받는 share_url = {base-url}/share/{token}. 운영은 공개 도메인으로 덮어쓴다.
     base-url: ${BUEONGI_SHARE_BASE_URL:http://localhost:8119}
