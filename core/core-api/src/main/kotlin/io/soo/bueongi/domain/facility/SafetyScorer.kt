@@ -26,7 +26,11 @@ class SafetyScorer(
         val lengthM = SpatialMath.pathLengthMeters(path)
         val routeKm = lengthM / 1000.0
         // 0 길이 경로 방어: 밀도 분모를 최소 1m(0.001km)로 잡아 폭주를 막는다.
-        val km = if (routeKm > 0) routeKm else 0.001
+        val km = if (routeKm > 0) {
+            routeKm
+        } else {
+            0.001
+        }
 
         val cctvCount = repository.index(FacilityType.CCTV).withinCorridor(path, corridorMeters).size
         val lampCount = repository.index(FacilityType.LAMP).withinCorridor(path, corridorMeters).size

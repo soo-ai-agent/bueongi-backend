@@ -33,7 +33,11 @@ class FacilityService {
         // km·밀도 → 개수(짧은 경로도 핵심 시설 1개는 보이도록 안전 경로엔 최소 보정).
         fun count(perKm: Double, floorWhenSafe: Int): Int {
             val raw = (km * perKm).roundToInt()
-            val withFloor = if (type == RouteType.SAFE) maxOf(raw, floorWhenSafe) else raw
+            val withFloor = if (type == RouteType.SAFE) {
+                maxOf(raw, floorWhenSafe)
+            } else {
+                raw
+            }
             return min(withFloor, MAX_PER_TYPE)
         }
 
@@ -86,8 +90,16 @@ class FacilityService {
     }
 
     private fun endpoint(type: String, point: GeoPoint): FacilityPoi {
-        val x = if (type == "start") 12 else 88
-        val y = if (type == "start") 84 else 16
+        // MapMock 정규화 좌표(0~100): 출발지는 좌하단, 도착지는 우상단에 고정 배치한다.
+        val x: Int
+        val y: Int
+        if (type == "start") {
+            x = 12
+            y = 84
+        } else {
+            x = 88
+            y = 16
+        }
         return FacilityPoi(type = type, x = x, y = y, lat = point.lat, lng = point.lng)
     }
 }

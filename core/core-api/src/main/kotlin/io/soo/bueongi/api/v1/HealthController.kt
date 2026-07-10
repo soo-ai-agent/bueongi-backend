@@ -27,12 +27,19 @@ class HealthController(
 
     /** GET /api/health → 가동 상태 + 활성 장소 소스 + 위치공유 저장소(시크릿 비노출). */
     @GetMapping
-    fun health(): HealthStatus = HealthStatus(
-        status = STATUS_UP,
-        service = SERVICE_NAME,
-        placeSource = if (remoteProvider.isEnabled) PLACE_SOURCE_LIVE else PLACE_SOURCE_SEED,
-        locationStore = locationStore.backend,
-    )
+    fun health(): HealthStatus {
+        val placeSource = if (remoteProvider.isEnabled) {
+            PLACE_SOURCE_LIVE
+        } else {
+            PLACE_SOURCE_SEED
+        }
+        return HealthStatus(
+            status = STATUS_UP,
+            service = SERVICE_NAME,
+            placeSource = placeSource,
+            locationStore = locationStore.backend,
+        )
+    }
 
     private companion object {
         const val STATUS_UP = "UP"

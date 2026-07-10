@@ -243,8 +243,16 @@ class SafeRouteService(
         val spanLng = maxLng - minLng
         return raw.map { marker ->
             // 한 축이 퇴화(모든 좌표 동일)하면 가운데(50). 위도는 위쪽이 큰 값이라 y축을 뒤집는다.
-            val x = if (spanLng == 0.0) 50 else (MARKER_PADDING + (marker.lng - minLng) / spanLng * range).roundToInt()
-            val y = if (spanLat == 0.0) 50 else (MARKER_PADDING + (maxLat - marker.lat) / spanLat * range).roundToInt()
+            val x = if (spanLng == 0.0) {
+                50
+            } else {
+                (MARKER_PADDING + (marker.lng - minLng) / spanLng * range).roundToInt()
+            }
+            val y = if (spanLat == 0.0) {
+                50
+            } else {
+                (MARKER_PADDING + (maxLat - marker.lat) / spanLat * range).roundToInt()
+            }
             marker.copy(x = x.coerceIn(0, 100), y = y.coerceIn(0, 100))
         }
     }
