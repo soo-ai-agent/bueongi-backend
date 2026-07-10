@@ -510,6 +510,86 @@ class ShareControllerTest(
     }
 
     @Test
+    fun `type·provenance 포함 POST route 후 GET route 는 두 값을 그대로 에코`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "type": "safe",
+                  "provenance": "서울시 안심이 CCTV 2026-03 기준"
+                }
+            """.trimIndent()
+        }.andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.expired") { value(false) }
+            jsonPath("$.route.type") { value("safe") }
+            jsonPath("$.route.provenance") { value("서울시 안심이 CCTV 2026-03 기준") }
+        }
+    }
+
+    @Test
+    fun `type·provenance 생략 시 GET route 는 두 값이 null(하위호환)`() {
+        // routeBody 는 type/provenance 를 담지 않는다 — 기존 클라이언트 요청과 동일. 저장/조회가 그대로 동작하고
+        // 두 필드는 null 로 응답돼야 한다(미전송 시 기존 동작 완전 동일 — additive 계약).
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody(secret)
+        }.andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.route.destination.name") { value("집") }
+            jsonPath("$.route.type") { value(null) }
+            jsonPath("$.route.provenance") { value(null) }
+        }
+    }
+
+    @Test
+    fun `허용되지 않은 route type 은 422 INVALID_ROUTE_META`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "type": "scenic"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isUnprocessableEntity() }
+            jsonPath("$.code") { value("INVALID_ROUTE_META") }
+            jsonPath("$.errors[0].field") { value("type") }
+        }
+    }
+
+    @Test
+    fun `길이 초과 provenance 는 422 INVALID_ROUTE_META`() {
+        val (token, secret) = createSharePair()
+        val tooLong = "가".repeat(201) // MAX_ROUTE_PROVENANCE_LENGTH(200) 초과
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "provenance": "$tooLong"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isUnprocessableEntity() }
+            jsonPath("$.code") { value("INVALID_ROUTE_META") }
+            jsonPath("$.errors[0].field") { value("provenance") }
+        }
+    }
+
+    @Test
     fun `GET route 는 시청자로 집계되지 않는다(위치 폴링과 분리)`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {

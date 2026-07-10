@@ -3,6 +3,7 @@ package io.soo.bueongi.api
 import io.soo.bueongi.support.error.ApiFieldError
 import io.soo.bueongi.support.error.InvalidCoordinateException
 import io.soo.bueongi.support.error.InvalidKeywordException
+import io.soo.bueongi.support.error.InvalidRouteMetaException
 import io.soo.bueongi.support.error.OriginRequiredException
 import io.soo.bueongi.support.error.SameOriginDestinationException
 import io.soo.bueongi.support.error.ShareSessionNotFoundException
@@ -163,6 +164,31 @@ class ApiControllerAdvice {
                         field = "destination",
                         message = "도착지는 출발지에서 ${ex.maxMeters / 1000}km 이내여야 합니다.",
                         rejectedValue = ex.distanceMeters,
+                    ),
+                ),
+            )
+        }
+
+    /**
+     * 경로 저장 요청의 선택 메타(type/provenance) 규약 위반 → 422 + `code:"INVALID_ROUTE_META"` + `errors[{field}]`.
+     * 좌표/개수 같은 형식 오류(400 VALIDATION_FAILED)와 달리, 형식은 읽혔으나 값 규약(허용 enum·길이 상한)을 못 지킨
+     * 복구 가능 상태라 422 로 낸다(RouteRequest 의 ORIGIN_REQUIRED/TRIP_TOO_FAR 와 같은 경계-검증→422 결).
+     */
+    @ExceptionHandler(InvalidRouteMetaException::class)
+    fun handleInvalidRouteMeta(ex: InvalidRouteMetaException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            ex.message,
+        ).apply {
+            title = "Invalid Route Metadata"
+            setProperty("code", "INVALID_ROUTE_META")
+            setProperty(
+                "errors",
+                listOf(
+                    ApiFieldError(
+                        field = ex.field,
+                        message = ex.message,
+                        rejectedValue = ex.rejectedValue,
                     ),
                 ),
             )

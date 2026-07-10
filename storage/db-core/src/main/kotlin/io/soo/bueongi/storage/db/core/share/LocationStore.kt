@@ -65,6 +65,16 @@ data class StoredRoute(
     val markers: List<StoredMarker>,
     val totalDistanceM: Int?,
     val totalTimeS: Int?,
+    /**
+     * 경로 종류(safe|fast|main). 앱이 어떤 경로를 저장했는지 보호자 화면에 그대로 노출해 정보 패리티를 맞춘다.
+     * 선택 — 미전송(구세션/미보고)이면 null(Redis JSON 은 필드 누락 시 Kotlin 기본값 null 로 역직렬화되어 하위호환).
+     */
+    val type: String? = null,
+    /**
+     * 시설 데이터 출처·기준일 문구(예: "서울시 안심이 CCTV 2026-03 기준"). 보호자에게 데이터 신뢰 맥락을 보여준다.
+     * 선택 — 미전송이면 null([type] 과 동일한 하위호환 규약).
+     */
+    val provenance: String? = null,
 )
 
 /** 경로 목적지(좌표 + 표시명). */

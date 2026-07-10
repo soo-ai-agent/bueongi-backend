@@ -32,6 +32,16 @@ const val MAX_ROUTE_MARKERS = 300
 /** 허용하는 마커 유형(정규식). start/end 는 프론트가 이미 제외해 보내므로 여기선 안심시설 유형만 받는다. */
 const val ROUTE_MARKER_TYPE_PATTERN = "cctv|bell|store|police|safehouse|lamp"
 
+/**
+ * 경로 종류 허용 집합(safe|fast|main). 선택 필드라 null(미전송)은 허용하고, 값이 있으면 이 집합만 통과시킨다 —
+ * 벗어나면 [io.soo.bueongi.support.error.InvalidRouteMetaException]→422. 도메인 [io.soo.bueongi.domain.route.RouteType]
+ * 와 값이 같지만, 그쪽 from() 은 미상을 SAFE 로 관용 처리하므로(엄격 거부가 목적인 여기와 상반) 재사용하지 않고 명시 집합을 둔다.
+ */
+val ROUTE_TYPE_VALUES = setOf("safe", "fast", "main")
+
+/** 시설 데이터 출처 문구(provenance) 최대 길이(자). 초과 시 422 — 과도한 페이로드/오용을 막되 통상 문구는 넉넉히 담는다. */
+const val MAX_ROUTE_PROVENANCE_LENGTH = 200
+
 /** `POST /share/create` 응답: 발급된 토큰 + 외부 메신저로 공유할 URL + 상한 만료 시각. */
 data class CreateShareResponse(
     /** 공유 URL에 담기는 읽기 전용 토큰(보호자가 위치를 조회). */
@@ -170,6 +180,10 @@ data class RouteContext(
     val totalDistanceM: Int?,
     @JsonProperty("total_time_s")
     val totalTimeS: Int?,
+    /** 경로 종류(safe|fast|main). 저장 시 함께 온 값을 그대로 에코 — 미저장이면 null(보호자 UI 표시 생략). */
+    val type: String? = null,
+    /** 시설 데이터 출처·기준일 문구. 저장된 값을 그대로 에코 — 미저장이면 null. */
+    val provenance: String? = null,
 )
 
 /** 저장 모델([StoredRoute]) → 보호자 응답([RouteContext]) 매핑. */
@@ -192,4 +206,6 @@ fun StoredRoute.toRouteContext(): RouteContext = RouteContext(
     },
     totalDistanceM = totalDistanceM,
     totalTimeS = totalTimeS,
+    type = type,
+    provenance = provenance,
 )
