@@ -129,10 +129,9 @@ class SafeRouteServiceTest {
     }
 
     @Test
-    fun `마커는 회랑 실측이 없어도 그리드 유형(store police safehouse)을 경로 위에 채운다`() {
-        // 회귀 방어: 편의점(store)은 실 공간데이터가 없고, 지구대·안심집은 좁은 30m 회랑을 벗어나면 실측 0이라
-        // 프론트 시설 그리드가 store/police/safehouse=0 으로 떨어졌다(마커만 소비하도록 전환된 뒤 드러난 결함).
-        // 이제 실측 0인 그리드 유형은 /facilities 와 같은 개수 근거로 실제 경로 위에 표시되어야 한다.
+    fun `회랑 실측이 없는 유형은 마커를 지어내지 않는다(정직한 0)`() {
+        // 정직화 계약: 밀도 추정 보완을 폐기했다. 소스에 CCTV 만 있고 store/police/safehouse 실 시설이
+        // 회랑에 없으면, 그 유형은 마커에 나타나지 않는다(0). 편의점(store)은 실 소스 자체가 없어 항상 0.
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
@@ -140,17 +139,10 @@ class SafeRouteServiceTest {
 
         val safe = service(tmap).safeCompare(request).first { it.type == "safe" }
         val markerTypes = safe.markers!!.map { it.type }
-        // 실측(cctv) + 추정 보완(store/police/safehouse)이 함께 마커에 담긴다.
-        assertThat(markerTypes).contains("cctv", "store", "police", "safehouse")
-        // 채워진 시설 마커의 좌표는 실제 경로(출발↔도착) 경계 안에 있다(회랑 밖 이질감 방지).
-        val filled = safe.markers!!.filter { it.type in listOf("store", "police", "safehouse") }
-        assertThat(filled).isNotEmpty()
-        for (m in filled) {
-            assertThat(m.lat).isBetween(minOf(origin.lat, dest.lat), maxOf(origin.lat, dest.lat))
-            assertThat(m.lng).isBetween(minOf(origin.lng, dest.lng), maxOf(origin.lng, dest.lng))
-            assertThat(m.x).isBetween(0, 100)
-            assertThat(m.y).isBetween(0, 100)
-        }
+        // 실측 CCTV 는 있고 출발/도착도 있다.
+        assertThat(markerTypes).contains("start", "end", "cctv")
+        // 추정 보완이 사라졌으므로 실측 0 유형은 마커에 없다.
+        assertThat(markerTypes).doesNotContain("store", "police", "safehouse")
     }
 
     @Test

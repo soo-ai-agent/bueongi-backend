@@ -6,6 +6,8 @@ package io.soo.bueongi.domain.route
  *
  * type: 'start' | 'end' | 'cctv' | 'bell' | 'store' | 'police' | 'safehouse'.
  * (start/end 는 안심시설 집계에서 제외 — 프론트 summarizeSafetyFacilities 와 동일 규칙.)
+ * 'store'(편의점)는 사용자 결정으로 지도에서 제외되어 **실제로는 생성되지 않는다** — 프론트 계약 호환을 위해
+ * 유형 문자열·요약 필드만 남겨 두고(요약 store 는 항상 0), 마커로는 절대 나오지 않는다.
  * safehouse(여성안심지킴이집·B-2)는 지정 거점일 뿐 영업시간 정보가 없어, 프론트에서 별도 주의 문구로 안내한다.
  */
 data class FacilityPoi(
