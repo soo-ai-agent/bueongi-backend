@@ -142,7 +142,12 @@ class SafeRouteService(
                     path = candidate.path,
                     steps = candidate.steps,
                     score = scoredRoute.score.score,
-                    markers = markerBuilder.buildMarkers(origin, destination, candidate.path),
+                    markers = markerBuilder.buildMarkers(
+                        origin,
+                        destination,
+                        candidate.path,
+                        RouteType.from(scoredRoute.type),
+                    ),
                     // P0-4 점수 근거 — 프론트가 "CCTV n/km · 비상벨 n …"으로 그대로 렌더한다.
                     breakdown = ScoreBreakdown(
                         routeKm = breakdown.routeKm,

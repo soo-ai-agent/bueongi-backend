@@ -129,6 +129,57 @@ class SafeRouteServiceTest {
     }
 
     @Test
+    fun `마커는 회랑 실측이 없어도 그리드 유형(store police safehouse)을 경로 위에 채운다`() {
+        // 회귀 방어: 편의점(store)은 실 공간데이터가 없고, 지구대·안심집은 좁은 30m 회랑을 벗어나면 실측 0이라
+        // 프론트 시설 그리드가 store/police/safehouse=0 으로 떨어졌다(마커만 소비하도록 전환된 뒤 드러난 결함).
+        // 이제 실측 0인 그리드 유형은 /facilities 와 같은 개수 근거로 실제 경로 위에 표시되어야 한다.
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
+
+        val safe = service(tmap).safeCompare(request).first { it.type == "safe" }
+        val markerTypes = safe.markers!!.map { it.type }
+        // 실측(cctv) + 추정 보완(store/police/safehouse)이 함께 마커에 담긴다.
+        assertThat(markerTypes).contains("cctv", "store", "police", "safehouse")
+        // 채워진 시설 마커의 좌표는 실제 경로(출발↔도착) 경계 안에 있다(회랑 밖 이질감 방지).
+        val filled = safe.markers!!.filter { it.type in listOf("store", "police", "safehouse") }
+        assertThat(filled).isNotEmpty()
+        for (m in filled) {
+            assertThat(m.lat).isBetween(minOf(origin.lat, dest.lat), maxOf(origin.lat, dest.lat))
+            assertThat(m.lng).isBetween(minOf(origin.lng, dest.lng), maxOf(origin.lng, dest.lng))
+            assertThat(m.x).isBetween(0, 100)
+            assertThat(m.y).isBetween(0, 100)
+        }
+    }
+
+    @Test
+    fun `회랑에 실 지구대가 있으면 추정으로 중복 채우지 않는다`() {
+        // 실 데이터 우선: 회랑 안에 실 지구대가 있으면 그 실좌표(메타 포함)만 쓰고 추정 보완은 하지 않는다.
+        val police = listOf(FacilityPoint(FacilityType.POLICE, 37.5, 127.005, name = "역삼지구대"))
+        val richSource = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv, FacilityType.POLICE to police))
+        val svc = SafeRouteService(
+            routeService,
+            mock<TmapRouteClient>().also {
+                whenever(it.isEnabled).thenReturn(true)
+                whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
+                whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
+            },
+            SafetyScorer(richSource),
+            SafeDetourPlanner(richSource),
+            richSource,
+            RouteMarkerBuilder(richSource),
+            RouteCandidateMerger(),
+        )
+
+        val safe = svc.safeCompare(request).first { it.type == "safe" }
+        val policeMarkers = safe.markers!!.filter { it.type == "police" }
+        // 실 지구대 1개만(추정 보완 없음) — 이름(메타)이 보존된다.
+        assertThat(policeMarkers).hasSize(1)
+        assertThat(policeMarkers.first().name).isEqualTo("역삼지구대")
+    }
+
+    @Test
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
