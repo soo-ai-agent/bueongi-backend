@@ -4,6 +4,7 @@ import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
@@ -26,6 +27,11 @@ import kotlin.math.roundToInt
 @Component
 class RouteMarkerBuilder(
     private val repository: FacilitySpatialSource,
+    /**
+     * 운영 알림(없으면 null 무해) — 시설 인덱스가 **통째로 비어(총 적재 0)** 마커를 구조적으로 만들 수 없을 때만 쓴다.
+     * "회랑에 실제 시설이 없어 정상적으로 0"인 경우(적재량>0)에는 알리지 않는다([alertIfIndexEmpty] 참고).
+     */
+    private val alertNotifier: AlertNotifier? = null,
 ) {
 
     fun buildMarkers(
@@ -33,6 +39,10 @@ class RouteMarkerBuilder(
         destination: GeoPoint,
         path: List<GeoPoint>,
     ): List<FacilityPoi> {
+        // 시설 데이터 제공 실패(인덱스 적재 실패/부재)를 회랑-정상-0 과 구분해 알린다. 마커 생성 자체는 계속한다
+        // (start/end 는 항상 나가 지도가 그려진다) — 알림은 부수효과일 뿐 응답 계약·결정성에 영향 없다.
+        alertIfIndexEmpty()
+
         val corridor = SafetyScorer.DEFAULT_CORRIDOR_METERS
         val raw = ArrayList<FacilityPoi>()
         raw.add(FacilityPoi(type = "start", x = 0, y = 0, lat = origin.lat, lng = origin.lng))
@@ -81,6 +91,26 @@ class RouteMarkerBuilder(
             }
             marker.copy(x = x.coerceIn(0, 100), y = y.coerceIn(0, 100))
         }
+    }
+
+    /**
+     * 시설 데이터 제공 실패 감지 — 마커 대상 유형의 **총 적재량이 0**이면 인덱스 자체가 비어 있다(파일/원천 적재 실패
+     * 또는 데이터 부재). 이 경우 어떤 회랑을 질의해도 구조적으로 0이라 운영 이상으로 알린다. 반대로 적재량>0인데
+     * 특정 회랑만 0인 것은 "실제로 그 경로변에 시설이 없는" **정직한 0**이므로 알리지 않는다.
+     *
+     * 즉 판정은 (총 적재량 0) 대 (특정 회랑 0)의 구분이다 — 전자만 장애다. 알림은 부수효과라 반환 마커에 영향 없다.
+     * key 를 상수로 고정해 요청마다의 알림 폭주를 [AlertNotifier] 스로틀(기본 10분)로 억제한다.
+     */
+    private fun alertIfIndexEmpty() {
+        val notifier = alertNotifier ?: return
+        val totalLoaded = MARKER_TYPES.sumOf { (_, facilityType) -> repository.index(facilityType).size }
+        if (totalLoaded > 0) return
+        notifier.notify(
+            key = "facility-index-empty",
+            title = "안심시설 데이터 제공 실패",
+            detail = "시설 인덱스 총 적재 0(적재 실패/부재) — /api/routes/facilities·/api/routes/safe-compare 의 " +
+                "경로변 시설 마커를 생성할 수 없음. 데이터 적재/원천 확인 필요",
+        )
     }
 
     private companion object {
