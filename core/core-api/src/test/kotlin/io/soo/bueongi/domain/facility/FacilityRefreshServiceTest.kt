@@ -7,6 +7,7 @@ import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -156,6 +157,25 @@ class FacilityRefreshServiceTest {
 
         assertThat(result[FacilityType.CCTV]).isEqualTo(1)
         assertThat(store.replaced[FacilityType.CCTV]!!.map { it.name }).containsExactly("유효")
+    }
+
+    @Test
+    fun `부수효과 - refreshAll 종료 시 반환 결과를 상태 홀더에 기록한다`() {
+        enableDataGoKr()
+        whenever(dataGoKr.fetchCctv()).thenReturn(listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)))
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null) // 수집 실패 → kept(count=null)
+        whenever(dataGoKr.fetchSafehouses()).thenReturn(listOf(DataGoKrPoint(lat = 37.6, lng = 127.1)))
+        val holder = FacilityRefreshStatusStore()
+        val serviceWithHolder = FacilityRefreshService(
+            dataGoKr, safemap, store, notifier, refreshStatusStore = holder,
+        )
+
+        serviceWithHolder.refreshAll()
+
+        assertThat(holder.findByType(FacilityType.CCTV)?.replacedCount).isEqualTo(1) // replaced
+        assertThat(holder.findByType(FacilityType.BELL)?.replacedCount).isNull() // kept
+        assertThat(holder.findByType(FacilityType.BELL)).isNotNull // 기록은 됨(never 아님)
+        assertThat(holder.findByType(FacilityType.POLICE)).isNull() // 키 없는 원천 → never
     }
 
     @Test

@@ -9,6 +9,7 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.LoggerFactory
@@ -38,6 +39,8 @@ class FacilityRefreshService(
     private val alertNotifier: AlertNotifier? = null,
     /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 갱신 동작은 불변. */
     private val apiCallLogStore: ApiCallLogStore? = null,
+    /** 관리자 상태 조회용 마지막 갱신 결과 홀더(없으면 null 무해) — 순수 부수효과, 반환/로그 흐름 불변. */
+    private val refreshStatusStore: FacilityRefreshStatusStore? = null,
 ) {
     private val log = LoggerFactory.getLogger(FacilityRefreshService::class.java)
 
@@ -80,6 +83,7 @@ class FacilityRefreshService(
             result.entries.joinToString(", ") { (type, count) -> "${type.cdnType}=${count ?: "유지"}" }
                 .ifEmpty { "대상 없음" },
         )
+        refreshStatusStore?.record(result, System.currentTimeMillis())
         return result
     }
 

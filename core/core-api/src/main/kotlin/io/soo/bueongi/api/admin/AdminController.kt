@@ -2,6 +2,8 @@ package io.soo.bueongi.api.admin
 
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.ApiStatusSummary
+import io.soo.bueongi.domain.admin.FacilityStatusService
+import io.soo.bueongi.domain.admin.FacilityStatusSummary
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminController(
     private val apiCallLogStore: ApiCallLogStore,
     private val apiStatusService: ApiStatusService,
+    private val facilityStatusService: FacilityStatusService,
 ) {
 
     /** GET /api/admin/me → 현재 관리자 principal(userId)과 권한 목록. */
@@ -51,6 +54,13 @@ class AdminController(
      */
     @GetMapping("/api-status")
     fun apiStatus(): ApiStatusSummary = apiStatusService.summarize()
+
+    /**
+     * GET /api/admin/facility-status → 안심시설 종류별 데이터 현황([FacilityStatusSummary]).
+     * 적재 건수·마지막 라이브 갱신 결과·CDN 신선도를 집계해 돌려준다(변환만).
+     */
+    @GetMapping("/facility-status")
+    fun facilityStatus(): FacilityStatusSummary = facilityStatusService.summarize()
 }
 
 data class AdminIdentity(
