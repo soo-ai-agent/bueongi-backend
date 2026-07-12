@@ -11,6 +11,11 @@ import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
 import io.soo.bueongi.storage.db.core.facility.SafePath
+import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
+import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.storage.db.core.share.ShareSession
+import io.soo.bueongi.support.monitoring.AlertNotifier
+import io.soo.bueongi.support.monitoring.AlertRecord
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -80,6 +85,26 @@ class ApiLogsControllerTest(
             }
     }
 
+    @Test
+    fun `share-status 는 활성 세션 수를 반환한다`() {
+        mockMvc.get("/api/admin/share-status")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.activeSessions") { value(3) }
+            }
+    }
+
+    @Test
+    fun `alerts 는 최근 장애 이력을 배열로 반환한다`() {
+        mockMvc.get("/api/admin/alerts")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.alerts[0].key") { value("tmap-route-fallback") }
+                jsonPath("$.alerts[0].title") { value("Tmap 경로 API 실패") }
+                jsonPath("$.alerts[0].atEpochMs") { isNumber() }
+            }
+    }
+
     @TestConfiguration
     class FakeStoreConfig {
         @Bean
@@ -111,6 +136,28 @@ class ApiLogsControllerTest(
                 record(mapOf(FacilityType.CCTV to 2), atEpochMs = 1L)
             }
             return FacilityStatusService(source, holder)
+        }
+
+        @Bean
+        fun locationStore(): LocationStore = InMemoryLocationStore(java.time.Clock.systemUTC()).apply {
+            repeat(3) { i ->
+                save(
+                    ShareSession(
+                        token = "tok$i",
+                        ownerSecret = "sek",
+                        createdAt = java.time.Instant.now(),
+                        expiresAt = java.time.Instant.now().plusSeconds(3600),
+                    ),
+                )
+            }
+        }
+
+        @Bean
+        fun alertNotifier(): AlertNotifier = object : AlertNotifier {
+            override val isEnabled = false
+            override fun notify(key: String, title: String, detail: String) = Unit
+            override fun findRecentAlerts(limit: Int): List<AlertRecord> =
+                listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
         }
 
         companion object {

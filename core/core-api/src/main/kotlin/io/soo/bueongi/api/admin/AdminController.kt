@@ -8,6 +8,10 @@ import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
+import io.soo.bueongi.support.monitoring.AlertNotifier
+import io.soo.bueongi.support.monitoring.AlertRecord
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -25,6 +29,8 @@ class AdminController(
     private val apiCallLogStore: ApiCallLogStore,
     private val apiStatusService: ApiStatusService,
     private val facilityStatusService: FacilityStatusService,
+    private val locationStore: LocationStore,
+    private val alertNotifier: AlertNotifier,
 ) {
 
     /** GET /api/admin/me → 현재 관리자 principal(userId)과 권한 목록. */
@@ -61,7 +67,33 @@ class AdminController(
      */
     @GetMapping("/facility-status")
     fun facilityStatus(): FacilityStatusSummary = facilityStatusService.summarize()
+
+    /** GET /api/admin/share-status → 현재 활성(상한 미만료) 위치공유 세션 수. */
+    @GetMapping("/share-status")
+    fun shareStatus(): ShareStatusResponse = ShareStatusResponse(activeSessions = locationStore.countActiveSessions())
+
+    /**
+     * GET /api/admin/alerts?limit= → 최근 장애 알림 이력(최신순).
+     * limit 는 [1, [ALERT_HISTORY_MAX_LIMIT]] 로 절삭(기본 100).
+     */
+    @GetMapping("/alerts")
+    fun alerts(
+        @RequestParam(required = false, defaultValue = "100") limit: Int,
+    ): AlertsResponse {
+        val bounded = limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT)
+        return AlertsResponse(alerts = alertNotifier.findRecentAlerts(bounded))
+    }
 }
+
+/** share-status 응답 — 현재 활성 공유 세션 수. */
+data class ShareStatusResponse(
+    val activeSessions: Int,
+)
+
+/** alerts 응답 — 최근 장애 알림 이력(최신순). */
+data class AlertsResponse(
+    val alerts: List<AlertRecord>,
+)
 
 data class AdminIdentity(
     val userId: Long,

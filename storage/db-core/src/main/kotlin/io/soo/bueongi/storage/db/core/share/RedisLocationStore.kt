@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Clock
 import java.time.Duration
@@ -131,6 +132,20 @@ class RedisLocationStore(
 
     override fun isWatched(token: String): Boolean = redis.hasKey(viewerKey(token)) == true
 
+    override fun countActiveSessions(): Int {
+        // KEYS 금지 — SCAN 으로 비차단 순회하며 세션 키(share:{token})만 센다. 만료 키는 native TTL 로 이미 없다.
+        // location/route/viewer 키는 패턴에서 제외되어 중복 카운트되지 않는다.
+        var count = 0
+        redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
+            .use { cursor ->
+                while (cursor.hasNext()) {
+                    cursor.next()
+                    count++
+                }
+            }
+        return count
+    }
+
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {
         val remaining = Duration.between(clock.instant(), expiresAt)
@@ -146,6 +161,12 @@ class RedisLocationStore(
         fun locationKey(token: String) = "location:$token"
         fun routeKey(token: String) = "route:$token"
         fun viewerKey(token: String) = "viewer:$token"
+
+        /** SCAN 매칭 패턴 — 세션 키만(location/route/viewer 제외). token 은 콜론 없는 불투명 문자열이라 `share:*` 로 정확히 걸린다. */
+        const val SESSION_KEY_PATTERN = "share:*"
+
+        /** SCAN 배치 힌트(라운드트립당 반환 힌트) — 서버 부하와 왕복 횟수의 균형. */
+        const val SCAN_BATCH = 200L
 
         const val FIELD_CREATED_AT = "created_at"
         const val FIELD_EXPIRES_AT = "expires_at"

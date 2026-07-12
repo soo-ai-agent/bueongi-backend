@@ -11,7 +11,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.redis.core.Cursor
 import org.springframework.data.redis.core.HashOperations
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.ValueOperations
 import java.time.Duration
@@ -201,6 +203,17 @@ class RedisLocationStoreTest {
         whenever(valueOps.get("route:tok")).thenReturn(null)
 
         assertNull(store.findByToken("tok")!!.route)
+    }
+
+    @Test
+    fun `countActiveSessions 는 share 키를 SCAN 으로 세고 KEYS 를 쓰지 않는다`() {
+        val cursor = mock<Cursor<String>>()
+        whenever(cursor.hasNext()).thenReturn(true, true, false) // share:a, share:b
+        whenever(cursor.next()).thenReturn("share:a", "share:b")
+        whenever(redis.scan(any<ScanOptions>())).thenReturn(cursor)
+
+        assertEquals(2, store.countActiveSessions())
+        verify(cursor).close() // .use 로 커서를 닫는다
     }
 
     private companion object {

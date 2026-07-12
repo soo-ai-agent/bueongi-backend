@@ -58,10 +58,15 @@ class SlackAlertNotifier internal constructor(
     private val restClient = restClientBuilder.clone().build()
     private val lastSentAtMs = ConcurrentHashMap<String, Long>()
 
+    /** 장애 이력 링버퍼 — 자기 자신을 락으로 삼아 동기화한다. 최신 [ALERT_HISTORY_CAP]건만 보관(오래된 것부터 폐기). */
+    private val recentAlerts = ArrayDeque<AlertRecord>()
+
     override val isEnabled: Boolean
         get() = webhookUrl.isNotEmpty()
 
     override fun notify(key: String, title: String, detail: String) {
+        // 이력은 발송 스로틀·활성 여부와 독립하게 매 호출 기록한다 — 스로틀로 Slack 전송이 생략돼도 "장애 발생"은 남긴다.
+        recordAlert(key, title, detail)
         if (!isEnabled) {
             log.debug("Slack 알림 비활성(webhook 미설정) — 무시: {}", key)
             return
@@ -83,6 +88,22 @@ class SlackAlertNotifier internal constructor(
         executor.execute { send(title, detail) }
     }
 
+    override fun findRecentAlerts(limit: Int): List<AlertRecord> {
+        val snapshot = synchronized(recentAlerts) { recentAlerts.toList() }
+        // 버퍼는 오래된→최신 순으로 쌓이므로 뒤집어 최신순으로 돌려준다.
+        return snapshot.asReversed().take(limit)
+    }
+
+    private fun recordAlert(key: String, title: String, detail: String) {
+        val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
+        synchronized(recentAlerts) {
+            recentAlerts.addLast(record)
+            while (recentAlerts.size > ALERT_HISTORY_CAP) {
+                recentAlerts.removeFirst()
+            }
+        }
+    }
+
     private fun send(title: String, detail: String) {
         try {
             restClient.post()
@@ -99,6 +120,9 @@ class SlackAlertNotifier internal constructor(
     }
 
     private companion object {
+        /** 장애 이력 링버퍼 용량 — 최신 이 개수만 보관한다. */
+        const val ALERT_HISTORY_CAP = 200
+
         fun newDaemonSingleThreadExecutor(): Executor = Executors.newSingleThreadExecutor { r ->
             Thread(r, "slack-alert").apply { isDaemon = true }
         }

@@ -92,4 +92,20 @@ class InMemoryLocationStoreTest {
         store.deleteByToken("abc")
         assertFalse(store.isWatched("abc"))
     }
+
+    @Test
+    fun `countActiveSessions 는 저장된 미만료 세션 수를 센다`() {
+        assertEquals(0, store.countActiveSessions())
+        store.save(session("a", clock.now.plusSeconds(3600)))
+        store.save(session("b", clock.now.plusSeconds(3600)))
+        assertEquals(2, store.countActiveSessions())
+    }
+
+    @Test
+    fun `countActiveSessions 는 만료 세션을 제외한다(Redis TTL 동치)`() {
+        store.save(session("live", clock.now.plusSeconds(3600)))
+        store.save(session("dead", clock.now.plusSeconds(10)))
+        clock.advanceSeconds(20) // dead 만 만료 시각 통과
+        assertEquals(1, store.countActiveSessions())
+    }
 }

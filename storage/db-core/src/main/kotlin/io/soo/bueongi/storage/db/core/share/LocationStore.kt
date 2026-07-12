@@ -133,6 +133,12 @@ interface LocationStore {
 
     /** 최근 유효시간 내에 보호자 조회가 있었는지(=현재 누군가 보고 있는지). */
     fun isWatched(token: String): Boolean
+
+    /**
+     * 현재 활성(상한 미만료) 공유 세션 수 — 관리자 페이지 계측용. 세션 식별 키(`share:{token}`) 기준 1회씩만 센다
+     * (위치/경로/시청 키는 제외). Redis 는 native TTL 로 만료 키가 이미 없고, 인메모리는 만료 세션을 제외해 동치 거동을 맞춘다.
+     */
+    fun countActiveSessions(): Int
 }
 
 /**

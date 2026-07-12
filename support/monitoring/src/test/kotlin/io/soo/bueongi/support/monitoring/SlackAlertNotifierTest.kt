@@ -86,4 +86,40 @@ class SlackAlertNotifierTest {
 
         assertThatCode { notifier.notify("k", "t", "d") }.doesNotThrowAnyException()
     }
+
+    @Test
+    fun `이력 - notify 마다 기록하고 최신순으로 반환한다(비활성이어도 기록)`() {
+        val (notifier, _) = bind(url = " ") // 비활성 — 발송은 없지만 이력은 남는다
+        now = 100L
+        notifier.notify("k1", "t1", "d1")
+        now = 200L
+        notifier.notify("k2", "t2", "d2")
+
+        val recent = notifier.findRecentAlerts(10)
+        assertThat(recent.map { it.key }).containsExactly("k2", "k1") // 최신순
+        assertThat(recent[0].atEpochMs).isEqualTo(200L) // 시각도 nowMs 로 기록
+    }
+
+    @Test
+    fun `이력 - 스로틀로 발송이 억제돼도 이력은 매 호출 남는다(스로틀 독립)`() {
+        val (notifier, server) = bind(throttleMinutes = 10)
+        server.expect(ExpectedCount.times(1), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
+
+        notifier.notify("k", "t", "d") // 발송 1
+        notifier.notify("k", "t", "d") // 억제(같은 key, 창 내) — 발송은 1회
+
+        server.verify()
+        assertThat(notifier.findRecentAlerts(10)).hasSize(2) // 이력은 2건
+    }
+
+    @Test
+    fun `이력 - 용량(200)을 넘으면 오래된 것부터 폐기한다(capped)`() {
+        val (notifier, _) = bind(url = " ")
+        repeat(250) { notifier.notify("k$it", "t", "d") }
+
+        val recent = notifier.findRecentAlerts(1000)
+        assertThat(recent).hasSize(200) // 링버퍼 상한
+        assertThat(recent.first().key).isEqualTo("k249") // 가장 최근
+        assertThat(recent.last().key).isEqualTo("k50") // 오래된 k0~k49 는 폐기
+    }
 }

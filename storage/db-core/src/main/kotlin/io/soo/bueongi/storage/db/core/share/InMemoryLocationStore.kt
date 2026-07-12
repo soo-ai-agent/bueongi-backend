@@ -52,4 +52,10 @@ class InMemoryLocationStore(
         viewers.remove(token, last) // 유효시간 경과 → lazy 제거(Redis TTL 동치).
         return false
     }
+
+    override fun countActiveSessions(): Int {
+        // 만료 세션은 lazy 제거 전이라 map 에 남아 있을 수 있으므로 세지 않는다(Redis native TTL 카운트와 동치).
+        val now = clock.instant()
+        return sessions.values.count { !it.isExpired(now) }
+    }
 }

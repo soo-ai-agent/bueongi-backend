@@ -14,4 +14,22 @@ interface AlertNotifier {
     val isEnabled: Boolean
 
     fun notify(key: String, title: String, detail: String)
+
+    /**
+     * 최근 발생한 장애 알림 이력(최신순, 최대 [limit]건) — 관리자 페이지 조회용.
+     * 발송 스로틀·활성 여부와 독립하게 "장애 발생" 시점을 기록하는 구현만 실제 값을 돌려준다.
+     * 기본은 빈 목록 — 이력을 보관하지 않는 목/단순 구현은 무영향(순수 추가).
+     */
+    fun findRecentAlerts(limit: Int): List<AlertRecord> = emptyList()
 }
+
+/** 장애 알림 이력 1건 — 발생 시각(epoch ms)·스로틀 key·제목·상세. */
+data class AlertRecord(
+    val atEpochMs: Long,
+    val key: String,
+    val title: String,
+    val detail: String,
+)
+
+/** alerts 조회 상한(관리자 API limit 절삭용). 버퍼 용량(200)보다 크게 둬도 실제 반환은 보관분까지다. */
+const val ALERT_HISTORY_MAX_LIMIT = 500

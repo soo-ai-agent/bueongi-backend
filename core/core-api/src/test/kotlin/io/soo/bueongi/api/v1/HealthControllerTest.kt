@@ -113,4 +113,5 @@ private class StubLocationStore(override val backend: String) : LocationStore {
     override fun deleteByToken(token: String) = throw AssertionError("health 는 delete 를 호출하지 않는다")
     override fun markViewed(token: String) = throw AssertionError("health 는 markViewed 를 호출하지 않는다")
     override fun isWatched(token: String): Boolean = throw AssertionError("health 는 isWatched 를 호출하지 않는다")
+    override fun countActiveSessions(): Int = throw AssertionError("health 는 countActiveSessions 를 호출하지 않는다")
 }
