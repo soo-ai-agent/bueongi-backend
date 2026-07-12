@@ -17,6 +17,12 @@ spring:
 
 # 안심 귀가 도메인 설정(부팅 모듈 소유분 — API 계층·공유 URL).
 bueongi:
+  jwt:
+    # 관리자 인증(/api/admin/**)용 RS256 공개키. soo-auth-service 발급 토큰을 오프라인 검증한다.
+    # 운영은 반드시 JWT_PUBLIC_KEY 로 주입(미주입 시 JwtProperties fail-fast 로 startup 중단).
+    public-key: ${JWT_PUBLIC_KEY:}
+    # 발급자 식별(auth-service 규약). 현재 검증엔 미사용(공개키 서명 검증이 신뢰근거).
+    issuer: ${JWT_ISSUER:soo-auth}
   cors:
     # 프론트 dev 서버(strictPort=3619). dev 가 https(자체서명)로 전환되어 https origin 이 기본이고,
     # 과거 http dev 도 함께 허용한다. 운영 도메인은 환경변수로 덮어쓴다.

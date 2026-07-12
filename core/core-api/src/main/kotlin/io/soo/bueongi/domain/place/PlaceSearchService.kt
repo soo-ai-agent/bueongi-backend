@@ -1,5 +1,7 @@
 package io.soo.bueongi.domain.place
 
+import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.support.error.InvalidKeywordException
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.LoggerFactory
@@ -19,6 +21,8 @@ class PlaceSearchService(
     private val remoteProvider: RemotePlaceProvider,
     /** 운영 알림(없으면 null 무해) — 실연동 검색이 켜져 있는데 실패해 시드로 폴백할 때만 쓴다. */
     private val alertNotifier: AlertNotifier? = null,
+    /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 검색 동작은 불변. */
+    private val apiCallLogStore: ApiCallLogStore? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -37,7 +41,10 @@ class PlaceSearchService(
         }
         if (!remoteProvider.isEnabled) return seedProvider.search(trimmed)
         return try {
-            remoteProvider.search(trimmed)
+            // ponytail: service 레벨 계측 — statusCode/resultCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능
+            apiCallLogStore.measure(provider = "KAKAO", endpoint = "search", success = { true }) {
+                remoteProvider.search(trimmed)
+            }
         } catch (e: Exception) {
             log.warn("외부 장소 검색 실패 → 시드 폴백 (keyword='{}'): {}", trimmed, e.message)
             // 검색어는 사용자 입력이라 알림에 싣지 않는다(개인정보 최소화) — 원인만.

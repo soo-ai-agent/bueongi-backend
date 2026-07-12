@@ -14,6 +14,7 @@ import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScorer
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
@@ -32,6 +33,8 @@ import org.springframework.test.web.servlet.post
  * 폴백 계약(safe/main/fast)을 고정한다. (실 Tmap/점수/우회는 [SafeRouteServiceTest] 등에서 목으로 검증.)
  */
 @WebMvcTest(RouteController::class)
+// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(
     RouteService::class,
     RouteFacilityService::class,

@@ -8,6 +8,7 @@ import io.soo.bueongi.storage.db.core.share.ShareSession
 import java.time.Clock
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -25,6 +26,7 @@ class HealthControllerTest {
 
     /** 외부 키 미설정(remote disabled) → placeSource="seed". */
     @WebMvcTest(HealthController::class)
+    @AutoConfigureMockMvc(addFilters = false)
     @Import(HealthControllerSeedTest.DisabledRemoteConfig::class)
     @ActiveProfiles("test")
     class HealthControllerSeedTest(
@@ -59,6 +61,7 @@ class HealthControllerTest {
 
     /** 외부 키 설정(remote enabled) → placeSource="live", 키 값은 응답 어디에도 없음. */
     @WebMvcTest(HealthController::class)
+    @AutoConfigureMockMvc(addFilters = false)
     @Import(HealthControllerLiveTest.EnabledRemoteConfig::class)
     @ActiveProfiles("test")
     class HealthControllerLiveTest(

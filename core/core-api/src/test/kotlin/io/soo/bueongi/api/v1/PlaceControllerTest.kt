@@ -7,6 +7,7 @@ import io.soo.bueongi.domain.place.SeedPlaceProvider
 import io.soo.bueongi.api.ApiControllerAdvice
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -20,6 +21,8 @@ import org.springframework.test.web.servlet.get
  * 외부 키 없는 환경(remote disabled)을 가정 — 슬라이스에 네트워크 autoconfig 를 끌어오지 않는다.
  */
 @WebMvcTest(PlaceController::class)
+// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(
     PlaceSearchService::class,
     SeedPlaceProvider::class,

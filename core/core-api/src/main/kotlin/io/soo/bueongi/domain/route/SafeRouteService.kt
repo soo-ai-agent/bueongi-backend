@@ -7,6 +7,8 @@ import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
+import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
@@ -39,6 +41,8 @@ class SafeRouteService(
     private val candidateMerger: RouteCandidateMerger,
     /** 운영 알림(없으면 null 무해) — Tmap 키가 있는데도 전부 실패해 폴백으로 전환될 때만 쓴다. */
     private val alertNotifier: AlertNotifier? = null,
+    /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 경로 산출은 불변. */
+    private val apiCallLogStore: ApiCallLogStore? = null,
 ) {
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
@@ -49,7 +53,16 @@ class SafeRouteService(
         val destination = query.destination
         val budget = query.safetyPreference.detourBudget
 
-        val base = tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
+        // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
+        // 경유(fetchRouteVia) 다건 호출은 개별 계측하지 않는다(요청당 다수라 로그 폭주 방지) — 대표 fetchRoutes 만 기록.
+        val base = apiCallLogStore.measure(
+            provider = "TMAP",
+            endpoint = "route",
+            success = { it.isNotEmpty() },
+            detail = { if (it.isEmpty()) "경로 후보 0건 — 폴백" else null },
+        ) {
+            tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
+        }
         // Tmap 전부 실패 → 폴백(추천 끊김 방지). 키가 설정된 상태의 전면 실패는 운영 이상 신호라 알린다.
         if (base.isEmpty()) {
             alertNotifier?.notify(

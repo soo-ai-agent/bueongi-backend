@@ -10,6 +10,7 @@ import io.soo.bueongi.storage.db.core.share.LocationStore
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -26,6 +27,8 @@ import org.springframework.test.web.servlet.post
  * 만료(expired)·404·400 분기를 결정론적으로 검증한다(공통 [io.soo.bueongi.api.ApiControllerAdvice] 가 슬라이스에 포함됨).
  */
 @WebMvcTest(ShareController::class)
+// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ShareControllerTest.ShareTestConfig::class)
 @ActiveProfiles("test")
 class ShareControllerTest(

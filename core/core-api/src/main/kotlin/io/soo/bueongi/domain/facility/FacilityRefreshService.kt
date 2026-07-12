@@ -5,6 +5,8 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
@@ -34,6 +36,8 @@ class FacilityRefreshService(
     private val liveStore: FacilityLiveStore,
     /** 운영 알림(없으면 null 무해) — 키가 있는 원천의 갱신 실패/0건만 알린다(미설정 건너뜀은 정상이라 제외). */
     private val alertNotifier: AlertNotifier? = null,
+    /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 갱신 동작은 불변. */
+    private val apiCallLogStore: ApiCallLogStore? = null,
 ) {
     private val log = LoggerFactory.getLogger(FacilityRefreshService::class.java)
 
@@ -49,20 +53,24 @@ class FacilityRefreshService(
         val result = LinkedHashMap<FacilityType, Int?>()
         if (dataGoKrClient.isEnabled) {
             result[FacilityType.CCTV] = refresh(FacilityType.CCTV) {
-                dataGoKrClient.fetchCctv()?.mapNotNull { it.toFacilityPoint(FacilityType.CCTV) }
+                measureFetch("DATAGOKR", "cctv") { dataGoKrClient.fetchCctv() }
+                    ?.mapNotNull { it.toFacilityPoint(FacilityType.CCTV) }
             }
             result[FacilityType.BELL] = refresh(FacilityType.BELL) {
-                dataGoKrClient.fetchEmergencyBells()?.mapNotNull { it.toFacilityPoint(FacilityType.BELL) }
+                measureFetch("DATAGOKR", "bell") { dataGoKrClient.fetchEmergencyBells() }
+                    ?.mapNotNull { it.toFacilityPoint(FacilityType.BELL) }
             }
             result[FacilityType.SAFEHOUSE] = refresh(FacilityType.SAFEHOUSE) {
-                dataGoKrClient.fetchSafehouses()?.mapNotNull { it.toFacilityPoint(FacilityType.SAFEHOUSE) }
+                measureFetch("DATAGOKR", "safehouse") { dataGoKrClient.fetchSafehouses() }
+                    ?.mapNotNull { it.toFacilityPoint(FacilityType.SAFEHOUSE) }
             }
         } else {
             log.info("data.go.kr 키 미설정 — CCTV·비상벨·안심지킴이집 라이브 갱신 건너뜀(파일 적재분 유지)")
         }
         if (safemapClient.isEnabled) {
             result[FacilityType.POLICE] = refresh(FacilityType.POLICE) {
-                safemapClient.fetchPoliceFacilities()?.map { it.toFacilityPoint() }
+                measureFetch("SAFEMAP", "police") { safemapClient.fetchPoliceFacilities() }
+                    ?.map { it.toFacilityPoint() }
             }
         } else {
             log.info("safemap 키 미설정 — 치안시설(파출소) 라이브 갱신 건너뜀(파일 적재분 유지)")
@@ -74,6 +82,19 @@ class FacilityRefreshService(
         )
         return result
     }
+
+    /**
+     * 외부 수집 호출을 접속 내역에 계측한다 — datagokr/safemap 은 실패 시 예외가 아니라 null 을 주므로 success=(결과!=null).
+     * ponytail: service 레벨 계측 — datagokr resultCode·HTTP status 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능
+     */
+    private inline fun <T> measureFetch(provider: String, endpoint: String, fetch: () -> T?): T? =
+        apiCallLogStore.measure(
+            provider = provider,
+            endpoint = endpoint,
+            success = { it != null },
+            detail = { if (it == null) "수집 실패 또는 0건" else null },
+            block = fetch,
+        )
 
     private fun refresh(type: FacilityType, fetch: () -> List<FacilityPoint>?): Int? {
         val points = fetch()

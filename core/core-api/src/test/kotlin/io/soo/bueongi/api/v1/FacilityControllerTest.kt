@@ -9,6 +9,7 @@ import io.soo.bueongi.api.ApiControllerAdvice
 import io.soo.bueongi.domain.facility.NearestPoliceFinder
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -21,6 +22,8 @@ import org.springframework.test.web.servlet.get
  * HTTP 계약을 고정한다 — 위급 기능 폴백 API라 계약이 흔들리면 프론트 긴급 시트가 조용히 깨진다.
  */
 @WebMvcTest(FacilityController::class)
+// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class, NearestPoliceFinder::class, FacilityControllerTest.FakeSourceConfig::class)
 class FacilityControllerTest(
     @Autowired private val mockMvc: MockMvc,

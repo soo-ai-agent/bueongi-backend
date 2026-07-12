@@ -12,6 +12,7 @@ import io.soo.bueongi.domain.route.RouteMarkerBuilder
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
@@ -26,6 +27,9 @@ import org.springframework.test.web.servlet.post
  * [RouteController] 를 통해 실제 `@Valid` 흐름을 태운다.
  */
 @WebMvcTest(RouteController::class)
+// 관리자 인증 도입 후 spring-security 기본 필터체인이 슬라이스를 잠그므로, 컨트롤러 계약만 검증하는
+// 이 슬라이스는 보안 필터를 끈다(실 보안 게이트는 AdminAuthGateTest 가 end-to-end 로 검증).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(
     RouteService::class,
     RouteFacilityService::class,

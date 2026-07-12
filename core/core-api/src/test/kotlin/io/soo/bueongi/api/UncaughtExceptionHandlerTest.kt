@@ -2,6 +2,7 @@ package io.soo.bueongi.api
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController
  * 따르는지, 그리고 응답 본문에 내부 details(예외 메시지)가 새지 않는지 고정한다.
  */
 @WebMvcTest(BoomController::class)
+// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class)
 class UncaughtExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,

@@ -1,0 +1,15 @@
+# 테스트 전용 오버라이드. 운영은 JWT_PUBLIC_KEY env 로 주입하지만, 테스트에서는
+# 컨텍스트가 뜨도록(JwtProperties fail-fast 회피) 개발용 RSA 공개키를 고정 주입한다.
+# 이 키의 개인키는 앱에 존재하지 않는다 — 토큰 서명 검증 자체는 각 테스트가 자체 키쌍으로 수행한다.
+bueongi:
+  jwt:
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4KUGZ8mIur7mAkxoHcLl
+      P/EkpcjV95ydAj11JuSi9up9NQ+btGUTL9CIRH1lhvhNwdcCCqq8Woo9Z/Gk80n6
+      3xXaN3z16WlbEr9LWwMwzSkLRUM7uD0M9o6UvuoKQRdLoMEKiQ2Eu8LX8pB2uIs6
+      XpzwKYF1gYCId9f3gz6XGUzC9c0vkWDBYRbIAGbyCPda+V/kiIR829WpNPWmDiSG
+      MXq2Es+dXxMbyVKEc5XQ7et1g2ReoCz2Q17PHrtCKX95qavHtlkkviKB9W4KpgCZ
+      kXE++D0DUQDs3oAsxJFvzteYBUYNY3F2N/SNtcvm97SzyEvAj++poZ7ZhjVagVVc
+      0QIDAQAB
+      -----END PUBLIC KEY-----
