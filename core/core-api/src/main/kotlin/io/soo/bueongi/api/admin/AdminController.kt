@@ -1,5 +1,7 @@
 package io.soo.bueongi.api.admin
 
+import io.soo.bueongi.domain.admin.ApiStatusService
+import io.soo.bueongi.domain.admin.ApiStatusSummary
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin")
 class AdminController(
     private val apiCallLogStore: ApiCallLogStore,
+    private val apiStatusService: ApiStatusService,
 ) {
 
     /** GET /api/admin/me → 현재 관리자 principal(userId)과 권한 목록. */
@@ -41,6 +44,13 @@ class AdminController(
         val bounded = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT)
         return apiCallLogStore.findRecent(provider, bounded).map { it.toResponse() }
     }
+
+    /**
+     * GET /api/admin/api-status → 외부 API 원천별 상태 요약·쿼터([ApiStatusSummary]).
+     * 저장된 접속 내역에서 집계만 한다(원천 4종 고정 노출).
+     */
+    @GetMapping("/api-status")
+    fun apiStatus(): ApiStatusSummary = apiStatusService.summarize()
 }
 
 data class AdminIdentity(

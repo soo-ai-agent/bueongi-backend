@@ -1,5 +1,6 @@
 package io.soo.bueongi.api.admin
 
+import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.junit.jupiter.api.Test
@@ -44,6 +45,19 @@ class ApiLogsControllerTest(
         org.assertj.core.api.Assertions.assertThat(FakeStoreConfig.lastLimit).isEqualTo(500)
     }
 
+    @Test
+    fun `api-status 는 원천 4종과 windowSize 를 반환한다`() {
+        mockMvc.get("/api/admin/api-status")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.windowSize") { value(1) }
+                jsonPath("$.providers.length()") { value(4) }
+                jsonPath("$.providers[0].provider") { value("KAKAO") }
+                jsonPath("$.providers[0].total") { value(1) }
+                jsonPath("$.providers[0].successRate") { value(1.0) }
+            }
+    }
+
     @TestConfiguration
     class FakeStoreConfig {
         @Bean
@@ -56,6 +70,9 @@ class ApiLogsControllerTest(
                 )
             }
         }
+
+        @Bean
+        fun apiStatusService(store: ApiCallLogStore): ApiStatusService = ApiStatusService(store)
 
         companion object {
             var lastLimit: Int = -1
