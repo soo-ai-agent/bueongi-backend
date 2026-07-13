@@ -48,7 +48,9 @@ class InMemoryLocationStore(
 
     override fun isWatched(token: String): Boolean {
         val last = viewers[token] ?: return false
-        if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) return true
+        if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) {
+            return true
+        }
         viewers.remove(token, last) // 유효시간 경과 → lazy 제거(Redis TTL 동치).
         return false
     }

@@ -25,11 +25,15 @@ class SafeDetourPlanner(
      * 버킷별 시설수를 weight 로 한 클러스터 중심 앵커 목록을 만든다(weight 내림차순 상위 [MAX_ANCHORS]).
      */
     fun extractSafeAnchors(directPath: List<GeoPoint>): List<SafeAnchor> {
-        if (directPath.size < 2) return emptyList()
+        if (directPath.size < 2) {
+            return emptyList()
+        }
         val facilities = ANCHOR_TYPES.flatMap {
             repository.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
         }
-        if (facilities.isEmpty()) return emptyList()
+        if (facilities.isEmpty()) {
+            return emptyList()
+        }
 
         // ~80m 그리드 버킷으로 클러스터링. 버킷 중심 = 구성 시설 좌표 평균.
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
@@ -69,7 +73,9 @@ class SafeDetourPlanner(
         dest: GeoPoint,
         anchors: List<SafeAnchor>,
     ): List<List<GeoPoint>> {
-        if (anchors.isEmpty()) return emptyList()
+        if (anchors.isEmpty()) {
+            return emptyList()
+        }
         val maxLateralMeters = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
 
         // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
@@ -77,11 +83,17 @@ class SafeDetourPlanner(
         val placed = anchors.mapNotNull { a ->
             val (tRaw, lateral) = SpatialMath.projectOntoSegment(a.center, origin, dest)
             // 중간 구간(끝점 근처 제외) + 과도 측방이탈 제외.
-            if (tRaw <= MIDDLE_MIN_T || tRaw >= MIDDLE_MAX_T) return@mapNotNull null
-            if (lateral > maxLateralMeters) return@mapNotNull null
+            if (tRaw <= MIDDLE_MIN_T || tRaw >= MIDDLE_MAX_T) {
+                return@mapNotNull null
+            }
+            if (lateral > maxLateralMeters) {
+                return@mapNotNull null
+            }
             Placed(a, tRaw)
         }
-        if (placed.isEmpty()) return emptyList()
+        if (placed.isEmpty()) {
+            return emptyList()
+        }
 
         // weight 내림차순(동률은 t 오름차순)으로 고가중 우선.
         val byWeight = placed.sortedWith(

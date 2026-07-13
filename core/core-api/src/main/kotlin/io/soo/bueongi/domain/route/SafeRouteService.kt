@@ -47,7 +47,9 @@ class SafeRouteService(
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
         // Tmap 미설정이면 기존 결정론적 폴백(점수/마커 없는 RouteOption).
-        if (!tmapClient.isEnabled) return routeService.compare(query)
+        if (!tmapClient.isEnabled) {
+            return routeService.compare(query)
+        }
 
         val origin = query.origin
         val destination = query.destination
@@ -59,7 +61,13 @@ class SafeRouteService(
             provider = "TMAP",
             endpoint = "route",
             success = { it.isNotEmpty() },
-            detail = { if (it.isEmpty()) "경로 후보 0건 — 폴백" else null },
+            detail = {
+                if (it.isEmpty()) {
+                    "경로 후보 0건 — 폴백"
+                } else {
+                    null
+                }
+            },
         ) {
             tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
         }
@@ -112,7 +120,9 @@ class SafeRouteService(
      * 동률은 먼저 나온 후보 우선(인덱스 미세 가중 — 프론트 scoreAndType 동형).
      */
     private fun scoreTypeAndLimit(candidates: List<RouteCandidate>): List<ScoredRoute> {
-        if (candidates.isEmpty()) return emptyList()
+        if (candidates.isEmpty()) {
+            return emptyList()
+        }
         val scored = candidates.map { it to scorer.score(it.path) }
 
         // safe: 최고점(동률이면 먼저 나온 후보). 위 isEmpty 가드로 비어있지 않음이 보장되므로 비-널 maxBy.
@@ -127,8 +137,12 @@ class SafeRouteService(
 
         val picks = LinkedHashMap<Int, String>()
         picks[safeIdx] = "safe"
-        if (fastIdx != null) picks[fastIdx] = "fast"
-        if (mainIdx != null) picks[mainIdx] = "main"
+        if (fastIdx != null) {
+            picks[fastIdx] = "fast"
+        }
+        if (mainIdx != null) {
+            picks[mainIdx] = "main"
+        }
         return picks.map { (i, type) -> ScoredRoute(scored[i].first, scored[i].second, type) }
     }
 
@@ -190,14 +204,28 @@ class SafeRouteService(
     }
 
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
-        if (scoredRoute.type == "safe") add(RouteTag("안심", "mint"))
-        if (scoredRoute.type == "fast") add(RouteTag("빠른길", "blue"))
+        if (scoredRoute.type == "safe") {
+            add(RouteTag("안심", "mint"))
+        }
+        if (scoredRoute.type == "fast") {
+            add(RouteTag("빠른길", "blue"))
+        }
         val breakdown = scoredRoute.score.breakdown
-        if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) add(RouteTag("CCTV 많음", "mint"))
-        if (breakdown.lampDensity >= TAG_LAMP_DENSITY_MIN_PER_KM) add(RouteTag("밝은 길", "yellow"))
-        if (breakdown.safePathOverlap >= TAG_SAFE_PATH_OVERLAP_MIN) add(RouteTag("안심귀갓길", "mint"))
-        if (breakdown.safehouseCount >= 1) add(RouteTag("안심지킴이집", "outline"))
-        if (breakdown.policeCount >= 1) add(RouteTag("지구대 인접", "blue"))
+        if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) {
+            add(RouteTag("CCTV 많음", "mint"))
+        }
+        if (breakdown.lampDensity >= TAG_LAMP_DENSITY_MIN_PER_KM) {
+            add(RouteTag("밝은 길", "yellow"))
+        }
+        if (breakdown.safePathOverlap >= TAG_SAFE_PATH_OVERLAP_MIN) {
+            add(RouteTag("안심귀갓길", "mint"))
+        }
+        if (breakdown.safehouseCount >= 1) {
+            add(RouteTag("안심지킴이집", "outline"))
+        }
+        if (breakdown.policeCount >= 1) {
+            add(RouteTag("지구대 인접", "blue"))
+        }
     }
 
     private companion object {

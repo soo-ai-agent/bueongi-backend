@@ -101,14 +101,18 @@ class SafemapPoliceClient(
             }
             for (child in node) {
                 val found = findFacilityRows(child)
-                if (found.isNotEmpty()) return found
+                if (found.isNotEmpty()) {
+                    return found
+                }
             }
             return emptyList()
         }
         if (node.isObject) {
             for (child in node) {
                 val found = findFacilityRows(child)
-                if (found.isNotEmpty()) return found
+                if (found.isNotEmpty()) {
+                    return found
+                }
             }
         }
         return emptyList()

@@ -44,8 +44,11 @@ class RouteServiceTest {
     fun `안전 경로가 최단 경로보다 거리가 길다(우회 계수)`() {
         val routes = service.compare(request()).associateBy { it.type }
         fun meters(dist: String): Double =
-            if (dist.endsWith("km")) dist.removeSuffix("km").toDouble() * 1000
-            else dist.removeSuffix("m").toDouble()
+            if (dist.endsWith("km")) {
+                dist.removeSuffix("km").toDouble() * 1000
+            } else {
+                dist.removeSuffix("m").toDouble()
+            }
         assertThat(meters(routes.getValue("safe").dist))
             .isGreaterThan(meters(routes.getValue("fast").dist))
     }

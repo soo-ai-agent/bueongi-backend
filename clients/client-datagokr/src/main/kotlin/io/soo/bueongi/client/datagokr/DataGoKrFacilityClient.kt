@@ -92,7 +92,9 @@ class DataGoKrFacilityClient(
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
-            if (rows.isEmpty() || rows.size < PAGE_SIZE) break
+            if (rows.isEmpty() || rows.size < PAGE_SIZE) {
+                break
+            }
             pageNo += 1
         }
         return points

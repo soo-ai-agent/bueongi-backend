@@ -48,7 +48,9 @@ class SafetyScorer(
         var safePathOverlap = 0.0
         if (lengthM > 0 && repository.safePaths.isNotEmpty()) {
             for (safePath in repository.safePaths) {
-                if (safePath.coords.size < 2) continue
+                if (safePath.coords.size < 2) {
+                    continue
+                }
                 val overlap = SpatialMath.overlapLengthMeters(path, safePath.coords, corridorMeters)
                 safePathOverlap = maxOf(safePathOverlap, overlap / lengthM)
             }
@@ -79,7 +81,9 @@ class SafetyScorer(
 
     /** [value] 를 [saturationCeiling](만점=정규화 1.0 에 이르는 기준값, SAT_* 상수) 대비 0~1 로 정규화한다. */
     private fun saturate(value: Double, saturationCeiling: Double): Double {
-        if (saturationCeiling <= 0) return 0.0
+        if (saturationCeiling <= 0) {
+            return 0.0
+        }
         return max(0.0, min(1.0, value / saturationCeiling))
     }
 

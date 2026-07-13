@@ -37,7 +37,9 @@ class TmapRouteCache(
 
     /** 성공 응답만 저장(null 은 호출부에서 걸러진다). 용량 초과 시 전체 비움. */
     fun put(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?, route: TmapRoute) {
-        if (entries.size >= maxEntries) entries.clear()
+        if (entries.size >= maxEntries) {
+            entries.clear()
+        }
         entries[key(origin, dest, searchOption, passList)] = Entry(route, clock() + ttlMillis)
     }
 

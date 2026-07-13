@@ -37,7 +37,9 @@ object Epsg5179 {
 
     /** EPSG:5179 (x=동, y=북) → WGS84. 결과가 한국 범위 밖이면 null(원천 좌표 불량). */
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
-        if (!x.isFinite() || !y.isFinite()) return null
+        if (!x.isFinite() || !y.isFinite()) {
+            return null
+        }
         val m = M0 + (y - FALSE_NORTHING) / K0
         val mu = m / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256))
         val phi1 = mu +

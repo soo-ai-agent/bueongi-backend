@@ -35,11 +35,15 @@ class PlaceSearchService(
      */
     fun search(keyword: String?): List<PlaceItem> {
         val trimmed = keyword?.trim().orEmpty()
-        if (trimmed.isEmpty()) return emptyList()
+        if (trimmed.isEmpty()) {
+            return emptyList()
+        }
         if (trimmed.length > MAX_KEYWORD_LENGTH) {
             throw InvalidKeywordException(maxLength = MAX_KEYWORD_LENGTH, actualLength = trimmed.length)
         }
-        if (!remoteProvider.isEnabled) return seedProvider.search(trimmed)
+        if (!remoteProvider.isEnabled) {
+            return seedProvider.search(trimmed)
+        }
         return try {
             // ponytail: service 레벨 계측 — statusCode/resultCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능
             apiCallLogStore.measure(provider = "KAKAO", endpoint = "search", success = { true }) {

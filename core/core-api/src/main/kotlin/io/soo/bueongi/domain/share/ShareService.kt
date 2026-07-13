@@ -161,7 +161,9 @@ class ShareService(
             provided.toByteArray(Charsets.UTF_8),
             session.ownerSecret.toByteArray(Charsets.UTF_8),
         )
-        if (!matches) throw ShareSessionNotFoundException()
+        if (!matches) {
+            throw ShareSessionNotFoundException()
+        }
     }
 
     /** 추측 불가능한 128-bit URL-safe 랜덤 토큰(22자, 패딩 없음). */

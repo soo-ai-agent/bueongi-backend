@@ -72,12 +72,18 @@ object SpatialMath {
 
     /** 점에서 경로(폴리라인)까지의 최단거리(m). 빈/단일 좌표 경로 방어. */
     fun minDistanceToPathMeters(p: GeoPoint, path: List<GeoPoint>): Double {
-        if (path.isEmpty()) return Double.POSITIVE_INFINITY
-        if (path.size == 1) return haversineMeters(p, path[0])
+        if (path.isEmpty()) {
+            return Double.POSITIVE_INFINITY
+        }
+        if (path.size == 1) {
+            return haversineMeters(p, path[0])
+        }
         var minD = Double.POSITIVE_INFINITY
         for (i in 1 until path.size) {
             val d = distancePointToSegmentMeters(p, path[i - 1], path[i])
-            if (d < minD) minD = d
+            if (d < minD) {
+                minD = d
+            }
         }
         return minD
     }
@@ -87,7 +93,9 @@ object SpatialMath {
      * 그 선분 길이를 겹침으로 본다. 안심귀갓길 보너스 산정용 결정론적 근사치(프론트 overlapLengthMeters 동형).
      */
     fun overlapLengthMeters(base: List<GeoPoint>, other: List<GeoPoint>, meters: Double): Double {
-        if (base.size < 2 || other.size < 2) return 0.0
+        if (base.size < 2 || other.size < 2) {
+            return 0.0
+        }
         var overlap = 0.0
         for (i in 1 until base.size) {
             val a = base[i - 1]

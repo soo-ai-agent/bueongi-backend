@@ -56,7 +56,9 @@ inline fun <T> ApiCallLogStore?.measure(
     detail: (T) -> String? = { null },
     block: () -> T,
 ): T {
-    if (this == null) return block()
+    if (this == null) {
+        return block()
+    }
     val startedAt = System.currentTimeMillis()
     val result = try {
         block()

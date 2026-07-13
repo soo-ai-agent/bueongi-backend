@@ -104,7 +104,9 @@ class RouteMarkerBuilder(
     private fun alertIfIndexEmpty() {
         val notifier = alertNotifier ?: return
         val totalLoaded = MARKER_TYPES.sumOf { (_, facilityType) -> repository.index(facilityType).size }
-        if (totalLoaded > 0) return
+        if (totalLoaded > 0) {
+            return
+        }
         notifier.notify(
             key = "facility-index-empty",
             title = "안심시설 데이터 제공 실패",

@@ -26,7 +26,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
      * center 반경 radiusM 안의 시설. 셀 후보를 모은 뒤 정확한 대권거리로 거른다.
      */
     fun withinRadius(center: GeoPoint, radiusM: Double): List<FacilityPoint> {
-        if (radiusM <= 0) return emptyList()
+        if (radiusM <= 0) {
+            return emptyList()
+        }
         val candidates = candidateCells(listOf(center), radiusM)
         return candidates.filter { SpatialMath.haversineMeters(center, it.toGeoPoint()) <= radiusM }
     }
@@ -39,7 +41,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
      * 그래서 각 선분을 셀 크기 간격으로 보간한 샘플점을 후보 앵커로 써 구간 전체를 빠짐없이 덮는다.
      */
     fun withinCorridor(path: List<GeoPoint>, corridorM: Double): List<FacilityPoint> {
-        if (path.isEmpty() || corridorM <= 0) return emptyList()
+        if (path.isEmpty() || corridorM <= 0) {
+            return emptyList()
+        }
         val samples = densify(path)
         val candidates = candidateCells(samples, corridorM)
         return candidates.filter { SpatialMath.minDistanceToPathMeters(it.toGeoPoint(), path) <= corridorM }
@@ -47,7 +51,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
 
     /** 각 선분을 셀 크기(CELL_DEG) 이하 간격으로 보간해 구간 전체를 덮는 샘플점 목록을 만든다. */
     private fun densify(path: List<GeoPoint>): List<GeoPoint> {
-        if (path.size < 2) return path
+        if (path.size < 2) {
+            return path
+        }
         val out = ArrayList<GeoPoint>()
         out.add(path[0])
         for (i in 1 until path.size) {
@@ -68,7 +74,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
      * 반경을 보수적 셀 폭(경도 최소 폭)으로 환산해 충분히 넓게 훑는다.
      */
     private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<FacilityPoint> {
-        if (buckets.isEmpty()) return emptyList()
+        if (buckets.isEmpty()) {
+            return emptyList()
+        }
         // 경도 1°의 최소 폭(한국 최북단 ~38.7°N)으로 보수적 환산 → 셀 반경 개수.
         val cellSpanMinM = CELL_DEG * MIN_LNG_DEG_METERS
         val ring = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
@@ -80,7 +88,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
             for (dx in -ring..ring) {
                 for (dy in -ring..ring) {
                     val key = cellKey(cx + dx, cy + dy)
-                    if (!seenCells.add(key)) continue
+                    if (!seenCells.add(key)) {
+                        continue
+                    }
                     buckets[key]?.let { result.addAll(it) }
                 }
             }

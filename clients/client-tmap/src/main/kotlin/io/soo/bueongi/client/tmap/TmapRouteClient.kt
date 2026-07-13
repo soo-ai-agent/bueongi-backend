@@ -51,12 +51,16 @@ class TmapRouteClient(
         dest: TmapCoord,
         destName: String? = null,
     ): List<TmapRoute> {
-        if (!isEnabled) return emptyList()
+        if (!isEnabled) {
+            return emptyList()
+        }
         val routes = ArrayList<TmapRoute>()
         val seen = HashSet<Long>()
         for (option in DEFAULT_SEARCH_OPTIONS) {
             val route = call(origin, dest, destName, option, passList = null) ?: continue
-            if (!seen.add(route.identityKey)) continue
+            if (!seen.add(route.identityKey)) {
+                continue
+            }
             routes.add(route)
         }
         return routes
@@ -69,7 +73,9 @@ class TmapRouteClient(
         passList: List<TmapCoord>,
         destName: String? = null,
     ): TmapRoute? {
-        if (!isEnabled) return null
+        if (!isEnabled) {
+            return null
+        }
         return call(origin, dest, destName, VIA_SEARCH_OPTION, passList.ifEmpty { null })
     }
 
@@ -145,7 +151,9 @@ object TmapGeoJson {
 
     fun parse(root: JsonNode, searchOption: String): TmapRoute? {
         val features = root.get("features") ?: return null
-        if (!features.isArray) return null
+        if (!features.isArray) {
+            return null
+        }
 
         val path = ArrayList<TmapCoord>()
         val steps = ArrayList<NavStep>()
@@ -199,8 +207,12 @@ object TmapGeoJson {
                 }
             }
         }
-        if (path.size < 2) return null
-        if (distanceM == 0.0) distanceM = pathLengthMeters(path)
+        if (path.size < 2) {
+            return null
+        }
+        if (distanceM == 0.0) {
+            distanceM = pathLengthMeters(path)
+        }
         steps.sortBy { it.index }
         return TmapRoute(
             searchOption = searchOption,
@@ -213,11 +225,17 @@ object TmapGeoJson {
 
     /** GeoJSON 좌표 [lng, lat] → TmapCoord. 비유효(NaN/∞/범위 밖)는 null. */
     private fun parseLngLat(node: JsonNode): TmapCoord? {
-        if (!node.isArray || node.size() < 2) return null
+        if (!node.isArray || node.size() < 2) {
+            return null
+        }
         val lng = node.get(0).asDouble()
         val lat = node.get(1).asDouble()
-        if (!lat.isFinite() || lat !in -90.0..90.0) return null
-        if (!lng.isFinite() || lng !in -180.0..180.0) return null
+        if (!lat.isFinite() || lat !in -90.0..90.0) {
+            return null
+        }
+        if (!lng.isFinite() || lng !in -180.0..180.0) {
+            return null
+        }
         return TmapCoord(lat, lng)
     }
 

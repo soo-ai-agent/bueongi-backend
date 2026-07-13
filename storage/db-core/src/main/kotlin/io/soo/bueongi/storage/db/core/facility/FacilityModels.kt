@@ -21,8 +21,12 @@ data class GeoPoint(val lat: Double, val lng: Double) {
          * 같은 검사를 지점마다 복붙하면 한쪽만 고쳐지는 드리프트가 생기므로 규칙을 타입 안에 둔다.
          */
         fun orNull(lat: Double?, lng: Double?): GeoPoint? {
-            if (lat == null || !lat.isFinite() || lat !in -90.0..90.0) return null
-            if (lng == null || !lng.isFinite() || lng !in -180.0..180.0) return null
+            if (lat == null || !lat.isFinite() || lat !in -90.0..90.0) {
+                return null
+            }
+            if (lng == null || !lng.isFinite() || lng !in -180.0..180.0) {
+                return null
+            }
             return GeoPoint(lat, lng)
         }
     }

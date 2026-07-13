@@ -128,7 +128,11 @@ class ApiLogsControllerTest(
                     List(2) { FacilityPoint(type = FacilityType.CCTV, lat = 37.5, lng = 127.0) },
                 )
                 override fun index(type: FacilityType): GridSpatialIndex =
-                    if (type == FacilityType.CCTV) cctv else GridSpatialIndex(emptyList())
+                    if (type == FacilityType.CCTV) {
+                        cctv
+                    } else {
+                        GridSpatialIndex(emptyList())
+                    }
                 override val safePaths: List<SafePath> = emptyList()
                 override val freshness = FacilityFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }

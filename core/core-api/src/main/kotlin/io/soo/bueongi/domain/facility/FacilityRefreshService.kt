@@ -96,7 +96,13 @@ class FacilityRefreshService(
             provider = provider,
             endpoint = endpoint,
             success = { it != null },
-            detail = { if (it == null) "수집 실패 또는 0건" else null },
+            detail = {
+                if (it == null) {
+                    "수집 실패 또는 0건"
+                } else {
+                    null
+                }
+            },
             block = fetch,
         )
 

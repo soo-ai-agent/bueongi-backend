@@ -74,7 +74,9 @@ class FacilityRepository(
         // 컬렉션 디렉터리(type 별 하위 폴더)를 훑어 *.json 을 적재. safepath 는 좌표열로 따로.
         for (type in FacilityType.entries) {
             val typeDir = File(dir, type.cdnType)
-            if (!typeDir.isDirectory) continue
+            if (!typeDir.isDirectory) {
+                continue
+            }
             for (file in typeDir.listJsonFiles()) {
                 val collection = parseCollection(file) ?: continue
                 fileCount++
@@ -152,7 +154,9 @@ class FacilityRepository(
 
     /** 설정 경로 → 폴백 후보 순으로 첫 존재하는 CSV 파일을 찾는다. 빈 설정값이면 CSV 적재 비활성(null). */
     private fun resolveCctvCsv(): File? {
-        if (cctvCsvPath.isBlank()) return null
+        if (cctvCsvPath.isBlank()) {
+            return null
+        }
         val candidates = buildList {
             add(cctvCsvPath)
             add("CCTV정보.csv")
@@ -221,10 +225,14 @@ private val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목�
 internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     val parts = line.split(',')
     // 최소: 설치목적구분(parts[N-13]) + 좌표(parts[N-6]) + name(parts[2]) 가 모두 존재해야 함.
-    if (parts.size < 13) return null
+    if (parts.size < 13) {
+        return null
+    }
     // 용도(설치목적구분) 필터 — 방범 성격이 아니면 적재 제외.
     val purpose = parts[parts.size - 13].trim().trim('"')
-    if (purpose !in CCTV_SECURITY_PURPOSES) return null
+    if (purpose !in CCTV_SECURITY_PURPOSES) {
+        return null
+    }
     val point = GeoPoint.orNull(
         lat = parts[parts.size - 6].trim().toDoubleOrNull(),
         lng = parts[parts.size - 5].trim().toDoubleOrNull(),
@@ -284,7 +292,9 @@ data class FacilityItemDto(
 
     fun toSafePath(): SafePath? {
         val coordList = coords?.mapNotNull { it.toGeoPoint() }
-        if (!coordList.isNullOrEmpty()) return SafePath(coords = coordList, name = name)
+        if (!coordList.isNullOrEmpty()) {
+            return SafePath(coords = coordList, name = name)
+        }
         // coords 없으면 단일 점 폴백.
         val point = GeoPoint.orNull(lat, lng) ?: return null
         return SafePath(coords = listOf(point), name = name)

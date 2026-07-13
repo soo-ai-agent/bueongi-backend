@@ -30,7 +30,9 @@ class ShareStoreConfigTest {
     /** production 과 동일하게 default "" 로 조회하는 [MockEnvironment] 를 단 [ConditionContext]. */
     private fun contextWith(redisUrl: String?): ConditionContext {
         val env = MockEnvironment()
-        if (redisUrl != null) env.setProperty("bueongi.share.redis-url", redisUrl)
+        if (redisUrl != null) {
+            env.setProperty("bueongi.share.redis-url", redisUrl)
+        }
         return mock { on { environment } doReturn env }
     }
 

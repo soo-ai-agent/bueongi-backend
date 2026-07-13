@@ -30,7 +30,9 @@ class RouteCandidateMerger {
         val lengthA = SpatialMath.pathLengthMeters(a.path)
         val lengthB = SpatialMath.pathLengthMeters(b.path)
         val shorter = minOf(lengthA, lengthB)
-        if (shorter <= 0.0) return false
+        if (shorter <= 0.0) {
+            return false
+        }
         // 양방향 겹침 중 큰 값 — 한 경로가 다른 경로에 거의 포함되면 같은 길로 본다.
         val overlap = maxOf(
             SpatialMath.overlapLengthMeters(a.path, b.path, MERGE_CORRIDOR_METERS),
