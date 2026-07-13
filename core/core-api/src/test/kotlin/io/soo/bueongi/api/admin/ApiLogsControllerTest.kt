@@ -2,10 +2,13 @@ package io.soo.bueongi.api.admin
 
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusService
+import io.soo.bueongi.domain.admin.RequestMetricsService
 import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.domain.admin.SlackConfigService
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
+import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.core.enums.FacilityType
@@ -108,6 +111,25 @@ class ApiLogsControllerTest(
     }
 
     @Test
+    fun `traffic 은 엔드포인트 집계와 예측 사용자 시간대 일자 추이를 반환한다`() {
+        mockMvc.get("/api/admin/traffic")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCalls") { value(1) }
+                jsonPath("$.windowSize") { value(1) }
+                jsonPath("$.byEndpoint[0].method") { value("GET") }
+                jsonPath("$.byEndpoint[0].endpoint") { value("/api/places/search") }
+                jsonPath("$.byEndpoint[0].count") { value(1) }
+                jsonPath("$.byEndpoint[0].successRate") { value(1.0) }
+                jsonPath("$.byEndpoint[0].distinctClients") { value(1) }
+                jsonPath("$.estimatedUsers.today") { value(1) }
+                jsonPath("$.estimatedUsers.callsWithoutClientId") { value(0) }
+                jsonPath("$.hourlyCalls.length()") { value(24) }
+                jsonPath("$.dailyActiveUsers.length()") { value(7) }
+            }
+    }
+
+    @Test
     fun `share-status 는 활성 세션 수를 반환한다`() {
         mockMvc.get("/api/admin/share-status")
             .andExpect {
@@ -159,6 +181,25 @@ class ApiLogsControllerTest(
 
         @Bean
         fun routeStatsService(store: RouteStatsStore): RouteStatsService = RouteStatsService(store)
+
+        @Bean
+        fun requestMetricStore(): RequestMetricStore = object : RequestMetricStore {
+            override fun record(metric: RequestMetric) = Unit
+            override fun findRecent(limit: Int): List<RequestMetric> =
+                listOf(
+                    RequestMetric(
+                        atEpochMs = System.currentTimeMillis(),
+                        method = "GET",
+                        endpoint = "/api/places/search",
+                        clientId = "anon-1",
+                        status = 200,
+                        durationMs = 15,
+                    ),
+                )
+        }
+
+        @Bean
+        fun requestMetricsService(store: RequestMetricStore): RequestMetricsService = RequestMetricsService(store)
 
         @Bean
         fun facilityStatusService(): FacilityStatusService {

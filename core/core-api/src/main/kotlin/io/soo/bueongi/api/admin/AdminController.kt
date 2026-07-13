@@ -5,8 +5,10 @@ import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.ApiStatusSummary
 import io.soo.bueongi.domain.admin.FacilityStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusSummary
+import io.soo.bueongi.domain.admin.RequestMetricsService
 import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.domain.admin.RouteStatsSummary
+import io.soo.bueongi.domain.admin.TrafficSummary
 import io.soo.bueongi.domain.admin.SlackConfigService
 import io.soo.bueongi.domain.admin.SlackConfigSummary
 import io.soo.bueongi.domain.admin.SlackTestResult
@@ -40,6 +42,7 @@ class AdminController(
     private val apiStatusService: ApiStatusService,
     private val facilityStatusService: FacilityStatusService,
     private val routeStatsService: RouteStatsService,
+    private val requestMetricsService: RequestMetricsService,
     private val locationStore: LocationStore,
     private val alertNotifier: AlertNotifier,
     private val slackConfigService: SlackConfigService,
@@ -86,6 +89,13 @@ class AdminController(
      */
     @GetMapping("/route-stats")
     fun routeStats(): RouteStatsSummary = routeStatsService.summarize()
+
+    /**
+     * GET /api/admin/traffic → 수신 요청 트래픽 집계([TrafficSummary]).
+     * 저장된 수신 요청 기록에서 엔드포인트별 호출수·예측 사용자 수(고유 익명 client-id)·시간대/일자 추이를 집계만 한다(변환만).
+     */
+    @GetMapping("/traffic")
+    fun traffic(): TrafficSummary = requestMetricsService.summarize()
 
     /** GET /api/admin/share-status → 현재 활성(상한 미만료) 위치공유 세션 수. */
     @GetMapping("/share-status")
