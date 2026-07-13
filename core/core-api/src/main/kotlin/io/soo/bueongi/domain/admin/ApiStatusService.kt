@@ -7,11 +7,13 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 /**
  * 관리자 페이지용 "외부 API 상태 요약·쿼터" 집계 — 이미 저장된 접속 내역([ApiCallLogStore])만 읽어
- * 원천(provider)별로 성공률·평균 소요시간·최근 성공/실패 시각·오늘 호출 수(쿼터)를 계산한다(새 저장소 없음).
+ * 원천(provider)별로 성공률·평균/95분위 소요시간·최근 성공/실패 시각·오늘 호출 수(쿼터)·시간별 호출빈도·
+ * 쿼터 소진 예측을 계산한다(새 저장소 없음).
  *
  * 원천은 4종([TRACKED_PROVIDERS]) 고정 노출한다 — 로그가 0건인 원천도 total=0 으로 항상 나온다.
  * 쿼터는 data.go.kr 일 1000건 제한만 실재하므로 DATAGOKR 에만 [quotaLimit] 을 둔다.
@@ -25,25 +27,27 @@ class ApiStatusService(
 ) {
 
     fun summarize(): ApiStatusSummary {
+        val now = System.currentTimeMillis()
         val logs = apiCallLogStore.findRecent(provider = null, limit = API_CALL_LOG_CAP)
-        val todayStartMs = todayStartMs()
+        val todayStartMs = todayStartMs(now)
         val byProvider = logs.groupBy { it.provider }
         val providers = TRACKED_PROVIDERS.map { provider ->
-            aggregate(provider, byProvider[provider] ?: emptyList(), todayStartMs)
+            aggregate(provider, byProvider[provider] ?: emptyList(), now, todayStartMs)
         }
         return ApiStatusSummary(
             providers = providers,
             windowSize = logs.size,
-            hourlyTrend = hourlyTrend(logs),
+            hourlyTrend = hourlyBuckets(logs),
         )
     }
 
     /**
-     * 최근 24시간을 1시간 단위로 버킷팅한다(오래된→최신, Asia/Seoul 정각 경계) — 원천 무관 전체 호출량.
+     * 최근 24시간을 1시간 단위로 버킷팅한다(오래된→최신, Asia/Seoul 정각 경계) — 넘겨준 로그 집합의 호출량.
      * 현재 시각을 Seoul 기준 정각으로 내림한 버킷을 마지막으로, 그 앞 23개를 채운다(호출이 0건인 시간도 노출).
-     * [RouteStatsService.hourlyTrend] 와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
+     * 전체([ApiStatusSummary.hourlyTrend])와 원천별([ProviderStatus.hourlyCalls])이 **같은 함수·같은 경계**를 써
+     * 프론트가 같은 축으로 겹쳐 그릴 수 있다. [RouteStatsService.hourlyTrend] 와도 같은 [HourlyBucket] 이다.
      */
-    private fun hourlyTrend(logs: List<ApiCallLog>): List<HourlyBucket> {
+    private fun hourlyBuckets(logs: List<ApiCallLog>): List<HourlyBucket> {
         val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
             .atZone(SEOUL)
             .truncatedTo(ChronoUnit.HOURS)
@@ -56,7 +60,7 @@ class ApiStatusService(
         }
     }
 
-    private fun aggregate(provider: String, logs: List<ApiCallLog>, todayStartMs: Long): ProviderStatus {
+    private fun aggregate(provider: String, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
         val total = logs.size
         val successCount = logs.count { it.success }
         val successRate = if (total == 0) {
@@ -69,25 +73,56 @@ class ApiStatusService(
         } else {
             (logs.sumOf { it.durationMs }.toDouble() / total).roundToLong()
         }
+        val p95DurationMs = Percentiles.nearestRank(logs.map { it.durationMs }.sorted(), 95)
         val todayCount = logs.count { it.atEpochMs >= todayStartMs }
         val quotaLimit = QUOTA_LIMITS[provider]
         val quotaWarning = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
+        val quotaBurnPerHour = quotaBurnPerHour(quotaLimit, todayCount, nowMs, todayStartMs)
         return ProviderStatus(
             provider = provider,
             total = total,
             successCount = successCount,
             successRate = successRate,
             avgDurationMs = avgDurationMs,
+            p95DurationMs = p95DurationMs,
             lastSuccessAtMs = logs.filter { it.success }.maxOfOrNull { it.atEpochMs },
             lastFailureAtMs = logs.filter { !it.success }.maxOfOrNull { it.atEpochMs },
             todayCount = todayCount,
             quotaLimit = quotaLimit,
             quotaWarning = quotaWarning,
+            quotaBurnPerHour = quotaBurnPerHour,
+            quotaProjectedTodayTotal = quotaProjectedTodayTotal(quotaBurnPerHour),
+            hourlyCalls = hourlyBuckets(logs),
         )
     }
 
-    private fun todayStartMs(): Long {
-        val today = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SEOUL).toLocalDate()
+    /**
+     * 오늘 경과시간 기준 시간당 쿼터 소진율(호출/시간) — 쿼터 없는 원천은 null.
+     *
+     * 근사: 자정부터 지금까지의 평균 속도가 하루 끝까지 유지된다고 본 선형 외삽이다(버스트·야간 편차 미반영).
+     * 자정 직후 경과시간이 0 이하이면 속도를 잴 수 없어 0 으로 둔다(0 나눗셈 방지).
+     */
+    private fun quotaBurnPerHour(quotaLimit: Int?, todayCount: Int, nowMs: Long, todayStartMs: Long): Double? {
+        if (quotaLimit == null) {
+            return null
+        }
+        val elapsedHoursToday = (nowMs - todayStartMs).toDouble() / HOUR_MS
+        if (elapsedHoursToday <= 0.0) {
+            return 0.0
+        }
+        return todayCount / elapsedHoursToday
+    }
+
+    /** 현재 소진율이 유지될 때 오늘 마감 예상 총 호출 수(반올림). 소진율이 null(쿼터 없음)이면 null. */
+    private fun quotaProjectedTodayTotal(burnPerHour: Double?): Int? {
+        if (burnPerHour == null) {
+            return null
+        }
+        return (burnPerHour * HOURS_PER_DAY).roundToInt()
+    }
+
+    private fun todayStartMs(nowMs: Long): Long {
+        val today = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
         return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
     }
 
@@ -104,6 +139,12 @@ class ApiStatusService(
         /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위) — [RouteStatsService] 와 동일. */
         const val HOURLY_BUCKET_COUNT = 24
 
+        /** 쿼터 소진율 계산용 1시간(ms). */
+        const val HOUR_MS = 3_600_000L
+
+        /** 하루 시간 수 — 쿼터 마감 예상 총량 = 시간당 소진율 × 이 값. */
+        const val HOURS_PER_DAY = 24
+
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }
 }
@@ -117,6 +158,8 @@ data class ProviderStatus(
     val successRate: Double,
     /** 평균 소요시간(ms, 반올림). total=0 이면 0. */
     val avgDurationMs: Long,
+    /** 이 원천 그룹 내 소요시간 95 분위수(ms, nearest-rank). total=0 이면 0. */
+    val p95DurationMs: Long,
     val lastSuccessAtMs: Long?,
     val lastFailureAtMs: Long?,
     /** 오늘(Asia/Seoul 자정 이후) 호출 수 — 쿼터 계측. */
@@ -125,6 +168,15 @@ data class ProviderStatus(
     val quotaLimit: Int?,
     /** todayCount 가 상한의 80% 이상이면 경고. */
     val quotaWarning: Boolean,
+    /**
+     * 오늘 경과시간 기준 시간당 쿼터 소진율(호출/시간). 쿼터 있는 원천(DATAGOKR)만, 없으면 null.
+     * 선형 외삽 근사 — 자정~현재 평균 속도가 유지된다는 가정.
+     */
+    val quotaBurnPerHour: Double?,
+    /** 현재 소진율이 유지될 때 오늘 마감 예상 총 호출 수(반올림). 쿼터 없으면 null. */
+    val quotaProjectedTodayTotal: Int?,
+    /** 이 원천의 최근 24시간 시간별 호출빈도 — 전체 [ApiStatusSummary.hourlyTrend] 와 같은 경계·같은 버킷. */
+    val hourlyCalls: List<HourlyBucket>,
 )
 
 /** api-status 응답 전체. [windowSize] 는 집계에 쓴 로그 총수, [hourlyTrend] 는 최근 24시간 전체 호출량 추이. */

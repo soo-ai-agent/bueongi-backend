@@ -5,6 +5,7 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.ZoneId
+import kotlin.math.roundToInt
 
 /**
  * [ApiStatusService] 집계 정확성 — 저장된 로그만으로 성공률·평균 소요·최근 성공/실패·오늘 쿼터를 계산한다.
@@ -54,6 +55,70 @@ class ApiStatusServiceTest {
         assertThat(datagokr.todayCount).isEqualTo(820)
         assertThat(datagokr.quotaLimit).isEqualTo(1000)
         assertThat(datagokr.quotaWarning).isTrue()
+    }
+
+    @Test
+    fun `p95DurationMs 는 원천 그룹 내 소요시간 분위수이고 로그 없는 원천은 0 이다`() {
+        val logs = (1..20).map {
+            ApiCallLog(atEpochMs = 100, provider = "KAKAO", endpoint = "search", success = true, durationMs = (it * 10).toLong())
+        }
+
+        val summary = ApiStatusService(store(logs)).summarize()
+
+        assertThat(summary.providers.first { it.provider == "KAKAO" }.p95DurationMs).isEqualTo(190L) // ceil(0.95*20)=19번째
+        assertThat(summary.providers.first { it.provider == "TMAP" }.p95DurationMs).isEqualTo(0L) // 로그 0건
+    }
+
+    @Test
+    fun `hourlyCalls 는 원천별 24버킷이며 방금 호출은 마지막 버킷에 원천별로 집계된다`() {
+        val logs = listOf(
+            ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 10),
+            ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 20),
+            ApiCallLog(atEpochMs = seoulNow, provider = "TMAP", endpoint = "route", success = true, durationMs = 30),
+        )
+
+        val summary = ApiStatusService(store(logs)).summarize()
+
+        val kakao = summary.providers.first { it.provider == "KAKAO" }
+        assertThat(kakao.hourlyCalls).hasSize(24)
+        assertThat(kakao.hourlyCalls.last().count).isEqualTo(2) // KAKAO 만
+        assertThat(kakao.hourlyCalls.dropLast(1).sumOf { it.count }).isEqualTo(0)
+        assertThat(summary.providers.first { it.provider == "TMAP" }.hourlyCalls.last().count).isEqualTo(1) // TMAP 만
+        assertThat(summary.hourlyTrend.last().count).isEqualTo(3) // 전체는 원천 합산
+    }
+
+    @Test
+    fun `쿼터 있는 DATAGOKR 만 소진 예측을 내고 예측총량은 현재속도의 24시간 외삽이다`() {
+        val today = (1..10).map {
+            ApiCallLog(atEpochMs = todayStart + 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
+        }
+
+        val summary = ApiStatusService(store(today)).summarize()
+
+        val datagokr = summary.providers.first { it.provider == "DATAGOKR" }
+        assertThat(datagokr.todayCount).isEqualTo(10)
+        val burn = requireNotNull(datagokr.quotaBurnPerHour)
+        assertThat(datagokr.quotaProjectedTodayTotal).isEqualTo((burn * 24).roundToInt())
+        // 하루 경과율 ≤ 100% 라 현재 속도의 24시간 외삽은 오늘 실적 이상이다.
+        assertThat(datagokr.quotaProjectedTodayTotal).isGreaterThanOrEqualTo(10)
+
+        // 쿼터 없는 원천은 예측이 없다.
+        val kakao = summary.providers.first { it.provider == "KAKAO" }
+        assertThat(kakao.quotaBurnPerHour).isNull()
+        assertThat(kakao.quotaProjectedTodayTotal).isNull()
+    }
+
+    @Test
+    fun `오늘 호출이 0건이면 소진율과 예측총량은 0 이다`() {
+        val yesterday = (1..5).map {
+            ApiCallLog(atEpochMs = todayStart - 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
+        }
+
+        val datagokr = ApiStatusService(store(yesterday)).summarize().providers.first { it.provider == "DATAGOKR" }
+
+        assertThat(datagokr.todayCount).isEqualTo(0)
+        assertThat(datagokr.quotaBurnPerHour).isEqualTo(0.0)
+        assertThat(datagokr.quotaProjectedTodayTotal).isEqualTo(0)
     }
 
     @Test

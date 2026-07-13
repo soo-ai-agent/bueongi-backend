@@ -309,11 +309,13 @@
   "totalCalls": 842,
   "windowSize": 842,
   "byEndpoint": [
-    { "method": "GET", "endpoint": "/share/{token}/location", "count": 500, "successRate": 1.0, "avgDurationMs": 8, "distinctClients": 37 },
-    { "method": "GET", "endpoint": "/api/places/search", "count": 210, "successRate": 0.98, "avgDurationMs": 120, "distinctClients": 44 }
+    { "method": "GET", "endpoint": "/share/{token}/location", "count": 500, "successRate": 1.0, "avgDurationMs": 8, "p95DurationMs": 15, "distinctClients": 37 },
+    { "method": "GET", "endpoint": "/api/places/search", "count": 210, "successRate": 0.98, "avgDurationMs": 120, "p95DurationMs": 340, "distinctClients": 44 }
   ],
-  "estimatedUsers": { "today": 12, "last7d": 58, "last30d": 143, "callsWithoutClientId": 61 },
+  "estimatedUsers": { "today": 12, "last7d": 58, "last30d": 143, "callsWithoutClientId": 61, "newToday": 4, "returningToday": 8 },
+  "latency": { "p50Ms": 12, "p95Ms": 210, "p99Ms": 540 },
   "hourlyCalls": [ { "hourStartMs": 1720828800000, "count": 33 } ],
+  "hourlyErrors": [ { "hourStartMs": 1720828800000, "count": 1 } ],
   "dailyActiveUsers": [ { "dateEpochMs": 1720710000000, "distinctClients": 21 } ]
 }
 ```
@@ -322,14 +324,56 @@
 |------|------|
 | `totalCalls` | 집계 창 내 총 수신 호출 수(clientId 유무 무관 전량). |
 | `windowSize` | 집계에 쓴 기록 수(창 상한 이하). |
-| `byEndpoint` | 메서드+정규화경로별 집계, **`count` 내림차순**. `successRate`=status 2xx·3xx 비율(0~1), `avgDurationMs`=평균 소요(반올림), `distinctClients`=고유 익명 client-id 수(null 제외). |
+| `byEndpoint` | 메서드+정규화경로별 집계, **`count` 내림차순**. `successRate`=status 2xx·3xx 비율(0~1), `avgDurationMs`=평균 소요(반올림), `p95DurationMs`=그룹 내 소요시간 95 분위수(ms, nearest-rank), `distinctClients`=고유 익명 client-id 수(null 제외). |
 | `estimatedUsers.today` | 오늘(Asia/Seoul 자정 이후) 고유 client-id 수. |
 | `estimatedUsers.last7d` / `last30d` | 최근 7일 / 30일(이동 창) 고유 client-id 수. |
 | `estimatedUsers.callsWithoutClientId` | `X-Client-Id` 없어 사용자 추정에서 제외된 호출 수(정직성 지표). |
+| `estimatedUsers.newToday` / `returningToday` | 오늘 활동한 client-id 중 **창 내 최초 관측이 오늘**이면 신규, **오늘 이전**이면 재방문. `today = newToday + returningToday`. **근사**: 진짜 첫 방문이 아니라 창(`REQUEST_METRIC_CAP`=5000) 안에 남아 있는 기록 중 가장 이른 것 기준이라, 오래된 사용자가 창에서 밀려나면 신규로 잡힐 수 있다. |
+| `latency` | 전체 소요시간 분위수 `p50Ms`/`p95Ms`/`p99Ms`(ms, nearest-rank·보간 없음). 빈 창이면 전부 0. |
 | `hourlyCalls` | 최근 24시간 1시간 버킷(오래된→최신, Asia/Seoul 정각). `hourStartMs`=버킷 시작 epoch ms, 호출 0건 버킷도 노출. |
+| `hourlyErrors` | 최근 24시간 시간대별 **에러(status 2xx·3xx 아님) 건수** — `hourlyCalls` 와 **같은 경계·같은 버킷**이라 호출량 위에 겹쳐 그릴 수 있다(에러 0건 시간도 노출). |
 | `dailyActiveUsers` | 최근 7일 일자별 고유 사용자 수(오래된→최신). `dateEpochMs`=해당 날 자정(Asia/Seoul), 요청 0건 날도 `distinctClients:0` 으로 노출. |
 
 - **정직성**: 모든 값은 실제 수신 기록만으로 계산한다 — 목/샘플/하드코딩 없음. `estimatedUsers` 는 익명 client-id 관측치(관측 하한)이지 실제 사용자 수 추정이 아니다.
+
+---
+
+## `GET /api/admin/api-status` — 외부 API 원천별 상태·쿼터 (관리자)
+
+`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 저장된 외부 API 접속 내역(창, 최근 `API_CALL_LOG_CAP`=1000 건)을 **원천(provider)별로** 집계해 성공률·평균/95분위 소요시간·최근 성공/실패 시각·오늘 호출 수(쿼터)·시간별 호출빈도를 돌려준다. 원천은 4종(`KAKAO`/`TMAP`/`DATAGOKR`/`SAFEMAP`) **고정 노출**(로그 0건도 `total:0`). 집계만 한다 — 새 저장소·새 수집 없음. 출처: `api/admin/AdminController.kt`, `domain/admin/ApiStatusService.kt`, `storage/db-core/.../apilog/`.
+
+**200 응답** (`ApiStatusSummary`):
+
+```json
+{
+  "windowSize": 640,
+  "providers": [
+    {
+      "provider": "DATAGOKR", "total": 210, "successCount": 208, "successRate": 0.99,
+      "avgDurationMs": 180, "p95DurationMs": 520, "lastSuccessAtMs": 1720828800000, "lastFailureAtMs": 1720820000000,
+      "todayCount": 120, "quotaLimit": 1000, "quotaWarning": false,
+      "quotaBurnPerHour": 12.6, "quotaProjectedTodayTotal": 302,
+      "hourlyCalls": [ { "hourStartMs": 1720828800000, "count": 7 } ]
+    }
+  ],
+  "hourlyTrend": [ { "hourStartMs": 1720828800000, "count": 21 } ]
+}
+```
+
+| 필드 | 의미 |
+|------|------|
+| `windowSize` | 집계에 쓴 로그 총수(창 상한 이하). |
+| `providers` | **항상 4건**(`KAKAO`/`TMAP`/`DATAGOKR`/`SAFEMAP`, 로그 0건도 노출). |
+| `providers[].successRate` / `avgDurationMs` | 성공률(0~1) / 평균 소요(ms, 반올림). `total:0` 이면 각각 0. |
+| `providers[].p95DurationMs` | 원천 그룹 내 소요시간 95 분위수(ms, nearest-rank·보간 없음). `total:0` 이면 0. |
+| `providers[].lastSuccessAtMs` / `lastFailureAtMs` | 마지막 성공/실패 시각(epoch ms, 없으면 null). |
+| `providers[].todayCount` / `quotaLimit` / `quotaWarning` | 오늘(Asia/Seoul 자정 이후) 호출 수 / 일일 쿼터 상한(없으면 null) / `todayCount` 가 상한의 80% 이상이면 true. |
+| `providers[].quotaBurnPerHour` | 오늘 경과시간 기준 **시간당 쿼터 소진율**(호출/시간). 쿼터 있는 원천(`DATAGOKR`)만, 없으면 null. **근사**: 자정~현재 평균 속도가 하루 끝까지 유지된다는 선형 외삽(버스트·야간 편차 미반영). 자정 직후 경과 0 이면 0. |
+| `providers[].quotaProjectedTodayTotal` | 현재 소진율이 유지될 때 오늘 마감 예상 총 호출 수(=`round(quotaBurnPerHour × 24)`). 쿼터 없으면 null. |
+| `providers[].hourlyCalls` | 이 원천의 최근 24시간 시간별 호출빈도 — 전체 `hourlyTrend` 와 **같은 경계·같은 버킷**(호출 0건 시간도 노출). |
+| `hourlyTrend` | 원천 무관 전체 호출량, 최근 24시간 1시간 버킷(오래된→최신, Asia/Seoul 정각). |
+
+- **정직성**: 모든 값은 실제 접속 내역만으로 계산한다 — 목/샘플/하드코딩 없음. 쿼터 예측은 선형 외삽 **근사**임을 위 표에 명시했다.
 
 ---
 

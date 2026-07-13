@@ -119,6 +119,71 @@ class RequestMetricsServiceTest {
     }
 
     @Test
+    fun `byEndpoint 는 그룹 내 소요시간 p95 를 함께 집계한다`() {
+        val metrics = (1..20).map { metric(durationMs = (it * 10).toLong()) } // 10..200 (한 엔드포인트)
+
+        val endpoint = RequestMetricsService(store(metrics)).summarize().byEndpoint.single()
+
+        assertThat(endpoint.avgDurationMs).isEqualTo(105L) // (10+…+200)/20
+        assertThat(endpoint.p95DurationMs).isEqualTo(190L) // ceil(0.95*20)=19 → 19번째 표본
+    }
+
+    @Test
+    fun `latency 는 전체 소요시간의 p50 p95 p99 분위수다`() {
+        val metrics = listOf(
+            metric(durationMs = 10),
+            metric(durationMs = 20),
+            metric(durationMs = 30),
+            metric(durationMs = 40),
+            metric(durationMs = 50),
+        )
+
+        val latency = RequestMetricsService(store(metrics)).summarize().latency
+
+        // 5개 정렬 [10,20,30,40,50]: p50→3번째(30), p95·p99→5번째(50)
+        assertThat(latency.p50Ms).isEqualTo(30L)
+        assertThat(latency.p95Ms).isEqualTo(50L)
+        assertThat(latency.p99Ms).isEqualTo(50L)
+    }
+
+    @Test
+    fun `newToday 는 창 내 최초관측이 오늘인 사용자 returningToday 는 오늘 이전부터 본 사용자다`() {
+        val now = System.currentTimeMillis()
+        val metrics = listOf(
+            metric(at = now, clientId = "a"), // 오늘 처음 관측 → 신규
+            metric(at = now - 2 * DAY_MS, clientId = "b"), // b 최초=이틀 전
+            metric(at = now, clientId = "b"), // b 오늘도 활동 → 재방문
+            metric(at = now - 2 * DAY_MS, clientId = "c"), // 오늘 활동 없음 → today 대상 아님
+            metric(at = now, clientId = null), // clientId 없음 → 제외
+        )
+
+        val estimated = RequestMetricsService(store(metrics)).summarize().estimatedUsers
+
+        assertThat(estimated.today).isEqualTo(2) // a, b
+        assertThat(estimated.newToday).isEqualTo(1) // a
+        assertThat(estimated.returningToday).isEqualTo(1) // b
+    }
+
+    @Test
+    fun `hourlyErrors 는 24버킷이며 2xx 3xx 가 아닌 요청만 세고 hourlyCalls 와 같은 경계다`() {
+        val now = System.currentTimeMillis()
+        val metrics = listOf(
+            metric(at = now, status = 200), // 성공
+            metric(at = now, status = 301), // 3xx 성공
+            metric(at = now, status = 404), // 에러
+            metric(at = now, status = 500), // 에러
+            metric(at = now - 25 * HOUR_MS, status = 500), // 창 밖 → 제외
+        )
+
+        val summary = RequestMetricsService(store(metrics)).summarize()
+
+        assertThat(summary.hourlyErrors).hasSize(24)
+        assertThat(summary.hourlyErrors.map { it.hourStartMs }).isSorted()
+        assertThat(summary.hourlyErrors.sumOf { it.count }).isEqualTo(2) // 404, 500 (창 안)
+        assertThat(summary.hourlyCalls.sumOf { it.count }).isEqualTo(4) // 같은 경계, 창 안 4건
+    }
+
+    @Test
     fun `hourlyCalls 는 24버킷 오래된→최신이며 창 밖 호출은 제외한다`() {
         val now = System.currentTimeMillis()
         val metrics = listOf(
@@ -162,8 +227,15 @@ class RequestMetricsServiceTest {
         assertThat(summary.estimatedUsers.last7d).isEqualTo(0)
         assertThat(summary.estimatedUsers.last30d).isEqualTo(0)
         assertThat(summary.estimatedUsers.callsWithoutClientId).isEqualTo(0)
+        assertThat(summary.estimatedUsers.newToday).isEqualTo(0)
+        assertThat(summary.estimatedUsers.returningToday).isEqualTo(0)
+        assertThat(summary.latency.p50Ms).isEqualTo(0L)
+        assertThat(summary.latency.p95Ms).isEqualTo(0L)
+        assertThat(summary.latency.p99Ms).isEqualTo(0L)
         assertThat(summary.hourlyCalls).hasSize(24)
         assertThat(summary.hourlyCalls.sumOf { it.count }).isEqualTo(0)
+        assertThat(summary.hourlyErrors).hasSize(24)
+        assertThat(summary.hourlyErrors.sumOf { it.count }).isEqualTo(0)
         assertThat(summary.dailyActiveUsers).hasSize(7)
         assertThat(summary.dailyActiveUsers.sumOf { it.distinctClients }).isEqualTo(0)
     }

@@ -11,7 +11,8 @@ import kotlin.math.roundToLong
 
 /**
  * 관리자 페이지용 "수신 트래픽" 집계 — 이미 저장된 수신 요청 기록([RequestMetricStore])만 읽어
- * 엔드포인트별 호출수와 **예측 사용자 수**(고유 익명 client-id 관측치)를 계산한다(새 저장소 없음).
+ * 엔드포인트별 호출수·소요시간 분위수와 **예측 사용자 수**(고유 익명 client-id 관측치, 신규/재방문 근사)·
+ * 시간대별 에러 건수를 계산한다(새 저장소 없음).
  *
  * [ApiStatusService]·[RouteStatsService] 와 같은 관례 — 창(window)은 최근 [REQUEST_METRIC_CAP] 건이고
  * 시각 처리는 Asia/Seoul 기준, 시간대 추이는 24버킷 [HourlyBucket] 을 재사용한다.
@@ -31,8 +32,20 @@ class RequestMetricsService(
             windowSize = metrics.size,
             byEndpoint = byEndpoint(metrics),
             estimatedUsers = estimatedUsers(metrics),
+            latency = latency(metrics),
             hourlyCalls = hourlyCalls(metrics),
+            hourlyErrors = hourlyErrors(metrics),
             dailyActiveUsers = dailyActiveUsers(metrics),
+        )
+    }
+
+    /** 전체 소요시간 분위수(p50/p95/p99) — 정렬 1회 후 [Percentiles.nearestRank] 로 뽑는다. 빈 창이면 전부 0. */
+    private fun latency(metrics: List<RequestMetric>): LatencyPercentiles {
+        val sortedDurations = metrics.map { it.durationMs }.sorted()
+        return LatencyPercentiles(
+            p50Ms = Percentiles.nearestRank(sortedDurations, 50),
+            p95Ms = Percentiles.nearestRank(sortedDurations, 95),
+            p99Ms = Percentiles.nearestRank(sortedDurations, 99),
         )
     }
 
@@ -47,12 +60,14 @@ class RequestMetricsService(
         val successCount = group.count { it.status in SUCCESS_STATUS_RANGE }
         val successRate = successCount.toDouble() / count
         val avgDurationMs = (group.sumOf { it.durationMs }.toDouble() / count).roundToLong()
+        val p95DurationMs = Percentiles.nearestRank(group.map { it.durationMs }.sorted(), 95)
         return EndpointTraffic(
             method = key.method,
             endpoint = key.endpoint,
             count = count,
             successRate = successRate,
             avgDurationMs = avgDurationMs,
+            p95DurationMs = p95DurationMs,
             distinctClients = distinctClients(group),
         )
     }
@@ -60,15 +75,53 @@ class RequestMetricsService(
     /**
      * 예측 사용자 수 — 고유 익명 clientId 기준. today 는 Asia/Seoul 자정 이후, last7d/last30d 는 현재로부터의
      * 이동 창(rolling)이다. clientId 없는 요청은 고유 집계에서 빠지되 그 수를 [EstimatedUsers.callsWithoutClientId] 로 남긴다.
+     *
+     * newToday/returningToday 는 오늘 활동한 clientId 를 **창 내 최초 관측 시각** 기준으로 신규/재방문으로 가른다(아래 [newVsReturningToday]).
      */
     private fun estimatedUsers(metrics: List<RequestMetric>): EstimatedUsers {
         val now = System.currentTimeMillis()
+        val todayStartMs = todayStartMs(now)
+        val newVsReturning = newVsReturningToday(metrics, todayStartMs)
         return EstimatedUsers(
-            today = distinctClientsSince(metrics, todayStartMs(now)),
+            today = distinctClientsSince(metrics, todayStartMs),
             last7d = distinctClientsSince(metrics, now - DAYS_7_MS),
             last30d = distinctClientsSince(metrics, now - DAYS_30_MS),
             callsWithoutClientId = metrics.count { it.clientId == null },
+            newToday = newVsReturning.newToday,
+            returningToday = newVsReturning.returningToday,
         )
+    }
+
+    /**
+     * 오늘 활동한 clientId 를 신규/재방문으로 가른다 — **창(CAP) 내 최초 관측 시각**이 오늘 자정 이후면 신규, 이전이면 재방문.
+     *
+     * 근사임을 분명히: 진짜 "첫 방문"이 아니라 이 창에 남아 있는 기록 중 가장 이른 것 기준이다.
+     * 창을 벗어난 과거 방문은 알 수 없어, 오래 전 사용자가 창에서 밀려나면 신규로 잡힐 수 있다.
+     */
+    private fun newVsReturningToday(metrics: List<RequestMetric>, todayStartMs: Long): NewVsReturning {
+        val firstSeenByClient = firstSeenByClient(metrics)
+        val activeTodayClients = metrics
+            .filter { it.atEpochMs >= todayStartMs }
+            .mapNotNull { it.clientId }
+            .distinct()
+        val newCount = activeTodayClients.count { clientId ->
+            val firstSeen = firstSeenByClient[clientId] ?: todayStartMs
+            firstSeen >= todayStartMs
+        }
+        return NewVsReturning(newToday = newCount, returningToday = activeTodayClients.size - newCount)
+    }
+
+    /** 창 내 각 clientId 의 최초 관측 시각(epoch ms). clientId 없는 요청은 제외. */
+    private fun firstSeenByClient(metrics: List<RequestMetric>): Map<String, Long> {
+        val firstSeen = mutableMapOf<String, Long>()
+        metrics.forEach { metric ->
+            val clientId = metric.clientId ?: return@forEach
+            val previous = firstSeen[clientId]
+            if (previous == null || metric.atEpochMs < previous) {
+                firstSeen[clientId] = metric.atEpochMs
+            }
+        }
+        return firstSeen
     }
 
     /** [sinceMs] 이후 요청의 고유 clientId 수(null 제외). */
@@ -82,7 +135,23 @@ class RequestMetricsService(
      * 최근 24시간을 1시간 단위로 버킷팅한 호출수(오래된→최신, Asia/Seoul 정각 경계).
      * [ApiStatusService.hourlyTrend]·[RouteStatsService] 와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
      */
-    private fun hourlyCalls(metrics: List<RequestMetric>): List<HourlyBucket> {
+    private fun hourlyCalls(metrics: List<RequestMetric>): List<HourlyBucket> =
+        hourlyBuckets { startMs, endMs -> metrics.count { it.atEpochMs >= startMs && it.atEpochMs < endMs } }
+
+    /**
+     * 최근 24시간 시간대별 **에러 건수**(2xx·3xx 가 아닌 status). [hourlyCalls] 와 같은 경계·같은 [HourlyBucket] 이라
+     * 프론트가 호출량 막대 위에 에러를 겹쳐 그릴 수 있다(에러 0건 시간도 노출).
+     */
+    private fun hourlyErrors(metrics: List<RequestMetric>): List<HourlyBucket> =
+        hourlyBuckets { startMs, endMs ->
+            metrics.count { it.atEpochMs >= startMs && it.atEpochMs < endMs && it.status !in SUCCESS_STATUS_RANGE }
+        }
+
+    /**
+     * 최근 24시간을 1시간 버킷 24개로 만들고(오래된→최신, Asia/Seoul 정각 경계) 각 버킷 값을 [countInBucket] 로 센다.
+     * 호출량·에러가 **정확히 같은 경계**를 쓰도록 버킷 골격을 단일화한다 — 경계 정의가 갈라지는 것을 원천 차단.
+     */
+    private fun hourlyBuckets(countInBucket: (startMs: Long, endMs: Long) -> Int): List<HourlyBucket> {
         val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
             .atZone(SEOUL)
             .truncatedTo(ChronoUnit.HOURS)
@@ -90,8 +159,7 @@ class RequestMetricsService(
             val bucketStart = currentHour.minusHours(hoursAgo.toLong())
             val startMs = bucketStart.toInstant().toEpochMilli()
             val endMs = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count = metrics.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
-            HourlyBucket(hourStartMs = startMs, count = count)
+            HourlyBucket(hourStartMs = startMs, count = countInBucket(startMs, endMs))
         }
     }
 
@@ -119,6 +187,12 @@ class RequestMetricsService(
     private data class EndpointKey(
         val method: String,
         val endpoint: String,
+    )
+
+    /** 오늘 활동한 clientId 의 신규/재방문 분해 결과(서비스 내부 전달용). */
+    private data class NewVsReturning(
+        val newToday: Int,
+        val returningToday: Int,
     )
 
     companion object {
@@ -153,6 +227,8 @@ data class EndpointTraffic(
     val successRate: Double,
     /** 평균 소요시간(ms, 반올림). */
     val avgDurationMs: Long,
+    /** 이 엔드포인트 그룹 내 소요시간 95 분위수(ms, nearest-rank). 빈 그룹은 없음(groupBy 결과라 최소 1건). */
+    val p95DurationMs: Long,
     /** 이 엔드포인트를 부른 고유 익명 클라이언트 수(clientId null 제외). */
     val distinctClients: Int,
 )
@@ -170,6 +246,20 @@ data class EstimatedUsers(
     val last30d: Int,
     /** clientId 가 없어 사용자 추정에서 제외된 호출 수(정직성 지표). */
     val callsWithoutClientId: Int,
+    /**
+     * 오늘 활동한 clientId 중 **창(CAP) 내 최초 관측이 오늘**인 수(신규 근사).
+     * 창 밖 과거 방문은 알 수 없어, 오래된 사용자가 창에서 밀려나면 신규로 잡힐 수 있는 관측 근사다.
+     */
+    val newToday: Int,
+    /** 오늘 활동한 clientId 중 **창 내 최초 관측이 오늘 이전**인 수(재방문 근사). [today] = [newToday] + [returningToday]. */
+    val returningToday: Int,
+)
+
+/** 소요시간 백분위수(ms) 묶음 — nearest-rank(보간 없음). 빈 창이면 전부 0. */
+data class LatencyPercentiles(
+    val p50Ms: Long,
+    val p95Ms: Long,
+    val p99Ms: Long,
 )
 
 /** 일자별 활성 사용자 1건. [dateEpochMs] 는 해당 날 자정(Asia/Seoul, epoch ms). */
@@ -187,6 +277,10 @@ data class TrafficSummary(
     val windowSize: Int,
     val byEndpoint: List<EndpointTraffic>,
     val estimatedUsers: EstimatedUsers,
+    /** 전체 소요시간 분위수(p50/p95/p99, ms). */
+    val latency: LatencyPercentiles,
     val hourlyCalls: List<HourlyBucket>,
+    /** 최근 24시간 시간대별 에러(2xx·3xx 아님) 건수 — [hourlyCalls] 와 같은 경계·같은 버킷. */
+    val hourlyErrors: List<HourlyBucket>,
     val dailyActiveUsers: List<DailyActive>,
 )
