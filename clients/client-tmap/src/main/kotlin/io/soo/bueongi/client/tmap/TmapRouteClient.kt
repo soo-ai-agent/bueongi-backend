@@ -98,8 +98,11 @@ class TmapRouteClient(
                 .body(body)
                 .retrieve()
                 .body(JsonNode::class.java)
-            json?.let { TmapGeoJson.parse(it, searchOption) }
-                ?.also { cache.put(origin, dest, searchOption, passList, it) }
+            val route = json?.let { TmapGeoJson.parse(it, searchOption) }
+            if (route != null) {
+                cache.put(origin, dest, searchOption, passList, route)
+            }
+            route
         } catch (e: Exception) {
             // 시크릿(appKey) 비노출 — 메시지만 로깅. 부분 실패는 무시(상위가 폴백 판단).
             log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, e.message)
@@ -176,26 +179,26 @@ object TmapGeoJson {
             when (geom.get("type")?.asText()) {
                 "LineString" -> {
                     val coords = geom.get("coordinates") ?: continue
-                    for (c in coords) parseLngLat(c)?.let { path.add(it) }
+                    for (coordNode in coords) parseLngLat(coordNode)?.let { path.add(it) }
                     // Tmap 구조상 거리/시간은 Point 가 아니라 그 뒤 LineString 의 properties 에 있다.
                     // 이 구간값을 직전 안내지점(Point) step 에 부여한다(= 그 지점→다음 지점 구간 거리/시간).
                     if (steps.isNotEmpty() && props != null) {
                         val segDist = props.get("distance")?.takeIf { it.isNumber }?.asInt() ?: 0
                         val segTime = props.get("time")?.takeIf { it.isNumber }?.asInt() ?: 0
                         if (segDist > 0 || segTime > 0) {
-                            val i = steps.size - 1
-                            steps[i] = steps[i].copy(distanceM = segDist, timeS = segTime)
+                            val lastStepIndex = steps.size - 1
+                            steps[lastStepIndex] = steps[lastStepIndex].copy(distanceM = segDist, timeS = segTime)
                         }
                     }
                 }
                 "Point" -> {
-                    val c = geom.get("coordinates") ?: continue
-                    val pt = parseLngLat(c) ?: continue
+                    val pointCoords = geom.get("coordinates") ?: continue
+                    val point = parseLngLat(pointCoords) ?: continue
                     steps.add(
                         NavStep(
                             index = props?.get("index")?.asInt() ?: 0,
-                            lat = pt.lat,
-                            lng = pt.lng,
+                            lat = point.lat,
+                            lng = point.lng,
                             description = props?.get("description")?.asText() ?: "",
                             turnType = props?.get("turnType")?.asInt() ?: 0,
                             // 거리/시간은 뒤따르는 LineString 구간에서 채운다(Point 자체엔 없음).

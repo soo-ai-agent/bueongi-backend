@@ -50,10 +50,10 @@ class SafeDetourPlanner(
         }
 
         return clusters.values
-            .map {
+            .map { cluster ->
                 SafeAnchor(
-                    GeoPoint(it.sumLat / it.facilityCount, it.sumLng / it.facilityCount),
-                    weight = it.facilityCount,
+                    GeoPoint(cluster.sumLat / cluster.facilityCount, cluster.sumLng / cluster.facilityCount),
+                    weight = cluster.facilityCount,
                 )
             }
             // weight 내림차순, 동률은 좌표로 결정론적 정렬.
@@ -79,17 +79,17 @@ class SafeDetourPlanner(
         val maxLateralMeters = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
 
         // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
-        data class Placed(val anchor: SafeAnchor, val t: Double)
-        val placed = anchors.mapNotNull { a ->
-            val (tRaw, lateral) = SpatialMath.projectOntoSegment(a.center, origin, dest)
+        data class Placed(val anchor: SafeAnchor, val progress: Double)
+        val placed = anchors.mapNotNull { anchor ->
+            val (progressRaw, lateral) = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
             // 중간 구간(끝점 근처 제외) + 과도 측방이탈 제외.
-            if (tRaw <= MIDDLE_MIN_T || tRaw >= MIDDLE_MAX_T) {
+            if (progressRaw <= MIDDLE_MIN_T || progressRaw >= MIDDLE_MAX_T) {
                 return@mapNotNull null
             }
             if (lateral > maxLateralMeters) {
                 return@mapNotNull null
             }
-            Placed(a, tRaw)
+            Placed(anchor, progressRaw)
         }
         if (placed.isEmpty()) {
             return emptyList()
@@ -97,7 +97,7 @@ class SafeDetourPlanner(
 
         // weight 내림차순(동률은 t 오름차순)으로 고가중 우선.
         val byWeight = placed.sortedWith(
-            compareByDescending<Placed> { it.anchor.weight }.thenBy { it.t },
+            compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
         )
 
         val combos = LinkedHashSet<List<GeoPoint>>()
@@ -105,7 +105,7 @@ class SafeDetourPlanner(
         byWeight.take(SINGLE_ANCHOR_COMBOS).forEach { combos.add(listOf(it.anchor.center)) }
         // 앵커 2개짜리 조합 1개(상위 2개를 출발거리순 정렬).
         if (byWeight.size >= 2) {
-            val pair = byWeight.take(2).sortedBy { it.t }.map { it.anchor.center }
+            val pair = byWeight.take(2).sortedBy { it.progress }.map { it.anchor.center }
             combos.add(pair)
         }
         return combos.toList()

@@ -45,7 +45,7 @@ class ApiStatusService(
         }
         val todayCount = logs.count { it.atEpochMs >= todayStartMs }
         val quotaLimit = QUOTA_LIMITS[provider]
-        val quotaWarning = quotaLimit != null && todayCount >= quotaLimit * 0.8
+        val quotaWarning = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
         return ProviderStatus(
             provider = provider,
             total = total,
@@ -71,6 +71,9 @@ class ApiStatusService(
 
         /** 원천별 일일 쿼터 상한(있는 것만) — data.go.kr 은 승인 기본 1일 1000건. */
         val QUOTA_LIMITS = mapOf("DATAGOKR" to 1000)
+
+        /** 오늘 호출 수가 일일 쿼터 상한의 이 비율 이상이면 경고(quotaWarning). */
+        const val QUOTA_WARNING_RATIO = 0.8
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

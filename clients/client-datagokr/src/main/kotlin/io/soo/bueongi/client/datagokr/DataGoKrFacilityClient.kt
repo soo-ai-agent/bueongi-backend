@@ -104,7 +104,8 @@ class DataGoKrFacilityClient(
     private fun extractItems(items: JsonNode?): List<JsonNode> = when {
         items == null -> emptyList()
         items.isArray -> items.toList()
-        items.isObject && items.has("item") -> items.get("item").let { inner ->
+        items.isObject && items.has("item") -> {
+            val inner = items.get("item")
             when {
                 inner.isArray -> inner.toList()
                 inner.isObject -> listOf(inner)

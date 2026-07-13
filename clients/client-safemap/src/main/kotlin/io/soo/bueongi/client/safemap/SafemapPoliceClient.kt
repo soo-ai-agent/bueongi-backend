@@ -74,7 +74,10 @@ class SafemapPoliceClient(
             }
 
             val rows = findFacilityRows(body)
-            body.findValue("totalCount")?.asLong()?.takeIf { it >= 0 }?.let { totalCount = it }
+            val parsedTotalCount = body.findValue("totalCount")?.asLong()
+            if (parsedTotalCount != null && parsedTotalCount >= 0) {
+                totalCount = parsedTotalCount
+            }
             received += rows.size
             rows.mapNotNullTo(facilities) { it.toFacility() }
 
