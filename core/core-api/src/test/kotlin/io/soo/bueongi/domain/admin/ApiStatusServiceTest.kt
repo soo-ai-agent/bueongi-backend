@@ -74,4 +74,30 @@ class ApiStatusServiceTest {
         assertThat(summary.providers.first { it.provider == "DATAGOKR" }.quotaLimit).isEqualTo(1000)
         assertThat(summary.providers.first { it.provider == "KAKAO" }.quotaLimit).isNull()
     }
+
+    @Test
+    fun `빈 로그면 시간대 추이는 24버킷 모두 0 오래된에서 최신순`() {
+        val trend = ApiStatusService(store(emptyList())).summarize().hourlyTrend
+
+        assertThat(trend).hasSize(24)
+        assertThat(trend.map { it.count }).allMatch { it == 0 }
+        // 버킷 시작 시각이 오래된→최신 순으로 1시간(3_600_000ms)씩 증가한다.
+        val starts = trend.map { it.hourStartMs }
+        assertThat(starts).isSorted()
+        assertThat(starts.last() - starts.first()).isEqualTo(23L * 3_600_000L)
+    }
+
+    @Test
+    fun `방금 호출은 원천 무관 마지막 버킷에 집계된다`() {
+        val logs = listOf(
+            ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 10),
+            ApiCallLog(atEpochMs = seoulNow, provider = "TMAP", endpoint = "route", success = true, durationMs = 20),
+        )
+
+        val trend = ApiStatusService(store(logs)).summarize().hourlyTrend
+
+        // 현재 시각 정각 버킷(마지막)에 2건(원천 합산), 나머지 23버킷은 0.
+        assertThat(trend.last().count).isEqualTo(2)
+        assertThat(trend.dropLast(1).sumOf { it.count }).isEqualTo(0)
+    }
 }
