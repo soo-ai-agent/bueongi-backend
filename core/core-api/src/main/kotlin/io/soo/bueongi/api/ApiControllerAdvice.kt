@@ -4,6 +4,7 @@ import io.soo.bueongi.support.error.ApiFieldError
 import io.soo.bueongi.support.error.InvalidCoordinateException
 import io.soo.bueongi.support.error.InvalidKeywordException
 import io.soo.bueongi.support.error.InvalidRouteMetaException
+import io.soo.bueongi.support.error.InvalidSlackCategoryException
 import io.soo.bueongi.support.error.OriginRequiredException
 import io.soo.bueongi.support.error.SameOriginDestinationException
 import io.soo.bueongi.support.error.ShareSessionNotFoundException
@@ -192,6 +193,31 @@ class ApiControllerAdvice(
                     ApiFieldError(
                         field = ex.field,
                         message = ex.message,
+                        rejectedValue = ex.rejectedValue,
+                    ),
+                ),
+            )
+        }
+
+    /**
+     * 관리자 Slack 설정 편집의 뮤트 카테고리 key 가 허용 5종 밖 → 422 + `code:"INVALID_SLACK_CATEGORY"` +
+     * `errors[{field:"mutedCategories"}]`. 형식(문자열 목록)은 읽혔으나 값 규약(허용 카테고리)을 못 지킨
+     * 복구 가능 상태라 422 로 낸다(INVALID_ROUTE_META 와 같은 경계-검증→422 결).
+     */
+    @ExceptionHandler(InvalidSlackCategoryException::class)
+    fun handleInvalidSlackCategory(ex: InvalidSlackCategoryException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "알 수 없는 알림 카테고리입니다. 허용된 카테고리만 뮤트할 수 있습니다.",
+        ).apply {
+            title = "Invalid Slack Category"
+            setProperty("code", "INVALID_SLACK_CATEGORY")
+            setProperty(
+                "errors",
+                listOf(
+                    ApiFieldError(
+                        field = "mutedCategories",
+                        message = "허용된 카테고리: ${ex.knownKeys.joinToString(", ")}",
                         rejectedValue = ex.rejectedValue,
                     ),
                 ),

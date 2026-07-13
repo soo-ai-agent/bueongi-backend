@@ -1,11 +1,15 @@
 package io.soo.bueongi.api.admin
 
+import io.soo.bueongi.api.admin.request.SlackConfigUpdateRequest
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.ApiStatusSummary
 import io.soo.bueongi.domain.admin.FacilityStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusSummary
 import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.domain.admin.RouteStatsSummary
+import io.soo.bueongi.domain.admin.SlackConfigService
+import io.soo.bueongi.domain.admin.SlackConfigSummary
+import io.soo.bueongi.domain.admin.SlackTestResult
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -14,8 +18,12 @@ import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
+import jakarta.validation.Valid
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -34,6 +42,7 @@ class AdminController(
     private val routeStatsService: RouteStatsService,
     private val locationStore: LocationStore,
     private val alertNotifier: AlertNotifier,
+    private val slackConfigService: SlackConfigService,
 ) {
 
     /** GET /api/admin/me → 현재 관리자 principal(userId)과 권한 목록. */
@@ -93,6 +102,25 @@ class AdminController(
         val bounded = limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT)
         return AlertsResponse(alerts = alertNotifier.findRecentAlerts(bounded))
     }
+
+    /**
+     * GET /api/admin/slack-config → 현재 Slack 알림 설정([SlackConfigSummary]).
+     * webhook 원문은 노출하지 않는다(마스킹만). 변환만 — 집계·마스킹은 서비스가 한다.
+     */
+    @GetMapping("/slack-config")
+    fun slackConfig(): SlackConfigSummary = slackConfigService.view()
+
+    /**
+     * PUT /api/admin/slack-config → 발송 토글·스로틀·카테고리 뮤트를 편집하고 갱신된 요약을 반환.
+     * webhook 은 편집 불가(요청 DTO 에 없음). 요청은 @Valid 로 검증하고 도메인 입력으로 변환만 한다.
+     */
+    @PutMapping("/slack-config")
+    fun updateSlackConfig(@Valid @RequestBody request: SlackConfigUpdateRequest): SlackConfigSummary =
+        slackConfigService.update(request.toUpdate())
+
+    /** POST /api/admin/slack-config/test → 테스트 발송을 시도하고 결과([SlackTestResult])를 반환(변환만). */
+    @PostMapping("/slack-config/test")
+    fun testSlackConfig(): SlackTestResult = slackConfigService.test()
 }
 
 /** share-status 응답 — 현재 활성 공유 세션 수. */

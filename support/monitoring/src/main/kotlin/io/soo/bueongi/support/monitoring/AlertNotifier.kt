@@ -21,6 +21,13 @@ interface AlertNotifier {
      * 기본은 빈 목록 — 이력을 보관하지 않는 목/단순 구현은 무영향(순수 추가).
      */
     fun findRecentAlerts(limit: Int): List<AlertRecord> = emptyList()
+
+    /**
+     * 관리자 "테스트 발송" — 발송 채널이 살아있는지 **동기**로 확인한다(스로틀·뮤트 무시).
+     * [notify] 와 달리 결과(성공 여부)를 즉시 돌려줘야 해서 호출 스레드에서 발송하고, 2xx 면 true.
+     * 발송 불가(비활성)·실패·예외는 모두 false — 절대 예외를 던지지 않는다. 기본은 false(목/단순 구현 무영향).
+     */
+    fun sendTest(): Boolean = false
 }
 
 /** 장애 알림 이력 1건 — 발생 시각(epoch ms)·스로틀 key·제목·상세. */

@@ -3,6 +3,7 @@ package io.soo.bueongi.api.admin
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusService
 import io.soo.bueongi.domain.admin.RouteStatsService
+import io.soo.bueongi.domain.admin.SlackConfigService
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -19,6 +20,7 @@ import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
+import io.soo.bueongi.support.monitoring.SlackAlertConfig
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -200,6 +202,14 @@ class ApiLogsControllerTest(
             override fun findRecentAlerts(limit: Int): List<AlertRecord> =
                 listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
         }
+
+        /** webhook 미설정 홀더 — slack-config 슬라이스 계약(미설정 상태 shape)만 고정한다. */
+        @Bean
+        fun slackAlertConfig(): SlackAlertConfig = SlackAlertConfig(webhookUrl = "", throttleMinutes = 10)
+
+        @Bean
+        fun slackConfigService(config: SlackAlertConfig, notifier: AlertNotifier): SlackConfigService =
+            SlackConfigService(config, notifier)
 
         companion object {
             var lastLimit: Int = -1

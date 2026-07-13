@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.concurrent.Executor
 
 /**
- * [SlackAlertNotifier] 계약 테스트 — 발송 페이로드, 비활성 무해, key 스로틀(억제/창 경과 재발송),
- * 발송 실패 삼킴을 고정한다. 발송은 동기 실행기로 바꿔 결정론적으로 검증한다.
+ * [SlackAlertNotifier] 계약 테스트 — 발송 페이로드, 비활성 무해, 카테고리 뮤트, key 스로틀(억제/창 경과 재발송),
+ * 발송 실패 삼킴, 테스트 발송(동기)을 고정한다. 발송은 동기 실행기로 바꿔 결정론적으로 검증한다.
  */
 class SlackAlertNotifierTest {
 
@@ -26,12 +26,19 @@ class SlackAlertNotifierTest {
     /** 스로틀 검증용 가변 시계 — 테스트가 now 를 직접 진행시킨다. */
     private var now = 1_000_000L
 
-    private fun bind(url: String = webhook, throttleMinutes: Long = 10): Pair<SlackAlertNotifier, MockRestServiceServer> {
+    private fun bind(
+        url: String = webhook,
+        throttleMinutes: Int = 10,
+        mutedCategories: Set<String> = emptySet(),
+    ): Pair<SlackAlertNotifier, MockRestServiceServer> {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
+        val config = SlackAlertConfig(webhookUrl = url, throttleMinutes = throttleMinutes)
+        if (mutedCategories.isNotEmpty()) {
+            config.update(enabled = true, throttleMinutes = throttleMinutes, mutedCategories = mutedCategories)
+        }
         val notifier = SlackAlertNotifier(
-            webhookUrl = url,
-            throttleMinutes = throttleMinutes,
+            config = config,
             restClientBuilder = builder,
             objectMapper = ObjectMapper(),
             executor = Executor { it.run() }, // 테스트: 동기 발송
@@ -121,5 +128,57 @@ class SlackAlertNotifierTest {
         assertThat(recent).hasSize(200) // 링버퍼 상한
         assertThat(recent.first().key).isEqualTo("k249") // 가장 최근
         assertThat(recent.last().key).isEqualTo("k50") // 오래된 k0~k49 는 폐기
+    }
+
+    @Test
+    fun `뮤트 - key 의 카테고리(콜론 앞부분)가 뮤트면 발송 생략, 이력은 남긴다`() {
+        val (notifier, server) = bind(mutedCategories = setOf("api-500"))
+        // 발송은 한 건도 나가면 안 된다(뮤트).
+        server.expect(ExpectedCount.never(), requestTo(webhook)).andRespond(withSuccess())
+
+        notifier.notify("api-500:NullPointerException", "t", "d") // 카테고리 api-500 뮤트
+
+        server.verify()
+        assertThat(notifier.findRecentAlerts(10)).hasSize(1) // 이력은 남는다(뮤트 독립)
+    }
+
+    @Test
+    fun `뮤트 - 뮤트되지 않은 카테고리는 정상 발송된다`() {
+        val (notifier, server) = bind(mutedCategories = setOf("api-500"))
+        server.expect(ExpectedCount.times(1), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
+
+        notifier.notify("tmap-route-fallback", "t", "d") // 뮤트 아님 → 발송
+
+        server.verify()
+    }
+
+    @Test
+    fun `테스트 발송 - sendEnabled 이면 동기 POST 하고 2xx 면 true`() {
+        val (notifier, server) = bind()
+        server.expect(requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
+
+        assertThat(notifier.sendTest()).isTrue()
+
+        server.verify()
+    }
+
+    @Test
+    fun `테스트 발송 - 5xx 면 예외 삼키고 false`() {
+        val (notifier, server) = bind()
+        server.expect(requestTo(webhook)).andRespond(withServerError())
+
+        assertThat(notifier.sendTest()).isFalse()
+
+        server.verify()
+    }
+
+    @Test
+    fun `테스트 발송 - 비활성(webhook 미설정)이면 발송 없이 false`() {
+        val (notifier, server) = bind(url = " ")
+        server.expect(ExpectedCount.never(), requestTo(containsString("hooks.slack.com"))).andRespond(withSuccess())
+
+        assertThat(notifier.sendTest()).isFalse()
+
+        server.verify()
     }
 }

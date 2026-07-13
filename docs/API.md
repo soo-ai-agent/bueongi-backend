@@ -50,6 +50,7 @@
 | `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/facilities 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
 | `SAME_ORIGIN_DESTINATION` | 422 | Same Origin And Destination | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 < 1m(사실상 같은 지점). 도착지 재선택 유도. |
 | `TRIP_TOO_FAR` | 422 | Trip Too Far | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 > 100km(도착지 오선택/위경도 뒤바뀜 추정). 도착지 재선택 유도("100km 이내" 안내). |
+| `INVALID_SLACK_CATEGORY` | 422 | Invalid Slack Category | ✅ `mutedCategories`(rejectedValue=알 수 없는 key 목록) | 관리자 Slack 설정 편집(PUT `/api/admin/slack-config`)의 `mutedCategories` 에 알려진 5종 밖 key. 허용 카테고리만 뮤트하도록 안내. |
 | `METHOD_NOT_ALLOWED` | 405 | Method Not Allowed | ❌ | POST 전용 엔드포인트에 GET 등. 응답에 `Allow` 헤더(허용 메서드) 보존. |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | Unsupported Media Type | ❌ | JSON 본문 엔드포인트에 `text/plain` 등 비-JSON Content-Type. |
 | `SHARE_SESSION_NOT_FOUND` | 404 | Share Session Not Found | ❌ | 위치 공유 `token` 이 없거나 TTL 만료된 상태에서 **위치 갱신(POST `/share/{token}/location`)** 을 시도. 미매칭 경로(`NOT_FOUND`)와 구분되는 **도메인 404**. (보호자 조회 GET `/share/{token}/location` 은 404 대신 항상 200 + `expired:true`.) |
@@ -293,6 +294,79 @@
 
 ---
 
+## `/api/admin/slack-config` — Slack 알림 설정 (관리자)
+
+`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 운영 알림(Slack)의 **발송 on/off·스로틀·카테고리별 뮤트**를 웹에서 편집한다. 출처: `api/admin/AdminController.kt`, `domain/admin/SlackConfigService.kt`, `support/monitoring/SlackAlertConfig.kt`.
+
+> **보안(webhook 편집 불가)**: webhook URL 은 env 시크릿(`SLACK_WEBHOOK_URL` → `bueongi.alert.slack-webhook-url`)이라 **편집 대상이 아니며**, 조회 시에도 **원문을 절대 노출하지 않고 마스킹만** 돌려준다(`https://hooks.slack.com/services/T***/B***/***` 형태, 형식이 다르면 앞 8자만 남기고 별표). PUT 은 `enabled`/`throttleMinutes`/`mutedCategories` 만 받는다.
+> **효과 발송 조건**: 실제 Slack 전송 = `webhookConfigured && enabled`. 뮤트된 카테고리는 **발송만 생략**하고 장애 이력(`GET /api/admin/alerts`)에는 그대로 남는다.
+
+**알림 카테고리(고정 5종)** — key 는 실제 알림 key 의 `:` 앞부분과 일치한다:
+
+| key | label | 실제 알림 key 예 |
+|-----|-------|------------------|
+| `api-500` | 서버 오류(미처리 500) | `api-500:<예외클래스>` |
+| `kakao-place-fallback` | 장소검색 폴백(Kakao) | `kakao-place-fallback` |
+| `tmap-route-fallback` | 경로 폴백(Tmap) | `tmap-route-fallback` |
+| `facility-index-empty` | 안심시설 데이터 없음 | `facility-index-empty` |
+| `facility-refresh` | 시설 라이브 갱신 실패 | `facility-refresh:<cdnType>` |
+
+### `GET /api/admin/slack-config` — 현재 설정 조회
+
+**200 응답** (`SlackConfigSummary`):
+
+```json
+{
+  "webhookConfigured": true,
+  "webhookMasked": "https://hooks.slack.com/services/T***/B***/***",
+  "enabled": true,
+  "throttleMinutes": 10,
+  "categories": [
+    { "key": "api-500", "label": "서버 오류(미처리 500)", "muted": false },
+    { "key": "kakao-place-fallback", "label": "장소검색 폴백(Kakao)", "muted": false },
+    { "key": "tmap-route-fallback", "label": "경로 폴백(Tmap)", "muted": false },
+    { "key": "facility-index-empty", "label": "안심시설 데이터 없음", "muted": false },
+    { "key": "facility-refresh", "label": "시설 라이브 갱신 실패", "muted": false }
+  ]
+}
+```
+
+- `webhookConfigured`: webhook env 설정 여부. `webhookMasked`: 마스킹 URL(미설정이면 `null`). **원문 비노출.**
+- `enabled`: 마스터 발송 토글. `throttleMinutes`: 같은 key 재발송 억제 창(분).
+- `categories`: **항상 위 5종 고정 순서**, 각 `muted` 여부.
+
+### `PUT /api/admin/slack-config` — 설정 편집
+
+**요청 본문** (`SlackConfigUpdateRequest`):
+
+```json
+{ "enabled": true, "throttleMinutes": 30, "mutedCategories": ["api-500", "tmap-route-fallback"] }
+```
+
+- `enabled` (필수): 마스터 발송 토글. 누락 → 400 `VALIDATION_FAILED`.
+- `throttleMinutes` (필수): **[1, 1440]**. 범위 밖 → 400 `VALIDATION_FAILED`.
+- `mutedCategories` (선택, 기본 `[]`): 뮤트할 카테고리 key 목록. **위 5종 밖 key → 422 `INVALID_SLACK_CATEGORY`**(부분 적용 없음 — 하나라도 알 수 없으면 전체 거부).
+- webhook 은 편집 불가(본문에 없음).
+
+**200 응답**: 갱신된 `SlackConfigSummary`(GET 과 동일 shape). PUT 직후 GET 하면 변경이 반영돼 있다.
+
+### `POST /api/admin/slack-config/test` — 테스트 발송
+
+효과 발송 가능(`webhookConfigured && enabled`)이면 **동기**로 테스트 메시지를 1회 발송한다(스로틀·뮤트 무시). 발송 실패·예외·비활성은 모두 `sent:false`(예외를 던지지 않는다).
+
+**요청**: 없음(본문 불요).
+
+**200 응답** (`SlackTestResult`):
+
+```json
+{ "sent": true, "enabled": true }
+```
+
+- `sent`: 테스트 발송이 2xx 로 성공했는가.
+- `enabled`: 현재 효과 발송 가능 여부(`webhookConfigured && enabled`).
+
+---
+
 ## 도메인 상수 한눈에
 
 | 상수 | 값 | 출처 |
@@ -306,3 +380,4 @@
 | distanceFactor | safe 1.18 / main 1.05 / fast 0.92 | `RouteType` |
 | `MIN_EXPIRES_HOURS` / `MAX_EXPIRES_HOURS` | 1 h / 3 h | `share/ShareDtos.kt` |
 | `DEFAULT_EXPIRES_HOURS`(미지정 시) | 1 h | `share/ShareDtos.kt` |
+| `MIN_THROTTLE_MINUTES` / `MAX_THROTTLE_MINUTES` | 1 / 1440 분 | `support/monitoring/SlackAlertConfig.kt` |
