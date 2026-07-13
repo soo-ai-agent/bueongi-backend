@@ -72,4 +72,20 @@ class RouteServiceTest {
         val long = request().copy(origin = GeoPoint(37.0, 127.0), destination = GeoPoint(37.8, 127.0))
         assertThat(service.compare(long)).hasSize(3)
     }
+
+    @Test
+    fun `compare 는 추천 요청을 compare 로 1회 집계하고 buildRoutes 는 집계하지 않는다`() {
+        // 추천 집계 계약: compare 만 기록(부수효과), 순수 생성(buildRoutes)은 기록 없음 → safe-compare 폴백이 이중 카운트 없이 재사용.
+        val recording = RecordingRouteStatsStore()
+        val recordingService = RouteService(recording)
+
+        recordingService.compare(request())
+        assertThat(recording.records.map { it.endpoint }).containsExactly("compare")
+        assertThat(recording.records.first().preference).isEqualTo("safe")
+        assertThat(recording.records.first().destinationName).isEqualTo("홍대입구역")
+
+        recording.records.clear()
+        recordingService.buildRoutes(request())
+        assertThat(recording.records).isEmpty()
+    }
 }

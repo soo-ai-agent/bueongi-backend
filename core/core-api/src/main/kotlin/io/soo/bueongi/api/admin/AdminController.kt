@@ -4,6 +4,8 @@ import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.ApiStatusSummary
 import io.soo.bueongi.domain.admin.FacilityStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusSummary
+import io.soo.bueongi.domain.admin.RouteStatsService
+import io.soo.bueongi.domain.admin.RouteStatsSummary
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -29,6 +31,7 @@ class AdminController(
     private val apiCallLogStore: ApiCallLogStore,
     private val apiStatusService: ApiStatusService,
     private val facilityStatusService: FacilityStatusService,
+    private val routeStatsService: RouteStatsService,
     private val locationStore: LocationStore,
     private val alertNotifier: AlertNotifier,
 ) {
@@ -67,6 +70,13 @@ class AdminController(
      */
     @GetMapping("/facility-status")
     fun facilityStatus(): FacilityStatusSummary = facilityStatusService.summarize()
+
+    /**
+     * GET /api/admin/route-stats → 경로 추천 요청 집계([RouteStatsSummary]).
+     * 저장된 추천 기록에서 엔드포인트별 수·안심강도 선호 분포·상위 목적지·최근 24시간 트렌드를 집계만 한다(변환만).
+     */
+    @GetMapping("/route-stats")
+    fun routeStats(): RouteStatsSummary = routeStatsService.summarize()
 
     /** GET /api/admin/share-status → 현재 활성(상한 미만료) 위치공유 세션 수. */
     @GetMapping("/share-status")

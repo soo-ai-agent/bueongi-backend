@@ -2,8 +2,11 @@ package io.soo.bueongi.api.admin
 
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusService
+import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
+import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
+import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
@@ -86,6 +89,23 @@ class ApiLogsControllerTest(
     }
 
     @Test
+    fun `route-stats 는 엔드포인트 2종과 창 크기를 반환한다`() {
+        mockMvc.get("/api/admin/route-stats")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.total") { value(1) }
+                jsonPath("$.windowSize") { value(1) }
+                jsonPath("$.byEndpoint.length()") { value(2) }
+                jsonPath("$.byEndpoint[0].endpoint") { value("compare") }
+                jsonPath("$.byEndpoint[0].count") { value(1) }
+                jsonPath("$.byEndpoint[1].endpoint") { value("safe-compare") }
+                jsonPath("$.byPreference[0].preference") { value("safe") }
+                jsonPath("$.topDestinations[0].name") { value("강남역") }
+                jsonPath("$.hourlyTrend.length()") { value(24) }
+            }
+    }
+
+    @Test
     fun `share-status 는 활성 세션 수를 반환한다`() {
         mockMvc.get("/api/admin/share-status")
             .andExpect {
@@ -120,6 +140,23 @@ class ApiLogsControllerTest(
 
         @Bean
         fun apiStatusService(store: ApiCallLogStore): ApiStatusService = ApiStatusService(store)
+
+        @Bean
+        fun routeStatsStore(): RouteStatsStore = object : RouteStatsStore {
+            override fun record(log: RouteRecommendationLog) = Unit
+            override fun findRecent(limit: Int): List<RouteRecommendationLog> =
+                listOf(
+                    RouteRecommendationLog(
+                        atEpochMs = System.currentTimeMillis(),
+                        endpoint = "compare",
+                        destinationName = "강남역",
+                        preference = "safe",
+                    ),
+                )
+        }
+
+        @Bean
+        fun routeStatsService(store: RouteStatsStore): RouteStatsService = RouteStatsService(store)
 
         @Bean
         fun facilityStatusService(): FacilityStatusService {

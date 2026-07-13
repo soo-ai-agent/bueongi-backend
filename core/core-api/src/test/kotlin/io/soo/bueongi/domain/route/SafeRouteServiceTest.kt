@@ -11,6 +11,8 @@ import io.soo.bueongi.domain.facility.FakeFacilitySource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScorer
+import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
+import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -207,6 +209,52 @@ class SafeRouteServiceTest {
     }
 
     @Test
+    fun `Tmap 미설정 폴백은 compare 를 record 하지 않고 safe-compare 만 1회 집계한다`() {
+        // 이중 카운트 방지 계약: 폴백은 routeService.buildRoutes(집계 없음)를 호출해야 한다.
+        // RouteService 에도 같은 기록 저장소를 물려, compare 로 폴백했다면 "compare" 도 남아 실패하도록 한다.
+        val recording = RecordingRouteStatsStore()
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(false)
+        val svc = SafeRouteService(
+            RouteService(recording),
+            tmap,
+            scorer,
+            detourPlanner,
+            source,
+            RouteMarkerBuilder(source),
+            RouteCandidateMerger(),
+            routeStatsStore = recording,
+        )
+
+        svc.safeCompare(request)
+
+        assertThat(recording.records.map { it.endpoint }).containsExactly("safe-compare")
+        assertThat(recording.records.first().preference).isEqualTo("safe")
+    }
+
+    @Test
+    fun `Tmap 전부 실패 폴백도 safe-compare 만 1회 집계한다`() {
+        val recording = RecordingRouteStatsStore()
+        val tmap = mock<TmapRouteClient>()
+        whenever(tmap.isEnabled).thenReturn(true)
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
+        val svc = SafeRouteService(
+            RouteService(recording),
+            tmap,
+            scorer,
+            detourPlanner,
+            source,
+            RouteMarkerBuilder(source),
+            RouteCandidateMerger(),
+            routeStatsStore = recording,
+        )
+
+        svc.safeCompare(request)
+
+        assertThat(recording.records.map { it.endpoint }).containsExactly("safe-compare")
+    }
+
+    @Test
     fun `서로 다른 후보가 4개여도 유형당 하나씩 정확히 3개만 반환한다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
@@ -224,4 +272,15 @@ class SafeRouteServiceTest {
         assertThat(result).hasSize(3)
         assertThat(result.map { it.type }).containsExactlyInAnyOrder("safe", "main", "fast")
     }
+}
+
+/** 추천 집계 기록을 그대로 모아두는 테스트 대역 — 이중 카운트/엔드포인트 라벨을 검증한다(같은 패키지 테스트 공용). */
+class RecordingRouteStatsStore : RouteStatsStore {
+    val records = mutableListOf<RouteRecommendationLog>()
+
+    override fun record(log: RouteRecommendationLog) {
+        records.add(log)
+    }
+
+    override fun findRecent(limit: Int): List<RouteRecommendationLog> = records.take(limit)
 }

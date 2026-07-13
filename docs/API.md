@@ -263,6 +263,36 @@
 
 ---
 
+## `GET /api/admin/route-stats` — 추천 통계 (관리자)
+
+`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 경로 추천 요청(`POST /api/routes/compare`·`/safe-compare`)을 창(window, 최근 `ROUTE_STATS_CAP`=2000 건) 단위로 집계해 돌려준다. 저장/집계는 순수 부수효과라 추천 응답은 불변이며, 저장소 미주입(테스트 슬라이스)이어도 무해하다. 출처: `api/admin/AdminController.kt`, `domain/admin/RouteStatsService.kt`, `storage/db-core/.../routestats/`.
+
+**200 응답** (`RouteStatsSummary`):
+
+```json
+{
+  "total": 128,
+  "windowSize": 128,
+  "byEndpoint": [ { "endpoint": "compare", "count": 90 }, { "endpoint": "safe-compare", "count": 38 } ],
+  "byPreference": [ { "preference": "safe", "count": 70 }, { "preference": "balanced", "count": 40 }, { "preference": "safest", "count": 18 } ],
+  "topDestinations": [ { "name": "강남역", "count": 12 }, { "name": "홍대입구역", "count": 8 } ],
+  "hourlyTrend": [ { "hourStartMs": 1720828800000, "count": 3 } ]
+}
+```
+
+| 필드 | 의미 |
+|------|------|
+| `total` | 집계 창 내 총 추천 요청 수. |
+| `windowSize` | 집계에 쓴 기록 수(창 상한 이하). |
+| `byEndpoint` | **항상 2건**(`compare`/`safe-compare`, 요청 0건도 노출). |
+| `byPreference` | 안심강도 선호(`SafetyPreference.requestValue`: `balanced`/`safe`/`safest`) 분포. **실제 나타난 값만**, `count` 내림차순. |
+| `topDestinations` | 목적지명 상위 **최대 10건**(빈 이름 제외, `count` 내림차순). |
+| `hourlyTrend` | 최근 24시간 1시간 버킷(오래된→최신, Asia/Seoul 정각). `hourStartMs`=버킷 시작 epoch ms, 요청 0건 버킷도 노출. |
+
+- **이중 카운트 방지**: `safe-compare` 는 진입 시 `safe-compare` 1회만 집계하고, 폴백(키 미설정/Tmap 전면 실패)은 `RouteService.compare` 가 아니라 집계 없는 `RouteService.buildRoutes` 를 호출한다.
+
+---
+
 ## 도메인 상수 한눈에
 
 | 상수 | 값 | 출처 |

@@ -9,6 +9,7 @@ import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
+import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
@@ -43,12 +44,18 @@ class SafeRouteService(
     private val alertNotifier: AlertNotifier? = null,
     /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 경로 산출은 불변. */
     private val apiCallLogStore: ApiCallLogStore? = null,
+    /** 추천 통계 집계(없으면 null 무해) — 순수 부수효과, 경로 산출은 불변. */
+    private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
+        // 추천 요청 집계(safe-compare)는 진입 시 정확히 1회만 기록한다 — 아래 폴백은 routeService.buildRoutes(집계 없음)를
+        // 호출하므로 이중 카운트가 나지 않는다(compare 로 폴백하면 compare 로도 한 번 더 집계되는 문제를 막는다).
+        routeStatsStore.recordRecommendation("safe-compare", query)
+
         // Tmap 미설정이면 기존 결정론적 폴백(점수/마커 없는 RouteOption).
         if (!tmapClient.isEnabled) {
-            return routeService.compare(query)
+            return routeService.buildRoutes(query)
         }
 
         val origin = query.origin
@@ -78,7 +85,7 @@ class SafeRouteService(
                 title = "Tmap 경로 API 실패",
                 detail = "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)",
             )
-            return routeService.compare(query)
+            return routeService.buildRoutes(query)
         }
 
         val baseShortestM = base.minOf { it.distanceM }
