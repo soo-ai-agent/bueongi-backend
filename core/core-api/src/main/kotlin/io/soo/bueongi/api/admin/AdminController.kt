@@ -12,6 +12,8 @@ import io.soo.bueongi.domain.admin.TrafficSummary
 import io.soo.bueongi.domain.admin.SlackConfigService
 import io.soo.bueongi.domain.admin.SlackConfigSummary
 import io.soo.bueongi.domain.admin.SlackTestResult
+import io.soo.bueongi.domain.share.ActiveShareView
+import io.soo.bueongi.domain.share.ShareService
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -44,6 +46,7 @@ class AdminController(
     private val routeStatsService: RouteStatsService,
     private val requestMetricsService: RequestMetricsService,
     private val locationStore: LocationStore,
+    private val shareService: ShareService,
     private val alertNotifier: AlertNotifier,
     private val slackConfigService: SlackConfigService,
 ) {
@@ -102,6 +105,14 @@ class AdminController(
     fun shareStatus(): ShareStatusResponse = ShareStatusResponse(activeSessions = locationStore.countActiveSessions())
 
     /**
+     * GET /api/admin/share-sessions → 현재 이동 중인(활성) 위치공유 세션 목록.
+     * 세션별 공유 URL·현재 위치·TTL·시청 여부를 담는다(변환만 — URL 조립·TTL 파생·정렬은 [ShareService] 가 수행).
+     * owner_secret·경로 상세는 도메인에서 이미 배제된다(프라이버시 불변식).
+     */
+    @GetMapping("/share-sessions")
+    fun shareSessions(): ShareSessionsResponse = ShareSessionsResponse(sessions = shareService.listActiveSessions())
+
+    /**
      * GET /api/admin/alerts?limit= → 최근 장애 알림 이력(최신순).
      * limit 는 [1, [ALERT_HISTORY_MAX_LIMIT]] 로 절삭(기본 100).
      */
@@ -136,6 +147,11 @@ class AdminController(
 /** share-status 응답 — 현재 활성 공유 세션 수. */
 data class ShareStatusResponse(
     val activeSessions: Int,
+)
+
+/** share-sessions 응답 — 현재 이동 중인(활성) 위치공유 세션 목록(관리자). */
+data class ShareSessionsResponse(
+    val sessions: List<ActiveShareView>,
 )
 
 /** alerts 응답 — 최근 장애 알림 이력(최신순). */

@@ -108,4 +108,22 @@ class InMemoryLocationStoreTest {
         clock.advanceSeconds(20) // dead 만 만료 시각 통과
         assertEquals(1, store.countActiveSessions())
     }
+
+    @Test
+    fun `findActiveSessions 는 저장된 미만료 세션을 반환한다`() {
+        assertTrue(store.findActiveSessions().isEmpty())
+        val a = session("a", clock.now.plusSeconds(3600))
+        val b = session("b", clock.now.plusSeconds(3600))
+        store.save(a)
+        store.save(b)
+        assertEquals(setOf(a, b), store.findActiveSessions().toSet())
+    }
+
+    @Test
+    fun `findActiveSessions 는 만료 세션을 제외한다(Redis SCAN 동치)`() {
+        store.save(session("live", clock.now.plusSeconds(3600)))
+        store.save(session("dead", clock.now.plusSeconds(10)))
+        clock.advanceSeconds(20) // dead 만 만료 시각 통과
+        assertEquals(listOf("live"), store.findActiveSessions().map { it.token })
+    }
 }

@@ -139,6 +139,13 @@ interface LocationStore {
      * (위치/경로/시청 키는 제외). Redis 는 native TTL 로 만료 키가 이미 없고, 인메모리는 만료 세션을 제외해 동치 거동을 맞춘다.
      */
     fun countActiveSessions(): Int
+
+    /**
+     * 현재 활성(상한 미만료) 공유 세션 전량 — 관리자 목록용. [countActiveSessions] 와 같은 세션 키(`share:{token}`)
+     * 기준으로 세션을 복원해 돌려준다(만료면 제외). Redis 는 세션 키를 SCAN 순회하며 [findByToken] 으로 복원하고,
+     * 인메모리는 만료 세션을 제외한다(동치 거동). 상세 매핑·정렬·URL 조립은 상위 도메인이 담당한다(저장소는 열거만).
+     */
+    fun findActiveSessions(): List<ShareSession>
 }
 
 /**

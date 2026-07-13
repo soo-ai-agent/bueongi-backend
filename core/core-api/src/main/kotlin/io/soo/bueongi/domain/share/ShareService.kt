@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import java.util.Base64
 
 /**
@@ -43,10 +45,41 @@ class ShareService(
         return CreateShareResponse(
             token = token,
             ownerSecret = ownerSecret,
-            shareUrl = "${baseUrl.trimEnd('/')}/share/$token",
+            shareUrl = shareUrlFor(token),
             expiresAt = expiresAt,
         )
     }
+
+    /**
+     * 활성(상한 미만료) 공유 세션 목록(관리자 전용). 저장소 열거([LocationStore.findActiveSessions])를
+     * [ActiveShareView] 로 매핑한다 — shareUrl 조립·TTL 파생·시청 여부 조회를 도메인에서 수행하고,
+     * owner_secret·경로 상세는 노출하지 않는다(프라이버시 불변식). 정렬은 updatedAtMs 내림차순(null 마지막),
+     * 동률은 token 오름차순 — 최근 움직인 공유가 위로 오되 위치 미보고 세션은 아래로 모은다.
+     */
+    fun listActiveSessions(): List<ActiveShareView> {
+        val now = clock.instant()
+        return store.findActiveSessions()
+            .map { session -> toActiveShareView(session, now) }
+            .sortedWith(ACTIVE_SHARE_ORDER)
+    }
+
+    /** 활성 세션 1건 → 관리자 뷰. lat/lng/updatedAtMs 는 위치 미보고 시 null, TTL 은 expiresAt 에서 파생(추가 왕복 없음). */
+    private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
+        val location = session.location
+        val ttlSeconds = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
+        return ActiveShareView(
+            token = session.token,
+            shareUrl = shareUrlFor(session.token),
+            lat = location?.lat,
+            lng = location?.lng,
+            updatedAtMs = location?.updatedAt?.toEpochMilli(),
+            ttlSeconds = ttlSeconds,
+            viewerActive = store.isWatched(session.token),
+        )
+    }
+
+    /** 외부 공유용 URL 조립. 생성·목록이 같은 규칙을 공유하도록 한 곳에 둔다(`{base}/share/{token}`). */
+    private fun shareUrlFor(token: String): String = "${baseUrl.trimEnd('/')}/share/$token"
 
     /**
      * 위치 갱신(사용자 단말, 5초마다). 토큰 없음/만료면 [ShareSessionNotFoundException]→404.
@@ -177,6 +210,15 @@ class ShareService(
         /** token 엔트로피(바이트). 16바이트 = 128-bit. */
         const val TOKEN_BYTES = 16
         const val SECONDS_PER_HOUR = 3600L
+
+        /**
+         * 관리자 목록 정렬 — updatedAtMs 내림차순(위치 있는 세션 먼저, 최근 갱신 순), 동률·위치 미보고(null) 그룹은 token 오름차순.
+         * 첫 키가 null/비null 을 먼저 가르므로 두 번째 키의 `?: 0L` 은 null 그룹 내부에서만 쓰여(전원 동률→token) 안전하다.
+         */
+        val ACTIVE_SHARE_ORDER: Comparator<ActiveShareView> =
+            compareByDescending<ActiveShareView> { it.updatedAtMs != null }
+                .thenByDescending { it.updatedAtMs ?: 0L }
+                .thenBy { it.token }
     }
 }
 

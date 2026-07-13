@@ -18,9 +18,11 @@ import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
 import io.soo.bueongi.storage.db.core.facility.SafePath
+import io.soo.bueongi.domain.share.ShareService
 import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
+import io.soo.bueongi.storage.db.core.share.StoredLocation
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import io.soo.bueongi.support.monitoring.SlackAlertConfig
@@ -139,6 +141,32 @@ class ApiLogsControllerTest(
     }
 
     @Test
+    fun `share-sessions 는 활성 공유 목록을 계약 형태로 반환한다`() {
+        mockMvc.get("/api/admin/share-sessions")
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith("application/json") }
+                jsonPath("$.sessions.length()") { value(3) }
+                // tok0(위치 보고됨)이 updatedAtMs 비null 이라 목록 맨 위 — shareUrl·lat/lng·ttl·viewerActive 계약 확인.
+                jsonPath("$.sessions[0].token") { value("tok0") }
+                jsonPath("$.sessions[0].shareUrl") { value("http://localhost:3619/share/tok0") }
+                jsonPath("$.sessions[0].lat") { value(37.5) }
+                jsonPath("$.sessions[0].lng") { value(127.0) }
+                jsonPath("$.sessions[0].updatedAtMs") { isNumber() }
+                jsonPath("$.sessions[0].ttlSeconds") { value(3600) }
+                jsonPath("$.sessions[0].viewerActive") { value(false) }
+                // 위치 미보고(tok1)는 좌표·updatedAtMs 가 null.
+                jsonPath("$.sessions[1].token") { value("tok1") }
+                jsonPath("$.sessions[1].lat") { value(null) }
+                jsonPath("$.sessions[1].updatedAtMs") { value(null) }
+                // owner_secret·경로 상세는 어떤 표기로도 노출되지 않는다.
+                jsonPath("$.sessions[0].ownerSecret") { doesNotExist() }
+                jsonPath("$.sessions[0].owner_secret") { doesNotExist() }
+                jsonPath("$.sessions[0].route") { doesNotExist() }
+            }
+    }
+
+    @Test
     fun `alerts 는 최근 장애 이력을 배열로 반환한다`() {
         mockMvc.get("/api/admin/alerts")
             .andExpect {
@@ -223,18 +251,28 @@ class ApiLogsControllerTest(
         }
 
         @Bean
-        fun locationStore(): LocationStore = InMemoryLocationStore(java.time.Clock.systemUTC()).apply {
+        fun locationStore(): LocationStore = InMemoryLocationStore(FIXED_CLOCK).apply {
             repeat(3) { i ->
                 save(
                     ShareSession(
                         token = "tok$i",
                         ownerSecret = "sek",
-                        createdAt = java.time.Instant.now(),
-                        expiresAt = java.time.Instant.now().plusSeconds(3600),
+                        createdAt = FIXED_NOW,
+                        expiresAt = FIXED_NOW.plusSeconds(3600),
+                        // tok0 만 위치 보고 — share-sessions 목록에서 lat/lng/updatedAtMs 채움(나머지 null) 검증용.
+                        location = if (i == 0) {
+                            StoredLocation(37.5, 127.0, FIXED_NOW)
+                        } else {
+                            null
+                        },
                     ),
                 )
             }
         }
+
+        /** 활성 공유 목록용 — 고정 시계로 ttlSeconds 를 결정론화한다(URL 조립·정렬은 도메인이 수행). */
+        @Bean
+        fun shareService(store: LocationStore): ShareService = ShareService(store, FIXED_CLOCK, SHARE_BASE_URL)
 
         @Bean
         fun alertNotifier(): AlertNotifier = object : AlertNotifier {
@@ -254,6 +292,13 @@ class ApiLogsControllerTest(
 
         companion object {
             var lastLimit: Int = -1
+
+            /** 결정론적 테스트 시각 — 위치 갱신·상한 만료·TTL 파생을 재현 가능하게 고정한다. */
+            val FIXED_NOW: java.time.Instant = java.time.Instant.parse("2026-06-19T12:00:00Z")
+            val FIXED_CLOCK: java.time.Clock = java.time.Clock.fixed(FIXED_NOW, java.time.ZoneOffset.UTC)
+
+            /** 공유 URL base — 어드민 목록 shareUrl 조립 검증에 쓴다. */
+            const val SHARE_BASE_URL = "http://localhost:3619"
         }
     }
 }

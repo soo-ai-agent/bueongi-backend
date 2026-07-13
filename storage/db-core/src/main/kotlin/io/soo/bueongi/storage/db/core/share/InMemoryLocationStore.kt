@@ -60,4 +60,10 @@ class InMemoryLocationStore(
         val now = clock.instant()
         return sessions.values.count { !it.isExpired(now) }
     }
+
+    override fun findActiveSessions(): List<ShareSession> {
+        // 카운트와 동일 기준 — 만료 세션은 제외해 열거한다(Redis SCAN+미존재 키 제외와 동치).
+        val now = clock.instant()
+        return sessions.values.filter { !it.isExpired(now) }
+    }
 }

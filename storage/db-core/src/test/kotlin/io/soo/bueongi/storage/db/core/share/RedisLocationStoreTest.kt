@@ -216,6 +216,29 @@ class RedisLocationStoreTest {
         verify(cursor).close() // .use 로 커서를 닫는다
     }
 
+    @Test
+    fun `findActiveSessions 는 SCAN 세션키에서 토큰을 뽑아 세션을 복원한다`() {
+        val cursor = mock<Cursor<String>>()
+        whenever(cursor.hasNext()).thenReturn(true, false) // share:tok
+        whenever(cursor.next()).thenReturn("share:tok")
+        whenever(redis.scan(any<ScanOptions>())).thenReturn(cursor)
+        // 키에서 뽑은 토큰으로 findByToken("tok") 이 세션을 재구성하도록 스텁.
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn(null)
+
+        val active = store.findActiveSessions()
+        assertEquals(1, active.size)
+        assertEquals("tok", active[0].token)
+        verify(cursor).close() // .use 로 커서를 닫는다
+    }
+
     private companion object {
         val SAMPLE_ROUTE = StoredRoute(
             destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),

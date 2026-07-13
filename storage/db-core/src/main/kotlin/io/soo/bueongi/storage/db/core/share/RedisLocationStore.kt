@@ -136,14 +136,29 @@ class RedisLocationStore(
         // KEYS 금지 — SCAN 으로 비차단 순회하며 세션 키(share:{token})만 센다. 만료 키는 native TTL 로 이미 없다.
         // location/route/viewer 키는 패턴에서 제외되어 중복 카운트되지 않는다.
         var count = 0
+        forEachSessionKey { count++ }
+        return count
+    }
+
+    override fun findActiveSessions(): List<ShareSession> {
+        // 카운트와 같은 SCAN 순회를 재사용하되, 키에서 토큰을 뽑아 세션을 복원한다.
+        // findByToken 이 만료/손상 키를 null 로 걸러내므로(native TTL 과 lazy 정합) 활성 세션만 남는다.
+        val sessions = mutableListOf<ShareSession>()
+        forEachSessionKey { sessionKey ->
+            val token = sessionKey.removePrefix(SESSION_KEY_PREFIX)
+            findByToken(token)?.let { sessions.add(it) }
+        }
+        return sessions
+    }
+
+    /** 세션 키(`share:{token}`)를 SCAN 으로 비차단 순회한다(KEYS 금지). 커서는 [use] 로 항상 닫는다. */
+    private fun forEachSessionKey(action: (String) -> Unit) {
         redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
             .use { cursor ->
                 while (cursor.hasNext()) {
-                    cursor.next()
-                    count++
+                    action(cursor.next())
                 }
             }
-        return count
     }
 
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
@@ -157,13 +172,16 @@ class RedisLocationStore(
     }
 
     private companion object {
-        fun shareKey(token: String) = "share:$token"
+        /** 세션 키 접두어(`share:{token}`). SCAN 패턴·토큰 추출·[shareKey] 가 한 상수를 공유해 드리프트를 막는다. */
+        const val SESSION_KEY_PREFIX = "share:"
+
+        fun shareKey(token: String) = "$SESSION_KEY_PREFIX$token"
         fun locationKey(token: String) = "location:$token"
         fun routeKey(token: String) = "route:$token"
         fun viewerKey(token: String) = "viewer:$token"
 
         /** SCAN 매칭 패턴 — 세션 키만(location/route/viewer 제외). token 은 콜론 없는 불투명 문자열이라 `share:*` 로 정확히 걸린다. */
-        const val SESSION_KEY_PATTERN = "share:*"
+        const val SESSION_KEY_PATTERN = "$SESSION_KEY_PREFIX*"
 
         /** SCAN 배치 힌트(라운드트립당 반환 힌트) — 서버 부하와 왕복 횟수의 균형. */
         const val SCAN_BATCH = 200L
