@@ -13,6 +13,7 @@ import io.soo.bueongi.domain.admin.SlackConfigService
 import io.soo.bueongi.domain.admin.SlackConfigSummary
 import io.soo.bueongi.domain.admin.SlackTestResult
 import io.soo.bueongi.domain.share.ActiveShareView
+import io.soo.bueongi.domain.share.LocationView
 import io.soo.bueongi.domain.share.ShareService
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
@@ -25,6 +26,7 @@ import io.soo.bueongi.support.monitoring.AlertRecord
 import jakarta.validation.Valid
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -111,6 +113,16 @@ class AdminController(
      */
     @GetMapping("/share-sessions")
     fun shareSessions(): ShareSessionsResponse = ShareSessionsResponse(sessions = shareService.listActiveSessions())
+
+    /**
+     * GET /api/admin/share-sessions/{token}/location → 특정 공유 세션의 현재 위치(관리자 앱 내 열람).
+     * 공개 `GET /share/{token}/location` 과 동일한 [LocationView] 계약(snake_case)을 주되, 관리자 열람을
+     * 보호자 시청(viewerActive)으로 집계하지 않는다(markViewed 미호출 — [ShareService.getLocationForAdmin]).
+     * 토큰 없음/만료는 공개 조회와 동일 규약(`expired:true`, 좌표 null). 변환만 — 상태 판정은 도메인이 한다.
+     */
+    @GetMapping("/share-sessions/{token}/location")
+    fun shareSessionLocation(@PathVariable token: String): LocationView =
+        shareService.getLocationForAdmin(token)
 
     /**
      * GET /api/admin/alerts?limit= → 최근 장애 알림 이력(최신순).

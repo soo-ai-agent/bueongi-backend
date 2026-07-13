@@ -130,9 +130,29 @@ class ShareService(
     fun getLocation(token: String): LocationView {
         val session = store.findByToken(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
-        // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 사용자 본인(관리자)은 GET location 을 호출하지 않고,
-        // 시청 여부는 owner_secret 이 필요한 POST /watching 으로만 확인하므로 본인 확인은 집계되지 않는다.
+        // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 관리자 열람은 이 경로가 아니라 집계하지 않는
+        // [getLocationForAdmin] 을 쓰고, 사용자 본인은 owner_secret 이 필요한 POST /watching 으로만 확인한다.
         store.markViewed(token)
+        return locationViewOf(session)
+    }
+
+    /**
+     * 위치 조회(관리자 앱 내 열람 — 비집계). [getLocation] 과 동일한 [LocationView] 를 주되 [LocationStore.markViewed]
+     * 를 호출하지 않는다 — 관리자 열람이 '보호자 시청 중'(viewerActive)으로 잘못 집계되지 않게 한다.
+     * 상태 규약은 공개 조회와 완전히 동일하다: 토큰 없음/만료 → `expired:true`(좌표 null),
+     * 살아있으나 첫 위치 전 → `expired:false`+좌표 null, 위치 있음 → 좌표.
+     */
+    fun getLocationForAdmin(token: String): LocationView {
+        val session = store.findByToken(token)
+            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
+        return locationViewOf(session)
+    }
+
+    /**
+     * 활성(상한 미만료) 세션 → 위치 뷰. 첫 위치 보고 전이면 `expired:false`+좌표 null, 위치가 있으면 좌표를 싣는다.
+     * 순수 조립이라 부수효과가 없다 — 시청 집계([LocationStore.markViewed])는 호출자(보호자 조회만)가 정한다.
+     */
+    private fun locationViewOf(session: ShareSession): LocationView {
         val location = session.location
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false)
         return LocationView(

@@ -167,6 +167,49 @@ class ApiLogsControllerTest(
     }
 
     @Test
+    fun `share-sessions token location 은 200 과 snake_case LocationView 를 반환한다`() {
+        // tok0 은 FakeStore 에서 위치(37.5, 127.0)를 보고한 세션 — 공개 LocationView 계약(snake_case)과 일치해야 한다.
+        mockMvc.get("/api/admin/share-sessions/tok0/location")
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith("application/json") }
+                jsonPath("$.lat") { value(37.5) }
+                jsonPath("$.lng") { value(127.0) }
+                jsonPath("$.updated_at") { exists() }
+                jsonPath("$.expired") { value(false) }
+                jsonPath("$.remaining_m") { value(null) }
+                jsonPath("$.remaining_s") { value(null) }
+                // @JsonProperty 회귀 시 나타날 camelCase 형태가 없어야 한다(보호자 화면과 동일 필드명).
+                jsonPath("$.updatedAt") { doesNotExist() }
+            }
+    }
+
+    @Test
+    fun `share-sessions token location 반복 열람은 viewerActive 를 올리지 않는다(비집계)`() {
+        // 관리자 열람을 여러 번 해도(markViewed 미호출)
+        repeat(3) {
+            mockMvc.get("/api/admin/share-sessions/tok0/location").andExpect { status { isOk() } }
+        }
+        // 목록의 viewerActive 는 여전히 false — 관리자 열람이 보호자 시청으로 집계되지 않는다.
+        mockMvc.get("/api/admin/share-sessions")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.sessions[0].token") { value("tok0") }
+                jsonPath("$.sessions[0].viewerActive") { value(false) }
+            }
+    }
+
+    @Test
+    fun `없는 token 의 share-sessions location 은 200 expired=true(공개 조회와 동일 규약)`() {
+        mockMvc.get("/api/admin/share-sessions/does-not-exist/location")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.expired") { value(true) }
+                jsonPath("$.lat") { value(null) }
+            }
+    }
+
+    @Test
     fun `alerts 는 최근 장애 이력을 배열로 반환한다`() {
         mockMvc.get("/api/admin/alerts")
             .andExpect {
