@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
+import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.domain.route.RouteFacilityService
@@ -40,6 +41,7 @@ import org.springframework.test.web.servlet.post
     SafetyScorer::class,
     SafeDetourPlanner::class,
     FacilityRepository::class,
+    FacilityUploadStore::class,
 )
 class ApiExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,

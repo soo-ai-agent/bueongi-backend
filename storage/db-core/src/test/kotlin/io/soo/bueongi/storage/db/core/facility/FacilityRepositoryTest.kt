@@ -24,6 +24,10 @@ class FacilityRepositoryTest {
         file.writeText(json)
     }
 
+    /** 업로드 없는 시나리오용 — 존재하지 않는 uploads 하위 디렉터리를 가리켜 findByType 이 null(오버레이 없음). */
+    private fun uploadStore(tmp: Path): FacilityUploadStore =
+        FacilityUploadStore(mapper, File(tmp.toFile(), "uploads").absolutePath)
+
     @Test
     fun `CDN 컬렉션과 safepath 를 적재해 인덱스를 만든다`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
@@ -43,7 +47,7 @@ class FacilityRepositoryTest {
                  {"name":"sp1","coords":[{"lat":37.5,"lng":127.0},{"lat":37.5,"lng":127.01}]}]}""",
         )
 
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         repo.load()
 
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(2)
@@ -57,7 +61,7 @@ class FacilityRepositoryTest {
     fun `safepath 가 단일 점이면 1점짜리 경로로 적재`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "safepath/all.json", """{"items":[{"name":"p","lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         repo.load()
         assertThat(repo.safePaths).hasSize(1)
         assertThat(repo.safePaths.first().coords).containsExactly(GeoPoint(37.5, 127.0))
@@ -68,7 +72,7 @@ class FacilityRepositoryTest {
         val dir = tmp.toFile()
         write(dir, "cctv/bad.json", "{ this is not json")
         write(dir, "cctv/good.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         repo.load()
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
     }
@@ -80,14 +84,14 @@ class FacilityRepositoryTest {
             dir, "cctv/x.json",
             """{"items":[{"lat":37.5,"lng":127.0},{"lat":999.0,"lng":127.0},{"lat":37.5,"lng":null}]}""",
         )
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         repo.load()
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
     }
 
     @Test
     fun `빈 디렉터리도 죽지 않고 빈 인덱스`(@TempDir tmp: Path) {
-        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, "")
+        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
         assertThatCode { repo.load() }.doesNotThrowAnyException()
         assertThat(repo.index(FacilityType.CCTV).size).isZero()
         assertThat(repo.safePaths).isEmpty()
@@ -116,7 +120,7 @@ class FacilityRepositoryTest {
             Charset.forName("MS949"),
         )
 
-        val repo = FacilityRepository(dir.absolutePath, mapper, csv.absolutePath)
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), csv.absolutePath)
         repo.load()
 
         // JSON 1 + CSV 방범 정상행 2 = 3 (좌표불량·비방범 행은 제외).
@@ -129,7 +133,7 @@ class FacilityRepositoryTest {
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
         write(dir, "police/all.json", """{"items":[{"name":"파출소","lat":37.51,"lng":127.01}]}""")
         write(dir, "safepath/all.json", """{"items":[{"name":"p","lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         repo.load()
 
         val replaced = repo.replace(
@@ -148,7 +152,7 @@ class FacilityRepositoryTest {
 
     @Test
     fun `replace 는 load 전(빈 인덱스)에도 동작한다`(@TempDir tmp: Path) {
-        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, "")
+        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
 
         repo.replace(FacilityType.BELL, listOf(FacilityPoint(type = FacilityType.BELL, lat = 37.5, lng = 127.0)))
 
@@ -159,8 +163,43 @@ class FacilityRepositoryTest {
     fun `CCTV CSV 설정이 비어 있으면 적재 비활성(JSON CCTV 만)`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
-        val repo = FacilityRepository(dir.absolutePath, mapper, "")
+        val repo = FacilityRepository(dir.absolutePath, mapper, uploadStore(tmp), "")
         assertThatCode { repo.load() }.doesNotThrowAnyException()
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(1)
+    }
+
+    @Test
+    fun `업로드 파일이 있으면 부팅 시 해당 종류를 통째로 교체한다(업로드 우선)`(@TempDir tmp: Path) {
+        val dir = tmp.toFile()
+        write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""") // CDN 1건
+        write(dir, "police/all.json", """{"items":[{"name":"파출소","lat":37.51,"lng":127.01}]}""")
+        val store = FacilityUploadStore(mapper, File(dir, "uploads").absolutePath)
+        store.save(
+            FacilityType.CCTV,
+            listOf(
+                FacilityPoint(FacilityType.CCTV, 37.6, 127.1, name = "u1"),
+                FacilityPoint(FacilityType.CCTV, 37.61, 127.11, name = "u2"),
+                FacilityPoint(FacilityType.CCTV, 37.62, 127.12, name = "u3"),
+            ),
+        )
+
+        val repo = FacilityRepository(dir.absolutePath, mapper, store, "")
+        repo.load()
+
+        assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(3) // CDN 1건이 아니라 업로드 3건으로 교체
+        assertThat(repo.index(FacilityType.POLICE).size).isEqualTo(1) // 업로드 없는 종류는 CDN 유지
+    }
+
+    @Test
+    fun `CDN 컬렉션이 없어도 업로드분은 적재된다`(@TempDir tmp: Path) {
+        // 빈 CDN 디렉터리(type 하위폴더 없음) + 업로드 BELL 1건 → 업로드분만으로 적재.
+        val store = FacilityUploadStore(mapper, File(tmp.toFile(), "uploads").absolutePath)
+        store.save(FacilityType.BELL, listOf(FacilityPoint(FacilityType.BELL, 37.5, 127.0)))
+
+        val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, store, "")
+        repo.load()
+
+        assertThat(repo.index(FacilityType.BELL).size).isEqualTo(1)
+        assertThat(repo.index(FacilityType.CCTV).size).isZero()
     }
 }

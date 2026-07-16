@@ -24,6 +24,8 @@ import java.nio.charset.Charset
 class FacilityRepository(
     @Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
+    /** 관리자 업로드 저장소 — 부팅 시 CDN 적재분 위에 마지막 업로드분을 종류별로 덮어쓴다(업로드 우선). */
+    private val uploadStore: FacilityUploadStore,
     @Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
 ) : FacilitySpatialSource, FacilityLiveStore {
     private val log = LoggerFactory.getLogger(FacilityRepository::class.java)
@@ -59,52 +61,53 @@ class FacilityRepository(
 
     @PostConstruct
     fun load() {
-        val dir = resolveDataDir()
-        if (dir == null) {
-            log.warn(
-                "안심시설 데이터 디렉터리를 찾지 못했습니다(configured='{}'). 빈 인덱스로 동작합니다.",
-                configuredDir,
-            )
-            return
-        }
         val byType = LinkedHashMap<FacilityType, MutableList<FacilityPoint>>()
         val paths = ArrayList<SafePath>()
         var fileCount = 0
 
-        // 컬렉션 디렉터리(type 별 하위 폴더)를 훑어 *.json 을 적재. safepath 는 좌표열로 따로.
-        for (type in FacilityType.entries) {
-            val typeDir = File(dir, type.cdnType)
-            if (!typeDir.isDirectory) {
-                continue
-            }
-            for (file in typeDir.listJsonFiles()) {
-                val collection = parseCollection(file) ?: continue
-                fileCount++
-                val bucket = byType.getOrPut(type) { ArrayList() }
-                for (item in collection.items) {
-                    val point = item.toFacilityPoint(type) ?: continue
-                    bucket.add(point)
+        // CDN 디렉터리(있으면) 적재. 없으면 CDN 적재는 건너뛰고 업로드분만으로 동작한다(업로드는 CDN 유무와 무관하게 유지).
+        val dir = resolveDataDir()
+        if (dir == null) {
+            log.warn(
+                "안심시설 CDN 데이터 디렉터리를 찾지 못했습니다(configured='{}'). CDN 적재 없이 업로드분만 적재합니다.",
+                configuredDir,
+            )
+        } else {
+            // 컬렉션 디렉터리(type 별 하위 폴더)를 훑어 *.json 을 적재. safepath 는 좌표열로 따로.
+            for (type in FacilityType.entries) {
+                val typeDir = File(dir, type.cdnType)
+                if (!typeDir.isDirectory) {
+                    continue
+                }
+                for (file in typeDir.listJsonFiles()) {
+                    val collection = parseCollection(file) ?: continue
+                    fileCount++
+                    val bucket = byType.getOrPut(type) { ArrayList() }
+                    for (item in collection.items) {
+                        val point = item.toFacilityPoint(type) ?: continue
+                        bucket.add(point)
+                    }
                 }
             }
-        }
-        // safepath(안심귀갓길) 좌표열.
-        File(dir, "safepath").takeIf { it.isDirectory }?.listJsonFiles()?.forEach { file ->
-            val collection = parseCollection(file) ?: return@forEach
-            fileCount++
-            collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
-        }
+            // safepath(안심귀갓길) 좌표열.
+            File(dir, "safepath").takeIf { it.isDirectory }?.listJsonFiles()?.forEach { file ->
+                val collection = parseCollection(file) ?: return@forEach
+                fileCount++
+                collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
+            }
 
-        // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
-        _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
-            try {
-                val manifestJson = objectMapper.readTree(file)
-                FacilityFreshness(
-                    generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
-                    version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
-                )
-            } catch (e: Exception) {
-                log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
-                null
+            // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
+            _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
+                try {
+                    val manifestJson = objectMapper.readTree(file)
+                    FacilityFreshness(
+                        generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
+                        version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
+                    )
+                } catch (e: Exception) {
+                    log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
+                    null
+                }
             }
         }
 
@@ -114,12 +117,21 @@ class FacilityRepository(
             byType.getOrPut(FacilityType.CCTV) { ArrayList() }.addAll(csvCctv)
         }
 
+        // 관리자 업로드분 우선 — 해당 종류가 업로드된 적 있으면 CDN/CSV 적재분을 통째로 교체한다(재기동해도 마지막 업로드 유지).
+        var uploadedTypes = 0
+        for (type in FacilityType.entries) {
+            val uploaded = uploadStore.findByType(type) ?: continue
+            byType[type] = uploaded.toMutableList()
+            uploadedTypes++
+        }
+
         indexByType = byType.mapValues { (_, pts) -> GridSpatialIndex(pts) }
         _safePaths = paths
         log.info(
-            "안심시설 적재 완료: dir='{}', files={}, cctv={}(csv={}), lamp={}, bell={}, safehouse={}, police={}, safepaths={}",
-            dir.path,
+            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}, bell={}, safehouse={}, police={}, safepaths={}",
+            dir?.path ?: "(없음)",
             fileCount,
+            uploadedTypes,
             indexByType[FacilityType.CCTV]?.size ?: 0,
             csvCctv.size,
             indexByType[FacilityType.LAMP]?.size ?: 0,
@@ -206,8 +218,11 @@ private val CP949: Charset = Charset.forName("MS949")
  * 안심 귀가에 의미 있는 **방범 성격** 설치목적구분(=용도)만 적재 대상으로 한다.
  * 전국 CCTV 표준데이터의 설치목적구분 10종 중 — 생활방범/다목적/어린이보호/차량방범(약 84%)은 유지,
  * 교통단속·시설물관리·재난재해·쓰레기단속·교통정보수집·기타(약 16%)는 안심 시설로 부적합하여 제외.
+ *
+ * 부팅 CSV 적재([parseCctvCsvLine])와 관리자 업로드 파서(domain FacilityCsvParser)가 같은 기준을
+ * 쓰도록 단일 출처로 공개한다(규칙 복붙 드리프트 방지).
  */
-private val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
+val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
 
 /**
  * 전국 CCTV CSV 한 줄을 [FacilityPoint](type=CCTV)로 파싱한다. 헤더·빈줄·좌표불량·비방범 행은 null.

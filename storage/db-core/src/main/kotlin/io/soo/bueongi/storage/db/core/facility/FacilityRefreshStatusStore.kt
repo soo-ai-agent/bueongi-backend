@@ -24,6 +24,14 @@ class FacilityRefreshStatusStore {
         records = results.mapValues { (_, count) -> FacilityRefreshRecord(atEpochMs = atEpochMs, replacedCount = count) }
     }
 
+    /**
+     * 관리자 업로드에 의한 [type] 단일 종류 교체를 기록한다(다른 종류 기록은 보존 — 전체 교체인 [record] 와 다르다).
+     * 업로드는 항상 교체 성공이므로 [replacedCount] 는 저장 건수(비null) → 조회 시 replaced 로 판정된다.
+     */
+    fun recordUpload(type: FacilityType, replacedCount: Int, atEpochMs: Long) {
+        records = records + (type to FacilityRefreshRecord(atEpochMs = atEpochMs, replacedCount = replacedCount))
+    }
+
     /** [type] 의 마지막 갱신 기록. 아직 갱신을 시도한 적 없으면 null. */
     fun findByType(type: FacilityType): FacilityRefreshRecord? = records[type]
 }

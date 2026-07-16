@@ -91,6 +91,27 @@ class InvalidSlackCategoryException(
     "알 수 없는 알림 카테고리입니다: ${rejectedValue.joinToString(", ")} (허용: ${knownKeys.joinToString(", ")})",
 )
 
+/**
+ * 관리자 시설 업로드(POST /api/admin/facilities/{type}/upload)의 path 변수 type 이 알려진 시설 종류(cdnType) 밖일 때 던진다.
+ * [io.soo.bueongi.api.ApiControllerAdvice] 가 400 `code:"UNKNOWN_FACILITY_TYPE"` + `errors[{field:"type"}]` 로 변환한다.
+ */
+class UnknownFacilityTypeException(
+    /** 거부된 type 값(경로 변수). 응답 errors.rejectedValue 로 전달한다. */
+    val rejectedType: String,
+    /** 허용된 시설 종류(cdnType) 전체. 메시지에 안내한다. */
+    val knownTypes: List<String>,
+) : RuntimeException("알 수 없는 시설 종류입니다: $rejectedType (허용: ${knownTypes.joinToString(", ")})")
+
+/**
+ * 관리자 시설 업로드에서 유효한 시설 좌표가 0건일 때(빈 파일·헤더뿐·좌표 없는 행만) 던진다.
+ * [io.soo.bueongi.api.ApiControllerAdvice] 가 400 `code:"VALIDATION_FAILED"` + `errors[{field:"file"}]` 로 변환한다 —
+ * 본문 검증 실패(@Valid)와 같은 계약으로, 프론트가 파일을 다시 확인하도록 안내한다. 기존 데이터는 교체하지 않는다.
+ */
+class EmptyFacilityUploadException(
+    /** 파싱된 데이터 행 수(모두 좌표 없음·불량이라 유효 0건). 응답 errors.rejectedValue 로 전달한다. */
+    val received: Int,
+) : RuntimeException("업로드에서 유효한 시설 좌표를 찾지 못했습니다(수신 ${received}행).")
+
 /** 표준 에러 스키마의 필드별 항목. 프론트가 좌표 입력 폼의 어떤 필드를 어떻게 고쳐야 하는지 안내한다. */
 data class ApiFieldError(
     /** 거부된 필드 경로. 중첩 시 `origin.lat`, `destination.lng` 형태. */

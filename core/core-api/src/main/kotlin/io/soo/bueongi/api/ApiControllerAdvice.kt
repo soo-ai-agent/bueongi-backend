@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.support.error.ApiFieldError
+import io.soo.bueongi.support.error.EmptyFacilityUploadException
 import io.soo.bueongi.support.error.InvalidCoordinateException
 import io.soo.bueongi.support.error.InvalidKeywordException
 import io.soo.bueongi.support.error.InvalidRouteMetaException
@@ -9,6 +10,7 @@ import io.soo.bueongi.support.error.OriginRequiredException
 import io.soo.bueongi.support.error.SameOriginDestinationException
 import io.soo.bueongi.support.error.ShareSessionNotFoundException
 import io.soo.bueongi.support.error.TripTooFarException
+import io.soo.bueongi.support.error.UnknownFacilityTypeException
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import org.slf4j.LoggerFactory
@@ -22,6 +24,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.support.MissingServletRequestPartException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 /**
@@ -219,6 +222,78 @@ class ApiControllerAdvice(
                         field = "mutedCategories",
                         message = "허용된 카테고리: ${ex.knownKeys.joinToString(", ")}",
                         rejectedValue = ex.rejectedValue,
+                    ),
+                ),
+            )
+        }
+
+    /**
+     * 관리자 시설 업로드의 path 변수 type 이 알려진 시설 종류(cdnType) 밖 → 400 + `code:"UNKNOWN_FACILITY_TYPE"` +
+     * `errors[{field:"type"}]`. 경로 자체는 매핑됐으나(404 아님) 종류 값이 규약 밖인 잘못된 입력이라 400 으로 낸다.
+     */
+    @ExceptionHandler(UnknownFacilityTypeException::class)
+    fun handleUnknownFacilityType(ex: UnknownFacilityTypeException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "알 수 없는 시설 종류입니다. 허용된 종류로만 업로드할 수 있습니다.",
+        ).apply {
+            title = "Unknown Facility Type"
+            setProperty("code", "UNKNOWN_FACILITY_TYPE")
+            setProperty(
+                "errors",
+                listOf(
+                    ApiFieldError(
+                        field = "type",
+                        message = "허용된 시설 종류: ${ex.knownTypes.joinToString(", ")}",
+                        rejectedValue = ex.rejectedType,
+                    ),
+                ),
+            )
+        }
+
+    /**
+     * 관리자 시설 업로드에서 유효한 시설 좌표가 0건(빈 파일·헤더뿐·좌표 없는 행만) → 400 + `code:"VALIDATION_FAILED"` +
+     * `errors[{field:"file"}]`. 본문 검증 실패(@Valid)와 같은 계약으로 표면화한다(기존 데이터는 교체하지 않음).
+     */
+    @ExceptionHandler(EmptyFacilityUploadException::class)
+    fun handleEmptyFacilityUpload(ex: EmptyFacilityUploadException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "업로드에서 유효한 시설 좌표를 찾지 못했습니다. 표준 CSV(헤더 포함)인지 확인해 주세요.",
+        ).apply {
+            title = "Validation Failed"
+            setProperty("code", "VALIDATION_FAILED")
+            setProperty(
+                "errors",
+                listOf(
+                    ApiFieldError(
+                        field = "file",
+                        message = "유효한 좌표가 있는 데이터 행이 없습니다.",
+                        rejectedValue = ex.received,
+                    ),
+                ),
+            )
+        }
+
+    /**
+     * 멀티파트 업로드에서 필수 파트(`file`)가 없을 때 → 400 + `code:"VALIDATION_FAILED"` + `errors[{field:"file"}]`.
+     * Spring 기본 처리는 `code` 없는 응답을 내므로, "모든 에러 응답에 code" 계약을 지키도록 표준 스키마로 변환한다.
+     */
+    @ExceptionHandler(MissingServletRequestPartException::class)
+    fun handleMissingPart(ex: MissingServletRequestPartException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "업로드 파일이 없습니다. multipart/form-data 의 file 파트로 CSV 를 보내주세요.",
+        ).apply {
+            title = "Validation Failed"
+            setProperty("code", "VALIDATION_FAILED")
+            setProperty(
+                "errors",
+                listOf(
+                    ApiFieldError(
+                        field = "file",
+                        message = "업로드 파일(file 파트)이 필요합니다.",
+                        rejectedValue = ex.requestPartName,
                     ),
                 ),
             )

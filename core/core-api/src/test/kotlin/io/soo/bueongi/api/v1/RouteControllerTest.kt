@@ -10,6 +10,7 @@ import io.soo.bueongi.domain.route.RouteCandidateMerger
 import io.soo.bueongi.domain.route.RouteMarkerBuilder
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
+import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScorer
 import org.junit.jupiter.api.Test
@@ -44,6 +45,7 @@ import org.springframework.test.web.servlet.post
     SafetyScorer::class,
     SafeDetourPlanner::class,
     FacilityRepository::class,
+    FacilityUploadStore::class,
 )
 class RouteControllerTest(
     @Autowired private val mockMvc: MockMvc,

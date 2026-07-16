@@ -10,3 +10,5 @@ bueongi:
     # 전국 CCTV 실데이터 CSV(CP949/MS949 인코딩). 있으면 JSON CCTV 와 합쳐 적재한다.
     # 파일이 없으면 경고 로그 후 건너뛴다(죽지 않음).
     cctv-csv: ${BUEONGI_FACILITY_CCTV_CSV:CCTV정보.csv}
+    # 관리자 CSV 업로드분 영속 디렉터리. 부팅 시 {cdnType}.json 이 있으면 그 종류를 통째로 교체한다(업로드 우선, 재기동 유지).
+    upload-dir: ${BUEONGI_FACILITY_UPLOAD_DIR:./data/facility-uploads}
