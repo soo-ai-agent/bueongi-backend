@@ -1,10 +1,13 @@
 package io.soo.bueongi.api.admin
 
+import io.soo.bueongi.domain.admin.AdStatsService
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusService
 import io.soo.bueongi.domain.admin.RequestMetricsService
 import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.domain.admin.SlackConfigService
+import io.soo.bueongi.storage.db.core.adevent.AdEvent
+import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
@@ -128,6 +131,19 @@ class ApiLogsControllerTest(
                 jsonPath("$.estimatedUsers.callsWithoutClientId") { value(0) }
                 jsonPath("$.hourlyCalls.length()") { value(24) }
                 jsonPath("$.dailyActiveUsers.length()") { value(7) }
+            }
+    }
+
+    @Test
+    fun `ad-stats 는 총계 오늘 지면별 카운트 시간대 트렌드를 반환한다`() {
+        mockMvc.get("/api/admin/ad-stats")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.total") { value(2) }
+                jsonPath("$.today") { isNumber() }
+                jsonPath("$.byPlacement.interstitial") { value(1) }
+                jsonPath("$.byPlacement.native") { value(1) }
+                jsonPath("$.hourlyTrend.length()") { value(24) }
             }
     }
 
@@ -271,6 +287,19 @@ class ApiLogsControllerTest(
 
         @Bean
         fun requestMetricsService(store: RequestMetricStore): RequestMetricsService = RequestMetricsService(store)
+
+        @Bean
+        fun adEventStore(): AdEventStore = object : AdEventStore {
+            override fun record(event: AdEvent) = Unit
+            override fun findRecent(limit: Int): List<AdEvent> =
+                listOf(
+                    AdEvent(atEpochMs = System.currentTimeMillis(), placement = "interstitial"),
+                    AdEvent(atEpochMs = System.currentTimeMillis(), placement = "native"),
+                )
+        }
+
+        @Bean
+        fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)
 
         @Bean
         fun facilityStatusService(): FacilityStatusService {

@@ -1,6 +1,8 @@
 package io.soo.bueongi.api.admin
 
 import io.soo.bueongi.api.admin.request.SlackConfigUpdateRequest
+import io.soo.bueongi.domain.admin.AdStatsService
+import io.soo.bueongi.domain.admin.AdStatsSummary
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.ApiStatusSummary
 import io.soo.bueongi.domain.admin.FacilityStatusService
@@ -47,6 +49,7 @@ class AdminController(
     private val facilityStatusService: FacilityStatusService,
     private val routeStatsService: RouteStatsService,
     private val requestMetricsService: RequestMetricsService,
+    private val adStatsService: AdStatsService,
     private val locationStore: LocationStore,
     private val shareService: ShareService,
     private val alertNotifier: AlertNotifier,
@@ -101,6 +104,13 @@ class AdminController(
      */
     @GetMapping("/traffic")
     fun traffic(): TrafficSummary = requestMetricsService.summarize()
+
+    /**
+     * GET /api/admin/ad-stats → 광고 노출(호출) 집계([AdStatsSummary]).
+     * 저장된 광고 노출 기록에서 총계·오늘 노출·지면별 카운트·최근 24시간 트렌드를 집계만 한다(변환만).
+     */
+    @GetMapping("/ad-stats")
+    fun adStats(): AdStatsSummary = adStatsService.summarize()
 
     /** GET /api/admin/share-status → 현재 활성(상한 미만료) 위치공유 세션 수. */
     @GetMapping("/share-status")
