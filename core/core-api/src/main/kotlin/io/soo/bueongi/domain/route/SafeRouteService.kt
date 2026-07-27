@@ -142,13 +142,13 @@ class SafeRouteService(
         val mainIdx = scored.indices.filter { it !in used }
             .maxByOrNull { scored[it].second.score.toDouble() - it * TIE_BREAK_EPSILON }
 
-        val picks = LinkedHashMap<Int, String>()
-        picks[safeIdx] = "safe"
+        val picks = LinkedHashMap<Int, RouteType>()
+        picks[safeIdx] = RouteType.SAFE
         if (fastIdx != null) {
-            picks[fastIdx] = "fast"
+            picks[fastIdx] = RouteType.FAST
         }
         if (mainIdx != null) {
-            picks[mainIdx] = "main"
+            picks[mainIdx] = RouteType.MAIN
         }
         return picks.map { (i, type) -> ScoredRoute(scored[i].first, scored[i].second, type) }
     }
@@ -211,32 +211,32 @@ class SafeRouteService(
     }
 
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
-        if (scoredRoute.type == "safe") {
-            add(RouteTag("안심", "mint"))
+        if (scoredRoute.type == RouteType.SAFE) {
+            add(RouteTag("안심", RouteTagVariant.MINT))
         }
-        if (scoredRoute.type == "fast") {
-            add(RouteTag("빠른길", "blue"))
+        if (scoredRoute.type == RouteType.FAST) {
+            add(RouteTag("빠른길", RouteTagVariant.BLUE))
         }
         val breakdown = scoredRoute.score.breakdown
         if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) {
-            add(RouteTag("CCTV 많음", "mint"))
+            add(RouteTag("CCTV 많음", RouteTagVariant.MINT))
         }
         if (breakdown.lampDensity >= TAG_LAMP_DENSITY_MIN_PER_KM) {
-            add(RouteTag("밝은 길", "yellow"))
+            add(RouteTag("밝은 길", RouteTagVariant.YELLOW))
         }
         if (breakdown.safePathOverlap >= TAG_SAFE_PATH_OVERLAP_MIN) {
-            add(RouteTag("안심귀갓길", "mint"))
+            add(RouteTag("안심귀갓길", RouteTagVariant.MINT))
         }
         if (breakdown.safehouseCount >= 1) {
-            add(RouteTag("안심지킴이집", "outline"))
+            add(RouteTag("안심지킴이집", RouteTagVariant.OUTLINE))
         }
         if (breakdown.policeCount >= 1) {
-            add(RouteTag("지구대 인접", "blue"))
+            add(RouteTag("지구대 인접", RouteTagVariant.BLUE))
         }
     }
 
     private companion object {
-        val TYPE_NAME = mapOf("safe" to "안심 경로", "main" to "기본 경로", "fast" to "빠른 경로")
+        val TYPE_NAME = mapOf(RouteType.SAFE to "안심 경로", RouteType.MAIN to "기본 경로", RouteType.FAST to "빠른 경로")
 
         /** 동률 처리용 인덱스 미세 가중 — "먼저 나온 후보 우선"을 점수 비교 한 번으로 표현한다. */
         const val TIE_BREAK_EPSILON = 1e-9
@@ -273,9 +273,9 @@ data class RouteCandidate(
 
 /**
  * 채점·유형 배정이 끝난 후보(응답 변환 직전의 중간 표현).
- * [type] 은 "safe"|"fast"|"main" — TYPE_NAME 키 집합과 일치해야 한다(toRouteOptions 의 getValue 전제).
+ * [type] 은 [RouteType] — TYPE_NAME 키 집합(전 유형)과 일치한다(toRouteOptions 의 getValue 전제).
  */
-private data class ScoredRoute(val candidate: RouteCandidate, val score: SafetyScore, val type: String)
+private data class ScoredRoute(val candidate: RouteCandidate, val score: SafetyScore, val type: RouteType)
 
 private fun TmapRoute.toCandidate(): RouteCandidate =
     RouteCandidate(searchOption = searchOption, path = path.toGeoPoints(), distanceM = distanceM, timeS = timeS, steps = steps)

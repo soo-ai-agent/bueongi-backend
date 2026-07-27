@@ -80,7 +80,7 @@ class SafeRouteServiceTest {
         whenever(tmap.isEnabled).thenReturn(false)
         val result = service(tmap).safeCompare(request)
         assertThat(result).hasSize(3)
-        assertThat(result.map { it.type }).containsExactly("safe", "main", "fast")
+        assertThat(result.map { it.type }).containsExactly(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
         assertThat(result.first().score).isNull()
         assertThat(result.first().path).isNull()
         // 폴백엔 출처(provenance)·근거(breakdown)가 없다 → 프론트가 '예시 데이터'로 표기(P0-1).
@@ -111,15 +111,15 @@ class SafeRouteServiceTest {
         assertThat(result).hasSize(2)
         // 점수 내림차순: A(시설 있음)가 먼저.
         assertThat(result[0].score!!).isGreaterThanOrEqualTo(result[1].score!!)
-        assertThat(result[0].type).isEqualTo("safe")
+        assertThat(result[0].type).isEqualTo(RouteType.SAFE)
         assertThat(result[0].score!!).isGreaterThan(0)
-        assertThat(result.map { it.type }).contains("fast")
+        assertThat(result.map { it.type }).contains(RouteType.FAST)
         // safe 경로 path/steps/markers 채움.
         assertThat(result[0].path).isNotNull
         assertThat(result[0].markers).isNotNull
         // 마커는 출발/도착 + 회랑 내 CCTV 를 포함.
         val markerTypes = result[0].markers!!.map { it.type }
-        assertThat(markerTypes).contains("start", "end", "cctv")
+        assertThat(markerTypes).contains(FacilityPoiType.START, FacilityPoiType.END, FacilityPoiType.CCTV)
         // P0-4 점수 근거: 회랑 내 CCTV 4개/0.888km ≈ 4.5/km 가 그대로 노출된다.
         val breakdown = result[0].breakdown!!
         assertThat(breakdown.cctvDensity).isGreaterThan(0.0)
@@ -139,12 +139,12 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
         whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
 
-        val safe = service(tmap).safeCompare(request).first { it.type == "safe" }
+        val safe = service(tmap).safeCompare(request).first { it.type == RouteType.SAFE }
         val markerTypes = safe.markers!!.map { it.type }
         // 실측 CCTV 는 있고 출발/도착도 있다.
-        assertThat(markerTypes).contains("start", "end", "cctv")
+        assertThat(markerTypes).contains(FacilityPoiType.START, FacilityPoiType.END, FacilityPoiType.CCTV)
         // 추정 보완이 사라졌으므로 실측 0 유형은 마커에 없다.
-        assertThat(markerTypes).doesNotContain("store", "police", "safehouse")
+        assertThat(markerTypes).doesNotContain(FacilityPoiType.STORE, FacilityPoiType.POLICE, FacilityPoiType.SAFEHOUSE)
     }
 
     @Test
@@ -166,8 +166,8 @@ class SafeRouteServiceTest {
             RouteCandidateMerger(),
         )
 
-        val safe = svc.safeCompare(request).first { it.type == "safe" }
-        val policeMarkers = safe.markers!!.filter { it.type == "police" }
+        val safe = svc.safeCompare(request).first { it.type == RouteType.SAFE }
+        val policeMarkers = safe.markers!!.filter { it.type == FacilityPoiType.POLICE }
         // 실 지구대 1개만(추정 보완 없음) — 이름(메타)이 보존된다.
         assertThat(policeMarkers).hasSize(1)
         assertThat(policeMarkers.first().name).isEqualTo("역삼지구대")
@@ -204,7 +204,7 @@ class SafeRouteServiceTest {
 
         // rADup 은 rA 와 병합돼 사라지고, 남은 3개 실경로에 유형이 하나씩 배정된다(중복 라벨 없음).
         assertThat(result).hasSize(3)
-        assertThat(result.map { it.type }).containsExactlyInAnyOrder("safe", "main", "fast")
+        assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
         assertThat(result.map { it.type }).doesNotHaveDuplicates()
     }
 
@@ -229,7 +229,7 @@ class SafeRouteServiceTest {
         svc.safeCompare(request)
 
         assertThat(recording.records.map { it.endpoint }).containsExactly("safe-compare")
-        assertThat(recording.records.first().preference).isEqualTo("safe")
+        assertThat(recording.records.first().preference).isEqualTo(SafetyPreference.SAFE)
     }
 
     @Test
@@ -270,7 +270,7 @@ class SafeRouteServiceTest {
         val result = service(tmap).safeCompare(request)
 
         assertThat(result).hasSize(3)
-        assertThat(result.map { it.type }).containsExactlyInAnyOrder("safe", "main", "fast")
+        assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
     }
 }
 

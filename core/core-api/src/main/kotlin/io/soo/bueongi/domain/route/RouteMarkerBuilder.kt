@@ -45,8 +45,8 @@ class RouteMarkerBuilder(
 
         val corridor = SafetyScorer.DEFAULT_CORRIDOR_METERS
         val raw = ArrayList<FacilityPoi>()
-        raw.add(FacilityPoi(type = "start", x = 0, y = 0, lat = origin.lat, lng = origin.lng))
-        raw.add(FacilityPoi(type = "end", x = 0, y = 0, lat = destination.lat, lng = destination.lng))
+        raw.add(FacilityPoi(type = FacilityPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
+        raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
         // 회랑 내 실 시설(실좌표·메타 포함)만 담는다. 유형별 마커 수 상한으로 가로등처럼 밀집한 시설이 지도를
         // 가리지 않도록 방어한다(점수 계산은 SafetyScorer 가 전체 개수를 그대로 쓴다 — 여기 상한과 무관).
@@ -116,15 +116,15 @@ class RouteMarkerBuilder(
     }
 
     private companion object {
-        // 마커 표시 종류 → 시설 인덱스(회랑 실측; 실좌표·메타 포함).
+        // 마커 표시 종류(POI 어휘) → 시설 인덱스(회랑 실측; 실좌표·메타 포함).
         val MARKER_TYPES = listOf(
-            "cctv" to FacilityType.CCTV,
-            "safehouse" to FacilityType.SAFEHOUSE,
-            "bell" to FacilityType.BELL,
+            FacilityPoiType.CCTV to FacilityType.CCTV,
+            FacilityPoiType.SAFEHOUSE to FacilityType.SAFEHOUSE,
+            FacilityPoiType.BELL to FacilityType.BELL,
             // 지구대·파출소도 경로변 거점 마커로 표시한다(여성안심지킴이집과 함께 지도에 노출).
-            "police" to FacilityType.POLICE,
+            FacilityPoiType.POLICE to FacilityType.POLICE,
             // 가로등·조명은 점수(밀도)에도 쓰이고, 지도에도 표시한다(상한으로 밀집 방어).
-            "lamp" to FacilityType.LAMP,
+            FacilityPoiType.LAMP to FacilityType.LAMP,
         )
 
         /** 정규화 x/y 투영의 경계 여백(%). */

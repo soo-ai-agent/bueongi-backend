@@ -15,6 +15,7 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
@@ -261,7 +262,7 @@ class ApiLogsControllerTest(
                         atEpochMs = System.currentTimeMillis(),
                         endpoint = "compare",
                         destinationName = "강남역",
-                        preference = "safe",
+                        preference = SafetyPreference.SAFE,
                     ),
                 )
         }

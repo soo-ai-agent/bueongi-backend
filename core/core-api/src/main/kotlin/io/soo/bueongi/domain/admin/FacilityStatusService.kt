@@ -21,7 +21,7 @@ class FacilityStatusService(
         val facilities = FacilityType.entries.map { type ->
             val record = refreshStatusStore.findByType(type)
             FacilityStatus(
-                type = type.cdnType,
+                type = type,
                 loadedCount = facilitySource.index(type).size,
                 lastRefreshAtMs = record?.atEpochMs,
                 lastRefreshCount = record?.replacedCount,
@@ -45,9 +45,9 @@ class FacilityStatusService(
     }
 }
 
-/** 시설 종류 1종의 데이터 현황. [type] 은 CDN 컬렉션 타입 문자열(cctv/lamp/emergency_bell/safehouse/police). */
+/** 시설 종류 1종의 데이터 현황. [type] 은 JSON 으로 cdnType(cctv/lamp/emergency_bell/safehouse/police)로 직렬화된다. */
 data class FacilityStatus(
-    val type: String,
+    val type: FacilityType,
     /** 현재 인메모리 인덱스에 적재된 건수(파일 적재분 + 라이브 교체분). */
     val loadedCount: Int,
     /** 마지막 라이브 갱신 시각(epoch ms). 갱신 시도 이력이 없으면 null. */

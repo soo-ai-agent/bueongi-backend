@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.routestats
 
+import io.soo.bueongi.core.enums.SafetyPreference
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ class InMemoryRouteStatsStoreTest {
 
     private val store = InMemoryRouteStatsStore()
 
-    private fun log(at: Long, endpoint: String = "compare", preference: String = "safe") =
+    private fun log(at: Long, endpoint: String = "compare", preference: SafetyPreference = SafetyPreference.SAFE) =
         RouteRecommendationLog(atEpochMs = at, endpoint = endpoint, destinationName = "목적지", preference = preference)
 
     @Test

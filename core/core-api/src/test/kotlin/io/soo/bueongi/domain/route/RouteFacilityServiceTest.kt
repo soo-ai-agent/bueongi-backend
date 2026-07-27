@@ -50,9 +50,9 @@ class RouteFacilityServiceTest {
     @Test
     fun `start 와 end POI 가 항상 포함된다`() {
         val res = request("safe", FakeFacilitySource())
-        assertThat(res.pois.map { it.type }).contains("start", "end")
-        val start = res.pois.first { it.type == "start" }
-        val end = res.pois.first { it.type == "end" }
+        assertThat(res.pois.map { it.type }).contains(FacilityPoiType.START, FacilityPoiType.END)
+        val start = res.pois.first { it.type == FacilityPoiType.START }
+        val end = res.pois.first { it.type == FacilityPoiType.END }
         assertThat(start.lat).isEqualTo(origin.lat)
         assertThat(end.lng).isEqualTo(destination.lng)
     }
@@ -60,11 +60,11 @@ class RouteFacilityServiceTest {
     @Test
     fun `요약은 생성된 POI 집계와 정확히 일치한다`() {
         val res = request("safe", mixedSource())
-        assertThat(res.summary.cctv).isEqualTo(res.pois.count { it.type == "cctv" })
-        assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == "bell" })
-        assertThat(res.summary.store).isEqualTo(res.pois.count { it.type == "store" })
-        assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == "police" })
-        assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == "safehouse" })
+        assertThat(res.summary.cctv).isEqualTo(res.pois.count { it.type == FacilityPoiType.CCTV })
+        assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == FacilityPoiType.BELL })
+        assertThat(res.summary.store).isEqualTo(res.pois.count { it.type == FacilityPoiType.STORE })
+        assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == FacilityPoiType.POLICE })
+        assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == FacilityPoiType.SAFEHOUSE })
     }
 
     @Test
@@ -83,7 +83,7 @@ class RouteFacilityServiceTest {
         // 사용자 결정: 편의점 제외. FacilityType.STORE 자체가 없어 회랑 질의 대상이 아니므로
         // 실 시설이 풍부한 소스에서도 store POI 는 0 이고, 요약 store 필드(계약 유지)는 항상 0 이다.
         val res = request("safe", mixedSource())
-        assertThat(res.pois).noneMatch { it.type == "store" }
+        assertThat(res.pois).noneMatch { it.type == FacilityPoiType.STORE }
         assertThat(res.summary.store).isEqualTo(0)
     }
 
@@ -95,7 +95,7 @@ class RouteFacilityServiceTest {
         val s = res.summary
         assertThat(s.total).isEqualTo(0)
         assertThat(s.cctv + s.bell + s.store + s.police + s.safehouse).isEqualTo(0)
-        assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder("start", "end")
+        assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
     }
 
     @Test
@@ -131,13 +131,13 @@ class RouteFacilityServiceTest {
     fun `실측 시설 POI 는 실 좌표(회랑 안)로 표시된다`() {
         // 정직화 이후 핵심: 표시 좌표는 지어낸 직선 위 점이 아니라 실 시설의 실 좌표여야 한다.
         val res = request("safe", mixedSource())
-        val cctv = res.pois.filter { it.type == "cctv" }
+        val cctv = res.pois.filter { it.type == FacilityPoiType.CCTV }
         assertThat(cctv).hasSize(2)
         // 소스에 넣은 실 좌표(위도 37.5, 경도 127.005/127.010)가 그대로 실린다.
         assertThat(cctv.map { it.lng }).containsExactlyInAnyOrder(127.005, 127.010)
         assertThat(cctv).allMatch { it.lat == 37.5 }
         // 안심집은 실 이름 메타가 보존된다.
-        val safehouse = res.pois.first { it.type == "safehouse" }
+        val safehouse = res.pois.first { it.type == FacilityPoiType.SAFEHOUSE }
         assertThat(safehouse.name).isEqualTo("안심지킴이집-1")
     }
 }

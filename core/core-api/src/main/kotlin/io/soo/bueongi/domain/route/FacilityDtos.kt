@@ -1,17 +1,42 @@
 package io.soo.bueongi.domain.route
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
+
+/**
+ * 경로상 POI 종류 — 프론트 MapMock POI type 어휘. [wire] 문자열이 곧 응답 계약이라 [JsonValue] 로 못 박는다.
+ *
+ * start/end 는 안심시설 집계에서 제외한다(프론트 summarizeSafetyFacilities 와 동일 규칙).
+ * [STORE](편의점)는 사용자 결정으로 지도에서 제외되어 **실제로는 마커가 생성되지 않지만**(요약 store 는 항상 0),
+ * 프론트 계약의 유형 집합에 포함되므로 어휘로 남긴다. 역직렬화는 [from] 으로 고정한다([JsonCreator]).
+ */
+enum class FacilityPoiType(@get:JsonValue val wire: String) {
+    START("start"),
+    END("end"),
+    CCTV("cctv"),
+    BELL("bell"),
+    STORE("store"),
+    POLICE("police"),
+    SAFEHOUSE("safehouse"),
+    LAMP("lamp"),
+    ;
+
+    companion object {
+        /** POI type 문자열 → 종류. 알 수 없는 값은 예외(닫힌 집합) — 역직렬화 경계용. */
+        @JsonCreator
+        @JvmStatic
+        fun from(value: String): FacilityPoiType = entries.first { it.wire == value }
+    }
+}
+
 /**
  * 경로상 POI 1건. 프론트 MapMock POI(`{ type, x, y }`)와 호환되도록 정규화 좌표 x/y(0~100)를 주고,
  * 실지도 연동을 위해 lat/lng 도 함께 준다(프론트는 필요한 쪽만 사용).
  *
- * type: 'start' | 'end' | 'cctv' | 'bell' | 'store' | 'police' | 'safehouse'.
- * (start/end 는 안심시설 집계에서 제외 — 프론트 summarizeSafetyFacilities 와 동일 규칙.)
- * 'store'(편의점)는 사용자 결정으로 지도에서 제외되어 **실제로는 생성되지 않는다** — 프론트 계약 호환을 위해
- * 유형 문자열·요약 필드만 남겨 두고(요약 store 는 항상 0), 마커로는 절대 나오지 않는다.
  * safehouse(여성안심지킴이집·B-2)는 지정 거점일 뿐 영업시간 정보가 없어, 프론트에서 별도 주의 문구로 안내한다.
  */
 data class FacilityPoi(
-    val type: String,
+    val type: FacilityPoiType,
     val x: Int,
     val y: Int,
     val lat: Double,

@@ -26,7 +26,7 @@ class RouteServiceTest {
     fun `항상 safe main fast 3개 경로 반환`() {
         val routes = service.compare(request())
         assertThat(routes).hasSize(3)
-        assertThat(routes.map { it.type }).containsExactly("safe", "main", "fast")
+        assertThat(routes.map { it.type }).containsExactly(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
     }
 
     @Test
@@ -49,8 +49,8 @@ class RouteServiceTest {
             } else {
                 dist.removeSuffix("m").toDouble()
             }
-        assertThat(meters(routes.getValue("safe").dist))
-            .isGreaterThan(meters(routes.getValue("fast").dist))
+        assertThat(meters(routes.getValue(RouteType.SAFE).dist))
+            .isGreaterThan(meters(routes.getValue(RouteType.FAST).dist))
     }
 
     @Test
@@ -81,7 +81,7 @@ class RouteServiceTest {
 
         recordingService.compare(request())
         assertThat(recording.records.map { it.endpoint }).containsExactly("compare")
-        assertThat(recording.records.first().preference).isEqualTo("safe")
+        assertThat(recording.records.first().preference).isEqualTo(SafetyPreference.SAFE)
         assertThat(recording.records.first().destinationName).isEqualTo("홍대입구역")
 
         recording.records.clear()

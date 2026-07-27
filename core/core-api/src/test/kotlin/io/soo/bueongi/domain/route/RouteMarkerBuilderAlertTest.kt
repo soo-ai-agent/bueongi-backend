@@ -37,7 +37,7 @@ class RouteMarkerBuilderAlertTest {
         val markers = build(FakeFacilitySource(), notifier)
 
         // 인덱스 적재 실패라도 마커 생성은 계속(start/end 유지) — 알림은 부수효과.
-        assertThat(markers.map { it.type }).containsExactlyInAnyOrder("start", "end")
+        assertThat(markers.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
         assertThat(notifier.keys).containsExactly("facility-index-empty")
     }
 
@@ -51,7 +51,7 @@ class RouteMarkerBuilderAlertTest {
 
         val markers = build(farAway, notifier)
 
-        assertThat(markers.map { it.type }).containsExactlyInAnyOrder("start", "end")
+        assertThat(markers.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
         assertThat(notifier.keys).isEmpty()
     }
 
@@ -70,6 +70,6 @@ class RouteMarkerBuilderAlertTest {
     @Test
     fun `알림기 미주입(null)이어도 마커 생성은 정상 동작한다`() {
         val markers = build(FakeFacilitySource(), notifier = null)
-        assertThat(markers.map { it.type }).containsExactlyInAnyOrder("start", "end")
+        assertThat(markers.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
     }
 }

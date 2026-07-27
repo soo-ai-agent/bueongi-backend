@@ -1,5 +1,6 @@
 package io.soo.bueongi.domain.admin
 
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.assertj.core.api.Assertions.assertThat
@@ -20,7 +21,7 @@ class RouteStatsServiceTest {
         at: Long = System.currentTimeMillis(),
         endpoint: String = "compare",
         destinationName: String? = "강남역",
-        preference: String = "safe",
+        preference: SafetyPreference = SafetyPreference.SAFE,
     ) = RouteRecommendationLog(atEpochMs = at, endpoint = endpoint, destinationName = destinationName, preference = preference)
 
     @Test
@@ -42,13 +43,13 @@ class RouteStatsServiceTest {
 
     @Test
     fun `byPreference 는 나타난 값만 많은 순으로 집계한다`() {
-        val logs = List(3) { log(preference = "safe") } +
-            List(2) { log(preference = "balanced") } +
-            List(1) { log(preference = "safest") }
+        val logs = List(3) { log(preference = SafetyPreference.SAFE) } +
+            List(2) { log(preference = SafetyPreference.BALANCED) } +
+            List(1) { log(preference = SafetyPreference.SAFEST) }
 
         val byPreference = RouteStatsService(store(logs)).summarize().byPreference
 
-        assertThat(byPreference.map { it.preference }).containsExactly("safe", "balanced", "safest")
+        assertThat(byPreference.map { it.preference }).containsExactly(SafetyPreference.SAFE, SafetyPreference.BALANCED, SafetyPreference.SAFEST)
         assertThat(byPreference.map { it.count }).containsExactly(3, 2, 1)
     }
 

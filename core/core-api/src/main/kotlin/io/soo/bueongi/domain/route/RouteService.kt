@@ -38,7 +38,7 @@ class RouteService(
                 dist = RouteFormat.formatDistance(meters),
                 desc = type.desc,
                 tags = type.tags,
-                type = type.apiType,
+                type = type,
             )
         }
     }
@@ -59,7 +59,7 @@ internal fun RouteStatsStore?.recordRecommendation(endpoint: String, query: Rout
             atEpochMs = System.currentTimeMillis(),
             endpoint = endpoint,
             destinationName = query.destinationName,
-            preference = query.safetyPreference.requestValue,
+            preference = query.safetyPreference,
         ),
     )
 }

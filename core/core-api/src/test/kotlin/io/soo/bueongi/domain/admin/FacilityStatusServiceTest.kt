@@ -48,9 +48,9 @@ class FacilityStatusServiceTest {
 
         // 5종 전부 cdnType 문자열로 노출.
         assertThat(summary.facilities.map { it.type })
-            .containsExactly("cctv", "lamp", "emergency_bell", "safehouse", "police")
+            .containsExactly(FacilityType.CCTV, FacilityType.LAMP, FacilityType.BELL, FacilityType.SAFEHOUSE, FacilityType.POLICE)
 
-        val cctv = summary.facilities.first { it.type == "cctv" }
+        val cctv = summary.facilities.first { it.type == FacilityType.CCTV }
         assertThat(cctv.loadedCount).isEqualTo(372)
         assertThat(cctv.lastRefreshStatus).isEqualTo("replaced")
         assertThat(cctv.lastRefreshCount).isEqualTo(372)
@@ -58,14 +58,14 @@ class FacilityStatusServiceTest {
         assertThat(cctv.cdnGeneratedAt).isEqualTo("2026-06-19T00:00:00Z")
         assertThat(cctv.cdnVersion).isEqualTo("2026-06-19")
 
-        val safehouse = summary.facilities.first { it.type == "safehouse" }
+        val safehouse = summary.facilities.first { it.type == FacilityType.SAFEHOUSE }
         assertThat(safehouse.loadedCount).isEqualTo(0)
         assertThat(safehouse.lastRefreshStatus).isEqualTo("kept")
         assertThat(safehouse.lastRefreshCount).isNull()
         assertThat(safehouse.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
 
         // lamp 는 라이브 갱신 대상이 아님 → never, 적재분(CDN)은 유지.
-        val lamp = summary.facilities.first { it.type == "lamp" }
+        val lamp = summary.facilities.first { it.type == FacilityType.LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
         assertThat(lamp.lastRefreshStatus).isEqualTo("never")
         assertThat(lamp.lastRefreshAtMs).isNull()
@@ -84,6 +84,6 @@ class FacilityStatusServiceTest {
             assertThat(f.cdnGeneratedAt).isNull()
             assertThat(f.cdnVersion).isNull()
         }
-        assertThat(summary.facilities.first { it.type == "cctv" }.loadedCount).isEqualTo(5)
+        assertThat(summary.facilities.first { it.type == FacilityType.CCTV }.loadedCount).isEqualTo(5)
     }
 }
