@@ -1,5 +1,7 @@
 package io.soo.bueongi.domain.admin
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
@@ -33,15 +35,39 @@ class FacilityStatusService(
         return FacilityStatusSummary(facilities = facilities)
     }
 
-    /** 갱신 기록 없음=never, 있으면 교체 건수 유무로 replaced(성공)/kept(수집 실패·0건 유지) 판정. */
-    private fun statusOf(replacedCount: Int?, attempted: Boolean): String {
+    /** 갱신 기록 없음=NEVER, 있으면 교체 건수 유무로 REPLACED(성공)/KEPT(수집 실패·0건 유지) 판정. */
+    private fun statusOf(replacedCount: Int?, attempted: Boolean): FacilityRefreshStatus {
         if (!attempted) {
-            return "never"
+            return FacilityRefreshStatus.NEVER
         }
         if (replacedCount != null) {
-            return "replaced"
+            return FacilityRefreshStatus.REPLACED
         }
-        return "kept"
+        return FacilityRefreshStatus.KEPT
+    }
+}
+
+/**
+ * 시설 라이브 갱신 결과 3상태 — facility-status 응답 전용 판별자. 프론트 FacilityRefreshStatus('replaced'|'kept'|'never')와 대응한다.
+ *
+ * [wire] 가 와이어 문자열이다([JsonValue]) — lastRefreshStatus 필드가 이 값이라 직렬화가 정확히
+ * replaced|kept|never 를 내야 한다. 역직렬화는 [from] 으로 고정한다([JsonCreator]).
+ *
+ * - NEVER: 아직 갱신 시도 없음(키 없는 원천 포함).
+ * - REPLACED: 마지막 갱신에서 실제로 교체 성공(교체 건수 있음).
+ * - KEPT: 갱신을 시도했으나 수집 실패·0건이라 기존 적재분을 유지.
+ */
+enum class FacilityRefreshStatus(@get:JsonValue val wire: String) {
+    NEVER("never"),
+    REPLACED("replaced"),
+    KEPT("kept"),
+    ;
+
+    companion object {
+        /** wire 문자열 → 상태. 알 수 없는 값은 예외(닫힌 집합) — 역직렬화 경계용. */
+        @JsonCreator
+        @JvmStatic
+        fun from(value: String): FacilityRefreshStatus = entries.first { it.wire == value }
     }
 }
 
@@ -54,8 +80,8 @@ data class FacilityStatus(
     val lastRefreshAtMs: Long?,
     /** 마지막 갱신에서 교체된 건수. 수집 실패·0건 유지(kept)거나 이력 없음(never)이면 null. */
     val lastRefreshCount: Int?,
-    /** replaced(교체 성공) / kept(수집 실패·0건으로 기존 유지) / never(아직 갱신 시도 없음·키 없음). */
-    val lastRefreshStatus: String,
+    /** 마지막 갱신 결과(3상태). JSON 으로 [FacilityRefreshStatus.wire](replaced|kept|never)로 직렬화된다. */
+    val lastRefreshStatus: FacilityRefreshStatus,
     /** CDN manifest 생성 시점(ISO-8601). 미상이면 null. */
     val cdnGeneratedAt: String?,
     /** CDN manifest 버전. 미상이면 null. */

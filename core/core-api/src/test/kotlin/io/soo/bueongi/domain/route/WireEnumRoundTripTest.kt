@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.domain.admin.FacilityRefreshStatus
 import io.soo.bueongi.domain.facility.FacilityCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -72,5 +73,12 @@ class WireEnumRoundTripTest {
         roundTrip(FacilityType.BELL, "emergency_bell")
         roundTrip(FacilityType.SAFEHOUSE, "safehouse")
         roundTrip(FacilityType.POLICE, "police")
+    }
+
+    @Test
+    fun `FacilityRefreshStatus never replaced kept`() {
+        roundTrip(FacilityRefreshStatus.NEVER, "never")
+        roundTrip(FacilityRefreshStatus.REPLACED, "replaced")
+        roundTrip(FacilityRefreshStatus.KEPT, "kept")
     }
 }

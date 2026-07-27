@@ -52,7 +52,7 @@ class FacilityStatusServiceTest {
 
         val cctv = summary.facilities.first { it.type == FacilityType.CCTV }
         assertThat(cctv.loadedCount).isEqualTo(372)
-        assertThat(cctv.lastRefreshStatus).isEqualTo("replaced")
+        assertThat(cctv.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.REPLACED)
         assertThat(cctv.lastRefreshCount).isEqualTo(372)
         assertThat(cctv.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
         assertThat(cctv.cdnGeneratedAt).isEqualTo("2026-06-19T00:00:00Z")
@@ -60,14 +60,14 @@ class FacilityStatusServiceTest {
 
         val safehouse = summary.facilities.first { it.type == FacilityType.SAFEHOUSE }
         assertThat(safehouse.loadedCount).isEqualTo(0)
-        assertThat(safehouse.lastRefreshStatus).isEqualTo("kept")
+        assertThat(safehouse.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.KEPT)
         assertThat(safehouse.lastRefreshCount).isNull()
         assertThat(safehouse.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
 
         // lamp 는 라이브 갱신 대상이 아님 → never, 적재분(CDN)은 유지.
         val lamp = summary.facilities.first { it.type == FacilityType.LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
-        assertThat(lamp.lastRefreshStatus).isEqualTo("never")
+        assertThat(lamp.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.NEVER)
         assertThat(lamp.lastRefreshAtMs).isNull()
         assertThat(lamp.lastRefreshCount).isNull()
     }
@@ -79,7 +79,7 @@ class FacilityStatusServiceTest {
         val summary = FacilityStatusService(source, FacilityRefreshStatusStore()).summarize()
 
         assertThat(summary.facilities).allSatisfy { f ->
-            assertThat(f.lastRefreshStatus).isEqualTo("never")
+            assertThat(f.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.NEVER)
             assertThat(f.lastRefreshAtMs).isNull()
             assertThat(f.cdnGeneratedAt).isNull()
             assertThat(f.cdnVersion).isNull()
