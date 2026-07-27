@@ -81,7 +81,9 @@ class SafeDetourPlanner(
         // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
         data class Placed(val anchor: SafeAnchor, val progress: Double)
         val placed = anchors.mapNotNull { anchor ->
-            val (progressRaw, lateral) = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
+            val projection = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
+            val progressRaw = projection.t
+            val lateral = projection.distanceMeters
             // 중간 구간(끝점 근처 제외) + 과도 측방이탈 제외.
             if (progressRaw <= MIDDLE_MIN_T || progressRaw >= MIDDLE_MAX_T) {
                 return@mapNotNull null

@@ -130,17 +130,17 @@ class SafeRouteService(
         if (candidates.isEmpty()) {
             return emptyList()
         }
-        val scored = candidates.map { it to scorer.score(it.path) }
+        val scored = candidates.map { ScoredCandidate(it, scorer.score(it.path)) }
 
         // safe: 최고점(동률이면 먼저 나온 후보). 위 isEmpty 가드로 비어있지 않음이 보장되므로 비-널 maxBy.
-        val safeIdx = scored.indices.maxBy { scored[it].second.score.toDouble() - it * TIE_BREAK_EPSILON }
+        val safeIdx = scored.indices.maxBy { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
         // fast: safe 제외 최소시간(동률이면 먼저 나온 후보).
         val fastIdx = scored.indices.filter { it != safeIdx }
-            .minByOrNull { scored[it].first.timeS.toDouble() + it * TIE_BREAK_EPSILON }
+            .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
         val used = setOfNotNull(safeIdx, fastIdx)
         // main: 남은 후보 중 최고점.
         val mainIdx = scored.indices.filter { it !in used }
-            .maxByOrNull { scored[it].second.score.toDouble() - it * TIE_BREAK_EPSILON }
+            .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
 
         val picks = LinkedHashMap<Int, RouteType>()
         picks[safeIdx] = RouteType.SAFE
@@ -150,7 +150,7 @@ class SafeRouteService(
         if (mainIdx != null) {
             picks[mainIdx] = RouteType.MAIN
         }
-        return picks.map { (i, type) -> ScoredRoute(scored[i].first, scored[i].second, type) }
+        return picks.map { (i, type) -> ScoredRoute(scored[i].candidate, scored[i].score, type) }
     }
 
     /** ScoredRoute → 프론트 계약 RouteOption. 안전 점수 내림차순 정렬(동률은 입력 순서 유지). */
@@ -270,6 +270,9 @@ data class RouteCandidate(
     val timeS: Int,
     val steps: List<NavStep>,
 )
+
+/** 채점만 끝난 후보(유형 배정 전 중간 표현) — 안전점수·시간으로 safe/fast/main 을 고르는 입력. */
+private data class ScoredCandidate(val candidate: RouteCandidate, val score: SafetyScore)
 
 /**
  * 채점·유형 배정이 끝난 후보(응답 변환 직전의 중간 표현).

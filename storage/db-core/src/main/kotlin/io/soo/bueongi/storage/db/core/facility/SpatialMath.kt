@@ -48,7 +48,7 @@ object SpatialMath {
      * 점 p 의 선분 [a,b] 위 투영 매개변수 t(클램프 전)와 선분까지의 최단거리(m)를 함께 반환한다.
      * t<0 은 a 이전, t>1 은 b 이후를 뜻한다(우회의 진행방향 중간 구간 판정에 쓰려고 클램프 전 값도 준다).
      */
-    fun projectOntoSegment(p: GeoPoint, a: GeoPoint, b: GeoPoint): Pair<Double, Double> {
+    fun projectOntoSegment(p: GeoPoint, a: GeoPoint, b: GeoPoint): SegmentProjection {
         val originLat = p.lat
         val pp = toPlanar(p, originLat)
         val pa = toPlanar(a, originLat)
@@ -57,18 +57,18 @@ object SpatialMath {
         val dy = pb.y - pa.y
         val segLenSq = dx * dx + dy * dy
         if (segLenSq == 0.0) {
-            return 0.0 to hypot(pp.x - pa.x, pp.y - pa.y)
+            return SegmentProjection(t = 0.0, distanceMeters = hypot(pp.x - pa.x, pp.y - pa.y))
         }
         val tRaw = ((pp.x - pa.x) * dx + (pp.y - pa.y) * dy) / segLenSq
         val t = max(0.0, min(1.0, tRaw))
         val cx = pa.x + t * dx
         val cy = pa.y + t * dy
-        return tRaw to hypot(pp.x - cx, pp.y - cy)
+        return SegmentProjection(t = tRaw, distanceMeters = hypot(pp.x - cx, pp.y - cy))
     }
 
     /** 점에서 선분 [a,b]까지의 최단거리(m). */
     fun distancePointToSegmentMeters(p: GeoPoint, a: GeoPoint, b: GeoPoint): Double =
-        projectOntoSegment(p, a, b).second
+        projectOntoSegment(p, a, b).distanceMeters
 
     /** 점에서 경로(폴리라인)까지의 최단거리(m). 빈/단일 좌표 경로 방어. */
     fun minDistanceToPathMeters(p: GeoPoint, path: List<GeoPoint>): Double {
@@ -108,3 +108,9 @@ object SpatialMath {
         return overlap
     }
 }
+
+/**
+ * 점을 선분에 투영한 결과. [t] 는 클램프 전 진행 매개변수(0 미만=선분 시작 이전, 1 초과=끝 이후),
+ * [distanceMeters] 는 그 점에서 선분까지의 최단거리(m).
+ */
+data class SegmentProjection(val t: Double, val distanceMeters: Double)

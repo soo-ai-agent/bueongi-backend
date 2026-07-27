@@ -9,6 +9,9 @@ import kotlin.math.tan
 /** WGS84 한 점(치안시설 좌표 변환 결과). */
 data class Wgs84Point(val lat: Double, val lng: Double)
 
+/** 투영 평면 좌표(TM): [x]=동쪽(easting, m), [y]=북쪽(northing, m). [Epsg5179]·[Epsg5174] 정투영 결과. */
+data class TmXy(val x: Double, val y: Double)
+
 /**
  * EPSG:5179(UTM-K, GRS80) ↔ WGS84 변환 — 치안시설(IF_0036)의 x/y 좌표용.
  *
@@ -78,7 +81,7 @@ object Epsg5179 {
     }
 
     /** WGS84 → EPSG:5179. 왕복 테스트(변환 자기일관성 검증)용. */
-    fun fromWgs84(lat: Double, lng: Double): Pair<Double, Double> {
+    fun fromWgs84(lat: Double, lng: Double): TmXy {
         val phi = Math.toRadians(lat)
         val sinPhi = sin(phi)
         val cosPhi = cos(phi)
@@ -100,7 +103,7 @@ object Epsg5179 {
                     (61 - 58 * t + t * t + 600 * c - 330 * EP2) * aa.pow(6) / 720
                 )
             )
-        return x to y
+        return TmXy(x, y)
     }
 
     /** 적도에서 위도 [phi]까지의 자오선 호 길이(m) — Snyder 급수. */

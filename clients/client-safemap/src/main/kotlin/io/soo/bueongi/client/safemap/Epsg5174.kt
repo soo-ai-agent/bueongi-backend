@@ -85,7 +85,7 @@ object Epsg5174 {
      * (지오이드고 미상이라 양방향 모두 h=0 을 가정한다. 높이 오차는 재투영 시 수평이 아닌 반경 성분이라
      * 수평 왕복 오차는 무시할 수준이다).
      */
-    fun fromWgs84(lat: Double, lng: Double): Pair<Double, Double> {
+    fun fromWgs84(lat: Double, lng: Double): TmXy {
         val wgsEcef = geodeticToEcef(Math.toRadians(lat), Math.toRadians(lng), A_WGS84, E2_WGS84)
         val besselEcef = helmertWgs84ToBessel(wgsEcef)
         val besselGeodetic = ecefToGeodetic(besselEcef, A_BESSEL, E2_BESSEL)
@@ -125,7 +125,7 @@ object Epsg5174 {
     }
 
     /** Bessel 측지좌표 → Bessel TM(Snyder). [fromWgs84] 왕복용. */
-    private fun forwardTm(latRad: Double, lngRad: Double): Pair<Double, Double> {
+    private fun forwardTm(latRad: Double, lngRad: Double): TmXy {
         val sinPhi = sin(latRad)
         val cosPhi = cos(latRad)
         val tanPhi = tan(latRad)
@@ -146,7 +146,7 @@ object Epsg5174 {
                     (61 - 58 * t + t * t + 600 * c - 330 * EP2_BESSEL) * aa.pow(6) / 720
                 )
             )
-        return x to y
+        return TmXy(x, y)
     }
 
     /** 측지좌표(h=0) → 지심 직교좌표(ECEF). */

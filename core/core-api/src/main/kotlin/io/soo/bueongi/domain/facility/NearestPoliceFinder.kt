@@ -2,6 +2,7 @@ package io.soo.bueongi.domain.facility
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
@@ -24,17 +25,17 @@ class NearestPoliceFinder(
         val maxResults = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)
         return repository.index(FacilityType.POLICE)
             .withinRadius(center, radius)
-            .map { point -> point to SpatialMath.haversineMeters(center, point.toGeoPoint()) }
-            .sortedBy { (_, distance) -> distance }
+            .map { point -> FacilityWithDistance(point, SpatialMath.haversineMeters(center, point.toGeoPoint())) }
+            .sortedBy { it.distanceMeters }
             .take(maxResults)
-            .map { (point, distance) ->
+            .map { found ->
                 NearestPolice(
-                    name = point.name,
-                    address = point.address,
-                    tel = point.phone,
-                    lat = point.lat,
-                    lng = point.lng,
-                    distanceM = distance.roundToInt(),
+                    name = found.point.name,
+                    address = found.point.address,
+                    tel = found.point.phone,
+                    lat = found.point.lat,
+                    lng = found.point.lng,
+                    distanceM = found.distanceMeters.roundToInt(),
                 )
             }
     }
@@ -65,3 +66,6 @@ data class NearestPolice(
 
 /** `GET /api/facilities/police/nearest` 응답 봉투 — 프론트 NearbyPolice 계약(거리순 정렬)과 동형. */
 data class NearestPoliceResponse(val items: List<NearestPolice>)
+
+/** 중심에서의 거리(m)를 붙인 시설 점 — 거리순 정렬·상위 N 절단의 중간 표현. */
+private data class FacilityWithDistance(val point: FacilityPoint, val distanceMeters: Double)
