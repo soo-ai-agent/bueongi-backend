@@ -20,6 +20,7 @@
     }
     #status.live { background: #16a34a; }
     #status.waiting { background: #d97706; }
+    #status.overdue { background: #b91c1c; }
     #status.expired { background: #dc2626; }
     #status.error { background: #475569; }
     #updated { font-weight: 400; font-size: 12px; opacity: .9; }
@@ -125,6 +126,9 @@
       var fresh = isFinite(updatedMs) && (Date.now() - updatedMs) <= STALE_MS;
       if (fresh) {
         setStatus('live', '실시간 위치 공유 중');
+      } else if (data.overdue) {
+        // 예정 도착 시간을 넘겼는데 위치까지 멈춤 — 그냥 '끊김'보다 강한 경고로 격상(연락 유도).
+        setStatus('overdue', '예정 시간을 넘겼는데 위치가 멈췄어요. 연락해 보세요');
       } else {
         setStatus('waiting', '위치가 한동안 갱신되지 않았어요');
       }
