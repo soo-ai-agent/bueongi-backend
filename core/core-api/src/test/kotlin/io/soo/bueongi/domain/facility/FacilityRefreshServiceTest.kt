@@ -30,7 +30,7 @@ class FacilityRefreshServiceTest {
 
     private class RecordingNotifier : AlertNotifier {
         val keys: ArrayList<String> = ArrayList<String>()
-        override val isEnabled = true
+        override val isEnabled: Boolean = true
         override fun notify(key: String, title: String, detail: String) {
             keys.add(key)
         }
@@ -38,9 +38,9 @@ class FacilityRefreshServiceTest {
 
     private val dataGoKr: DataGoKrFacilityClient = mock()
     private val safemap: SafemapPoliceClient = mock()
-    private val store = FakeStore()
-    private val notifier = RecordingNotifier()
-    private val service = FacilityRefreshService(dataGoKr, safemap, store, notifier)
+    private val store: FakeStore = FakeStore()
+    private val notifier: RecordingNotifier = RecordingNotifier()
+    private val service: FacilityRefreshService = FacilityRefreshService(dataGoKr, safemap, store, notifier)
 
     private fun enableDataGoKr() = whenever(dataGoKr.isEnabled).thenReturn(true)
     private fun enableSafemap() = whenever(safemap.isEnabled).thenReturn(true)

@@ -241,7 +241,7 @@ class RequestMetricsServiceTest {
     }
 
     private companion object {
-        const val HOUR_MS = 3_600_000L
-        const val DAY_MS = 86_400_000L
+        const val HOUR_MS: Long = 3_600_000L
+        const val DAY_MS: Long = 86_400_000L
     }
 }

@@ -20,7 +20,7 @@ import java.nio.file.Path
  */
 class FacilityUploadServiceTest {
 
-    private val mapper = ObjectMapper()
+    private val mapper: ObjectMapper = ObjectMapper()
 
     private class FakeLiveStore : FacilityLiveStore {
         var lastType: FacilityType? = null

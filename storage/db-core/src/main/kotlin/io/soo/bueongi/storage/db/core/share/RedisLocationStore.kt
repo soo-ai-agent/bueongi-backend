@@ -213,7 +213,7 @@ class RedisLocationStore(
 
     private companion object {
         /** 세션 키 접두어(`share:{token}`). SCAN 패턴·토큰 추출·[shareKey] 가 한 상수를 공유해 드리프트를 막는다. */
-        const val SESSION_KEY_PREFIX = "share:"
+        const val SESSION_KEY_PREFIX: String = "share:"
 
         fun shareKey(token: String) = "$SESSION_KEY_PREFIX$token"
         fun locationKey(token: String) = "location:$token"
@@ -221,19 +221,19 @@ class RedisLocationStore(
         fun viewerKey(token: String) = "viewer:$token"
 
         /** SCAN 매칭 패턴 — 세션 키만(location/route/viewer 제외). token 은 콜론 없는 불투명 문자열이라 `share:*` 로 정확히 걸린다. */
-        const val SESSION_KEY_PATTERN = "$SESSION_KEY_PREFIX*"
+        const val SESSION_KEY_PATTERN: String = "$SESSION_KEY_PREFIX*"
 
         /** SCAN 배치 힌트(라운드트립당 반환 힌트) — 서버 부하와 왕복 횟수의 균형. */
-        const val SCAN_BATCH = 200L
+        const val SCAN_BATCH: Long = 200L
 
-        const val FIELD_CREATED_AT = "created_at"
-        const val FIELD_EXPIRES_AT = "expires_at"
-        const val FIELD_OWNER_SECRET = "owner_secret"
-        const val FIELD_EXPECTED_ARRIVAL_AT = "expected_arrival_at"
-        const val FIELD_LAT = "lat"
-        const val FIELD_LNG = "lng"
-        const val FIELD_UPDATED_AT = "updated_at"
-        const val FIELD_REMAINING_M = "remaining_m"
-        const val FIELD_REMAINING_S = "remaining_s"
+        const val FIELD_CREATED_AT: String = "created_at"
+        const val FIELD_EXPIRES_AT: String = "expires_at"
+        const val FIELD_OWNER_SECRET: String = "owner_secret"
+        const val FIELD_EXPECTED_ARRIVAL_AT: String = "expected_arrival_at"
+        const val FIELD_LAT: String = "lat"
+        const val FIELD_LNG: String = "lng"
+        const val FIELD_UPDATED_AT: String = "updated_at"
+        const val FIELD_REMAINING_M: String = "remaining_m"
+        const val FIELD_REMAINING_S: String = "remaining_s"
     }
 }

@@ -13,7 +13,7 @@ import java.nio.charset.Charset
  */
 class FacilityCsvParserTest {
 
-    private val parser = FacilityCsvParser()
+    private val parser: FacilityCsvParser = FacilityCsvParser()
 
     private fun bytes(text: String, charset: Charset = Charsets.UTF_8): ByteArray = text.toByteArray(charset)
 

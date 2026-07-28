@@ -85,7 +85,7 @@ class MissedArrivalWatchdogTest {
     }
 
     private fun fixedStore(active: List<ShareSession>): LocationStore = object : LocationStore {
-        override val backend = "memory"
+        override val backend: String = "memory"
         override fun save(session: ShareSession) = Unit
         override fun findByToken(token: String): ShareSession? = null
         override fun deleteByToken(token: String) = Unit
@@ -97,7 +97,7 @@ class MissedArrivalWatchdogTest {
 
     private class RecordingNotifier : AlertNotifier {
         val notified = ArrayList<Triple<String, String, String>>()
-        override val isEnabled = true
+        override val isEnabled: Boolean = true
         override fun notify(key: String, title: String, detail: String) {
             notified.add(Triple(key, title, detail))
         }

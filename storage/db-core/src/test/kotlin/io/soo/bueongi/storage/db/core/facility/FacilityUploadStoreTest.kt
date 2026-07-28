@@ -14,7 +14,7 @@ import java.nio.file.Path
  */
 class FacilityUploadStoreTest {
 
-    private val mapper = ObjectMapper()
+    private val mapper: ObjectMapper = ObjectMapper()
 
     @Test
     fun `save 는 파일을 만들고 findByType 이 필드까지 왕복 보존한다`(@TempDir tmp: Path) {

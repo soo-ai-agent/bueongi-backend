@@ -49,9 +49,9 @@ class KakaoPlaceClient(
     }
 
     companion object {
-        private const val KAKAO_BASE_URL = "https://dapi.kakao.com"
-        private const val KEYWORD_SEARCH_PATH = "/v2/local/search/keyword.json"
-        private const val DEFAULT_SIZE = 15
+        private const val KAKAO_BASE_URL: String = "https://dapi.kakao.com"
+        private const val KEYWORD_SEARCH_PATH: String = "/v2/local/search/keyword.json"
+        private const val DEFAULT_SIZE: Int = 15
     }
 }
 

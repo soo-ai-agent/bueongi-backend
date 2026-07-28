@@ -16,7 +16,7 @@ import java.nio.file.Path
  */
 class FacilityRepositoryTest {
 
-    private val mapper = ObjectMapper()
+    private val mapper: ObjectMapper = ObjectMapper()
 
     private fun write(dir: File, rel: String, json: String) {
         val file: File = File(dir, rel)

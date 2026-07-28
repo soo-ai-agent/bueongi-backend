@@ -100,6 +100,6 @@ class RouteStatsServiceTest {
     }
 
     private companion object {
-        const val HOUR_MS = 3_600_000L
+        const val HOUR_MS: Long = 3_600_000L
     }
 }

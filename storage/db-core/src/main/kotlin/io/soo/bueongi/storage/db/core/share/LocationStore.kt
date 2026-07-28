@@ -158,4 +158,4 @@ interface LocationStore {
  * 두 구현(Redis TTL / 인메모리 lazy 비교)의 동치 거동은 이 계약의 불변식이므로,
  * 값을 구현마다 두지 않고 계약 파일의 단일 상수로 공유한다(한쪽만 바뀌는 드리프트 방지).
  */
-const val VIEWER_WINDOW_SECONDS = 12L
+const val VIEWER_WINDOW_SECONDS: Long = 12L

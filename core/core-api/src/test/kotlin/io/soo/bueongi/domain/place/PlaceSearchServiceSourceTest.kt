@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
  */
 class PlaceSearchServiceSourceTest {
 
-    private val seed = SeedPlaceProvider()
+    private val seed: SeedPlaceProvider = SeedPlaceProvider()
 
     /** 호출 여부/검색어를 캡처하는 테스트용 외부 소스. */
     private class FakeRemote(

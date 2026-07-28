@@ -19,12 +19,12 @@ class PlaceSearchInstrumentationTest {
         override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> = logs
     }
 
-    private val store = RecordingStore()
+    private val store: RecordingStore = RecordingStore()
 
     @Test
     fun `실연동 성공은 KAKAO search 성공으로 기록되고 실결과를 반환한다`() {
         val remote = object : RemotePlaceProvider {
-            override val isEnabled = true
+            override val isEnabled: Boolean = true
             override fun search(keyword: String): List<PlaceItem> =
                 listOf(PlaceItem(name = "리모트결과", address = "서울", lat = 37.5, lng = 127.0))
         }
@@ -42,7 +42,7 @@ class PlaceSearchInstrumentationTest {
     @Test
     fun `실연동 실패는 KAKAO search 실패로 기록되고 시드로 폴백한다`() {
         val remote = object : RemotePlaceProvider {
-            override val isEnabled = true
+            override val isEnabled: Boolean = true
             override fun search(keyword: String): List<PlaceItem> =
                 throw RuntimeException("upstream 500")
         }

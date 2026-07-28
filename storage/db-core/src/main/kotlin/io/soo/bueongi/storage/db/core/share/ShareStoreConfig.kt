@@ -77,6 +77,6 @@ class ShareStoreConfig {
     }
 
     private companion object {
-        const val DEFAULT_REDIS_PORT = 6379
+        const val DEFAULT_REDIS_PORT: Int = 6379
     }
 }

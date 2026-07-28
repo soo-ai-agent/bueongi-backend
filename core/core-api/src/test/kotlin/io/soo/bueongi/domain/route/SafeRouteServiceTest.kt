@@ -28,8 +28,8 @@ import org.mockito.kotlin.whenever
  */
 class SafeRouteServiceTest {
 
-    private val origin = GeoPoint(37.5, 127.0)
-    private val dest = GeoPoint(37.5, 127.01)
+    private val origin: GeoPoint = GeoPoint(37.5, 127.0)
+    private val dest: GeoPoint = GeoPoint(37.5, 127.01)
 
     private val request = RouteQuery(
         origin = origin,
@@ -44,9 +44,9 @@ class SafeRouteServiceTest {
         FacilityPoint(FacilityType.CCTV, 37.5, it)
     }
     private val source = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv))
-    private val scorer = SafetyScorer(source)
-    private val detourPlanner = SafeDetourPlanner(source)
-    private val routeService = RouteService()
+    private val scorer: SafetyScorer = SafetyScorer(source)
+    private val detourPlanner: SafeDetourPlanner = SafeDetourPlanner(source)
+    private val routeService: RouteService = RouteService()
 
     private val routeA = TmapRoute(
         searchOption = "0",

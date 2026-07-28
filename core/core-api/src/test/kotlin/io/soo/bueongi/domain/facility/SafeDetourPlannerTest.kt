@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test
 class SafeDetourPlannerTest {
 
     // 약 888m 동서 직선(origin 127.0 → dest 127.01).
-    private val origin = GeoPoint(37.5, 127.0)
-    private val dest = GeoPoint(37.5, 127.01)
+    private val origin: GeoPoint = GeoPoint(37.5, 127.0)
+    private val dest: GeoPoint = GeoPoint(37.5, 127.01)
     private val directPath = listOf(origin, dest)
 
     @Test

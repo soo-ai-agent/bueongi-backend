@@ -28,14 +28,14 @@ import java.time.Instant
  */
 class RedisLocationStoreTest {
 
-    private val clock = MutableTestClock()
+    private val clock: MutableTestClock = MutableTestClock()
     private val hashOps = mock<HashOperations<String, String, String>>()
     private val valueOps = mock<ValueOperations<String, String>>()
     private val redis = mock<StringRedisTemplate> {
         on { opsForHash<String, String>() } doReturn hashOps
         on { opsForValue() } doReturn valueOps
     }
-    private val store = RedisLocationStore(redis, clock)
+    private val store: RedisLocationStore = RedisLocationStore(redis, clock)
 
     @Test
     fun `backend 라벨은 redis`() {

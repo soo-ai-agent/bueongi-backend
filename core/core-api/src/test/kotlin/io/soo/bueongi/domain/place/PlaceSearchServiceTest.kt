@@ -13,7 +13,7 @@ class PlaceSearchServiceTest {
 
     /** 키 미설정 외부 소스(폴백 경로). */
     private val disabledRemote = object : RemotePlaceProvider {
-        override val isEnabled = false
+        override val isEnabled: Boolean = false
         override fun search(keyword: String): List<PlaceItem> =
             throw AssertionError("disabled remote 는 호출되면 안 된다")
     }

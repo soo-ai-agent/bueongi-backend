@@ -16,12 +16,12 @@ import org.junit.jupiter.api.Test
  */
 class RouteMarkerBuilderAlertTest {
 
-    private val origin = GeoPoint(37.5, 127.000)
-    private val destination = GeoPoint(37.5, 127.020)
+    private val origin: GeoPoint = GeoPoint(37.5, 127.000)
+    private val destination: GeoPoint = GeoPoint(37.5, 127.020)
 
     private class RecordingNotifier : AlertNotifier {
         val keys: ArrayList<String> = ArrayList<String>()
-        override val isEnabled = true
+        override val isEnabled: Boolean = true
         override fun notify(key: String, title: String, detail: String) {
             keys.add(key)
         }

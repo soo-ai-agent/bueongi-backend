@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test
  */
 class ShareServiceTest {
 
-    private val clock = MutableTestClock()
-    private val store = InMemoryLocationStore(clock)
-    private val service = ShareService(store, clock, BASE_URL)
+    private val clock: MutableTestClock = MutableTestClock()
+    private val store: InMemoryLocationStore = InMemoryLocationStore(clock)
+    private val service: ShareService = ShareService(store, clock, BASE_URL)
 
     /** 위치 보고(도메인 입력). 쓰기 비밀은 updateLocation 호출부에서 별도 인자로 넘긴다. */
     private fun report(lat: Double = 37.5, lng: Double = 127.0, remainingM: Double? = null, remainingS: Double? = null) =
@@ -505,6 +505,6 @@ class ShareServiceTest {
     }
 
     private companion object {
-        const val BASE_URL = "http://localhost:8119"
+        const val BASE_URL: String = "http://localhost:8119"
     }
 }

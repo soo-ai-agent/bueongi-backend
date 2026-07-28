@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test
 class RouteFacilityServiceTest {
 
     // 동서(위도 37.5 고정) 직선 경로. 회랑 안(위도 37.5 선상)에 시설을 놓아 실측이 잡히게 한다.
-    private val origin = GeoPoint(37.5, 127.000)
-    private val destination = GeoPoint(37.5, 127.020)
+    private val origin: GeoPoint = GeoPoint(37.5, 127.000)
+    private val destination: GeoPoint = GeoPoint(37.5, 127.020)
 
     private fun request(routeType: String?, source: FakeFacilitySource) =
         RouteFacilityService(RouteMarkerBuilder(source)).alongRoute(

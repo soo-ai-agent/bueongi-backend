@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test
  */
 class SlackConfigServiceTest {
 
-    private val webhook = "https://hooks.slack.com/services/T00000000/B11111111/abcdefghijklmnop"
+    private val webhook: String = "https://hooks.slack.com/services/T00000000/B11111111/abcdefghijklmnop"
 
     private fun notifier(sendTestResult: Boolean = false): AlertNotifier = object : AlertNotifier {
-        override val isEnabled = false
+        override val isEnabled: Boolean = false
         override fun notify(key: String, title: String, detail: String) = Unit
         override fun sendTest(): Boolean = sendTestResult
     }

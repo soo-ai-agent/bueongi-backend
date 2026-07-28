@@ -23,8 +23,8 @@ import org.springframework.mock.env.MockEnvironment
  */
 class ShareStoreConfigTest {
 
-    private val redisConfigured = RedisConfigured()
-    private val redisNotConfigured = RedisNotConfigured()
+    private val redisConfigured: RedisConfigured = RedisConfigured()
+    private val redisNotConfigured: RedisNotConfigured = RedisNotConfigured()
     private val metadata = mock<AnnotatedTypeMetadata>()
 
     /** production 과 동일하게 default "" 로 조회하는 [MockEnvironment] 를 단 [ConditionContext]. */

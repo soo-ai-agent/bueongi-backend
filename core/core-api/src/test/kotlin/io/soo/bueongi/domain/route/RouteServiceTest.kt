@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
  */
 class RouteServiceTest {
 
-    private val service = RouteService()
+    private val service: RouteService = RouteService()
 
     private fun request() = RouteQuery(
         origin = GeoPoint(37.4979, 127.0276), // 강남역

@@ -15,9 +15,9 @@ class InMemoryLocationStore(
     private val clock: Clock,
 ) : LocationStore {
 
-    private val sessions = ConcurrentHashMap<String, ShareSession>()
+    private val sessions: ConcurrentHashMap<String, ShareSession> = ConcurrentHashMap<String, ShareSession>()
     /** 보호자 조회 시각(토큰별). 유효시간이 지나면 lazy 제거 — '시청 중' 판정용. */
-    private val viewers = ConcurrentHashMap<String, Instant>()
+    private val viewers: ConcurrentHashMap<String, Instant> = ConcurrentHashMap<String, Instant>()
 
     override val backend: String = "memory"
 
