@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
  */
 class InMemoryApiCallLogStoreTest {
 
-    private val store = InMemoryApiCallLogStore()
+    private val store: InMemoryApiCallLogStore = InMemoryApiCallLogStore()
 
     private fun log(at: Long, provider: String = "KAKAO", success: Boolean = true) =
         ApiCallLog(atEpochMs = at, provider = provider, endpoint = "search", success = success, durationMs = 10)
@@ -21,7 +21,7 @@ class InMemoryApiCallLogStoreTest {
         store.record(log(2, provider = "TMAP"))
         store.record(log(3, provider = "DATAGOKR"))
 
-        val recent = store.findRecent(provider = null, limit = 10)
+        val recent: List<ApiCallLog> = store.findRecent(provider = null, limit = 10)
 
         assertEquals(listOf(3L, 2L, 1L), recent.map { it.atEpochMs })
     }
@@ -46,10 +46,10 @@ class InMemoryApiCallLogStoreTest {
 
     @Test
     fun `상한을 초과하면 가장 오래된 것부터 축출된다`() {
-        val total = API_CALL_LOG_CAP + 50L
+        val total: Long = API_CALL_LOG_CAP + 50L
         (1L..total).forEach { store.record(log(it)) }
 
-        val all = store.findRecent(null, API_CALL_LOG_CAP + 100)
+        val all: List<ApiCallLog> = store.findRecent(null, API_CALL_LOG_CAP + 100)
 
         assertEquals(API_CALL_LOG_CAP, all.size)
         assertEquals(total, all.first().atEpochMs) // 최신 유지

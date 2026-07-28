@@ -68,7 +68,7 @@ class PlaceControllerTest(
 
     @Test
     fun `검색어가 최대 길이를 초과하면 400 과 INVALID_KEYWORD 표준 스키마`() {
-        val tooLong = "가".repeat(PlaceSearchService.MAX_KEYWORD_LENGTH + 1)
+        val tooLong: String = "가".repeat(PlaceSearchService.MAX_KEYWORD_LENGTH + 1)
         mockMvc.get("/api/places/search") { param("keyword", tooLong) }
             .andExpect {
                 status { isBadRequest() }
@@ -86,7 +86,7 @@ class PlaceControllerTest(
     class DisabledRemoteConfig {
         @Bean
         fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-            override val isEnabled = false
+            override val isEnabled: Boolean = false
             override fun search(keyword: String): List<PlaceItem> =
                 throw AssertionError("disabled remote 는 호출되면 안 된다")
         }

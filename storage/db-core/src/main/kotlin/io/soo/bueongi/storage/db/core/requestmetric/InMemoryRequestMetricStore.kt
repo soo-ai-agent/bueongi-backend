@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory
 class InMemoryRequestMetricStore : RequestMetricStore {
 
     private val logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
-    private val metrics = ArrayDeque<RequestMetric>()
-    private val lock = Any()
+    private val metrics: ArrayDeque<RequestMetric> = ArrayDeque<RequestMetric>()
+    private val lock: Any = Any()
 
     override fun record(metric: RequestMetric) {
         // 계측 실패가 실제 요청을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
@@ -29,7 +29,7 @@ class InMemoryRequestMetricStore : RequestMetricStore {
     }
 
     override fun findRecent(limit: Int): List<RequestMetric> {
-        val snapshot = synchronized(lock) { metrics.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<RequestMetric> = synchronized(lock) { metrics.toList() } // 이미 최신순(addFirst)
         return snapshot.take(limit.coerceAtLeast(0))
     }
 }

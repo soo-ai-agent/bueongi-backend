@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
  */
 class InMemoryRequestMetricStoreTest {
 
-    private val store = InMemoryRequestMetricStore()
+    private val store: InMemoryRequestMetricStore = InMemoryRequestMetricStore()
 
     private fun metric(at: Long, endpoint: String = "/api/places/search", clientId: String? = "anon-1") =
         RequestMetric(
@@ -28,7 +28,7 @@ class InMemoryRequestMetricStoreTest {
         store.record(metric(2))
         store.record(metric(3))
 
-        val recent = store.findRecent(10)
+        val recent: List<RequestMetric> = store.findRecent(10)
 
         assertEquals(listOf(3L, 2L, 1L), recent.map { it.atEpochMs })
     }
@@ -49,10 +49,10 @@ class InMemoryRequestMetricStoreTest {
 
     @Test
     fun `상한을 초과하면 가장 오래된 것부터 축출된다`() {
-        val total = REQUEST_METRIC_CAP + 50L
+        val total: Long = REQUEST_METRIC_CAP + 50L
         (1L..total).forEach { store.record(metric(it)) }
 
-        val all = store.findRecent(REQUEST_METRIC_CAP + 100)
+        val all: List<RequestMetric> = store.findRecent(REQUEST_METRIC_CAP + 100)
 
         assertEquals(REQUEST_METRIC_CAP, all.size)
         assertEquals(total, all.first().atEpochMs) // 최신 유지

@@ -61,12 +61,12 @@ class FacilityRepository(
 
     @PostConstruct
     fun load() {
-        val byType = LinkedHashMap<FacilityType, MutableList<FacilityPoint>>()
+        val byType: LinkedHashMap<FacilityType, MutableList<FacilityPoint>> = LinkedHashMap<FacilityType, MutableList<FacilityPoint>>()
         val paths: ArrayList<SafePath> = ArrayList<SafePath>()
         var fileCount: Int = 0
 
         // CDN 디렉터리(있으면) 적재. 없으면 CDN 적재는 건너뛰고 업로드분만으로 동작한다(업로드는 CDN 유무와 무관하게 유지).
-        val dir = resolveDataDir()
+        val dir: File? = resolveDataDir()
         if (dir == null) {
             log.warn(
                 "안심시설 CDN 데이터 디렉터리를 찾지 못했습니다(configured='{}'). CDN 적재 없이 업로드분만 적재합니다.",
@@ -80,18 +80,18 @@ class FacilityRepository(
                     continue
                 }
                 for (file in typeDir.listJsonFiles()) {
-                    val collection = parseCollection(file) ?: continue
+                    val collection: FacilityCollectionDto = parseCollection(file) ?: continue
                     fileCount++
-                    val bucket = byType.getOrPut(type) { ArrayList() }
+                    val bucket: MutableList<FacilityPoint> = byType.getOrPut(type) { ArrayList() }
                     for (item in collection.items) {
-                        val point = item.toFacilityPoint(type) ?: continue
+                        val point: FacilityPoint = item.toFacilityPoint(type) ?: continue
                         bucket.add(point)
                     }
                 }
             }
             // safepath(안심귀갓길) 좌표열.
             File(dir, "safepath").takeIf { it.isDirectory }?.listJsonFiles()?.forEach { file ->
-                val collection = parseCollection(file) ?: return@forEach
+                val collection: FacilityCollectionDto = parseCollection(file) ?: return@forEach
                 fileCount++
                 collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
             }
@@ -112,7 +112,7 @@ class FacilityRepository(
         }
 
         // 전국 CCTV 실데이터 CSV(있으면) 적재 — JSON CCTV 포인트와 합쳐 단일 인덱스를 만든다.
-        val csvCctv = loadCctvCsv()
+        val csvCctv: List<FacilityPoint> = loadCctvCsv()
         if (csvCctv.isNotEmpty()) {
             byType.getOrPut(FacilityType.CCTV) { ArrayList() }.addAll(csvCctv)
         }
@@ -120,7 +120,7 @@ class FacilityRepository(
         // 관리자 업로드분 우선 — 해당 종류가 업로드된 적 있으면 CDN/CSV 적재분을 통째로 교체한다(재기동해도 마지막 업로드 유지).
         var uploadedTypes: Int = 0
         for (type in FacilityType.entries) {
-            val uploaded = uploadStore.findByType(type) ?: continue
+            val uploaded: List<FacilityPoint> = uploadStore.findByType(type) ?: continue
             byType[type] = uploaded.toMutableList()
             uploadedTypes++
         }
@@ -147,7 +147,7 @@ class FacilityRepository(
      * 파일이 없으면 빈 목록(경고 로그 후 skip — 죽지 않음). 헤더·콤마밀림·좌표불량 행은 조용히 건너뛴다.
      */
     private fun loadCctvCsv(): List<FacilityPoint> {
-        val file = resolveCctvCsv()
+        val file: File? = resolveCctvCsv()
         if (file == null) {
             log.warn("CCTV CSV 파일을 찾지 못했습니다(configured='{}'). CSV 적재를 건너뜁니다.", cctvCsvPath)
             return emptyList()
@@ -169,7 +169,7 @@ class FacilityRepository(
         if (cctvCsvPath.isBlank()) {
             return null
         }
-        val candidates = buildList {
+        val candidates: List<String> = buildList {
             add(cctvCsvPath)
             add("CCTV정보.csv")
             add("../backend/CCTV정보.csv")
@@ -183,7 +183,7 @@ class FacilityRepository(
 
     /** 설정 경로 → 폴백 후보 순으로 첫 존재하는 디렉터리를 찾는다. */
     private fun resolveDataDir(): File? {
-        val candidates = buildList {
+        val candidates: List<String> = buildList {
             add(configuredDir)
             // backend cwd 기준 흔한 위치들(테스트/실행 환경 차이 흡수).
             add("../cdn")
@@ -207,7 +207,7 @@ class FacilityRepository(
         listFiles { f -> f.isFile && f.name.endsWith(".json") }?.sortedBy { it.name } ?: emptyList()
 
     private companion object {
-        val EMPTY_INDEX = GridSpatialIndex(emptyList())
+        val EMPTY_INDEX: GridSpatialIndex = GridSpatialIndex(emptyList())
     }
 }
 
@@ -238,23 +238,23 @@ val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "�
  * lat/lng 는 Double 파싱 + 좌표 불변식([GeoPoint.orNull]) 검증, 실패 시 null(조용히 skip).
  */
 internal fun parseCctvCsvLine(line: String): FacilityPoint? {
-    val parts = line.split(',')
+    val parts: List<String> = line.split(',')
     // 최소: 설치목적구분(parts[N-13]) + 좌표(parts[N-6]) + name(parts[2]) 가 모두 존재해야 함.
     if (parts.size < 13) {
         return null
     }
     // 용도(설치목적구분) 필터 — 방범 성격이 아니면 적재 제외.
-    val purpose = parts[parts.size - 13].trim().trim('"')
+    val purpose: String = parts[parts.size - 13].trim().trim('"')
     if (purpose !in CCTV_SECURITY_PURPOSES) {
         return null
     }
-    val point = GeoPoint.orNull(
+    val point: GeoPoint = GeoPoint.orNull(
         lat = parts[parts.size - 6].trim().toDoubleOrNull(),
         lng = parts[parts.size - 5].trim().toDoubleOrNull(),
     ) ?: return null
-    val name = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
+    val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     // 카메라대수(N-12) — 적재 대상(목적 정상 판독) 행은 후행 구조가 안정적이라 신뢰 가능. 표시용.
-    val cameraCount = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
+    val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     return FacilityPoint(
         type = FacilityType.CCTV,
         lat = point.lat,
@@ -291,7 +291,7 @@ data class FacilityItemDto(
     val properties: FacilityItemPropertiesDto? = null,
 ) {
     fun toFacilityPoint(type: FacilityType): FacilityPoint? {
-        val point = GeoPoint.orNull(lat, lng) ?: return null
+        val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
         return FacilityPoint(
             type = type,
             lat = point.lat,
@@ -306,12 +306,12 @@ data class FacilityItemDto(
     }
 
     fun toSafePath(): SafePath? {
-        val coordList = coords?.mapNotNull { it.toGeoPoint() }
+        val coordList: List<GeoPoint>? = coords?.mapNotNull { it.toGeoPoint() }
         if (!coordList.isNullOrEmpty()) {
             return SafePath(coords = coordList, name = name)
         }
         // coords 없으면 단일 점 폴백.
-        val point = GeoPoint.orNull(lat, lng) ?: return null
+        val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
         return SafePath(coords = listOf(point), name = name)
     }
 }

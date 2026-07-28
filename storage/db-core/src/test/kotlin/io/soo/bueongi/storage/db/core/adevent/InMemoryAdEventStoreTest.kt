@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
  */
 class InMemoryAdEventStoreTest {
 
-    private val store = InMemoryAdEventStore()
+    private val store: InMemoryAdEventStore = InMemoryAdEventStore()
 
     private fun event(at: Long, placement: String = "interstitial") =
         AdEvent(atEpochMs = at, placement = placement)
@@ -33,10 +33,10 @@ class InMemoryAdEventStoreTest {
 
     @Test
     fun `상한을 초과하면 가장 오래된 것부터 축출된다`() {
-        val total = AD_EVENT_CAP + 50L
+        val total: Long = AD_EVENT_CAP + 50L
         (1L..total).forEach { store.record(event(it)) }
 
-        val all = store.findRecent(AD_EVENT_CAP + 100)
+        val all: List<AdEvent> = store.findRecent(AD_EVENT_CAP + 100)
 
         assertEquals(AD_EVENT_CAP, all.size)
         assertEquals(total, all.first().atEpochMs) // 최신 유지

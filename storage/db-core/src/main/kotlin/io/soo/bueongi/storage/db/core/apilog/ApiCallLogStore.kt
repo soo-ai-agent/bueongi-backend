@@ -34,13 +34,13 @@ interface ApiCallLogStore {
 }
 
 /** 순환 버퍼 상한 — 최근 이만큼만 유지한다(Redis LTRIM / 인메모리 deque 축출). */
-const val API_CALL_LOG_CAP = 1000
+const val API_CALL_LOG_CAP: Int = 1000
 
 /** 조회 기본 건수(관리자 API 미지정 시). */
-const val API_CALL_LOG_DEFAULT_LIMIT = 100
+const val API_CALL_LOG_DEFAULT_LIMIT: Int = 100
 
 /** 조회 상한 건수(관리자 API 요청이 이를 넘겨도 이 값으로 절삭). */
-const val API_CALL_LOG_MAX_LIMIT = 500
+const val API_CALL_LOG_MAX_LIMIT: Int = 500
 
 /**
  * 외부 호출 [block] 을 감싸 소요시간·성공여부를 재고 [record] 하는 공통 계측 헬퍼.
@@ -59,7 +59,7 @@ inline fun <T> ApiCallLogStore?.measure(
     if (this == null) {
         return block()
     }
-    val startedAt = System.currentTimeMillis()
+    val startedAt: Long = System.currentTimeMillis()
     val result = try {
         block()
     } catch (e: Exception) {

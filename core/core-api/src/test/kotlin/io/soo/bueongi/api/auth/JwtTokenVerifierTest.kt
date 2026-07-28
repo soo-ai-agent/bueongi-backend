@@ -20,7 +20,7 @@ class JwtTokenVerifierTest {
     private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
 
     private fun verifierFor(publicKey: RSAPublicKey): JwtTokenVerifier {
-        val pem = Base64.getEncoder().encodeToString(publicKey.encoded)
+        val pem: String = Base64.getEncoder().encodeToString(publicKey.encoded)
         return JwtTokenVerifier(JwtProperties(publicKey = pem))
     }
 
@@ -42,7 +42,7 @@ class JwtTokenVerifierTest {
 
     @Test
     fun `유효한 ROLE_ADMIN 토큰을 검증해 userId 와 roles 를 추출한다`() {
-        val verified = verifierFor(keyPair.public as RSAPublicKey).verify(token())
+        val verified: JwtTokenVerifier.VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token())
 
         assertThat(verified.userId).isEqualTo(42L)
         assertThat(verified.roles).containsExactly("ROLE_ADMIN")
@@ -51,14 +51,14 @@ class JwtTokenVerifierTest {
 
     @Test
     fun `roles 클레임이 없으면 빈 목록으로 추출한다`() {
-        val verified = verifierFor(keyPair.public as RSAPublicKey).verify(token(roles = null))
+        val verified: JwtTokenVerifier.VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token(roles = null))
 
         assertThat(verified.roles).isEmpty()
     }
 
     @Test
     fun `만료된 토큰은 ExpiredTokenException 이다`() {
-        val expired = token(expiresAt = Date(System.currentTimeMillis() - 1_000))
+        val expired: String = token(expiresAt = Date(System.currentTimeMillis() - 1_000))
 
         assertThatThrownBy { verifierFor(keyPair.public as RSAPublicKey).verify(expired) }
             .isInstanceOf(ExpiredTokenException::class.java)
@@ -66,8 +66,8 @@ class JwtTokenVerifierTest {
 
     @Test
     fun `다른 키로 서명한 토큰은 InvalidTokenException 이다`() {
-        val otherKey = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
-        val forged = token(signingKey = otherKey.private)
+        val otherKey: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+        val forged: String = token(signingKey = otherKey.private)
 
         assertThatThrownBy { verifierFor(keyPair.public as RSAPublicKey).verify(forged) }
             .isInstanceOf(InvalidTokenException::class.java)

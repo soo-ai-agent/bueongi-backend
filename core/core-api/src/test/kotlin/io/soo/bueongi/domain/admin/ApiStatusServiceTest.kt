@@ -18,20 +18,20 @@ class ApiStatusServiceTest {
         override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> = logs.take(limit)
     }
 
-    private val seoulNow = System.currentTimeMillis()
-    private val todayStart = java.time.Instant.ofEpochMilli(seoulNow)
+    private val seoulNow: Long = System.currentTimeMillis()
+    private val todayStart: Long = java.time.Instant.ofEpochMilli(seoulNow)
         .atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
         .atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
 
     @Test
     fun `성공 실패 섞인 로그로 성공률 평균 최근시각을 집계한다`() {
-        val logs = listOf(
+        val logs: List<ApiCallLog> = listOf(
             ApiCallLog(atEpochMs = 300, provider = "KAKAO", endpoint = "search", success = true, durationMs = 100),
             ApiCallLog(atEpochMs = 200, provider = "KAKAO", endpoint = "search", success = false, durationMs = 200, detail = "boom"),
             ApiCallLog(atEpochMs = 100, provider = "KAKAO", endpoint = "search", success = true, durationMs = 300),
         )
 
-        val kakao = ApiStatusService(store(logs)).summarize().providers.first { it.provider == "KAKAO" }
+        val kakao: ProviderStatus = ApiStatusService(store(logs)).summarize().providers.first { it.provider == "KAKAO" }
 
         assertThat(kakao.total).isEqualTo(3)
         assertThat(kakao.successCount).isEqualTo(2)
@@ -43,14 +43,14 @@ class ApiStatusServiceTest {
 
     @Test
     fun `DATAGOKR 오늘 800건 이상이면 쿼터 경고 어제 것은 제외`() {
-        val today = (1..820).map {
+        val today: List<ApiCallLog> = (1..820).map {
             ApiCallLog(atEpochMs = todayStart + 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
         }
-        val yesterday = (1..50).map {
+        val yesterday: List<ApiCallLog> = (1..50).map {
             ApiCallLog(atEpochMs = todayStart - 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
         }
 
-        val datagokr = ApiStatusService(store(today + yesterday)).summarize().providers.first { it.provider == "DATAGOKR" }
+        val datagokr: ProviderStatus = ApiStatusService(store(today + yesterday)).summarize().providers.first { it.provider == "DATAGOKR" }
 
         assertThat(datagokr.todayCount).isEqualTo(820)
         assertThat(datagokr.quotaLimit).isEqualTo(1000)
@@ -59,11 +59,11 @@ class ApiStatusServiceTest {
 
     @Test
     fun `p95DurationMs 는 원천 그룹 내 소요시간 분위수이고 로그 없는 원천은 0 이다`() {
-        val logs = (1..20).map {
+        val logs: List<ApiCallLog> = (1..20).map {
             ApiCallLog(atEpochMs = 100, provider = "KAKAO", endpoint = "search", success = true, durationMs = (it * 10).toLong())
         }
 
-        val summary = ApiStatusService(store(logs)).summarize()
+        val summary: ApiStatusSummary = ApiStatusService(store(logs)).summarize()
 
         assertThat(summary.providers.first { it.provider == "KAKAO" }.p95DurationMs).isEqualTo(190L) // ceil(0.95*20)=19번째
         assertThat(summary.providers.first { it.provider == "TMAP" }.p95DurationMs).isEqualTo(0L) // 로그 0건
@@ -71,15 +71,15 @@ class ApiStatusServiceTest {
 
     @Test
     fun `hourlyCalls 는 원천별 24버킷이며 방금 호출은 마지막 버킷에 원천별로 집계된다`() {
-        val logs = listOf(
+        val logs: List<ApiCallLog> = listOf(
             ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 10),
             ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 20),
             ApiCallLog(atEpochMs = seoulNow, provider = "TMAP", endpoint = "route", success = true, durationMs = 30),
         )
 
-        val summary = ApiStatusService(store(logs)).summarize()
+        val summary: ApiStatusSummary = ApiStatusService(store(logs)).summarize()
 
-        val kakao = summary.providers.first { it.provider == "KAKAO" }
+        val kakao: ProviderStatus = summary.providers.first { it.provider == "KAKAO" }
         assertThat(kakao.hourlyCalls).hasSize(24)
         assertThat(kakao.hourlyCalls.last().count).isEqualTo(2) // KAKAO 만
         assertThat(kakao.hourlyCalls.dropLast(1).sumOf { it.count }).isEqualTo(0)
@@ -89,28 +89,28 @@ class ApiStatusServiceTest {
 
     @Test
     fun `쿼터 있는 DATAGOKR 만 소진 예측을 내고 예측총량은 현재속도의 24시간 외삽이다`() {
-        val today = (1..10).map {
+        val today: List<ApiCallLog> = (1..10).map {
             ApiCallLog(atEpochMs = todayStart + 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
         }
 
-        val summary = ApiStatusService(store(today)).summarize()
+        val summary: ApiStatusSummary = ApiStatusService(store(today)).summarize()
 
-        val datagokr = summary.providers.first { it.provider == "DATAGOKR" }
+        val datagokr: ProviderStatus = summary.providers.first { it.provider == "DATAGOKR" }
         assertThat(datagokr.todayCount).isEqualTo(10)
-        val burn = requireNotNull(datagokr.quotaBurnPerHour)
+        val burn: Double = requireNotNull(datagokr.quotaBurnPerHour)
         assertThat(datagokr.quotaProjectedTodayTotal).isEqualTo((burn * 24).roundToInt())
         // 하루 경과율 ≤ 100% 라 현재 속도의 24시간 외삽은 오늘 실적 이상이다.
         assertThat(datagokr.quotaProjectedTodayTotal).isGreaterThanOrEqualTo(10)
 
         // 쿼터 없는 원천은 예측이 없다.
-        val kakao = summary.providers.first { it.provider == "KAKAO" }
+        val kakao: ProviderStatus = summary.providers.first { it.provider == "KAKAO" }
         assertThat(kakao.quotaBurnPerHour).isNull()
         assertThat(kakao.quotaProjectedTodayTotal).isNull()
     }
 
     @Test
     fun `오늘 호출이 0건이면 소진율과 예측총량은 0 이다`() {
-        val yesterday = (1..5).map {
+        val yesterday: List<ApiCallLog> = (1..5).map {
             ApiCallLog(atEpochMs = todayStart - 1000, provider = "DATAGOKR", endpoint = "cctv", success = true, durationMs = 10)
         }
 
@@ -123,7 +123,7 @@ class ApiStatusServiceTest {
 
     @Test
     fun `빈 로그면 4종 모두 total 0 시각 null 쿼터 경고 없음`() {
-        val summary = ApiStatusService(store(emptyList())).summarize()
+        val summary: ApiStatusSummary = ApiStatusService(store(emptyList())).summarize()
 
         assertThat(summary.windowSize).isEqualTo(0)
         assertThat(summary.providers.map { it.provider })
@@ -142,7 +142,7 @@ class ApiStatusServiceTest {
 
     @Test
     fun `빈 로그면 시간대 추이는 24버킷 모두 0 오래된에서 최신순`() {
-        val trend = ApiStatusService(store(emptyList())).summarize().hourlyTrend
+        val trend: List<HourlyBucket> = ApiStatusService(store(emptyList())).summarize().hourlyTrend
 
         assertThat(trend).hasSize(24)
         assertThat(trend.map { it.count }).allMatch { it == 0 }
@@ -154,12 +154,12 @@ class ApiStatusServiceTest {
 
     @Test
     fun `방금 호출은 원천 무관 마지막 버킷에 집계된다`() {
-        val logs = listOf(
+        val logs: List<ApiCallLog> = listOf(
             ApiCallLog(atEpochMs = seoulNow, provider = "KAKAO", endpoint = "search", success = true, durationMs = 10),
             ApiCallLog(atEpochMs = seoulNow, provider = "TMAP", endpoint = "route", success = true, durationMs = 20),
         )
 
-        val trend = ApiStatusService(store(logs)).summarize().hourlyTrend
+        val trend: List<HourlyBucket> = ApiStatusService(store(logs)).summarize().hourlyTrend
 
         // 현재 시각 정각 버킷(마지막)에 2건(원천 합산), 나머지 23버킷은 0.
         assertThat(trend.last().count).isEqualTo(2)

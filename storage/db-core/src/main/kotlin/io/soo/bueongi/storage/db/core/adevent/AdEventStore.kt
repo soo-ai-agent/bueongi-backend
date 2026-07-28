@@ -32,4 +32,4 @@ interface AdEventStore {
 }
 
 /** 순환 버퍼 상한 — 최근 이만큼만 유지한다(인메모리 deque 축출). */
-const val AD_EVENT_CAP = 5000
+const val AD_EVENT_CAP: Int = 5000

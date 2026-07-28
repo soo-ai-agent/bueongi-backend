@@ -53,6 +53,6 @@ class RedisRequestMetricStore(
         }
 
     private companion object {
-        const val KEY = "requestmetric"
+        const val KEY: String = "requestmetric"
     }
 }

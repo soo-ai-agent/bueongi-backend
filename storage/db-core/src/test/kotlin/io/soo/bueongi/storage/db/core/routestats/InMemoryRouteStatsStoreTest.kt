@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
  */
 class InMemoryRouteStatsStoreTest {
 
-    private val store = InMemoryRouteStatsStore()
+    private val store: InMemoryRouteStatsStore = InMemoryRouteStatsStore()
 
     private fun log(at: Long, endpoint: String = "compare", preference: SafetyPreference = SafetyPreference.SAFE) =
         RouteRecommendationLog(atEpochMs = at, endpoint = endpoint, destinationName = "목적지", preference = preference)
@@ -22,7 +22,7 @@ class InMemoryRouteStatsStoreTest {
         store.record(log(2))
         store.record(log(3))
 
-        val recent = store.findRecent(10)
+        val recent: List<RouteRecommendationLog> = store.findRecent(10)
 
         assertEquals(listOf(3L, 2L, 1L), recent.map { it.atEpochMs })
     }
@@ -36,10 +36,10 @@ class InMemoryRouteStatsStoreTest {
 
     @Test
     fun `상한을 초과하면 가장 오래된 것부터 축출된다`() {
-        val total = ROUTE_STATS_CAP + 50L
+        val total: Long = ROUTE_STATS_CAP + 50L
         (1L..total).forEach { store.record(log(it)) }
 
-        val all = store.findRecent(ROUTE_STATS_CAP + 100)
+        val all: List<RouteRecommendationLog> = store.findRecent(ROUTE_STATS_CAP + 100)
 
         assertEquals(ROUTE_STATS_CAP, all.size)
         assertEquals(total, all.first().atEpochMs) // 최신 유지

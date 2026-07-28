@@ -305,7 +305,7 @@ class ApiLogsControllerTest(
         @Bean
         fun facilityStatusService(): FacilityStatusService {
             val source = object : FacilitySpatialSource {
-                private val cctv = GridSpatialIndex(
+                private val cctv: GridSpatialIndex = GridSpatialIndex(
                     List(2) { FacilityPoint(type = FacilityType.CCTV, lat = 37.5, lng = 127.0) },
                 )
                 override fun index(type: FacilityType): GridSpatialIndex =
@@ -315,9 +315,9 @@ class ApiLogsControllerTest(
                         GridSpatialIndex(emptyList())
                     }
                 override val safePaths: List<SafePath> = emptyList()
-                override val freshness = FacilityFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
+                override val freshness: FacilityFreshness = FacilityFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }
-            val holder = FacilityRefreshStatusStore().apply {
+            val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore().apply {
                 record(mapOf(FacilityType.CCTV to 2), atEpochMs = 1L)
             }
             return FacilityStatusService(source, holder)
@@ -349,7 +349,7 @@ class ApiLogsControllerTest(
 
         @Bean
         fun alertNotifier(): AlertNotifier = object : AlertNotifier {
-            override val isEnabled = false
+            override val isEnabled: Boolean = false
             override fun notify(key: String, title: String, detail: String) = Unit
             override fun findRecentAlerts(limit: Int): List<AlertRecord> =
                 listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
@@ -371,7 +371,7 @@ class ApiLogsControllerTest(
             val FIXED_CLOCK: java.time.Clock = java.time.Clock.fixed(FIXED_NOW, java.time.ZoneOffset.UTC)
 
             /** 공유 URL base — 어드민 목록 shareUrl 조립 검증에 쓴다. */
-            const val SHARE_BASE_URL = "http://localhost:3619"
+            const val SHARE_BASE_URL: String = "http://localhost:3619"
         }
     }
 }

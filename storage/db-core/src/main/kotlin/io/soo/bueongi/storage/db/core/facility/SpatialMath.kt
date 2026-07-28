@@ -14,13 +14,13 @@ import kotlin.math.min
  */
 object SpatialMath {
 
-    private const val EARTH_RADIUS_M = 6_371_000.0
+    private const val EARTH_RADIUS_M: Double = 6_371_000.0
 
     /** 두 점 사이 대권거리(m). haversine — 프로젝트 전체 거리 계산의 단일 출처. */
     fun haversineMeters(a: GeoPoint, b: GeoPoint): Double {
-        val dLat = Math.toRadians(b.lat - a.lat)
-        val dLng = Math.toRadians(b.lng - a.lng)
-        val h = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+        val dLat: Double = Math.toRadians(b.lat - a.lat)
+        val dLng: Double = Math.toRadians(b.lng - a.lng)
+        val h: Double = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
             kotlin.math.cos(Math.toRadians(a.lat)) * kotlin.math.cos(Math.toRadians(b.lat)) *
             kotlin.math.sin(dLng / 2) * kotlin.math.sin(dLng / 2)
         return EARTH_RADIUS_M * 2 * kotlin.math.atan2(kotlin.math.sqrt(h), kotlin.math.sqrt(1 - h))
@@ -39,8 +39,8 @@ object SpatialMath {
 
     /** 기준 위도 근처에서 위경도를 국소 평면(m)으로 투영. */
     private fun toPlanar(p: GeoPoint, originLat: Double): Planar {
-        val latScale = Math.toRadians(1.0) * EARTH_RADIUS_M
-        val lngScale = latScale * cos(Math.toRadians(originLat))
+        val latScale: Double = Math.toRadians(1.0) * EARTH_RADIUS_M
+        val lngScale: Double = latScale * cos(Math.toRadians(originLat))
         return Planar(p.lng * lngScale, p.lat * latScale)
     }
 
@@ -49,20 +49,20 @@ object SpatialMath {
      * t<0 은 a 이전, t>1 은 b 이후를 뜻한다(우회의 진행방향 중간 구간 판정에 쓰려고 클램프 전 값도 준다).
      */
     fun projectOntoSegment(p: GeoPoint, a: GeoPoint, b: GeoPoint): SegmentProjection {
-        val originLat = p.lat
-        val pp = toPlanar(p, originLat)
-        val pa = toPlanar(a, originLat)
-        val pb = toPlanar(b, originLat)
-        val dx = pb.x - pa.x
-        val dy = pb.y - pa.y
-        val segLenSq = dx * dx + dy * dy
+        val originLat: Double = p.lat
+        val pp: Planar = toPlanar(p, originLat)
+        val pa: Planar = toPlanar(a, originLat)
+        val pb: Planar = toPlanar(b, originLat)
+        val dx: Double = pb.x - pa.x
+        val dy: Double = pb.y - pa.y
+        val segLenSq: Double = dx * dx + dy * dy
         if (segLenSq == 0.0) {
             return SegmentProjection(t = 0.0, distanceMeters = hypot(pp.x - pa.x, pp.y - pa.y))
         }
-        val tRaw = ((pp.x - pa.x) * dx + (pp.y - pa.y) * dy) / segLenSq
-        val t = max(0.0, min(1.0, tRaw))
-        val cx = pa.x + t * dx
-        val cy = pa.y + t * dy
+        val tRaw: Double = ((pp.x - pa.x) * dx + (pp.y - pa.y) * dy) / segLenSq
+        val t: Double = max(0.0, min(1.0, tRaw))
+        val cx: Double = pa.x + t * dx
+        val cy: Double = pa.y + t * dy
         return SegmentProjection(t = tRaw, distanceMeters = hypot(pp.x - cx, pp.y - cy))
     }
 
@@ -78,9 +78,9 @@ object SpatialMath {
         if (path.size == 1) {
             return haversineMeters(p, path[0])
         }
-        var minD = Double.POSITIVE_INFINITY
+        var minD: Double = Double.POSITIVE_INFINITY
         for (i in 1 until path.size) {
-            val d = distancePointToSegmentMeters(p, path[i - 1], path[i])
+            val d: Double = distancePointToSegmentMeters(p, path[i - 1], path[i])
             if (d < minD) {
                 minD = d
             }
@@ -98,9 +98,9 @@ object SpatialMath {
         }
         var overlap: Double = 0.0
         for (i in 1 until base.size) {
-            val a = base[i - 1]
-            val b = base[i]
-            val mid = GeoPoint((a.lat + b.lat) / 2, (a.lng + b.lng) / 2)
+            val a: GeoPoint = base[i - 1]
+            val b: GeoPoint = base[i]
+            val mid: GeoPoint = GeoPoint((a.lat + b.lat) / 2, (a.lng + b.lng) / 2)
             if (minDistanceToPathMeters(mid, other) <= meters) {
                 overlap += haversineMeters(a, b)
             }

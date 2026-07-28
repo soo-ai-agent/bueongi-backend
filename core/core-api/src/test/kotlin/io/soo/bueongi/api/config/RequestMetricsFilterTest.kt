@@ -37,7 +37,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(store).doFilter(request, response, chainSetting(200))
 
-        val metric = store.recorded.single()
+        val metric: RequestMetric = store.recorded.single()
         assertThat(metric.method).isEqualTo("POST")
         assertThat(metric.endpoint).isEqualTo("/share/{token}/location")
         assertThat(metric.clientId).isEqualTo("anon-42")
@@ -49,7 +49,7 @@ class RequestMetricsFilterTest {
     fun `X-Client-Id 가 없거나 공백이면 clientId 는 null 이다`() {
         val store: CapturingStore = CapturingStore()
         val missing: MockHttpServletRequest = MockHttpServletRequest("GET", "/api/places/search")
-        val blank = MockHttpServletRequest("GET", "/api/places/search").apply { addHeader("X-Client-Id", "   ") }
+        val blank: MockHttpServletRequest = MockHttpServletRequest("GET", "/api/places/search").apply { addHeader("X-Client-Id", "   ") }
 
         RequestMetricsFilter(store).doFilter(missing, MockHttpServletResponse(), chainSetting(200))
         RequestMetricsFilter(store).doFilter(blank, MockHttpServletResponse(), chainSetting(200))
@@ -72,7 +72,7 @@ class RequestMetricsFilterTest {
     fun `관리자와 운영 경로는 계측하지 않는다`() {
         val store: CapturingStore = CapturingStore()
         val filter: RequestMetricsFilter = RequestMetricsFilter(store)
-        val excluded = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/facilities.json")
+        val excluded: List<String> = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/facilities.json")
 
         excluded.forEach { path ->
             filter.doFilter(MockHttpServletRequest("GET", path), MockHttpServletResponse(), chainSetting(200))

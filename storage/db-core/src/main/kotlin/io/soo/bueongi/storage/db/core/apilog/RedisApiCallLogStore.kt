@@ -54,6 +54,6 @@ class RedisApiCallLogStore(
         }
 
     private companion object {
-        const val KEY = "apilog"
+        const val KEY: String = "apilog"
     }
 }

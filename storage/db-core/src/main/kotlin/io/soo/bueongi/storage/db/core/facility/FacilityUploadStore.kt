@@ -35,7 +35,7 @@ class FacilityUploadStore(
         val dir: File = File(uploadDir)
         Files.createDirectories(dir.toPath())
         val target: File = File(dir, "${type.cdnType}.json")
-        val collection = FacilityCollectionDto(
+        val collection: FacilityCollectionDto = FacilityCollectionDto(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
         )

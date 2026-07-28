@@ -38,7 +38,7 @@ class ShareControllerTest(
 
     /** POST 로 공유를 만들고 token(읽기 전용)을 돌려준다(조회 전용 테스트 헬퍼). */
     private fun createShare(body: String = "{}"): String {
-        val response = mockMvc.post("/share/create") {
+        val response: String = mockMvc.post("/share/create") {
             contentType = MediaType.APPLICATION_JSON
             content = body
         }.andReturn().response.contentAsString
@@ -47,12 +47,12 @@ class ShareControllerTest(
 
     /** 공유를 만들고 (token, owner_secret) 둘 다 돌려준다(위치 쓰기/종료 테스트 헬퍼). */
     private fun createSharePair(body: String = "{}"): Pair<String, String> {
-        val response = mockMvc.post("/share/create") {
+        val response: String = mockMvc.post("/share/create") {
             contentType = MediaType.APPLICATION_JSON
             content = body
         }.andReturn().response.contentAsString
-        val token = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
-        val secret = Regex("\"owner_secret\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
+        val token: String = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
+        val secret: String = Regex("\"owner_secret\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
         return token to secret
     }
 
@@ -135,7 +135,7 @@ class ShareControllerTest(
 
     @Test
     fun `공유는 있으나 첫 위치 전이면 GET location 은 200 expired=false 에 좌표 null`() {
-        val token = createShare()
+        val token: String = createShare()
         mockMvc.get("/share/$token/location").andExpect {
             status { isOk() }
             jsonPath("$.expired") { value(false) }
@@ -154,7 +154,7 @@ class ShareControllerTest(
 
     @Test
     fun `만료 후 GET location 은 200 expired=true`() {
-        val token = createShare("{\"expires_in_hours\": 1}")
+        val token: String = createShare("{\"expires_in_hours\": 1}")
         clock.advanceSeconds(3600)
         mockMvc.get("/share/$token/location").andExpect {
             status { isOk() }
@@ -204,7 +204,7 @@ class ShareControllerTest(
 
     @Test
     fun `비유한 좌표 리터럴 POST 는 400 MALFORMED_REQUEST`() {
-        val token = createShare()
+        val token: String = createShare()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
             content = "{\"lat\": NaN, \"lng\": 127.0}" // 비숫자 리터럴 → Jackson 파싱 거부
@@ -227,7 +227,7 @@ class ShareControllerTest(
 
     @Test
     fun `GET 보호자 페이지는 200 text-html 이고 토큰이 주입된다`() {
-        val token = createShare()
+        val token: String = createShare()
         mockMvc.get("/share/$token").andExpect {
             status { isOk() }
             content { contentTypeCompatibleWith(MediaType.TEXT_HTML) }
@@ -262,7 +262,7 @@ class ShareControllerTest(
         // 이스케이프된 "리터럴"만 단언하고 폴링 URL 조립은 미검증 → 누가 guardian.html 의 fetch 를
         // `'/share/' + TOKEN + '/location'` 으로 "단순화"해 encodeURIComponent 를 제거해도 모든 테스트가 통과했다.
         // 서빙된 페이지가 토큰을 encodeURIComponent 로 감싸 폴링 URL 을 만드는지 고정해 그 회귀를 차단한다.
-        val token = createShare()
+        val token: String = createShare()
         mockMvc.get("/share/$token").andExpect {
             status { isOk() }
             content { contentTypeCompatibleWith(MediaType.TEXT_HTML) }
@@ -391,7 +391,7 @@ class ShareControllerTest(
 
     @Test
     fun `경로 미저장 시 GET route 는 200 expired=false 에 route null`() {
-        val token = createShare()
+        val token: String = createShare()
         mockMvc.get("/share/$token/route").andExpect {
             status { isOk() }
             jsonPath("$.expired") { value(false) }
@@ -575,7 +575,7 @@ class ShareControllerTest(
     @Test
     fun `길이 초과 provenance 는 422 INVALID_ROUTE_META`() {
         val (token, secret) = createSharePair()
-        val tooLong = "가".repeat(201) // MAX_ROUTE_PROVENANCE_LENGTH(200) 초과
+        val tooLong: String = "가".repeat(201) // MAX_ROUTE_PROVENANCE_LENGTH(200) 초과
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
             content = """

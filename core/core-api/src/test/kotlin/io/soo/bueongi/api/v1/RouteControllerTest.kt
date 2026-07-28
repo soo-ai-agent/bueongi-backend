@@ -56,7 +56,7 @@ class RouteControllerTest(
     @MockBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
-    private val validBody = """
+    private val validBody: String = """
         {"origin":{"lat":37.4979,"lng":127.0276},
          "destination":{"lat":37.5572,"lng":126.9245,"name":"홍대입구역"}}
     """.trimIndent()
@@ -106,7 +106,7 @@ class RouteControllerTest(
 
     @Test
     fun `facilities 정상 요청은 200 과 pois summary`() {
-        val body = validBody.dropLast(1) + ""","routeType":"safe"}"""
+        val body: String = validBody.dropLast(1) + ""","routeType":"safe"}"""
         mockMvc.post("/api/routes/facilities") {
             contentType = MediaType.APPLICATION_JSON
             content = body

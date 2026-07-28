@@ -35,4 +35,4 @@ interface RouteStatsStore {
 }
 
 /** 순환 버퍼 상한 — 최근 이만큼만 유지한다(Redis LTRIM / 인메모리 deque 축출). 24시간 트렌드 창을 넉넉히 담는 크기. */
-const val ROUTE_STATS_CAP = 2000
+const val ROUTE_STATS_CAP: Int = 2000

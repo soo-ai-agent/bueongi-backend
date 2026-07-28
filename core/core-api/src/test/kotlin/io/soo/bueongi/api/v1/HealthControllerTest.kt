@@ -49,7 +49,7 @@ class HealthControllerTest {
         class DisabledRemoteConfig {
             @Bean
             fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-                override val isEnabled = false
+                override val isEnabled: Boolean = false
                 override fun search(keyword: String): List<PlaceItem> =
                     throw AssertionError("health 는 search 를 호출하지 않는다")
             }
@@ -83,7 +83,7 @@ class HealthControllerTest {
         class EnabledRemoteConfig {
             @Bean
             fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-                override val isEnabled = true
+                override val isEnabled: Boolean = true
                 override fun search(keyword: String): List<PlaceItem> =
                     throw AssertionError("health 는 search 를 호출하지 않는다")
             }
@@ -94,7 +94,7 @@ class HealthControllerTest {
 
         companion object {
             /** 응답에 절대 나타나면 안 되는 가짜 시크릿(노출 회귀 가드용 상수). */
-            const val SECRET_KEY = "super-secret-kakao-key-value"
+            const val SECRET_KEY: String = "super-secret-kakao-key-value"
         }
     }
 }

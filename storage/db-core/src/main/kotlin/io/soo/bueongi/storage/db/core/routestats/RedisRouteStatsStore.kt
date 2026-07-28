@@ -53,6 +53,6 @@ class RedisRouteStatsStore(
         }
 
     private companion object {
-        const val KEY = "routestats"
+        const val KEY: String = "routestats"
     }
 }

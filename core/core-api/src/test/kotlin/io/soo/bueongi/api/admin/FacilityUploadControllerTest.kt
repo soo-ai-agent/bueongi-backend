@@ -35,7 +35,7 @@ class FacilityUploadControllerTest(
 
     @Test
     fun `정상 업로드는 200 과 종류·좌표계·집계를 반환한다`() {
-        val csv = """
+        val csv: String = """
             위도,경도,관리기관명,소재지지번주소,설치목적구분,카메라대수
             37.5,127.0,종로구청,서울 종로구 1,생활방범,4
             37.51,127.01,중구청,서울 중구 2,다목적,2
@@ -66,7 +66,7 @@ class FacilityUploadControllerTest(
 
     @Test
     fun `유효 0건(좌표 없음)은 400 VALIDATION_FAILED`() {
-        val csv = """
+        val csv: String = """
             관서명,소재지도로명주소,전화번호
             종로파출소,서울 종로구 대로 8,02-100
         """.trimIndent()
@@ -97,7 +97,7 @@ class FacilityUploadControllerTest(
 
         @Bean
         fun facilityUploadService(): FacilityUploadService {
-            val dir = Files.createTempDirectory("fac-upload-controller-test").toFile().absolutePath
+            val dir: String = Files.createTempDirectory("fac-upload-controller-test").toFile().absolutePath
             return FacilityUploadService(
                 parser = FacilityCsvParser(),
                 uploadStore = FacilityUploadStore(ObjectMapper(), dir),

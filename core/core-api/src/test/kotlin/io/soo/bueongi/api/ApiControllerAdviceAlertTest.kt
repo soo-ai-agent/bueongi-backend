@@ -15,8 +15,8 @@ import org.springframework.http.HttpStatus
 class ApiControllerAdviceAlertTest {
 
     private class RecordingNotifier : AlertNotifier {
-        val notified = ArrayList<Triple<String, String, String>>()
-        override val isEnabled = true
+        val notified: ArrayList<Triple<String, String, String>> = ArrayList<Triple<String, String, String>>()
+        override val isEnabled: Boolean = true
         override fun notify(key: String, title: String, detail: String) {
             notified.add(Triple(key, title, detail))
         }

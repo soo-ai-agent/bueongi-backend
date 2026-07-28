@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory
 class InMemoryRouteStatsStore : RouteStatsStore {
 
     private val logger = LoggerFactory.getLogger(InMemoryRouteStatsStore::class.java)
-    private val logs = ArrayDeque<RouteRecommendationLog>()
-    private val lock = Any()
+    private val logs: ArrayDeque<RouteRecommendationLog> = ArrayDeque<RouteRecommendationLog>()
+    private val lock: Any = Any()
 
     override fun record(log: RouteRecommendationLog) {
         // 집계 실패가 추천 응답을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
@@ -29,7 +29,7 @@ class InMemoryRouteStatsStore : RouteStatsStore {
     }
 
     override fun findRecent(limit: Int): List<RouteRecommendationLog> {
-        val snapshot = synchronized(lock) { logs.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<RouteRecommendationLog> = synchronized(lock) { logs.toList() } // 이미 최신순(addFirst)
         return snapshot.take(limit.coerceAtLeast(0))
     }
 }

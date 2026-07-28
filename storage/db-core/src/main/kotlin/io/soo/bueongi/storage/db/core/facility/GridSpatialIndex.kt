@@ -29,7 +29,7 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         if (radiusM <= 0) {
             return emptyList()
         }
-        val candidates = candidateCells(listOf(center), radiusM)
+        val candidates: List<FacilityPoint> = candidateCells(listOf(center), radiusM)
         return candidates.filter { SpatialMath.haversineMeters(center, it.toGeoPoint()) <= radiusM }
     }
 
@@ -44,8 +44,8 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         if (path.isEmpty() || corridorM <= 0) {
             return emptyList()
         }
-        val samples = densify(path)
-        val candidates = candidateCells(samples, corridorM)
+        val samples: List<GeoPoint> = densify(path)
+        val candidates: List<FacilityPoint> = candidateCells(samples, corridorM)
         return candidates.filter { SpatialMath.minDistanceToPathMeters(it.toGeoPoint(), path) <= corridorM }
     }
 
@@ -57,12 +57,12 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         val out: ArrayList<GeoPoint> = ArrayList<GeoPoint>()
         out.add(path[0])
         for (i in 1 until path.size) {
-            val a = path[i - 1]
-            val b = path[i]
-            val spanDeg = maxOf(kotlin.math.abs(b.lat - a.lat), kotlin.math.abs(b.lng - a.lng))
-            val steps = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
+            val a: GeoPoint = path[i - 1]
+            val b: GeoPoint = path[i]
+            val spanDeg: Double = maxOf(kotlin.math.abs(b.lat - a.lat), kotlin.math.abs(b.lng - a.lng))
+            val steps: Int = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
             for (s in 1..steps) {
-                val t = s.toDouble() / steps
+                val t: Double = s.toDouble() / steps
                 out.add(GeoPoint(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t))
             }
         }
@@ -78,16 +78,16 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
             return emptyList()
         }
         // 경도 1°의 최소 폭(한국 최북단 ~38.7°N)으로 보수적 환산 → 셀 반경 개수.
-        val cellSpanMinM = CELL_DEG * MIN_LNG_DEG_METERS
-        val ring = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
+        val cellSpanMinM: Double = CELL_DEG * MIN_LNG_DEG_METERS
+        val ring: Int = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
         val seenCells: HashSet<Long> = HashSet<Long>()
         val result: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
         for (anchor in anchors) {
-            val cx = cellIndex(anchor.lat, CELL_DEG)
-            val cy = cellIndex(anchor.lng, CELL_DEG)
+            val cx: Int = cellIndex(anchor.lat, CELL_DEG)
+            val cy: Int = cellIndex(anchor.lng, CELL_DEG)
             for (dx in -ring..ring) {
                 for (dy in -ring..ring) {
-                    val key = cellKey(cx + dx, cy + dy)
+                    val key: Long = cellKey(cx + dx, cy + dy)
                     if (!seenCells.add(key)) {
                         continue
                     }
@@ -99,9 +99,9 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
     }
 
     companion object {
-        private const val CELL_DEG = 0.001
+        private const val CELL_DEG: Double = 0.001
         /** 경도 1°의 보수적(최소) 폭(m). 위도가 높을수록 좁아지므로 한국 최북단 기준으로 잡아 누락 방지. */
-        private const val MIN_LNG_DEG_METERS = 86_000.0
+        private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
         private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
 

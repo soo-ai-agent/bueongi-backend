@@ -27,7 +27,7 @@ class WebCorsConfigTest(
 ) {
 
     /** application.yml 기본 허용 origin(BUEONGI_CORS_ORIGINS 미설정 시). */
-    private val allowedOrigin = "http://localhost:3619"
+    private val allowedOrigin: String = "http://localhost:3619"
 
     @Test
     fun `허용 origin 의 GET 프리플라이트는 통과하고 메서드는 GET POST OPTIONS 로 제한된다`() {

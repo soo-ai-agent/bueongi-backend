@@ -18,7 +18,7 @@ class RouteRequestGuardTest {
 
     @Test
     fun `정상 입력이면 비null 좌표의 도메인 질의를 돌려준다`() {
-        val request = RouteRequest(origin = LatLng(37.4979, 127.0276), destination = NamedLatLng(37.5572, 126.9245, name = "집"))
+        val request: RouteRequest = RouteRequest(origin = LatLng(37.4979, 127.0276), destination = NamedLatLng(37.5572, 126.9245, name = "집"))
         val query = request.toValidatedQuery()
         assertThat(query.origin).isEqualTo(GeoPoint(37.4979, 127.0276))
         assertThat(query.destination).isEqualTo(GeoPoint(37.5572, 126.9245))
@@ -27,14 +27,14 @@ class RouteRequestGuardTest {
 
     @Test
     fun `origin 누락이면 ORIGIN_REQUIRED`() {
-        val request = RouteRequest(origin = null, destination = NamedLatLng(37.5572, 126.9245))
+        val request: RouteRequest = RouteRequest(origin = null, destination = NamedLatLng(37.5572, 126.9245))
         assertThatThrownBy { request.toValidatedQuery() }
             .isInstanceOf(OriginRequiredException::class.java)
     }
 
     @Test
     fun `출발=도착이면 SAME_ORIGIN_DESTINATION`() {
-        val request = RouteRequest(
+        val request: RouteRequest = RouteRequest(
             origin = LatLng(37.5, 127.0),
             destination = NamedLatLng(37.5, 127.0),
         )
@@ -44,7 +44,7 @@ class RouteRequestGuardTest {
 
     @Test
     fun `원거리 상한 초과면 TRIP_TOO_FAR`() {
-        val request = RouteRequest(
+        val request: RouteRequest = RouteRequest(
             origin = LatLng(37.0, 127.0),
             destination = NamedLatLng(38.5, 127.0),   // 위도 1.5도 ≈ 167km > 100km
         )
@@ -56,7 +56,7 @@ class RouteRequestGuardTest {
     fun `가드 순서 - origin 누락이 거리 가드보다 먼저다`() {
         // origin 이 없으면 거리(동일좌표/원거리)를 따질 출발지조차 없다 → ORIGIN_REQUIRED 가 우선.
         // (destination 만으로는 SAME/TRIP 판정 불가하므로 순서가 뒤바뀌면 NPE 가 날 위험 → 순서를 못 박는다.)
-        val request = RouteRequest(origin = null, destination = NamedLatLng(37.5, 127.0))
+        val request: RouteRequest = RouteRequest(origin = null, destination = NamedLatLng(37.5, 127.0))
         assertThatThrownBy { request.toValidatedQuery() }
             .isInstanceOf(OriginRequiredException::class.java)
     }

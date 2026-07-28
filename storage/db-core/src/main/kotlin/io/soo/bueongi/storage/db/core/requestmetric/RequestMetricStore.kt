@@ -40,4 +40,4 @@ interface RequestMetricStore {
 }
 
 /** 순환 버퍼 상한 — 최근 이만큼만 유지한다(Redis LTRIM / 인메모리 deque 축출). 전량 수신 트래픽이라 넉넉히 잡는다. */
-const val REQUEST_METRIC_CAP = 5000
+const val REQUEST_METRIC_CAP: Int = 5000
