@@ -37,6 +37,16 @@ val ROUTE_TYPE_VALUES = setOf("safe", "fast", "main")
 /** 시설 데이터 출처 문구(provenance) 최대 길이(자). 초과 시 422 — 과도한 페이로드/오용을 막되 통상 문구는 넉넉히 담는다. */
 const val MAX_ROUTE_PROVENANCE_LENGTH = 200
 
+/**
+ * 미도착 감시(서버 워치독) 정책. 예정 도착 시각 = 공유 생성 + ETA + [MISSED_ARRIVAL_GRACE_SECONDS].
+ * 그 시각을 [MISSED_ARRIVAL_OVERDUE_SECONDS] 넘겨 초과하고 위치가 [MISSED_ARRIVAL_STOPPED_SECONDS] 이상
+ * 멈춰 있으면 '미도착 의심'으로 본다. GRACE 는 E(클라 포그라운드 체크인)와 일관 — 정시 도착 오알림 방지.
+ * (STOPPED 는 보호자 staleness 30초보다 크게 잡아 일시 blip 이 아닌 '정지'만 잡는다.)
+ */
+const val MISSED_ARRIVAL_GRACE_SECONDS = 60L
+const val MISSED_ARRIVAL_OVERDUE_SECONDS = 300L
+const val MISSED_ARRIVAL_STOPPED_SECONDS = 90L
+
 /** `POST /share/create` 응답: 발급된 토큰 + 외부 메신저로 공유할 URL + 상한 만료 시각. */
 data class CreateShareResponse(
     /** 공유 URL에 담기는 읽기 전용 토큰(보호자가 위치를 조회). */
@@ -79,6 +89,11 @@ data class LocationView(
     /** 목적지까지 남은 예상 시간(초). [remainingM] 과 동일 규약(보고 시에만 채움). */
     @JsonProperty("remaining_s")
     val remainingS: Double? = null,
+    /**
+     * 미도착 의심 여부 — 예정 도착 시각을 여유([MISSED_ARRIVAL_OVERDUE_SECONDS]) 넘겨 초과했는지. ETA 미제공 세션은 false.
+     * 보호자 페이지가 B(staleness) 경고 위에 "예정 시간 초과 — 연락해 보세요" 격상을 그릴 근거로 쓴다(FE 후속).
+     */
+    val overdue: Boolean = false,
 )
 
 /**

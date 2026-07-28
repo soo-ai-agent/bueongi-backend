@@ -45,3 +45,5 @@ bueongi:
   share:
     # 보호자 공유 URL 의 base. 앱이 받는 share_url = {base-url}/share/{token}. 운영은 공개 도메인으로 덮어쓴다.
     base-url: ${BUEONGI_SHARE_BASE_URL:http://localhost:8119}
+    # 미도착 감시 스캔 주기(ms). 활성 공유 중 '예정 도착 초과 + 위치 정지'를 주기적으로 찾아 운영자에게 알린다.
+    watchdog-interval-ms: ${BUEONGI_WATCHDOG_INTERVAL_MS:60000}

@@ -57,6 +57,33 @@ class ShareServiceTest {
     }
 
     @Test
+    fun `create 는 eta_seconds 로 예정 도착 시각(+GRACE)을 잡는다`() {
+        val res = service.create(1, etaSeconds = 600)
+        assertEquals(clock.now.plusSeconds(600 + MISSED_ARRIVAL_GRACE_SECONDS), store.findByToken(res.token)!!.expectedArrivalAt)
+    }
+
+    @Test
+    fun `create 는 eta 미제공 시 예정 도착 시각을 두지 않는다(감시 제외)`() {
+        val res = service.create(1)
+        assertNull(store.findByToken(res.token)!!.expectedArrivalAt)
+    }
+
+    @Test
+    fun `getLocation 은 예정 도착 시각을 여유 넘겨 초과하면 overdue=true`() {
+        val res = service.create(3, etaSeconds = 60)
+        service.updateLocation(res.token, res.ownerSecret, report())
+        clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + MISSED_ARRIVAL_OVERDUE_SECONDS + 1)
+        assertTrue(service.getLocation(res.token).overdue)
+    }
+
+    @Test
+    fun `getLocation 은 예정 도착 전이면 overdue=false`() {
+        val res = service.create(3, etaSeconds = 600)
+        service.updateLocation(res.token, res.ownerSecret, report())
+        assertFalse(service.getLocation(res.token).overdue)
+    }
+
+    @Test
     fun `create 는 null 요청도 기본 TTL 로 처리`() {
         val res = service.create(null)
         assertEquals(clock.now.plusSeconds(DEFAULT_EXPIRES_HOURS * 3600L), res.expiresAt)

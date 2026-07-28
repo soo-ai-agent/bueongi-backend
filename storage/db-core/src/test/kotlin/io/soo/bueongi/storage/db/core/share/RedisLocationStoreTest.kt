@@ -242,6 +242,36 @@ class RedisLocationStoreTest {
     }
 
     @Test
+    fun `save 는 expectedArrivalAt 을 share HASH 에 쓰고 find 가 되읽는다(왕복)`() {
+        val now = clock.now
+        val expected = now.plusSeconds(1800)
+        store.save(ShareSession("tok", "sek", now, now.plusSeconds(3600), expectedArrivalAt = expected))
+        verify(hashOps).putAll(
+            eq("share:tok"),
+            eq(
+                mapOf(
+                    "created_at" to now.toString(),
+                    "expires_at" to now.plusSeconds(3600).toString(),
+                    "owner_secret" to "sek",
+                    "expected_arrival_at" to expected.toString(),
+                ),
+            ),
+        )
+
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to now.toString(),
+                "expires_at" to now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+                "expected_arrival_at" to expected.toString(),
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn(null)
+        assertEquals(expected, store.findByToken("tok")!!.expectedArrivalAt)
+    }
+
+    @Test
     fun `읽기 중 Redis 연결 실패는 LocationStoreUnavailableException 으로 변환된다`() {
         // Redis 가 죽으면 Spring Data 가 DataAccessException(연결 실패)을 던진다.
         whenever(hashOps.entries(any())).thenThrow(RedisConnectionFailureException("redis down"))

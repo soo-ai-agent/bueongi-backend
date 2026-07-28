@@ -41,10 +41,10 @@ class ShareController(
         ClassPathResource("share/guardian.html").inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
-    /** POST /share/create → 토큰 발급. 본문은 선택(expires_in_hours: 1~3, 미지정 시 기본). */
+    /** POST /share/create → 토큰 발급. 본문은 선택(expires_in_hours: 1~3, eta_seconds: 선택 — 미도착 감시 기준). */
     @PostMapping("/create")
     fun create(@Valid @RequestBody(required = false) request: CreateShareRequest?): CreateShareResponse =
-        service.create(request?.expiresInHours)
+        service.create(request?.expiresInHours, request?.etaSeconds)
 
     /** POST /share/{token}/location → 위치 갱신(사용자 단말, 5초마다). 토큰 없음/만료 → 404. */
     @PostMapping("/{token}/location")

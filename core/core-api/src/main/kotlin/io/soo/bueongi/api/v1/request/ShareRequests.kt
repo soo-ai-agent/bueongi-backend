@@ -38,6 +38,13 @@ data class CreateShareRequest(
     @field:Max(MAX_EXPIRES_HOURS.toLong())
     @JsonProperty("expires_in_hours")
     val expiresInHours: Int? = null,
+    /**
+     * 예정 도착까지 남은 시간(초). 선택 — 앱이 길안내 시작 시 ETA 를 보내면 서버가 미도착 감시 기준(예정 도착 시각)을 잡는다.
+     * 미전송 시 감시 대상에서 제외(하위호환). 음수/0 은 400(양수만 유의미).
+     */
+    @field:Min(1)
+    @JsonProperty("eta_seconds")
+    val etaSeconds: Int? = null,
 )
 
 /**

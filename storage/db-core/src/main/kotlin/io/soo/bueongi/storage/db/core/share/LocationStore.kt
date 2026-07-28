@@ -26,6 +26,11 @@ data class ShareSession(
      * 위치와 독립이다(경로만·위치만·둘 다 모두 허용). 저장 전이면 null.
      */
     val route: StoredRoute? = null,
+    /**
+     * 예정 도착 시각(절대). 생성 시 클라가 ETA 를 제공하면 서버가 산출해 둔다 — 미도착 감시(서버 워치독)의 기준.
+     * 없으면(ETA 미제공·구세션) 감시 대상에서 제외한다(하위호환).
+     */
+    val expectedArrivalAt: Instant? = null,
 ) {
     /**
      * 위치만 갱신한 새 세션 — 경로 컨텍스트([route])는 보존한다(둘은 독립이라는 불변식을

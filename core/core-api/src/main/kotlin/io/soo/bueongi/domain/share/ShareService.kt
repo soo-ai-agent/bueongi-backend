@@ -32,15 +32,26 @@ class ShareService(
     private val random = SecureRandom()
     private val tokenEncoder = Base64.getUrlEncoder().withoutPadding()
 
-    /** 공유 생성 → token·share_url·상한 만료 반환. expiresInHours 미지정이면 [DEFAULT_EXPIRES_HOURS]. */
-    fun create(expiresInHours: Int?): CreateShareResponse {
+    /**
+     * 공유 생성 → token·share_url·상한 만료 반환. expiresInHours 미지정이면 [DEFAULT_EXPIRES_HOURS].
+     * etaSeconds 를 받으면 예정 도착 시각(+[MISSED_ARRIVAL_GRACE_SECONDS])을 잡아 미도착 감시 대상으로 둔다(미제공 시 감시 제외).
+     */
+    fun create(expiresInHours: Int?, etaSeconds: Int? = null): CreateShareResponse {
         val hours = expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token = newToken()
         val ownerSecret = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
         val now = clock.instant()
         val expiresAt = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
+        val expectedArrivalAt = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
         store.save(
-            ShareSession(token = token, ownerSecret = ownerSecret, createdAt = now, expiresAt = expiresAt, location = null),
+            ShareSession(
+                token = token,
+                ownerSecret = ownerSecret,
+                createdAt = now,
+                expiresAt = expiresAt,
+                location = null,
+                expectedArrivalAt = expectedArrivalAt,
+            ),
         )
         return CreateShareResponse(
             token = token,
@@ -153,8 +164,9 @@ class ShareService(
      * 순수 조립이라 부수효과가 없다 — 시청 집계([LocationStore.markViewed])는 호출자(보호자 조회만)가 정한다.
      */
     private fun locationViewOf(session: ShareSession): LocationView {
+        val overdue = isOverdue(session, clock.instant())
         val location = session.location
-            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false)
+            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
         return LocationView(
             lat = location.lat,
             lng = location.lng,
@@ -162,7 +174,14 @@ class ShareService(
             expired = false,
             remainingM = location.remainingM,
             remainingS = location.remainingS,
+            overdue = overdue,
         )
+    }
+
+    /** 예정 도착 시각을 여유([MISSED_ARRIVAL_OVERDUE_SECONDS]) 넘겨 초과했는지 — 보호자 페이지 경고 격상 근거. ETA 미제공이면 false. */
+    private fun isOverdue(session: ShareSession, now: Instant): Boolean {
+        val expected = session.expectedArrivalAt ?: return false
+        return now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
     }
 
     /**

@@ -44,15 +44,15 @@ class RedisLocationStore(
         onRedis("save") {
             val ttl = ttlFrom(session.expiresAt)
             val shareKey = shareKey(session.token)
-            redis.opsForHash<String, String>().putAll(
-                shareKey,
-                mapOf(
-                    FIELD_CREATED_AT to session.createdAt.toString(),
-                    FIELD_EXPIRES_AT to session.expiresAt.toString(),
-                    // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
-                    FIELD_OWNER_SECRET to session.ownerSecret,
-                ),
-            )
+            val shareFields = buildMap {
+                put(FIELD_CREATED_AT, session.createdAt.toString())
+                put(FIELD_EXPIRES_AT, session.expiresAt.toString())
+                // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
+                put(FIELD_OWNER_SECRET, session.ownerSecret)
+                // 예정 도착 시각은 있을 때만 저장한다(ETA 미제공 세션은 필드 없음 → 감시 제외, 하위호환).
+                session.expectedArrivalAt?.let { put(FIELD_EXPECTED_ARRIVAL_AT, it.toString()) }
+            }
+            redis.opsForHash<String, String>().putAll(shareKey, shareFields)
             redis.expire(shareKey, ttl)
 
             session.location?.let { loc ->
@@ -84,6 +84,8 @@ class RedisLocationStore(
         val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
         val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
         val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.
+        // 예정 도착 시각(선택). 없으면(ETA 미제공·구세션) null. 손상값은 null 로 관용 처리(감시만 제외, 세션은 살린다).
+        val expectedArrivalAt = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
 
         val locHash = redis.opsForHash<String, String>().entries(locationKey(token))
         val location = if (locHash.isEmpty()) {
@@ -124,8 +126,18 @@ class RedisLocationStore(
             expiresAt = expiresAt,
             location = location,
             route = route,
+            expectedArrivalAt = expectedArrivalAt,
         )
     }
+
+    /** Instant 관용 파싱 — 손상값이면 null(선택 필드가 세션 전체를 깨뜨리지 않게 한다). */
+    private fun parseInstantOrNull(value: String): Instant? =
+        try {
+            Instant.parse(value)
+        } catch (e: Exception) {
+            log.warn("공유 세션 시각 필드 파싱 실패(무시): {}", e.message)
+            null
+        }
 
     override fun deleteByToken(token: String) {
         onRedis("deleteByToken") {
@@ -217,6 +229,7 @@ class RedisLocationStore(
         const val FIELD_CREATED_AT = "created_at"
         const val FIELD_EXPIRES_AT = "expires_at"
         const val FIELD_OWNER_SECRET = "owner_secret"
+        const val FIELD_EXPECTED_ARRIVAL_AT = "expected_arrival_at"
         const val FIELD_LAT = "lat"
         const val FIELD_LNG = "lng"
         const val FIELD_UPDATED_AT = "updated_at"
