@@ -38,11 +38,11 @@ class MissedArrivalWatchdog(
     }
 
     private fun alert(session: ShareSession, now: Instant) {
-        val expected = session.expectedArrivalAt ?: return // 술어가 보장하지만 스마트캐스트/방어 목적.
-        val overdueMinutes = Duration.between(expected, now).toMinutes()
-        val stoppedSeconds = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
-        val stoppedText = stoppedSeconds?.let { "위치가 ${it}초째 정지" } ?: "위치 보고 없음"
-        val masked = maskToken(session.token)
+        val expected: Instant = session.expectedArrivalAt ?: return // 술어가 보장하지만 스마트캐스트/방어 목적.
+        val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
+        val stoppedSeconds: Long? = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
+        val stoppedText: String = stoppedSeconds?.let { "위치가 ${it}초째 정지" } ?: "위치 보고 없음"
+        val masked: String = maskToken(session.token)
         alertNotifier?.notify(
             key = "missed-arrival:$masked",
             title = "미도착 의심 — 위치 공유",
@@ -62,8 +62,8 @@ class MissedArrivalWatchdog(
  * ETA 미제공(expectedArrivalAt=null) 세션은 제외한다. "늦지만 이동 중"(위치가 계속 갱신)은 위치가 안 멈췄으니 제외된다.
  */
 fun isMissedArrivalSuspect(session: ShareSession, now: Instant): Boolean {
-    val expected = session.expectedArrivalAt ?: return false
-    val overdue = now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
+    val expected: Instant = session.expectedArrivalAt ?: return false
+    val overdue: Boolean = now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
     return overdue && isLocationStopped(session, now)
 }
 

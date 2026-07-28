@@ -21,7 +21,7 @@ enum class SafetyPreference(@get:JsonValue val requestValue: String, val detourB
         @JsonCreator
         @JvmStatic
         fun from(value: String?): SafetyPreference {
-            val normalized = value?.trim()?.lowercase() ?: return SAFE
+            val normalized: String = value?.trim()?.lowercase() ?: return SAFE
             return entries.firstOrNull { it.requestValue == normalized } ?: SAFE
         }
     }

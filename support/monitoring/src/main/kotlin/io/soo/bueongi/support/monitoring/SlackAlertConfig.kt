@@ -60,7 +60,7 @@ class SlackAlertConfig(
 
     /** 알림 key 의 카테고리(`:` 앞부분)가 뮤트 집합에 있으면 발송을 생략한다. */
     fun isMuted(key: String): Boolean {
-        val category = key.substringBefore(DELIMITER)
+        val category: String = key.substringBefore(DELIMITER)
         return mutedCategorySet.contains(category)
     }
 
@@ -91,18 +91,18 @@ class SlackAlertConfig(
     }
 
     private fun maskWebhook(url: String): String {
-        val markerIndex = url.indexOf(SERVICES_MARKER)
+        val markerIndex: Int = url.indexOf(SERVICES_MARKER)
         if (markerIndex < 0) {
             return conservativeMask(url)
         }
-        val prefix = url.take(markerIndex + SERVICES_MARKER.length)
-        val segments = url.drop(markerIndex + SERVICES_MARKER.length)
+        val prefix: String = url.take(markerIndex + SERVICES_MARKER.length)
+        val segments: List<String> = url.drop(markerIndex + SERVICES_MARKER.length)
             .split("/")
             .filter { it.isNotEmpty() }
         if (segments.isEmpty()) {
             return conservativeMask(url)
         }
-        val maskedSegments = segments.mapIndexed { index, segment ->
+        val maskedSegments: List<String> = segments.mapIndexed { index, segment ->
             // 마지막(토큰) 세그먼트는 완전 마스킹, 앞 세그먼트는 유형 접두 1글자만 표기(T***/B***).
             if (index == segments.lastIndex) {
                 MASK
@@ -118,13 +118,13 @@ class SlackAlertConfig(
 
     companion object {
         /** 스로틀 창 허용 범위(분) — 요청 DTO 검증과 동일 경계. */
-        const val MIN_THROTTLE_MINUTES = 1
-        const val MAX_THROTTLE_MINUTES = 1440
+        const val MIN_THROTTLE_MINUTES: Int = 1
+        const val MAX_THROTTLE_MINUTES: Int = 1440
 
-        private const val MILLIS_PER_MINUTE = 60_000L
-        private const val DELIMITER = ":"
-        private const val SERVICES_MARKER = "/services/"
-        private const val MASK = "***"
-        private const val CONSERVATIVE_PREFIX_LENGTH = 8
+        private const val MILLIS_PER_MINUTE: Long = 60_000L
+        private const val DELIMITER: String = ":"
+        private const val SERVICES_MARKER: String = "/services/"
+        private const val MASK: String = "***"
+        private const val CONSERVATIVE_PREFIX_LENGTH: Int = 8
     }
 }

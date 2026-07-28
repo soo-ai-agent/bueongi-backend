@@ -27,14 +27,14 @@ class RouteCandidateMerger {
     }
 
     private fun isNearDuplicate(first: RouteCandidate, second: RouteCandidate): Boolean {
-        val lengthFirst = SpatialMath.pathLengthMeters(first.path)
-        val lengthSecond = SpatialMath.pathLengthMeters(second.path)
-        val shorter = minOf(lengthFirst, lengthSecond)
+        val lengthFirst: Double = SpatialMath.pathLengthMeters(first.path)
+        val lengthSecond: Double = SpatialMath.pathLengthMeters(second.path)
+        val shorter: Double = minOf(lengthFirst, lengthSecond)
         if (shorter <= 0.0) {
             return false
         }
         // 양방향 겹침 중 큰 값 — 한 경로가 다른 경로에 거의 포함되면 같은 길로 본다.
-        val overlap = maxOf(
+        val overlap: Double = maxOf(
             SpatialMath.overlapLengthMeters(first.path, second.path, MERGE_CORRIDOR_METERS),
             SpatialMath.overlapLengthMeters(second.path, first.path, MERGE_CORRIDOR_METERS),
         )
@@ -43,9 +43,9 @@ class RouteCandidateMerger {
 
     private companion object {
         /** 근접 경로 병합: 두 경로 점이 이 거리(m) 안이면 같은 도로 위로 본다. */
-        const val MERGE_CORRIDOR_METERS = 25.0
+        const val MERGE_CORRIDOR_METERS: Double = 25.0
 
         /** 근접 경로 병합 임계: 짧은 경로의 이 비율 이상이 다른 경로와 겹치면 같은 경로로 병합. */
-        const val MERGE_OVERLAP_RATIO = 0.85
+        const val MERGE_OVERLAP_RATIO: Double = 0.85
     }
 }

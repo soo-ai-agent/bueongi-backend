@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
  */
 class TmapRouteCacheTest {
 
-    private val origin = TmapCoord(37.5, 127.0)
-    private val dest = TmapCoord(37.51, 127.01)
-    private val route = TmapRoute("0", listOf(origin, dest), 880.0, 700, emptyList())
+    private val origin: TmapCoord = TmapCoord(37.5, 127.0)
+    private val dest: TmapCoord = TmapCoord(37.51, 127.01)
+    private val route: TmapRoute = TmapRoute("0", listOf(origin, dest), 880.0, 700, emptyList())
 
     @Test
     fun `동일 출발-도착-옵션 재요청은 캐시 히트`() {

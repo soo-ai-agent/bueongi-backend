@@ -22,8 +22,8 @@ object Percentiles {
         if (sortedAscending.isEmpty()) {
             return 0L
         }
-        val rank = ceil(percentile / 100.0 * sortedAscending.size).toInt()
-        val index = rank.coerceIn(1, sortedAscending.size) - 1
+        val rank: Int = ceil(percentile / 100.0 * sortedAscending.size).toInt()
+        val index: Int = rank.coerceIn(1, sortedAscending.size) - 1
         return sortedAscending[index]
     }
 }

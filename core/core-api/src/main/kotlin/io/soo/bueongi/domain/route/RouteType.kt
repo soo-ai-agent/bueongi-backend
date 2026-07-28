@@ -52,7 +52,7 @@ enum class RouteType(
         @JsonCreator
         @JvmStatic
         fun from(value: String?): RouteType {
-            val normalized = value?.trim()?.lowercase() ?: return SAFE
+            val normalized: String = value?.trim()?.lowercase() ?: return SAFE
             return entries.firstOrNull { it.apiType == normalized || it.id == normalized } ?: SAFE
         }
     }

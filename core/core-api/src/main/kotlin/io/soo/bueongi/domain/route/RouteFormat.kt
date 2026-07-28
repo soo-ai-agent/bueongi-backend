@@ -11,7 +11,7 @@ object RouteFormat {
 
     /** 미터를 표시문자열로. 1km 미만은 "850m", 이상은 "1.2km"(프론트 dist 표기 형식). */
     fun formatDistance(meters: Double): String {
-        val clampedMeters = max(0.0, meters)
+        val clampedMeters: Double = max(0.0, meters)
         return if (clampedMeters < 1000) {
             "${(clampedMeters / 10).roundToInt() * 10}m"
         } else {

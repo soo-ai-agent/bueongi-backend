@@ -27,7 +27,7 @@ class AdStatsService(
     }
 
     fun summarize(): AdStatsSummary {
-        val events = adEventStore.findRecent(AD_EVENT_CAP)
+        val events: List<AdEvent> = adEventStore.findRecent(AD_EVENT_CAP)
         return AdStatsSummary(
             total = events.size,
             today = todayCount(events),
@@ -38,13 +38,13 @@ class AdStatsService(
 
     /** Asia/Seoul 자정 이후 노출 수. */
     private fun todayCount(events: List<AdEvent>): Int {
-        val todayStartMs = todayStartMs(System.currentTimeMillis())
+        val todayStartMs: Long = todayStartMs(System.currentTimeMillis())
         return events.count { it.atEpochMs >= todayStartMs }
     }
 
     /** 지면 2종([TRACKED_PLACEMENTS])을 항상 키로 노출한다(노출이 0건인 지면도 0 으로 나온다). */
     private fun byPlacement(events: List<AdEvent>): Map<String, Int> {
-        val counts = events.groupingBy { it.placement }.eachCount()
+        val counts: Map<String, Int> = events.groupingBy { it.placement }.eachCount()
         return TRACKED_PLACEMENTS.associateWith { placement -> counts[placement] ?: 0 }
     }
 
@@ -59,9 +59,9 @@ class AdStatsService(
             .truncatedTo(ChronoUnit.HOURS)
         return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
             val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs = bucketStart.toInstant().toEpochMilli()
-            val endMs = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count = events.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
+            val startMs: Long = bucketStart.toInstant().toEpochMilli()
+            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
+            val count: Int = events.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
             HourlyBucket(hourStartMs = startMs, count = count)
         }
     }
@@ -73,10 +73,10 @@ class AdStatsService(
 
     companion object {
         /** 항상 노출하는 광고 지면 2종. 노출이 없어도 count=0 으로 나온다(요청 DTO 의 허용값과 같은 집합). */
-        val TRACKED_PLACEMENTS = listOf("interstitial", "native")
+        val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")
 
         /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위) — [RouteStatsService]·[RequestMetricsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT = 24
+        const val HOURLY_BUCKET_COUNT: Int = 24
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

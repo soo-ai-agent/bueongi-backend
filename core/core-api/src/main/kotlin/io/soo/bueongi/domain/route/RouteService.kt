@@ -28,9 +28,9 @@ class RouteService(
      * safe-compare 의 폴백이 이중 카운트 없이 재사용한다(추천 집계는 safe-compare 가 이미 1회 기록한다).
      */
     fun buildRoutes(query: RouteQuery): List<RouteOption> {
-        val straightMeters = SpatialMath.haversineMeters(query.origin, query.destination)
+        val straightMeters: Double = SpatialMath.haversineMeters(query.origin, query.destination)
         return RouteType.entries.map { type ->
-            val meters = straightMeters * type.distanceFactor
+            val meters: Double = straightMeters * type.distanceFactor
             RouteOption(
                 id = type.id,
                 name = type.displayName,

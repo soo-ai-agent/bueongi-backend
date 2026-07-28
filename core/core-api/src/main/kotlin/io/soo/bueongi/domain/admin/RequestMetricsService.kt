@@ -26,7 +26,7 @@ class RequestMetricsService(
 ) {
 
     fun summarize(): TrafficSummary {
-        val metrics = requestMetricStore.findRecent(REQUEST_METRIC_CAP)
+        val metrics: List<RequestMetric> = requestMetricStore.findRecent(REQUEST_METRIC_CAP)
         return TrafficSummary(
             totalCalls = metrics.size,
             windowSize = metrics.size,
@@ -41,7 +41,7 @@ class RequestMetricsService(
 
     /** 전체 소요시간 분위수(p50/p95/p99) — 정렬 1회 후 [Percentiles.nearestRank] 로 뽑는다. 빈 창이면 전부 0. */
     private fun latency(metrics: List<RequestMetric>): LatencyPercentiles {
-        val sortedDurations = metrics.map { it.durationMs }.sorted()
+        val sortedDurations: List<Long> = metrics.map { it.durationMs }.sorted()
         return LatencyPercentiles(
             p50Ms = Percentiles.nearestRank(sortedDurations, 50),
             p95Ms = Percentiles.nearestRank(sortedDurations, 95),
@@ -56,11 +56,11 @@ class RequestMetricsService(
             .sortedByDescending { it.count }
 
     private fun aggregateEndpoint(key: EndpointKey, group: List<RequestMetric>): EndpointTraffic {
-        val count = group.size // groupBy 결과라 최소 1건 — 0 나눗셈 없음
-        val successCount = group.count { it.status in SUCCESS_STATUS_RANGE }
-        val successRate = successCount.toDouble() / count
-        val avgDurationMs = (group.sumOf { it.durationMs }.toDouble() / count).roundToLong()
-        val p95DurationMs = Percentiles.nearestRank(group.map { it.durationMs }.sorted(), 95)
+        val count: Int = group.size // groupBy 결과라 최소 1건 — 0 나눗셈 없음
+        val successCount: Int = group.count { it.status in SUCCESS_STATUS_RANGE }
+        val successRate: Double = successCount.toDouble() / count
+        val avgDurationMs: Long = (group.sumOf { it.durationMs }.toDouble() / count).roundToLong()
+        val p95DurationMs: Long = Percentiles.nearestRank(group.map { it.durationMs }.sorted(), 95)
         return EndpointTraffic(
             method = key.method,
             endpoint = key.endpoint,
@@ -79,9 +79,9 @@ class RequestMetricsService(
      * newToday/returningToday 는 오늘 활동한 clientId 를 **창 내 최초 관측 시각** 기준으로 신규/재방문으로 가른다(아래 [newVsReturningToday]).
      */
     private fun estimatedUsers(metrics: List<RequestMetric>): EstimatedUsers {
-        val now = System.currentTimeMillis()
-        val todayStartMs = todayStartMs(now)
-        val newVsReturning = newVsReturningToday(metrics, todayStartMs)
+        val now: Long = System.currentTimeMillis()
+        val todayStartMs: Long = todayStartMs(now)
+        val newVsReturning: NewVsReturning = newVsReturningToday(metrics, todayStartMs)
         return EstimatedUsers(
             today = distinctClientsSince(metrics, todayStartMs),
             last7d = distinctClientsSince(metrics, now - DAYS_7_MS),
@@ -99,13 +99,13 @@ class RequestMetricsService(
      * 창을 벗어난 과거 방문은 알 수 없어, 오래 전 사용자가 창에서 밀려나면 신규로 잡힐 수 있다.
      */
     private fun newVsReturningToday(metrics: List<RequestMetric>, todayStartMs: Long): NewVsReturning {
-        val firstSeenByClient = firstSeenByClient(metrics)
-        val activeTodayClients = metrics
+        val firstSeenByClient: Map<String, Long> = firstSeenByClient(metrics)
+        val activeTodayClients: List<String> = metrics
             .filter { it.atEpochMs >= todayStartMs }
             .mapNotNull { it.clientId }
             .distinct()
-        val newCount = activeTodayClients.count { clientId ->
-            val firstSeen = firstSeenByClient[clientId] ?: todayStartMs
+        val newCount: Int = activeTodayClients.count { clientId ->
+            val firstSeen: Long = firstSeenByClient[clientId] ?: todayStartMs
             firstSeen >= todayStartMs
         }
         return NewVsReturning(newToday = newCount, returningToday = activeTodayClients.size - newCount)
@@ -115,8 +115,8 @@ class RequestMetricsService(
     private fun firstSeenByClient(metrics: List<RequestMetric>): Map<String, Long> {
         val firstSeen: MutableMap<String, Long> = mutableMapOf<String, Long>()
         metrics.forEach { metric ->
-            val clientId = metric.clientId ?: return@forEach
-            val previous = firstSeen[clientId]
+            val clientId: String = metric.clientId ?: return@forEach
+            val previous: Long? = firstSeen[clientId]
             if (previous == null || metric.atEpochMs < previous) {
                 firstSeen[clientId] = metric.atEpochMs
             }
@@ -157,8 +157,8 @@ class RequestMetricsService(
             .truncatedTo(ChronoUnit.HOURS)
         return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
             val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs = bucketStart.toInstant().toEpochMilli()
-            val endMs = bucketStart.plusHours(1).toInstant().toEpochMilli()
+            val startMs: Long = bucketStart.toInstant().toEpochMilli()
+            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
             HourlyBucket(hourStartMs = startMs, count = countInBucket(startMs, endMs))
         }
     }
@@ -171,9 +171,9 @@ class RequestMetricsService(
         val today = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SEOUL).toLocalDate()
         return (DAILY_ACTIVE_DAYS - 1 downTo 0).map { daysAgo ->
             val dayStart = today.minusDays(daysAgo.toLong()).atStartOfDay(SEOUL)
-            val startMs = dayStart.toInstant().toEpochMilli()
-            val endMs = dayStart.plusDays(1).toInstant().toEpochMilli()
-            val ofDay = metrics.filter { it.atEpochMs >= startMs && it.atEpochMs < endMs }
+            val startMs: Long = dayStart.toInstant().toEpochMilli()
+            val endMs: Long = dayStart.plusDays(1).toInstant().toEpochMilli()
+            val ofDay: List<RequestMetric> = metrics.filter { it.atEpochMs >= startMs && it.atEpochMs < endMs }
             DailyActive(dateEpochMs = startMs, distinctClients = distinctClients(ofDay))
         }
     }
@@ -197,19 +197,19 @@ class RequestMetricsService(
 
     companion object {
         /** 성공으로 보는 status 범위(2xx·3xx). */
-        val SUCCESS_STATUS_RANGE = 200..399
+        val SUCCESS_STATUS_RANGE: IntRange = 200..399
 
         /** 시간대 추이 버킷 수(최근 24시간, 1시간 단위) — [ApiStatusService]·[RouteStatsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT = 24
+        const val HOURLY_BUCKET_COUNT: Int = 24
 
         /** 일자별 활성 사용자 노출 일수(최근 7일). */
-        const val DAILY_ACTIVE_DAYS = 7
+        const val DAILY_ACTIVE_DAYS: Int = 7
 
         /** last7d 이동 창 길이(ms). */
-        const val DAYS_7_MS = 7L * 24 * 60 * 60 * 1000
+        const val DAYS_7_MS: Long = 7L * 24 * 60 * 60 * 1000
 
         /** last30d 이동 창 길이(ms). */
-        const val DAYS_30_MS = 30L * 24 * 60 * 60 * 1000
+        const val DAYS_30_MS: Long = 30L * 24 * 60 * 60 * 1000
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

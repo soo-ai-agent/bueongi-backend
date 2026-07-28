@@ -44,7 +44,7 @@ class JwtAuthenticationFilter(
             return
         }
 
-        val authorities = verified.roles.map { SimpleGrantedAuthority(it) }
+        val authorities: List<SimpleGrantedAuthority> = verified.roles.map { SimpleGrantedAuthority(it) }
         val authentication: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(verified.userId, null, authorities)
         SecurityContextHolder.getContext().authentication = authentication
         try {

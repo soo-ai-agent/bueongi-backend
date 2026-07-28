@@ -58,13 +58,13 @@ class SafeRouteService(
             return routeService.buildRoutes(query)
         }
 
-        val origin = query.origin
-        val destination = query.destination
-        val budget = query.safetyPreference.detourBudget
+        val origin: GeoPoint = query.origin
+        val destination: GeoPoint = query.destination
+        val budget: Double = query.safetyPreference.detourBudget
 
         // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
         // 경유(fetchRouteVia) 다건 호출은 개별 계측하지 않는다(요청당 다수라 로그 폭주 방지) — 대표 fetchRoutes 만 기록.
-        val base = apiCallLogStore.measure(
+        val base: List<TmapRoute> = apiCallLogStore.measure(
             provider = "TMAP",
             endpoint = "route",
             success = { it.isNotEmpty() },
@@ -88,13 +88,13 @@ class SafeRouteService(
             return routeService.buildRoutes(query)
         }
 
-        val baseShortestM = base.minOf { it.distanceM }
+        val baseShortestM: Double = base.minOf { it.distanceM }
 
         // 안심 경유지 우회 후보: 추천 경로 주변 시설 앵커 → 경유지 조합 → Tmap 경유 호출.
-        val directPath = base.first().path.toGeoPoints()
+        val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
         val anchors = detourPlanner.extractSafeAnchors(directPath)
-        val waypointCombos = detourPlanner.pickDetourWaypoints(origin, destination, anchors)
-        val detours = waypointCombos.mapNotNull { waypoints ->
+        val waypointCombos: List<List<GeoPoint>> = detourPlanner.pickDetourWaypoints(origin, destination, anchors)
+        val detours: List<TmapRoute> = waypointCombos.mapNotNull { waypoints ->
             tmapClient.fetchRouteVia(
                 origin.toTmapCoord(),
                 destination.toTmapCoord(),
@@ -107,10 +107,10 @@ class SafeRouteService(
 
         // 1) 완전 동일(identityKey) 제거 → 2) 도메인 후보로 매핑 → 3) 거의 겹치는 경로 병합 →
         // 4) 정확히 유형당 1개(최대 3개)로 정규화.
-        val candidates = candidateMerger.mergeNearDuplicates(
+        val candidates: List<RouteCandidate> = candidateMerger.mergeNearDuplicates(
             dedupeByIdentity(base + detours).map { it.toCandidate() },
         )
-        val scored = scoreTypeAndLimit(candidates)
+        val scored: List<ScoredRoute> = scoreTypeAndLimit(candidates)
         return toRouteOptions(scored, origin, destination)
     }
 
@@ -130,16 +130,16 @@ class SafeRouteService(
         if (candidates.isEmpty()) {
             return emptyList()
         }
-        val scored = candidates.map { ScoredCandidate(it, scorer.score(it.path)) }
+        val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path)) }
 
         // safe: 최고점(동률이면 먼저 나온 후보). 위 isEmpty 가드로 비어있지 않음이 보장되므로 비-널 maxBy.
-        val safeIdx = scored.indices.maxBy { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
+        val safeIdx: Int = scored.indices.maxBy { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
         // fast: safe 제외 최소시간(동률이면 먼저 나온 후보).
-        val fastIdx = scored.indices.filter { it != safeIdx }
+        val fastIdx: Int? = scored.indices.filter { it != safeIdx }
             .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
-        val used = setOfNotNull(safeIdx, fastIdx)
+        val used: Set<Int> = setOfNotNull(safeIdx, fastIdx)
         // main: 남은 후보 중 최고점.
-        val mainIdx = scored.indices.filter { it !in used }
+        val mainIdx: Int? = scored.indices.filter { it !in used }
             .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
 
         val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap<Int, RouteType>()
@@ -159,11 +159,11 @@ class SafeRouteService(
         origin: GeoPoint,
         destination: GeoPoint,
     ): List<RouteOption> {
-        val provenance = buildProvenance()
+        val provenance: DataProvenance = buildProvenance()
         return scoredRoutes
             .sortedByDescending { it.score.score }
             .mapIndexed { index, scoredRoute ->
-                val candidate = scoredRoute.candidate
+                val candidate: RouteCandidate = scoredRoute.candidate
                 val breakdown = scoredRoute.score.breakdown
                 RouteOption(
                     id = "tmap-${candidate.searchOption}-$index",
@@ -201,8 +201,8 @@ class SafeRouteService(
      * 기준일은 manifest generatedAt(ISO)의 연·월을 "YYYY.MM"로 표기(미상이면 생략).
      */
     private fun buildProvenance(): DataProvenance {
-        val generatedAt = repository.freshness?.generatedAt
-        val basedOn = if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
+        val generatedAt: String? = repository.freshness?.generatedAt
+        val basedOn: String? = if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
             generatedAt.substring(0, YEAR_MONTH_LENGTH).replace('-', '.')
         } else {
             null
@@ -236,26 +236,26 @@ class SafeRouteService(
     }
 
     private companion object {
-        val TYPE_NAME = mapOf(RouteType.SAFE to "안심 경로", RouteType.MAIN to "기본 경로", RouteType.FAST to "빠른 경로")
+        val TYPE_NAME: Map<RouteType, String> = mapOf(RouteType.SAFE to "안심 경로", RouteType.MAIN to "기본 경로", RouteType.FAST to "빠른 경로")
 
         /** 동률 처리용 인덱스 미세 가중 — "먼저 나온 후보 우선"을 점수 비교 한 번으로 표현한다. */
-        const val TIE_BREAK_EPSILON = 1e-9
+        const val TIE_BREAK_EPSILON: Double = 1e-9
 
         /** 안심시설 데이터 원천 표기(P0-3). 파이프라인 sources.yaml 의 원천 계열. */
-        const val DATA_ORIGIN = "공공데이터포털·서울 열린데이터광장"
+        const val DATA_ORIGIN: String = "공공데이터포털·서울 열린데이터광장"
 
         /** 기준일 표기용 "YYYY-MM" 길이 — generatedAt(ISO)에서 연·월만 잘라 쓴다. */
-        const val YEAR_MONTH_LENGTH = 7
+        const val YEAR_MONTH_LENGTH: Int = 7
 
         // 태그 부여 임계(MVP 캘리브레이션) — 점수 SAT_* 상수와 별개로, "표시할 만큼 두드러진가"의 기준.
         /** "CCTV 많음" 태그: 회랑 내 CCTV 밀도(개/km)가 이 값 이상. */
-        const val TAG_CCTV_DENSITY_MIN_PER_KM = 5.0
+        const val TAG_CCTV_DENSITY_MIN_PER_KM: Double = 5.0
 
         /** "밝은 길" 태그: 가로등 밀도(개/km)가 이 값 이상. */
-        const val TAG_LAMP_DENSITY_MIN_PER_KM = 10.0
+        const val TAG_LAMP_DENSITY_MIN_PER_KM: Double = 10.0
 
         /** "안심귀갓길" 태그: 경로 길이 대비 안심귀갓길 겹침 비율(0~1)이 이 값 이상. */
-        const val TAG_SAFE_PATH_OVERLAP_MIN = 0.2
+        const val TAG_SAFE_PATH_OVERLAP_MIN: Double = 0.2
     }
 }
 

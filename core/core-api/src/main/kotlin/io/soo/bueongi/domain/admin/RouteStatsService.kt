@@ -22,7 +22,7 @@ class RouteStatsService(
 ) {
 
     fun summarize(): RouteStatsSummary {
-        val logs = routeStatsStore.findRecent(ROUTE_STATS_CAP)
+        val logs: List<RouteRecommendationLog> = routeStatsStore.findRecent(ROUTE_STATS_CAP)
         return RouteStatsSummary(
             total = logs.size,
             windowSize = logs.size,
@@ -35,7 +35,7 @@ class RouteStatsService(
 
     /** 엔드포인트 2종 고정 노출(compare/safe-compare) — 요청이 없어도 count=0 으로 나온다. */
     private fun byEndpoint(logs: List<RouteRecommendationLog>): List<EndpointCount> {
-        val counts = logs.groupingBy { it.endpoint }.eachCount()
+        val counts: Map<String, Int> = logs.groupingBy { it.endpoint }.eachCount()
         return TRACKED_ENDPOINTS.map { endpoint ->
             EndpointCount(endpoint = endpoint, count = counts[endpoint] ?: 0)
         }
@@ -67,22 +67,22 @@ class RouteStatsService(
             .truncatedTo(ChronoUnit.HOURS)
         return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
             val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs = bucketStart.toInstant().toEpochMilli()
-            val endMs = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
+            val startMs: Long = bucketStart.toInstant().toEpochMilli()
+            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
+            val count: Int = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
             HourlyBucket(hourStartMs = startMs, count = count)
         }
     }
 
     companion object {
         /** 항상 노출하는 추천 엔드포인트 2종. 요청이 없어도 count=0 으로 나온다. */
-        val TRACKED_ENDPOINTS = listOf("compare", "safe-compare")
+        val TRACKED_ENDPOINTS: List<String> = listOf("compare", "safe-compare")
 
         /** 상위 목적지 최대 노출 건수. */
-        const val TOP_DESTINATIONS_LIMIT = 10
+        const val TOP_DESTINATIONS_LIMIT: Int = 10
 
         /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위). */
-        const val HOURLY_BUCKET_COUNT = 24
+        const val HOURLY_BUCKET_COUNT: Int = 24
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

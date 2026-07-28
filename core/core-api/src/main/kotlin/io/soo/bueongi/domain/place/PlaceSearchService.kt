@@ -34,7 +34,7 @@ class PlaceSearchService(
      * 길이 가드는 외부 API([RemotePlaceProvider]) 호출 전에 적용해 불필요한 외부 호출/남용을 차단한다.
      */
     fun search(keyword: String?): List<PlaceItem> {
-        val trimmed = keyword?.trim().orEmpty()
+        val trimmed: String = keyword?.trim().orEmpty()
         if (trimmed.isEmpty()) {
             return emptyList()
         }
@@ -66,6 +66,6 @@ class PlaceSearchService(
          * 검색어(트림 후) 최대 길이. 장소명/주소 일부로는 충분히 넉넉하고, 이를 넘는 입력은 사실상
          * 오작동/남용이므로 외부 API 호출 전에 400 으로 차단한다.
          */
-        const val MAX_KEYWORD_LENGTH = 100
+        const val MAX_KEYWORD_LENGTH: Int = 100
     }
 }

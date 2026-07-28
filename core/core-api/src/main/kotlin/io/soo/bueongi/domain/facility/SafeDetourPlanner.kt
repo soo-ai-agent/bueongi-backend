@@ -1,8 +1,10 @@
 package io.soo.bueongi.domain.facility
 import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.facility.SegmentProjection
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
 
 import org.springframework.stereotype.Component
@@ -28,7 +30,7 @@ class SafeDetourPlanner(
         if (directPath.size < 2) {
             return emptyList()
         }
-        val facilities = ANCHOR_TYPES.flatMap {
+        val facilities: List<FacilityPoint> = ANCHOR_TYPES.flatMap {
             repository.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
         }
         if (facilities.isEmpty()) {
@@ -39,11 +41,11 @@ class SafeDetourPlanner(
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
         val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap<Long, ClusterAccumulator>()
         for (facility in facilities) {
-            val cx = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
-            val cy = floor(facility.lng / CLUSTER_CELL_DEG).toInt()
+            val cx: Int = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
+            val cy: Int = floor(facility.lng / CLUSTER_CELL_DEG).toInt()
             // 셀 키 패킹은 storage 그리드 인덱스와 동일 규약(단일 출처 재사용).
-            val key = GridSpatialIndex.cellKey(cx, cy)
-            val cluster = clusters.getOrPut(key) { ClusterAccumulator() }
+            val key: Long = GridSpatialIndex.cellKey(cx, cy)
+            val cluster: ClusterAccumulator = clusters.getOrPut(key) { ClusterAccumulator() }
             cluster.sumLat += facility.lat
             cluster.sumLng += facility.lng
             cluster.facilityCount += 1
@@ -76,14 +78,14 @@ class SafeDetourPlanner(
         if (anchors.isEmpty()) {
             return emptyList()
         }
-        val maxLateralMeters = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
+        val maxLateralMeters: Double = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
 
         // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
         data class Placed(val anchor: SafeAnchor, val progress: Double)
-        val placed = anchors.mapNotNull { anchor ->
-            val projection = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
-            val progressRaw = projection.t
-            val lateral = projection.distanceMeters
+        val placed: List<Placed> = anchors.mapNotNull { anchor ->
+            val projection: SegmentProjection = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
+            val progressRaw: Double = projection.t
+            val lateral: Double = projection.distanceMeters
             // 중간 구간(끝점 근처 제외) + 과도 측방이탈 제외.
             if (progressRaw <= MIDDLE_MIN_T || progressRaw >= MIDDLE_MAX_T) {
                 return@mapNotNull null
@@ -98,41 +100,41 @@ class SafeDetourPlanner(
         }
 
         // weight 내림차순(동률은 t 오름차순)으로 고가중 우선.
-        val byWeight = placed.sortedWith(
+        val byWeight: List<Placed> = placed.sortedWith(
             compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
         )
 
-        val combos = LinkedHashSet<List<GeoPoint>>()
+        val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet<List<GeoPoint>>()
         // 앵커 1개짜리 조합 2~3개.
         byWeight.take(SINGLE_ANCHOR_COMBOS).forEach { combos.add(listOf(it.anchor.center)) }
         // 앵커 2개짜리 조합 1개(상위 2개를 출발거리순 정렬).
         if (byWeight.size >= 2) {
-            val pair = byWeight.take(2).sortedBy { it.progress }.map { it.anchor.center }
+            val pair: List<GeoPoint> = byWeight.take(2).sortedBy { it.progress }.map { it.anchor.center }
             combos.add(pair)
         }
         return combos.toList()
     }
 
     companion object {
-        const val ANCHOR_RADIUS_METERS = 150.0
-        const val MAX_ANCHORS = 6
+        const val ANCHOR_RADIUS_METERS: Double = 150.0
+        const val MAX_ANCHORS: Int = 6
 
         /** 클러스터 그리드 셀(~80m). 위도 0.0008°≈89m, 경도 0.0008°≈71m(한국). */
-        const val CLUSTER_CELL_DEG = 0.0008
+        const val CLUSTER_CELL_DEG: Double = 0.0008
 
         /** 직선 길이 대비 허용 측방이탈 비율 — maxLateralMeters = 직선거리 × 이 값. */
-        const val DEFAULT_LATERAL_RATIO = 0.25
+        const val DEFAULT_LATERAL_RATIO: Double = 0.25
 
         /** 진행방향 중간 구간(끝점 근처 제외) 경계. */
-        const val MIDDLE_MIN_T = 0.2
-        const val MIDDLE_MAX_T = 0.8
+        const val MIDDLE_MIN_T: Double = 0.2
+        const val MIDDLE_MAX_T: Double = 0.8
 
         /** 앵커 1개짜리 조합 최대 개수(2~3개 중 3). */
-        const val SINGLE_ANCHOR_COMBOS = 3
+        const val SINGLE_ANCHOR_COMBOS: Int = 3
 
         // 우회 거점 후보 시설. 지구대·파출소도 포함하되, 앵커는 directPath 회랑(ANCHOR_RADIUS_METERS=150m)
         // 안에서만 추출되므로 '가는 길 근처'의 지구대만 우회 거점이 되고, 멀리 떨어진 지구대로는 우회하지 않는다.
-        val ANCHOR_TYPES = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
+        val ANCHOR_TYPES: List<FacilityType> = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
     }
 }
 

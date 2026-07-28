@@ -18,7 +18,7 @@ class Epsg5179Test {
 
     @Test
     fun `왕복 - 한반도 주요 지점 forward-inverse 오차가 1e-7도(약 1cm) 이내`() {
-        val points = listOf(
+        val points: List<Pair<Double, Double>> = listOf(
             37.5665 to 126.9780, // 서울시청
             37.4981 to 127.0276, // 강남역
             35.1796 to 129.0756, // 부산
@@ -27,7 +27,7 @@ class Epsg5179Test {
         )
         for ((lat, lng) in points) {
             val (x, y) = Epsg5179.fromWgs84(lat, lng)
-            val back = Epsg5179.toWgs84(x, y)!!
+            val back: Wgs84Point = Epsg5179.toWgs84(x, y)!!
             assertThat(back.lat).isCloseTo(lat, within(1e-7))
             assertThat(back.lng).isCloseTo(lng, within(1e-7))
         }

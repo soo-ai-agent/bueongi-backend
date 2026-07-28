@@ -59,7 +59,7 @@ class DataGoKrFacilityClient(
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
         var pageNo: Int = 1
         var received: Long = 0L
-        var totalCount = Long.MAX_VALUE
+        var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= MAX_PAGES && received < totalCount) {
             val envelope = try {
@@ -79,7 +79,7 @@ class DataGoKrFacilityClient(
                 log.warn("data.go.kr 빈 응답(endpoint={}, page={}) — 갱신 중단(기존 데이터 유지)", endpoint, pageNo)
                 return null
             }
-            val code = envelope.response?.header?.resultCode
+            val code: String? = envelope.response?.header?.resultCode
             if (!code.isNullOrBlank() && code != "00") {
                 log.warn(
                     "data.go.kr resultCode={}({}) (endpoint={}) — 갱신 중단(기존 데이터 유지)",
@@ -88,7 +88,7 @@ class DataGoKrFacilityClient(
                 return null
             }
 
-            val rows = extractItems(envelope.response?.body?.items)
+            val rows: List<JsonNode> = extractItems(envelope.response?.body?.items)
             envelope.response?.body?.totalCount?.let { totalCount = it }
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
@@ -120,23 +120,23 @@ class DataGoKrFacilityClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     companion object {
-        const val CCTV_ENDPOINT = "https://apis.data.go.kr/1741000/cctv_info"
-        const val BELL_ENDPOINT = "https://apis.data.go.kr/1741000/emergency_call_box_info"
-        const val SAFEHOUSE_ENDPOINT = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
+        const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info"
+        const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info"
+        const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
         /** 표준 조회서비스 페이지당 최대 건수. */
-        const val PAGE_SIZE = 1000
+        const val PAGE_SIZE: Int = 1000
 
         /** 폭주 방지 상한(1000행 × 1000페이지 = 100만 행) — 전국 CCTV(약 37만행)에 충분한 여유. */
-        const val MAX_PAGES = 1000
+        const val MAX_PAGES: Int = 1000
 
         // 서비스별 원천 필드명(파이프라인 LIVE_SPEC B-1/D-1/B-2와 동일 매핑). 각 필드는 후보를 순서대로
         // 시도한다 — 표준데이터 계열은 영문 camelCase 가 규격이지만 서비스·시기별 편차가 있어 폴백을 둔다.
-        private val CCTV_FIELDS = FieldNames(
+        private val CCTV_FIELDS: FieldNames = FieldNames(
             lat = listOf("latitude"), lng = listOf("longitude"),
             name = listOf("institutionNm"), address = listOf("rdnmadr"), sigungu = emptyList(),
         )
-        private val BELL_FIELDS = FieldNames(
+        private val BELL_FIELDS: FieldNames = FieldNames(
             lat = listOf("lat"), lng = listOf("lon"),
             name = listOf("mng_inst"), address = listOf("rn_adres"), sigungu = listOf("sgg_cd"),
         )
@@ -146,7 +146,7 @@ class DataGoKrFacilityClient(
          * latitude/longitude/rdnmadr 를 1순위로 하되 한글 컬럼 응답(위도/경도 등) 폴백을 둔다
          * (키 활성화 후 실응답으로 1순위 확정 예정 — 폴백이 있어 어느 쪽이든 동작).
          */
-        private val SAFEHOUSE_FIELDS = FieldNames(
+        private val SAFEHOUSE_FIELDS: FieldNames = FieldNames(
             lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
             name = listOf("storNm", "institutionNm", "업소명", "점포명"),
             address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"), sigungu = emptyList(),
@@ -174,8 +174,8 @@ private data class FieldNames(
 
 /** 행 JsonNode → [DataGoKrPoint]. 좌표가 숫자로 안 읽히면 null(건너뜀). */
 private fun JsonNode.toPoint(fields: FieldNames): DataGoKrPoint? {
-    val lat = text(fields.lat)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-    val lng = text(fields.lng)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+    val lat: Double = text(fields.lat)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+    val lng: Double = text(fields.lng)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     return DataGoKrPoint(
         lat = lat,
         lng = lng,

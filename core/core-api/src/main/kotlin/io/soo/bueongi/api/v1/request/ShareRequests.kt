@@ -147,7 +147,7 @@ data class SaveRouteRequest(
      * 값 규약(허용 enum·길이 상한 → 422)이라 여기 경계에서 [validateRouteMeta] 로 검증한다(라우터 수동 검증 금지 준수).
      */
     fun toStoredRoute(): StoredRoute {
-        val dest = requireNotNull(destination) { "destination 은 @NotNull 검증을 통과했어야 한다" }
+        val dest: NamedLatLng = requireNotNull(destination) { "destination 은 @NotNull 검증을 통과했어야 한다" }
         validateRouteMeta()
         return StoredRoute(
             destination = StoredRouteDestination(

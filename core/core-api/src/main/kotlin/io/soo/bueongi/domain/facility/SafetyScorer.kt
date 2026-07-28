@@ -23,26 +23,26 @@ class SafetyScorer(
 
     /** 한 경로의 안전 점수와 세부 지표를 계산한다. 회랑 폭은 [DEFAULT_CORRIDOR_METERS] 고정(조절 요구 없음). */
     fun score(path: List<GeoPoint>): SafetyScore {
-        val corridorMeters = DEFAULT_CORRIDOR_METERS
-        val lengthM = SpatialMath.pathLengthMeters(path)
-        val routeKm = lengthM / 1000.0
+        val corridorMeters: Double = DEFAULT_CORRIDOR_METERS
+        val lengthM: Double = SpatialMath.pathLengthMeters(path)
+        val routeKm: Double = lengthM / 1000.0
         // 0 길이 경로 방어: 밀도 분모를 최소 1m(0.001km)로 잡아 폭주를 막는다.
-        val km = if (routeKm > 0) {
+        val km: Double = if (routeKm > 0) {
             routeKm
         } else {
             0.001
         }
 
-        val cctvCount = repository.index(FacilityType.CCTV).withinCorridor(path, corridorMeters).size
-        val lampCount = repository.index(FacilityType.LAMP).withinCorridor(path, corridorMeters).size
-        val bellCount = repository.index(FacilityType.BELL).withinCorridor(path, corridorMeters).size
-        val safehouseCount = repository.index(FacilityType.SAFEHOUSE).withinCorridor(path, corridorMeters).size
+        val cctvCount: Int = repository.index(FacilityType.CCTV).withinCorridor(path, corridorMeters).size
+        val lampCount: Int = repository.index(FacilityType.LAMP).withinCorridor(path, corridorMeters).size
+        val bellCount: Int = repository.index(FacilityType.BELL).withinCorridor(path, corridorMeters).size
+        val safehouseCount: Int = repository.index(FacilityType.SAFEHOUSE).withinCorridor(path, corridorMeters).size
         // 지구대·파출소도 안전 점수에 반영한다(긴급 도움처). 희소 시설이라 개수 기반으로 정규화.
-        val policeCount = repository.index(FacilityType.POLICE).withinCorridor(path, corridorMeters).size
+        val policeCount: Int = repository.index(FacilityType.POLICE).withinCorridor(path, corridorMeters).size
 
-        val cctvDensity = cctvCount / km
-        val lampDensity = lampCount / km
-        val bellDensity = bellCount / km
+        val cctvDensity: Double = cctvCount / km
+        val lampDensity: Double = lampCount / km
+        val bellDensity: Double = bellCount / km
 
         // 안심귀갓길 겹침 비율(0~1): 후보 경로 길이 대비 겹침 길이의 최댓값.
         var safePathOverlap: Double = 0.0
@@ -51,13 +51,13 @@ class SafetyScorer(
                 if (safePath.coords.size < 2) {
                     continue
                 }
-                val overlap = SpatialMath.overlapLengthMeters(path, safePath.coords, corridorMeters)
+                val overlap: Double = SpatialMath.overlapLengthMeters(path, safePath.coords, corridorMeters)
                 safePathOverlap = maxOf(safePathOverlap, overlap / lengthM)
             }
             safePathOverlap = min(1.0, safePathOverlap)
         }
 
-        val normalized =
+        val normalized: Double =
             WEIGHT_CCTV * saturate(cctvDensity, SAT_CCTV_PER_KM) +
                 WEIGHT_LAMP * saturate(lampDensity, SAT_LAMP_PER_KM) +
                 WEIGHT_BELL * saturate(bellDensity, SAT_BELL_PER_KM) +
@@ -91,23 +91,23 @@ class SafetyScorer(
     private fun round3(v: Double): Double = (v * 1000).roundToInt() / 1000.0
 
     companion object {
-        const val DEFAULT_CORRIDOR_METERS = 30.0
+        const val DEFAULT_CORRIDOR_METERS: Double = 30.0
 
         // 각 밀도/개수가 만점(정규화 1.0)에 이르는 기준값(MVP 캘리브레이션).
-        const val SAT_CCTV_PER_KM = 20.0
-        const val SAT_LAMP_PER_KM = 40.0
-        const val SAT_BELL_PER_KM = 5.0
-        const val SAT_SAFEHOUSE_COUNT = 3.0
+        const val SAT_CCTV_PER_KM: Double = 20.0
+        const val SAT_LAMP_PER_KM: Double = 40.0
+        const val SAT_BELL_PER_KM: Double = 5.0
+        const val SAT_SAFEHOUSE_COUNT: Double = 3.0
         /** 지구대·파출소 개수 — 희소 시설이라 2곳이면 만점 기여. */
-        const val SAT_POLICE_COUNT = 2.0
+        const val SAT_POLICE_COUNT: Double = 2.0
 
         // 설계 가중치(합 1.0). 지구대·파출소(0.10)·여성안심지킴이집(0.07) 반영분만큼 CCTV/조명/비상벨을 재배분.
-        const val WEIGHT_CCTV = 0.30
-        const val WEIGHT_LAMP = 0.20
-        const val WEIGHT_BELL = 0.18
-        const val WEIGHT_SAFEHOUSE = 0.07
-        const val WEIGHT_POLICE = 0.10
-        const val WEIGHT_SAFE_PATH = 0.15
+        const val WEIGHT_CCTV: Double = 0.30
+        const val WEIGHT_LAMP: Double = 0.20
+        const val WEIGHT_BELL: Double = 0.18
+        const val WEIGHT_SAFEHOUSE: Double = 0.07
+        const val WEIGHT_POLICE: Double = 0.10
+        const val WEIGHT_SAFE_PATH: Double = 0.15
     }
 }
 

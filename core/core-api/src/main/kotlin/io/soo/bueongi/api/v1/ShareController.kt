@@ -108,6 +108,6 @@ class ShareController(
         value.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e")
 
     private companion object {
-        const val TOKEN_PLACEHOLDER = "__SHARE_TOKEN__"
+        const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"
     }
 }

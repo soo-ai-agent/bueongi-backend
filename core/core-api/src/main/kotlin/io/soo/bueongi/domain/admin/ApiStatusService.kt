@@ -27,11 +27,11 @@ class ApiStatusService(
 ) {
 
     fun summarize(): ApiStatusSummary {
-        val now = System.currentTimeMillis()
-        val logs = apiCallLogStore.findRecent(provider = null, limit = API_CALL_LOG_CAP)
-        val todayStartMs = todayStartMs(now)
-        val byProvider = logs.groupBy { it.provider }
-        val providers = TRACKED_PROVIDERS.map { provider ->
+        val now: Long = System.currentTimeMillis()
+        val logs: List<ApiCallLog> = apiCallLogStore.findRecent(provider = null, limit = API_CALL_LOG_CAP)
+        val todayStartMs: Long = todayStartMs(now)
+        val byProvider: Map<String, List<ApiCallLog>> = logs.groupBy { it.provider }
+        val providers: List<ProviderStatus> = TRACKED_PROVIDERS.map { provider ->
             aggregate(provider, byProvider[provider] ?: emptyList(), now, todayStartMs)
         }
         return ApiStatusSummary(
@@ -53,31 +53,31 @@ class ApiStatusService(
             .truncatedTo(ChronoUnit.HOURS)
         return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
             val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs = bucketStart.toInstant().toEpochMilli()
-            val endMs = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
+            val startMs: Long = bucketStart.toInstant().toEpochMilli()
+            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
+            val count: Int = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
             HourlyBucket(hourStartMs = startMs, count = count)
         }
     }
 
     private fun aggregate(provider: String, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
-        val total = logs.size
-        val successCount = logs.count { it.success }
-        val successRate = if (total == 0) {
+        val total: Int = logs.size
+        val successCount: Int = logs.count { it.success }
+        val successRate: Double = if (total == 0) {
             0.0
         } else {
             successCount.toDouble() / total
         }
-        val avgDurationMs = if (total == 0) {
+        val avgDurationMs: Long = if (total == 0) {
             0L
         } else {
             (logs.sumOf { it.durationMs }.toDouble() / total).roundToLong()
         }
-        val p95DurationMs = Percentiles.nearestRank(logs.map { it.durationMs }.sorted(), 95)
-        val todayCount = logs.count { it.atEpochMs >= todayStartMs }
-        val quotaLimit = QUOTA_LIMITS[provider]
-        val quotaWarning = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
-        val quotaBurnPerHour = quotaBurnPerHour(quotaLimit, todayCount, nowMs, todayStartMs)
+        val p95DurationMs: Long = Percentiles.nearestRank(logs.map { it.durationMs }.sorted(), 95)
+        val todayCount: Int = logs.count { it.atEpochMs >= todayStartMs }
+        val quotaLimit: Int? = QUOTA_LIMITS[provider]
+        val quotaWarning: Boolean = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
+        val quotaBurnPerHour: Double? = quotaBurnPerHour(quotaLimit, todayCount, nowMs, todayStartMs)
         return ProviderStatus(
             provider = provider,
             total = total,
@@ -106,7 +106,7 @@ class ApiStatusService(
         if (quotaLimit == null) {
             return null
         }
-        val elapsedHoursToday = (nowMs - todayStartMs).toDouble() / HOUR_MS
+        val elapsedHoursToday: Double = (nowMs - todayStartMs).toDouble() / HOUR_MS
         if (elapsedHoursToday <= 0.0) {
             return 0.0
         }
@@ -128,22 +128,22 @@ class ApiStatusService(
 
     companion object {
         /** 항상 노출하는 원천 4종. 로그가 없어도 total=0 으로 나온다. */
-        val TRACKED_PROVIDERS = listOf("KAKAO", "TMAP", "DATAGOKR", "SAFEMAP")
+        val TRACKED_PROVIDERS: List<String> = listOf("KAKAO", "TMAP", "DATAGOKR", "SAFEMAP")
 
         /** 원천별 일일 쿼터 상한(있는 것만) — data.go.kr 은 승인 기본 1일 1000건. */
-        val QUOTA_LIMITS = mapOf("DATAGOKR" to 1000)
+        val QUOTA_LIMITS: Map<String, Int> = mapOf("DATAGOKR" to 1000)
 
         /** 오늘 호출 수가 일일 쿼터 상한의 이 비율 이상이면 경고(quotaWarning). */
-        const val QUOTA_WARNING_RATIO = 0.8
+        const val QUOTA_WARNING_RATIO: Double = 0.8
 
         /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위) — [RouteStatsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT = 24
+        const val HOURLY_BUCKET_COUNT: Int = 24
 
         /** 쿼터 소진율 계산용 1시간(ms). */
-        const val HOUR_MS = 3_600_000L
+        const val HOUR_MS: Long = 3_600_000L
 
         /** 하루 시간 수 — 쿼터 마감 예상 총량 = 시간당 소진율 × 이 값. */
-        const val HOURS_PER_DAY = 24
+        const val HOURS_PER_DAY: Int = 24
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

@@ -29,7 +29,7 @@ class ShareService(
     private val clock: Clock,
     @Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
-    private val random = SecureRandom()
+    private val random: SecureRandom = SecureRandom()
     private val tokenEncoder = Base64.getUrlEncoder().withoutPadding()
 
     /**
@@ -37,9 +37,9 @@ class ShareService(
      * etaSeconds 를 받으면 예정 도착 시각(+[MISSED_ARRIVAL_GRACE_SECONDS])을 잡아 미도착 감시 대상으로 둔다(미제공 시 감시 제외).
      */
     fun create(expiresInHours: Int?, etaSeconds: Int? = null): CreateShareResponse {
-        val hours = expiresInHours ?: DEFAULT_EXPIRES_HOURS
-        val token = newToken()
-        val ownerSecret = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
+        val hours: Int = expiresInHours ?: DEFAULT_EXPIRES_HOURS
+        val token: String = newToken()
+        val ownerSecret: String = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
         val now = clock.instant()
         val expiresAt = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
         val expectedArrivalAt = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
@@ -76,8 +76,8 @@ class ShareService(
 
     /** 활성 세션 1건 → 관리자 뷰. lat/lng/updatedAtMs 는 위치 미보고 시 null, TTL 은 expiresAt 에서 파생(추가 왕복 없음). */
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
-        val location = session.location
-        val ttlSeconds = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
+        val location: StoredLocation? = session.location
+        val ttlSeconds: Long = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
         return ActiveShareView(
             token = session.token,
             shareUrl = shareUrlFor(session.token),
@@ -97,10 +97,10 @@ class ShareService(
      * 경로 컨텍스트는 [ShareSession.withLocation] 이 보존한다(위치와 경로는 독립 — 엔티티 불변식).
      */
     fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
-        val session = store.findByToken(token) ?: throw ShareSessionNotFoundException()
+        val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
         val now = clock.instant()
-        val location = StoredLocation(
+        val location: StoredLocation = StoredLocation(
             lat = report.lat,
             lng = report.lng,
             updatedAt = now,
@@ -116,7 +116,7 @@ class ShareService(
      * 기존 위치는 [ShareSession.withRoute] 가 보존한다(위치와 경로는 독립 — 엔티티 불변식).
      */
     fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
-        val session = store.findByToken(token) ?: throw ShareSessionNotFoundException()
+        val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now = clock.instant()
         store.save(session.withRoute(route))
@@ -129,7 +129,7 @@ class ShareService(
      * 저장됨 → `{expired:false, route:{...}}`. 위치 폴링(GET /location)과 달리 시청자로 집계하지 않는다(markViewed 미호출).
      */
     fun getRoute(token: String): RouteView {
-        val session = store.findByToken(token)
+        val session: ShareSession = store.findByToken(token)
             ?: return RouteView(expired = true, route = null)
         return RouteView(expired = false, route = session.route?.toRouteContext())
     }
@@ -139,7 +139,7 @@ class ShareService(
      * 토큰 없음/만료 → `expired:true`(좌표 null), 살아있으나 첫 위치 전 → `expired:false`+좌표 null, 위치 있음 → 좌표.
      */
     fun getLocation(token: String): LocationView {
-        val session = store.findByToken(token)
+        val session: ShareSession = store.findByToken(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
         // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 관리자 열람은 이 경로가 아니라 집계하지 않는
         // [getLocationForAdmin] 을 쓰고, 사용자 본인은 owner_secret 이 필요한 POST /watching 으로만 확인한다.
@@ -154,7 +154,7 @@ class ShareService(
      * 살아있으나 첫 위치 전 → `expired:false`+좌표 null, 위치 있음 → 좌표.
      */
     fun getLocationForAdmin(token: String): LocationView {
-        val session = store.findByToken(token)
+        val session: ShareSession = store.findByToken(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
         return locationViewOf(session)
     }
@@ -164,8 +164,8 @@ class ShareService(
      * 순수 조립이라 부수효과가 없다 — 시청 집계([LocationStore.markViewed])는 호출자(보호자 조회만)가 정한다.
      */
     private fun locationViewOf(session: ShareSession): LocationView {
-        val overdue = isOverdue(session, clock.instant())
-        val location = session.location
+        val overdue: Boolean = isOverdue(session, clock.instant())
+        val location: StoredLocation = session.location
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
         return LocationView(
             lat = location.lat,
@@ -180,7 +180,7 @@ class ShareService(
 
     /** 예정 도착 시각을 여유([MISSED_ARRIVAL_OVERDUE_SECONDS]) 넘겨 초과했는지 — 보호자 페이지 경고 격상 근거. ETA 미제공이면 false. */
     private fun isOverdue(session: ShareSession, now: Instant): Boolean {
-        val expected = session.expectedArrivalAt ?: return false
+        val expected: Instant = session.expectedArrivalAt ?: return false
         return now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
     }
 
@@ -196,7 +196,7 @@ class ShareService(
      * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
      */
     fun end(token: String, ownerSecret: String?) {
-        val session = store.findByToken(token) ?: return // 이미 없음/만료 → 멱등.
+        val session: ShareSession = store.findByToken(token) ?: return // 이미 없음/만료 → 멱등.
         requireOwner(session, ownerSecret)
         store.deleteByToken(token)
     }
@@ -207,10 +207,10 @@ class ShareService(
      * 위치를 함께 돌려주므로 관리자가 보호자에게 보이는 화면을 '따로' 미리볼 수 있다(시청자 미집계). 없는/만료 토큰은 expired=true.
      */
     fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
-        val session = store.findByToken(token)
+        val session: ShareSession = store.findByToken(token)
             ?: return WatchResponse(watching = false, expired = true)
         requireOwner(session, ownerSecret)
-        val location = session.location
+        val location: StoredLocation? = session.location
         return WatchResponse(
             watching = store.isWatched(token),
             lat = location?.lat,
@@ -228,8 +228,8 @@ class ShareService(
      * 위치 조작·임의 종료를 막고, 토큰 존재 여부도 드러내지 않는다(불투명 응답).
      */
     private fun requireOwner(session: ShareSession, providedSecret: String?) {
-        val provided = providedSecret ?: throw ShareSessionNotFoundException()
-        val matches = MessageDigest.isEqual(
+        val provided: String = providedSecret ?: throw ShareSessionNotFoundException()
+        val matches: Boolean = MessageDigest.isEqual(
             provided.toByteArray(Charsets.UTF_8),
             session.ownerSecret.toByteArray(Charsets.UTF_8),
         )
@@ -247,8 +247,8 @@ class ShareService(
 
     private companion object {
         /** token 엔트로피(바이트). 16바이트 = 128-bit. */
-        const val TOKEN_BYTES = 16
-        const val SECONDS_PER_HOUR = 3600L
+        const val TOKEN_BYTES: Int = 16
+        const val SECONDS_PER_HOUR: Long = 3600L
 
         /**
          * 관리자 목록 정렬 — updatedAtMs 내림차순(위치 있는 세션 먼저, 최근 갱신 순), 동률·위치 미보고(null) 그룹은 token 오름차순.

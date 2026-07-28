@@ -74,7 +74,7 @@ class SafemapPoliceClient(
                 return null
             }
 
-            val rows = findFacilityRows(body)
+            val rows: List<JsonNode> = findFacilityRows(body)
             val parsedTotalCount = body.findValue("totalCount")?.asLong()
             if (parsedTotalCount != null && parsedTotalCount >= 0) {
                 totalCount = parsedTotalCount
@@ -82,7 +82,7 @@ class SafemapPoliceClient(
             received += rows.size
             rows.mapNotNullTo(facilities) { it.toFacility() }
 
-            val total = totalCount
+            val total: Long? = totalCount
             when {
                 rows.isEmpty() -> break
                 total != null && received >= total -> break
@@ -104,7 +104,7 @@ class SafemapPoliceClient(
                 return objects
             }
             for (child in node) {
-                val found = findFacilityRows(child)
+                val found: List<JsonNode> = findFacilityRows(child)
                 if (found.isNotEmpty()) {
                     return found
                 }
@@ -113,7 +113,7 @@ class SafemapPoliceClient(
         }
         if (node.isObject) {
             for (child in node) {
-                val found = findFacilityRows(child)
+                val found: List<JsonNode> = findFacilityRows(child)
                 if (found.isNotEmpty()) {
                     return found
                 }
@@ -124,7 +124,7 @@ class SafemapPoliceClient(
 
     /** 행 → 시설(WGS84 확정). 좌표를 판별 못 하면 null(건너뜀). */
     private fun JsonNode.toFacility(): SafemapPoliceFacility? {
-        val point = resolveWgs84(text("x"), text("y"))
+        val point: Wgs84Point = resolveWgs84(text("x"), text("y"))
             ?: resolveWgs84(text("tmp_x"), text("tmp_y"))
             ?: return null
         return SafemapPoliceFacility(
@@ -139,8 +139,8 @@ class SafemapPoliceClient(
 
     /** 좌표 문자열 쌍 → WGS84. 값 범위로 좌표계를 판별한다(경위도 그대로 / 순서 뒤바뀜 / EPSG:5179). */
     private fun resolveWgs84(xText: String?, yText: String?): Wgs84Point? {
-        val x = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-        val y = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+        val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+        val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
         return when {
             Epsg5179.inKoreaBounds(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x) // x=경도, y=위도
             Epsg5179.inKoreaBounds(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어
@@ -156,13 +156,13 @@ class SafemapPoliceClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     companion object {
-        const val ENDPOINT = "https://safemap.go.kr/openapi2/IF_0036"
+        const val ENDPOINT: String = "https://safemap.go.kr/openapi2/IF_0036"
 
         /** 페이지당 요청 건수 — 서버가 상한을 낮게 잡아도 totalCount 순회로 전량을 받는다. */
-        const val PAGE_SIZE = 1000
+        const val PAGE_SIZE: Int = 1000
 
         /** 폭주 방지 상한 — 전국 지역경찰관서(수천 관서)에 충분한 여유. */
-        const val MAX_PAGES = 500
+        const val MAX_PAGES: Int = 500
 
         /**
          * EPSG:5179 로 판별하는 동경(easting)/북위(northing) 미터 범위 — false easting/northing

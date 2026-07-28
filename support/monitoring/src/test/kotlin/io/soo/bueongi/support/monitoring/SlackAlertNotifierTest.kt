@@ -21,10 +21,10 @@ import java.util.concurrent.Executor
  */
 class SlackAlertNotifierTest {
 
-    private val webhook = "https://hooks.slack.com/services/T000/B000/XXXX"
+    private val webhook: String = "https://hooks.slack.com/services/T000/B000/XXXX"
 
     /** 스로틀 검증용 가변 시계 — 테스트가 now 를 직접 진행시킨다. */
-    private var now = 1_000_000L
+    private var now: Long = 1_000_000L
 
     private fun bind(
         url: String = webhook,
@@ -37,7 +37,7 @@ class SlackAlertNotifierTest {
         if (mutedCategories.isNotEmpty()) {
             config.update(enabled = true, throttleMinutes = throttleMinutes, mutedCategories = mutedCategories)
         }
-        val notifier = SlackAlertNotifier(
+        val notifier: SlackAlertNotifier = SlackAlertNotifier(
             config = config,
             restClientBuilder = builder,
             objectMapper = ObjectMapper(),
@@ -102,7 +102,7 @@ class SlackAlertNotifierTest {
         now = 200L
         notifier.notify("k2", "t2", "d2")
 
-        val recent = notifier.findRecentAlerts(10)
+        val recent: List<AlertRecord> = notifier.findRecentAlerts(10)
         assertThat(recent.map { it.key }).containsExactly("k2", "k1") // 최신순
         assertThat(recent[0].atEpochMs).isEqualTo(200L) // 시각도 nowMs 로 기록
     }
@@ -124,7 +124,7 @@ class SlackAlertNotifierTest {
         val (notifier, _) = bind(url = " ")
         repeat(250) { notifier.notify("k$it", "t", "d") }
 
-        val recent = notifier.findRecentAlerts(1000)
+        val recent: List<AlertRecord> = notifier.findRecentAlerts(1000)
         assertThat(recent).hasSize(200) // 링버퍼 상한
         assertThat(recent.first().key).isEqualTo("k249") // 가장 최근
         assertThat(recent.last().key).isEqualTo("k50") // 오래된 k0~k49 는 폐기

@@ -51,10 +51,10 @@ class JwtTokenVerifier(props: JwtProperties) {
             throw InvalidTokenException("malformed token", e)
         }
 
-        val userId = claims.subject?.toLongOrNull()
+        val userId: Long = claims.subject?.toLongOrNull()
             ?: throw InvalidTokenException("missing or non-numeric sub claim")
 
-        val roles = (claims["roles"] as? List<*>)
+        val roles: List<String> = (claims["roles"] as? List<*>)
             ?.mapNotNull { it as? String }
             ?: emptyList()
 
@@ -71,7 +71,7 @@ class JwtTokenVerifier(props: JwtProperties) {
          * 헤더("-----BEGIN PUBLIC KEY-----" 등)와 공백은 자동 제거한다.
          */
         fun parsePemPublicKey(pem: String): RSAPublicKey {
-            val stripped = pem
+            val stripped: String = pem
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replace("\\s".toRegex(), "")

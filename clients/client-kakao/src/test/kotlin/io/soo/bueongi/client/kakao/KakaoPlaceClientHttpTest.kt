@@ -29,12 +29,12 @@ import org.springframework.web.client.RestClient
  */
 class KakaoPlaceClientHttpTest {
 
-    private val apiKey = "test-rest-key"
+    private val apiKey: String = "test-rest-key"
 
     /** mock 서버를 바인딩한 builder 로 provider 를 만든다. provider 가 builder 를 clone 해도 mock 요청 팩토리는 보존된다. */
     private fun bind(): Pair<KakaoPlaceClient, MockRestServiceServer> {
-        val builder = RestClient.builder()
-        val server = MockRestServiceServer.bindTo(builder).build()
+        val builder: RestClient.Builder = RestClient.builder()
+        val server: MockRestServiceServer = MockRestServiceServer.bindTo(builder).build()
         val provider: KakaoPlaceClient = KakaoPlaceClient(apiKey = apiKey, restClientBuilder = builder)
         return provider to server
     }
@@ -78,7 +78,7 @@ class KakaoPlaceClientHttpTest {
                 ),
             )
 
-        val result = provider.search("gangnam")
+        val result: List<KakaoPlace> = provider.search("gangnam")
 
         server.verify()
         assertThat(result).containsExactly(
@@ -108,7 +108,7 @@ class KakaoPlaceClientHttpTest {
                 ),
             )
 
-        val result = provider.search("테스트")
+        val result: List<KakaoPlace> = provider.search("테스트")
 
         server.verify()
         assertThat(result).containsExactly(KakaoPlace("정상", "서울 어딘가 1", 37.5, 127.0))

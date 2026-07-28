@@ -33,9 +33,9 @@ class FacilityUploadController(
         @PathVariable type: String,
         @RequestParam("file") file: MultipartFile,
     ): FacilityUploadResponse {
-        val facilityType = FacilityType.entries.find { it.cdnType == type }
+        val facilityType: FacilityType = FacilityType.entries.find { it.cdnType == type }
             ?: throw UnknownFacilityTypeException(type, FacilityType.entries.map { it.cdnType })
-        val result = uploadService.upload(facilityType, file.bytes)
+        val result: FacilityUploadResult = uploadService.upload(facilityType, file.bytes)
         return FacilityUploadResponse.from(result)
     }
 }

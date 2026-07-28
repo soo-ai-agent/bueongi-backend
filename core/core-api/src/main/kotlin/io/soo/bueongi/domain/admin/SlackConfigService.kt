@@ -20,8 +20,8 @@ class SlackConfigService(
 
     /** 현재 설정을 요약으로 조회한다 — webhook 은 마스킹, 카테고리는 5종 라벨·뮤트 여부를 붙인다. */
     fun view(): SlackConfigSummary {
-        val muted = slackAlertConfig.mutedCategories()
-        val categories = KNOWN_CATEGORIES.map { (key, label) ->
+        val muted: Set<String> = slackAlertConfig.mutedCategories()
+        val categories: List<SlackCategoryConfig> = KNOWN_CATEGORIES.map { (key, label) ->
             SlackCategoryConfig(key = key, label = label, muted = muted.contains(key))
         }
         return SlackConfigSummary(
@@ -49,12 +49,12 @@ class SlackConfigService(
 
     /** 테스트 발송을 시도하고 결과(성공 여부 + 현재 효과 발송 가능 여부)를 돌려준다. */
     fun test(): SlackTestResult {
-        val sent = alertNotifier.sendTest()
+        val sent: Boolean = alertNotifier.sendTest()
         return SlackTestResult(sent = sent, enabled = slackAlertConfig.sendEnabled())
     }
 
     private fun rejectUnknownCategories(categories: Set<String>) {
-        val unknown = categories - KNOWN_CATEGORIES.keys
+        val unknown: Set<String> = categories - KNOWN_CATEGORIES.keys
         if (unknown.isNotEmpty()) {
             throw InvalidSlackCategoryException(
                 rejectedValue = unknown.sorted(),

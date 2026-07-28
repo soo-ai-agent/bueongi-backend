@@ -22,7 +22,7 @@ class RequestMetricsFilterConfig {
     fun requestMetricsFilterRegistration(
         requestMetricStore: RequestMetricStore,
     ): FilterRegistrationBean<RequestMetricsFilter> {
-        val registration = FilterRegistrationBean(RequestMetricsFilter(requestMetricStore))
+        val registration: FilterRegistrationBean<RequestMetricsFilter> = FilterRegistrationBean(RequestMetricsFilter(requestMetricStore))
         registration.addUrlPatterns("/api/*", "/share/*")
         registration.setName("requestMetricsFilter")
         registration.order = Ordered.HIGHEST_PRECEDENCE

@@ -25,13 +25,13 @@ class FacilityUploadService(
     private val log = LoggerFactory.getLogger(FacilityUploadService::class.java)
 
     fun upload(type: FacilityType, bytes: ByteArray): FacilityUploadResult {
-        val spec = FacilityCsvSpec.forType(type)
-        val parsed = parser.parse(bytes, spec)
+        val spec: FacilityCsvSpec = FacilityCsvSpec.forType(type)
+        val parsed: FacilityCsvParseResult = parser.parse(bytes, spec)
         if (parsed.points.isEmpty()) {
             throw EmptyFacilityUploadException(received = parsed.received)
         }
         uploadStore.save(type, parsed.points)
-        val saved = liveStore.replace(type, parsed.points)
+        val saved: Int = liveStore.replace(type, parsed.points)
         refreshStatusStore?.recordUpload(type, saved, System.currentTimeMillis())
         log.info(
             "시설 업로드 반영: type={}, coordSystem={}, received={}, saved={}, skipped={}",

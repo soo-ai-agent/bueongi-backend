@@ -107,7 +107,7 @@ class FacilityRefreshService(
         )
 
     private fun refresh(type: FacilityType, fetch: () -> List<FacilityPoint>?): Int? {
-        val points = fetch()
+        val points: List<FacilityPoint>? = fetch()
         if (points == null) {
             log.warn("안심시설 라이브 갱신 실패(type={}) — 기존 데이터 유지", type)
             alertNotifier?.notify(
@@ -132,7 +132,7 @@ class FacilityRefreshService(
 
 /** data.go.kr 행 → 저장 모델. 좌표 불변식([GeoPoint.orNull])을 여기(도메인 경계)서 검증하고 벗어나면 버린다. */
 private fun DataGoKrPoint.toFacilityPoint(type: FacilityType): FacilityPoint? {
-    val point = GeoPoint.orNull(lat, lng) ?: return null
+    val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
     return FacilityPoint(
         type = type,
         lat = point.lat,

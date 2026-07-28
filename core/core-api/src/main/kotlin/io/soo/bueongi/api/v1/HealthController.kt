@@ -43,10 +43,10 @@ class HealthController(
     }
 
     private companion object {
-        const val STATUS_UP = "UP"
-        const val SERVICE_NAME = "bueongi-backend"
-        const val PLACE_SOURCE_LIVE = "live"
-        const val PLACE_SOURCE_SEED = "seed"
+        const val STATUS_UP: String = "UP"
+        const val SERVICE_NAME: String = "bueongi-backend"
+        const val PLACE_SOURCE_LIVE: String = "live"
+        const val PLACE_SOURCE_SEED: String = "seed"
     }
 }
 

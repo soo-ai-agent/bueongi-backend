@@ -46,7 +46,7 @@ class ApiControllerAdvice(
     /** `@Valid` 본문 검증 실패 → 400 + 필드별 `errors`(중첩 필드는 `origin.lat` 형태). */
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
-        val errors = ex.bindingResult.fieldErrors.map { fe ->
+        val errors: List<ApiFieldError> = ex.bindingResult.fieldErrors.map { fe ->
             ApiFieldError(
                 field = fe.field,
                 message = fe.defaultMessage ?: "유효하지 않은 값입니다.",
@@ -419,6 +419,6 @@ class ApiControllerAdvice(
 
     private companion object {
         /** 503 응답의 Retry-After(초) — 저장소 장애는 대개 짧게 지나가므로 앱/프록시가 곧 재시도하게 유도. */
-        const val RETRY_AFTER_SECONDS = 5
+        const val RETRY_AFTER_SECONDS: Int = 5
     }
 }

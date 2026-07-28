@@ -51,10 +51,10 @@ class SlackAlertNotifier internal constructor(
 
     private val log = LoggerFactory.getLogger(SlackAlertNotifier::class.java)
     private val restClient = restClientBuilder.clone().build()
-    private val lastSentAtMs = ConcurrentHashMap<String, Long>()
+    private val lastSentAtMs: ConcurrentHashMap<String, Long> = ConcurrentHashMap<String, Long>()
 
     /** 장애 이력 링버퍼 — 자기 자신을 락으로 삼아 동기화한다. 최신 [ALERT_HISTORY_CAP]건만 보관(오래된 것부터 폐기). */
-    private val recentAlerts = ArrayDeque<AlertRecord>()
+    private val recentAlerts: ArrayDeque<AlertRecord> = ArrayDeque<AlertRecord>()
 
     override val isEnabled: Boolean
         get() = config.sendEnabled()
@@ -70,7 +70,7 @@ class SlackAlertNotifier internal constructor(
             log.debug("Slack 알림 뮤트 카테고리 — 발송 생략(이력은 남김): {}", key)
             return
         }
-        val now = nowMs()
+        val now: Long = nowMs()
         var allowed: Boolean = false
         lastSentAtMs.compute(key) { _, last ->
             if (last == null || now - last >= config.throttleMillis()) {
@@ -88,7 +88,7 @@ class SlackAlertNotifier internal constructor(
     }
 
     override fun findRecentAlerts(limit: Int): List<AlertRecord> {
-        val snapshot = synchronized(recentAlerts) { recentAlerts.toList() }
+        val snapshot: List<AlertRecord> = synchronized(recentAlerts) { recentAlerts.toList() }
         // 버퍼는 오래된→최신 순으로 쌓이므로 뒤집어 최신순으로 돌려준다.
         return snapshot.asReversed().take(limit)
     }
@@ -113,7 +113,7 @@ class SlackAlertNotifier internal constructor(
     }
 
     private fun recordAlert(key: String, title: String, detail: String) {
-        val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
+        val record: AlertRecord = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
         synchronized(recentAlerts) {
             recentAlerts.addLast(record)
             while (recentAlerts.size > ALERT_HISTORY_CAP) {
@@ -139,10 +139,10 @@ class SlackAlertNotifier internal constructor(
 
     private companion object {
         /** 장애 이력 링버퍼 용량 — 최신 이 개수만 보관한다. */
-        const val ALERT_HISTORY_CAP = 200
+        const val ALERT_HISTORY_CAP: Int = 200
 
         /** 관리자 테스트 발송 메시지 — 실제 장애가 아님을 수신측이 알 수 있게 고정 문구. */
-        const val TEST_MESSAGE = ":white_check_mark: bueongi 운영 알림 테스트 — 이 메시지가 보이면 Slack 연동이 정상입니다."
+        const val TEST_MESSAGE: String = ":white_check_mark: bueongi 운영 알림 테스트 — 이 메시지가 보이면 Slack 연동이 정상입니다."
 
         fun newDaemonSingleThreadExecutor(): Executor = Executors.newSingleThreadExecutor { r ->
             Thread(r, "slack-alert").apply { isDaemon = true }

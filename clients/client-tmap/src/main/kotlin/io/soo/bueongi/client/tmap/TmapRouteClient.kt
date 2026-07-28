@@ -41,7 +41,7 @@ class TmapRouteClient(
 
     // P0-2 쿼터 거버넌스: 동일 출발/도착/옵션/경유지 재요청은 TTL(10분) 동안 캐시를 재사용해
     // Tmap 호출(일 쿼터·요금)을 줄인다. 실패(null)는 캐시하지 않는다.
-    private val cache = TmapRouteCache()
+    private val cache: TmapRouteCache = TmapRouteCache()
 
     /**
      * searchOption 별 후보 경로를 모은다(추천=0/대로우선=4/최단=10). 일부 옵션이 실패해도 성공한 후보만
@@ -58,7 +58,7 @@ class TmapRouteClient(
         val routes: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
         val seen: HashSet<Long> = HashSet<Long>()
         for (option in DEFAULT_SEARCH_OPTIONS) {
-            val route = call(origin, dest, destName, option, passList = null) ?: continue
+            val route: TmapRoute = call(origin, dest, destName, option, passList = null) ?: continue
             if (!seen.add(route.identityKey)) {
                 continue
             }
@@ -90,7 +90,7 @@ class TmapRouteClient(
         // 캐시 히트면 Tmap 호출 없이 재사용(동일 출발/도착 재요청 — P0-2 AC).
         cache.get(origin, dest, searchOption, passList)?.let { return it }
         return try {
-            val body = buildRequestBody(origin, dest, destName, searchOption, passList)
+            val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
             val json = restClient.post()
                 .uri(PEDESTRIAN_ENDPOINT)
                 .header("appKey", appKey)
@@ -99,7 +99,7 @@ class TmapRouteClient(
                 .body(body)
                 .retrieve()
                 .body(JsonNode::class.java)
-            val route = json?.let { TmapGeoJson.parse(it, searchOption) }
+            val route: TmapRoute? = json?.let { TmapGeoJson.parse(it, searchOption) }
             if (route != null) {
                 cache.put(origin, dest, searchOption, passList, route)
             }
@@ -118,7 +118,7 @@ class TmapRouteClient(
         searchOption: String,
         passList: List<TmapCoord>?,
     ): Map<String, String> {
-        val body = linkedMapOf(
+        val body: LinkedHashMap<String, String> = linkedMapOf(
             "startX" to origin.lng.toString(),
             "startY" to origin.lat.toString(),
             "endX" to dest.lng.toString(),
@@ -136,13 +136,13 @@ class TmapRouteClient(
     }
 
     companion object {
-        const val PEDESTRIAN_ENDPOINT = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
+        const val PEDESTRIAN_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
 
         /** 기본 후보 수집 옵션(추천=0/대로우선=4/최단=10) — 실제 요구가 생기기 전까지 조합은 고정한다. */
-        val DEFAULT_SEARCH_OPTIONS = listOf("0", "4", "10")
+        val DEFAULT_SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
 
         /** 경유지(passList) 호출의 탐색 옵션 — 추천(0) 고정(경유지 자체가 우회를 표현하므로 옵션 조합 불필요). */
-        const val VIA_SEARCH_OPTION = "0"
+        const val VIA_SEARCH_OPTION: String = "0"
     }
 }
 
@@ -154,7 +154,7 @@ class TmapRouteClient(
 object TmapGeoJson {
 
     fun parse(root: JsonNode, searchOption: String): TmapRoute? {
-        val features = root.get("features") ?: return null
+        val features: JsonNode = root.get("features") ?: return null
         if (!features.isArray) {
             return null
         }
@@ -176,25 +176,25 @@ object TmapGeoJson {
                     timeS = totalTime.asInt()
                 }
             }
-            val geom = feature.get("geometry") ?: continue
+            val geom: JsonNode = feature.get("geometry") ?: continue
             when (geom.get("type")?.asText()) {
                 "LineString" -> {
-                    val coords = geom.get("coordinates") ?: continue
+                    val coords: JsonNode = geom.get("coordinates") ?: continue
                     for (coordNode in coords) parseLngLat(coordNode)?.let { path.add(it) }
                     // Tmap 구조상 거리/시간은 Point 가 아니라 그 뒤 LineString 의 properties 에 있다.
                     // 이 구간값을 직전 안내지점(Point) step 에 부여한다(= 그 지점→다음 지점 구간 거리/시간).
                     if (steps.isNotEmpty() && props != null) {
-                        val segDist = props.get("distance")?.takeIf { it.isNumber }?.asInt() ?: 0
-                        val segTime = props.get("time")?.takeIf { it.isNumber }?.asInt() ?: 0
+                        val segDist: Int = props.get("distance")?.takeIf { it.isNumber }?.asInt() ?: 0
+                        val segTime: Int = props.get("time")?.takeIf { it.isNumber }?.asInt() ?: 0
                         if (segDist > 0 || segTime > 0) {
-                            val lastStepIndex = steps.size - 1
+                            val lastStepIndex: Int = steps.size - 1
                             steps[lastStepIndex] = steps[lastStepIndex].copy(distanceM = segDist, timeS = segTime)
                         }
                     }
                 }
                 "Point" -> {
-                    val pointCoords = geom.get("coordinates") ?: continue
-                    val point = parseLngLat(pointCoords) ?: continue
+                    val pointCoords: JsonNode = geom.get("coordinates") ?: continue
+                    val point: TmapCoord = parseLngLat(pointCoords) ?: continue
                     steps.add(
                         NavStep(
                             index = props?.get("index")?.asInt() ?: 0,
@@ -232,8 +232,8 @@ object TmapGeoJson {
         if (!node.isArray || node.size() < 2) {
             return null
         }
-        val lng = node.get(0).asDouble()
-        val lat = node.get(1).asDouble()
+        val lng: Double = node.get(0).asDouble()
+        val lat: Double = node.get(1).asDouble()
         if (!lat.isFinite() || lat !in -90.0..90.0) {
             return null
         }
@@ -253,12 +253,12 @@ object TmapGeoJson {
         return sum
     }
 
-    private const val EARTH_RADIUS_M = 6_371_000.0
+    private const val EARTH_RADIUS_M: Double = 6_371_000.0
 
     private fun haversineMeters(a: TmapCoord, b: TmapCoord): Double {
-        val dLat = Math.toRadians(b.lat - a.lat)
-        val dLng = Math.toRadians(b.lng - a.lng)
-        val h = sin(dLat / 2) * sin(dLat / 2) +
+        val dLat: Double = Math.toRadians(b.lat - a.lat)
+        val dLng: Double = Math.toRadians(b.lng - a.lng)
+        val h: Double = sin(dLat / 2) * sin(dLat / 2) +
             cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sin(dLng / 2) * sin(dLng / 2)
         return EARTH_RADIUS_M * 2 * atan2(sqrt(h), sqrt(1 - h))
     }
@@ -290,7 +290,7 @@ data class TmapRoute(
 
     companion object {
         /** identityKey 의 좌표수 슬롯 크기 — 거리와 좌표수를 한 Long 에 패킹하는 자릿수 기준. */
-        const val PATH_SIZE_SLOT = 1_000L
+        const val PATH_SIZE_SLOT: Long = 1_000L
     }
 }
 

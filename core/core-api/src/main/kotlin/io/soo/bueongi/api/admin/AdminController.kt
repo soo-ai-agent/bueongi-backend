@@ -73,7 +73,7 @@ class AdminController(
         @RequestParam(required = false) provider: String?,
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): List<ApiCallLogResponse> {
-        val bounded = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT)
+        val bounded: Int = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT)
         return apiCallLogStore.findRecent(provider, bounded).map { it.toResponse() }
     }
 
@@ -142,7 +142,7 @@ class AdminController(
     fun alerts(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): AlertsResponse {
-        val bounded = limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT)
+        val bounded: Int = limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT)
         return AlertsResponse(alerts = alertNotifier.findRecentAlerts(bounded))
     }
 

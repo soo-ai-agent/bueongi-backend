@@ -19,7 +19,7 @@ import org.springframework.web.client.RestClient
  */
 class SafemapPoliceClientHttpTest {
 
-    private val serviceKey = "safemap%2Fkey"
+    private val serviceKey: String = "safemap%2Fkey"
 
     private fun bind(key: String = serviceKey): Pair<SafemapPoliceClient, MockRestServiceServer> {
         val builder = RestClient.builder()
@@ -32,7 +32,7 @@ class SafemapPoliceClientHttpTest {
         val (client, server) = bind()
         // 강남역(37.4981, 127.0276)의 EPSG:5179 좌표를 forward 로 만들어 응답에 심는다.
         val (x, y) = Epsg5179.fromWgs84(lat = 37.4981, lng = 127.0276)
-        val body = """
+        val body: String = """
             {"resultCode":"00","resultMsg":"NORMAL","numOfRows":10,"pageNo":1,"totalCount":1,
              "items":[{"objt_id":"1","police":"서울청","polcsttn":"강남서","fclty_ty":"지구대","fclty_nm":"역삼지구대",
                        "adres":"서울 강남구 역삼동 1","rn_adres":"서울 강남구 테헤란로 1","telno":"02-123-4567",
@@ -42,10 +42,10 @@ class SafemapPoliceClientHttpTest {
             .andExpect(requestTo(containsString("returnType=JSON")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities = client.fetchPoliceFacilities()
+        val facilities: List<SafemapPoliceFacility>? = client.fetchPoliceFacilities()
 
         assertThat(facilities).hasSize(1)
-        val f = facilities!![0]
+        val f: SafemapPoliceFacility = facilities!![0]
         assertThat(f.lat).isCloseTo(37.4981, within(1e-6))
         assertThat(f.lng).isCloseTo(127.0276, within(1e-6))
         assertThat(f.name).isEqualTo("역삼지구대")
@@ -58,7 +58,7 @@ class SafemapPoliceClientHttpTest {
     @Test
     fun `정상 - 경위도(WGS84)로 오는 x·y 도 그대로 수용하고, 중첩 envelope·좌표불량 행을 처리한다`() {
         val (client, server) = bind()
-        val body = """
+        val body: String = """
             {"response":{"header":{"resultCode":"00"},"body":{"totalCount":3,"items":{"item":[
               {"fclty_nm":"WGS그대로","x":"127.0276","y":"37.4981"},
               {"fclty_nm":"순서뒤바뀜","x":"37.51","y":"127.02"},
@@ -68,7 +68,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString(SafemapPoliceClient.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities = client.fetchPoliceFacilities()
+        val facilities: List<SafemapPoliceFacility>? = client.fetchPoliceFacilities()
 
         assertThat(facilities).hasSize(2) // 불량 1행만 제외
         assertThat(facilities!![0].lat).isCloseTo(37.4981, within(1e-9))
@@ -88,7 +88,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("pageNo=2"))).andRespond(withSuccess(page("c", "d"), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=3"))).andRespond(withSuccess(page("e"), MediaType.APPLICATION_JSON))
 
-        val facilities = client.fetchPoliceFacilities()
+        val facilities: List<SafemapPoliceFacility>? = client.fetchPoliceFacilities()
 
         assertThat(facilities).hasSize(5)
         assertThat(facilities!!.map { it.name }).containsExactly("a", "b", "c", "d", "e")

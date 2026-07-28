@@ -43,7 +43,7 @@ class RouteMarkerBuilder(
         // (start/end 는 항상 나가 지도가 그려진다) — 알림은 부수효과일 뿐 응답 계약·결정성에 영향 없다.
         alertIfIndexEmpty()
 
-        val corridor = SafetyScorer.DEFAULT_CORRIDOR_METERS
+        val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         val raw: ArrayList<FacilityPoi> = ArrayList<FacilityPoi>()
         raw.add(FacilityPoi(type = FacilityPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
@@ -70,21 +70,21 @@ class RouteMarkerBuilder(
             }
         }
 
-        val minLat = raw.minOf { it.lat }
-        val maxLat = raw.maxOf { it.lat }
-        val minLng = raw.minOf { it.lng }
-        val maxLng = raw.maxOf { it.lng }
-        val range = 100.0 - 2 * MARKER_PADDING
-        val spanLat = maxLat - minLat
-        val spanLng = maxLng - minLng
+        val minLat: Double = raw.minOf { it.lat }
+        val maxLat: Double = raw.maxOf { it.lat }
+        val minLng: Double = raw.minOf { it.lng }
+        val maxLng: Double = raw.maxOf { it.lng }
+        val range: Double = 100.0 - 2 * MARKER_PADDING
+        val spanLat: Double = maxLat - minLat
+        val spanLng: Double = maxLng - minLng
         return raw.map { marker ->
             // 한 축이 퇴화(모든 좌표 동일)하면 가운데(50). 위도는 위쪽이 큰 값이라 y축을 뒤집는다.
-            val x = if (spanLng == 0.0) {
+            val x: Int = if (spanLng == 0.0) {
                 50
             } else {
                 (MARKER_PADDING + (marker.lng - minLng) / spanLng * range).roundToInt()
             }
-            val y = if (spanLat == 0.0) {
+            val y: Int = if (spanLat == 0.0) {
                 50
             } else {
                 (MARKER_PADDING + (maxLat - marker.lat) / spanLat * range).roundToInt()
@@ -102,8 +102,8 @@ class RouteMarkerBuilder(
      * key 를 상수로 고정해 요청마다의 알림 폭주를 [AlertNotifier] 스로틀(기본 10분)로 억제한다.
      */
     private fun alertIfIndexEmpty() {
-        val notifier = alertNotifier ?: return
-        val totalLoaded = MARKER_TYPES.sumOf { (_, facilityType) -> repository.index(facilityType).size }
+        val notifier: AlertNotifier = alertNotifier ?: return
+        val totalLoaded: Int = MARKER_TYPES.sumOf { (_, facilityType) -> repository.index(facilityType).size }
         if (totalLoaded > 0) {
             return
         }
@@ -117,7 +117,7 @@ class RouteMarkerBuilder(
 
     private companion object {
         // 마커 표시 종류(POI 어휘) → 시설 인덱스(회랑 실측; 실좌표·메타 포함).
-        val MARKER_TYPES = listOf(
+        val MARKER_TYPES: List<Pair<FacilityPoiType, FacilityType>> = listOf(
             FacilityPoiType.CCTV to FacilityType.CCTV,
             FacilityPoiType.SAFEHOUSE to FacilityType.SAFEHOUSE,
             FacilityPoiType.BELL to FacilityType.BELL,
@@ -128,9 +128,9 @@ class RouteMarkerBuilder(
         )
 
         /** 정규화 x/y 투영의 경계 여백(%). */
-        const val MARKER_PADDING = 12.0
+        const val MARKER_PADDING: Double = 12.0
 
         /** 유형별 마커 수 상한(가로등 등 밀집 시설로 인한 지도 가독성 저하·응답 비대화 방어). */
-        const val MAX_MARKERS_PER_TYPE = 12
+        const val MAX_MARKERS_PER_TYPE: Int = 12
     }
 }

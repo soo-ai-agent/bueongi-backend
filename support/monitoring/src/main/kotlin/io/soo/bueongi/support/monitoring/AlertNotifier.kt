@@ -39,4 +39,4 @@ data class AlertRecord(
 )
 
 /** alerts 조회 상한(관리자 API limit 절삭용). 버퍼 용량(200)보다 크게 둬도 실제 반환은 보관분까지다. */
-const val ALERT_HISTORY_MAX_LIMIT = 500
+const val ALERT_HISTORY_MAX_LIMIT: Int = 500

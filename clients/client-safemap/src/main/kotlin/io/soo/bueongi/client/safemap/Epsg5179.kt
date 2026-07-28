@@ -21,18 +21,18 @@ data class TmXy(val x: Double, val y: Double)
  * 검증: 원점 앵커(38°/127.5° ↔ 1,000,000/2,000,000) + 왕복(forward→inverse) 테스트.
  */
 object Epsg5179 {
-    private const val A = 6378137.0 // GRS80 장반경(m)
-    private const val F = 1.0 / 298.257222101 // GRS80 편평률
-    private const val K0 = 0.9996
-    private const val FALSE_EASTING = 1_000_000.0
-    private const val FALSE_NORTHING = 2_000_000.0
-    private val LAT0 = Math.toRadians(38.0)
-    private val LON0 = Math.toRadians(127.5)
+    private const val A: Double = 6378137.0 // GRS80 장반경(m)
+    private const val F: Double = 1.0 / 298.257222101 // GRS80 편평률
+    private const val K0: Double = 0.9996
+    private const val FALSE_EASTING: Double = 1_000_000.0
+    private const val FALSE_NORTHING: Double = 2_000_000.0
+    private val LAT0: Double = Math.toRadians(38.0)
+    private val LON0: Double = Math.toRadians(127.5)
 
-    private const val E2 = F * (2 - F) // 제1이심률²
-    private const val EP2 = E2 / (1 - E2) // 제2이심률²
-    private val E1 = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
-    private val M0 = meridianArc(LAT0)
+    private const val E2: Double = F * (2 - F) // 제1이심률²
+    private const val EP2: Double = E2 / (1 - E2) // 제2이심률²
+    private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
+    private val M0: Double = meridianArc(LAT0)
 
     /** 대한민국 WGS84 유효 범위(파이프라인 KOREA_BOUNDS와 동일). 밖이면 변환 오류로 보고 폐기. */
     fun inKoreaBounds(lat: Double, lng: Double): Boolean =
@@ -43,36 +43,36 @@ object Epsg5179 {
         if (!x.isFinite() || !y.isFinite()) {
             return null
         }
-        val m = M0 + (y - FALSE_NORTHING) / K0
-        val mu = m / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256))
-        val phi1 = mu +
+        val m: Double = M0 + (y - FALSE_NORTHING) / K0
+        val mu: Double = m / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256))
+        val phi1: Double = mu +
             (3 * E1 / 2 - 27 * E1.pow(3) / 32) * sin(2 * mu) +
             (21 * E1.pow(2) / 16 - 55 * E1.pow(4) / 32) * sin(4 * mu) +
             (151 * E1.pow(3) / 96) * sin(6 * mu) +
             (1097 * E1.pow(4) / 512) * sin(8 * mu)
 
-        val sinPhi1 = sin(phi1)
-        val cosPhi1 = cos(phi1)
-        val tanPhi1 = tan(phi1)
-        val c1 = EP2 * cosPhi1 * cosPhi1
-        val t1 = tanPhi1 * tanPhi1
-        val n1 = A / sqrt(1 - E2 * sinPhi1 * sinPhi1)
-        val r1 = A * (1 - E2) / (1 - E2 * sinPhi1 * sinPhi1).pow(1.5)
-        val d = (x - FALSE_EASTING) / (n1 * K0)
+        val sinPhi1: Double = sin(phi1)
+        val cosPhi1: Double = cos(phi1)
+        val tanPhi1: Double = tan(phi1)
+        val c1: Double = EP2 * cosPhi1 * cosPhi1
+        val t1: Double = tanPhi1 * tanPhi1
+        val n1: Double = A / sqrt(1 - E2 * sinPhi1 * sinPhi1)
+        val r1: Double = A * (1 - E2) / (1 - E2 * sinPhi1 * sinPhi1).pow(1.5)
+        val d: Double = (x - FALSE_EASTING) / (n1 * K0)
 
-        val lat = phi1 - (n1 * tanPhi1 / r1) * (
+        val lat: Double = phi1 - (n1 * tanPhi1 / r1) * (
             d * d / 2 -
                 (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * EP2) * d.pow(4) / 24 +
                 (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * EP2 - 3 * c1 * c1) * d.pow(6) / 720
             )
-        val lon = LON0 + (
+        val lon: Double = LON0 + (
             d -
                 (1 + 2 * t1 + c1) * d.pow(3) / 6 +
                 (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * EP2 + 24 * t1 * t1) * d.pow(5) / 120
             ) / cosPhi1
 
-        val latDeg = Math.toDegrees(lat)
-        val lngDeg = Math.toDegrees(lon)
+        val latDeg: Double = Math.toDegrees(lat)
+        val lngDeg: Double = Math.toDegrees(lon)
         return if (inKoreaBounds(latDeg, lngDeg)) {
             Wgs84Point(latDeg, lngDeg)
         } else {
@@ -82,21 +82,21 @@ object Epsg5179 {
 
     /** WGS84 → EPSG:5179. 왕복 테스트(변환 자기일관성 검증)용. */
     fun fromWgs84(lat: Double, lng: Double): TmXy {
-        val phi = Math.toRadians(lat)
-        val sinPhi = sin(phi)
-        val cosPhi = cos(phi)
-        val tanPhi = tan(phi)
-        val n = A / sqrt(1 - E2 * sinPhi * sinPhi)
-        val t = tanPhi * tanPhi
-        val c = EP2 * cosPhi * cosPhi
-        val aa = (Math.toRadians(lng) - LON0) * cosPhi
+        val phi: Double = Math.toRadians(lat)
+        val sinPhi: Double = sin(phi)
+        val cosPhi: Double = cos(phi)
+        val tanPhi: Double = tan(phi)
+        val n: Double = A / sqrt(1 - E2 * sinPhi * sinPhi)
+        val t: Double = tanPhi * tanPhi
+        val c: Double = EP2 * cosPhi * cosPhi
+        val aa: Double = (Math.toRadians(lng) - LON0) * cosPhi
 
-        val x = FALSE_EASTING + K0 * n * (
+        val x: Double = FALSE_EASTING + K0 * n * (
             aa +
                 (1 - t + c) * aa.pow(3) / 6 +
                 (5 - 18 * t + t * t + 72 * c - 58 * EP2) * aa.pow(5) / 120
             )
-        val y = FALSE_NORTHING + K0 * (
+        val y: Double = FALSE_NORTHING + K0 * (
             meridianArc(phi) - M0 + n * tanPhi * (
                 aa * aa / 2 +
                     (5 - t + 9 * c + 4 * c * c) * aa.pow(4) / 24 +

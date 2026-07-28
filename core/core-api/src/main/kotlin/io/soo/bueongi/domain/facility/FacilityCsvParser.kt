@@ -27,38 +27,38 @@ class FacilityCsvParser {
      * 반환의 received 는 (헤더 제외) 데이터 행 수, points 는 유효 시설, skipped = received - points.size.
      */
     fun parse(bytes: ByteArray, spec: FacilityCsvSpec): FacilityCsvParseResult {
-        val text = decode(bytes)
-        val records = tokenizeCsv(text)
-        val headerPos = records.indexOfFirst { row -> row.any { it.isNotBlank() } }
+        val text: String = decode(bytes)
+        val records: List<List<String>> = tokenizeCsv(text)
+        val headerPos: Int = records.indexOfFirst { row -> row.any { it.isNotBlank() } }
         if (headerPos < 0) {
             return FacilityCsvParseResult(spec.coordSystem, received = 0, points = emptyList())
         }
 
-        val headerIndex = buildHeaderIndex(records[headerPos])
-        val dataRows = records.drop(headerPos + 1)
+        val headerIndex: Map<String, Int> = buildHeaderIndex(records[headerPos])
+        val dataRows: List<List<String>> = records.drop(headerPos + 1)
             .filter { row -> row.any { it.isNotBlank() } }
 
-        val latIdx = firstIndexOf(headerIndex, spec.latHeaders)
-        val lngIdx = firstIndexOf(headerIndex, spec.lngHeaders)
-        val useWgs84 = latIdx != null && lngIdx != null
-        val effectiveCoordSystem = if (useWgs84) FacilityCoordSystem.WGS84 else spec.coordSystem
+        val latIdx: Int? = firstIndexOf(headerIndex, spec.latHeaders)
+        val lngIdx: Int? = firstIndexOf(headerIndex, spec.lngHeaders)
+        val useWgs84: Boolean = latIdx != null && lngIdx != null
+        val effectiveCoordSystem: FacilityCoordSystem = if (useWgs84) FacilityCoordSystem.WGS84 else spec.coordSystem
 
-        val xIdx = firstIndexOf(headerIndex, spec.xHeaders)
-        val yIdx = firstIndexOf(headerIndex, spec.yHeaders)
-        val nameIdx = firstIndexOf(headerIndex, spec.nameHeaders)
-        val addressIdx = firstIndexOf(headerIndex, spec.addressHeaders)
-        val purposeIdx = firstIndexOf(headerIndex, spec.purposeHeaders)
-        val cameraIdx = firstIndexOf(headerIndex, spec.cameraCountHeaders)
-        val phoneIdx = firstIndexOf(headerIndex, spec.phoneHeaders)
+        val xIdx: Int? = firstIndexOf(headerIndex, spec.xHeaders)
+        val yIdx: Int? = firstIndexOf(headerIndex, spec.yHeaders)
+        val nameIdx: Int? = firstIndexOf(headerIndex, spec.nameHeaders)
+        val addressIdx: Int? = firstIndexOf(headerIndex, spec.addressHeaders)
+        val purposeIdx: Int? = firstIndexOf(headerIndex, spec.purposeHeaders)
+        val cameraIdx: Int? = firstIndexOf(headerIndex, spec.cameraCountHeaders)
+        val phoneIdx: Int? = firstIndexOf(headerIndex, spec.phoneHeaders)
 
-        val points = dataRows.mapNotNull { row ->
-            val geo = if (useWgs84) {
+        val points: List<FacilityPoint> = dataRows.mapNotNull { row ->
+            val geo: GeoPoint = if (useWgs84) {
                 GeoPoint.orNull(row.field(latIdx)?.toDoubleOrNull(), row.field(lngIdx)?.toDoubleOrNull())
             } else {
                 projectXy(row.field(xIdx)?.toDoubleOrNull(), row.field(yIdx)?.toDoubleOrNull(), spec.coordSystem)
             } ?: return@mapNotNull null
 
-            val purpose = row.field(purposeIdx)
+            val purpose: String? = row.field(purposeIdx)
             if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
                 return@mapNotNull null
             }
@@ -135,14 +135,14 @@ class FacilityCsvParser {
 
     /** RFC 4180 형 CSV 토크나이저 — 따옴표 필드(내부 콤마·개행·`""` 이스케이프)를 처리하고 레코드(행) 목록을 만든다. */
     private fun tokenizeCsv(text: String): List<List<String>> {
-        val records = ArrayList<List<String>>()
+        val records: ArrayList<List<String>> = ArrayList<List<String>>()
         var record: ArrayList<String> = ArrayList<String>()
         val field: StringBuilder = StringBuilder()
         var inQuotes: Boolean = false
         var i: Int = 0
-        val n = text.length
+        val n: Int = text.length
         while (i < n) {
-            val c = text[i]
+            val c: Char = text[i]
             if (inQuotes) {
                 if (c == '"') {
                     if (i + 1 < n && text[i + 1] == '"') {

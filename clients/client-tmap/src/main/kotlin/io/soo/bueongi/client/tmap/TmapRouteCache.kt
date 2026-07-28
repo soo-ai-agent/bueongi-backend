@@ -22,12 +22,12 @@ class TmapRouteCache(
 ) {
     private data class Entry(val route: TmapRoute, val expiresAt: Long)
 
-    private val entries = ConcurrentHashMap<String, Entry>()
+    private val entries: ConcurrentHashMap<String, Entry> = ConcurrentHashMap<String, Entry>()
 
     /** 캐시 조회. 없거나 만료면 null(만료 항목은 제거). */
     fun get(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?): TmapRoute? {
-        val key = key(origin, dest, searchOption, passList)
-        val entry = entries[key] ?: return null
+        val key: String = key(origin, dest, searchOption, passList)
+        val entry: Entry = entries[key] ?: return null
         if (clock() >= entry.expiresAt) {
             entries.remove(key)
             return null
@@ -59,7 +59,7 @@ class TmapRouteCache(
     private fun round5(v: Double): Double = Math.round(v * 1e5) / 1e5
 
     companion object {
-        const val DEFAULT_TTL_MILLIS = 10 * 60 * 1000L
-        const val DEFAULT_MAX_ENTRIES = 256
+        const val DEFAULT_TTL_MILLIS: Long = 10 * 60 * 1000L
+        const val DEFAULT_MAX_ENTRIES: Int = 256
     }
 }

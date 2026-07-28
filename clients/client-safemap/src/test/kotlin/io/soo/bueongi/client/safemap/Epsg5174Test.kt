@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 class Epsg5174Test {
 
     /** proj4 기준값: (설명, wgs84Lat, wgs84Lng, epsg5174X, epsg5174Y). */
-    private val anchors = listOf(
+    private val anchors: List<Anchor> = listOf(
         Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),
         Anchor("강남역", 37.4981, 127.0276, 202370.8770, 443988.3369),
         Anchor("부산시청", 35.1796, 129.0756, 389004.1526, 188683.8461),
@@ -26,7 +26,7 @@ class Epsg5174Test {
     @Test
     fun `기준 - proj4 로 만든 5174 좌표가 원 WGS84 로 복원된다(datum 규약 고정)`() {
         for (anchor in anchors) {
-            val result = Epsg5174.toWgs84(anchor.x, anchor.y)
+            val result: Wgs84Point? = Epsg5174.toWgs84(anchor.x, anchor.y)
             assertThat(result).describedAs(anchor.name).isNotNull
             assertThat(result!!.lat).describedAs("${anchor.name} lat").isCloseTo(anchor.lat, within(1e-4))
             assertThat(result.lng).describedAs("${anchor.name} lng").isCloseTo(anchor.lng, within(1e-4))
@@ -37,7 +37,7 @@ class Epsg5174Test {
     fun `왕복 - WGS84 forward-inverse 오차가 1e-6도(약 10cm) 이내`() {
         for (anchor in anchors) {
             val (x, y) = Epsg5174.fromWgs84(anchor.lat, anchor.lng)
-            val back = Epsg5174.toWgs84(x, y)!!
+            val back: Wgs84Point = Epsg5174.toWgs84(x, y)!!
             assertThat(back.lat).describedAs("${anchor.name} 왕복 lat").isCloseTo(anchor.lat, within(1e-6))
             assertThat(back.lng).describedAs("${anchor.name} 왕복 lng").isCloseTo(anchor.lng, within(1e-6))
         }

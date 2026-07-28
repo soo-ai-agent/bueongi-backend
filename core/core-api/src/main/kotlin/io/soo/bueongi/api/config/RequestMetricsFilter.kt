@@ -30,7 +30,7 @@ class RequestMetricsFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val startedAt = System.currentTimeMillis()
+        val startedAt: Long = System.currentTimeMillis()
         try {
             filterChain.doFilter(request, response)
         } finally {
@@ -63,9 +63,9 @@ class RequestMetricsFilter(
 
     private companion object {
         /** 프론트가 부여하는 익명 클라이언트 식별자 헤더 — 사용자 추정(고유 수)의 근거. */
-        const val CLIENT_ID_HEADER = "X-Client-Id"
+        const val CLIENT_ID_HEADER: String = "X-Client-Id"
 
         /** 계측에서 제외하는 경로 접두사(정확 일치 또는 하위 경로). 관리자 자기 트래픽·운영 경로는 사용자 집계에서 뺀다. */
-        val EXCLUDED_PREFIXES = listOf("/api/admin", "/actuator", "/healthz", "/cdn")
+        val EXCLUDED_PREFIXES: List<String> = listOf("/api/admin", "/actuator", "/healthz", "/cdn")
     }
 }

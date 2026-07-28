@@ -66,8 +66,8 @@ data class RouteRequest(
  * 가드 묶음·순서를 여기 한 곳에만 둔다. 반환이 [GeoPoint] 기반이라 도메인에서 널 단언(!!)이 필요 없다.
  */
 fun RouteRequest.toValidatedQuery(): RouteQuery {
-    val origin = requireOrigin()
-    val destinationPoint = destinationPoint()
+    val origin: GeoPoint = requireOrigin()
+    val destinationPoint: GeoPoint = destinationPoint()
     requireDistinctEndpoints(origin, destinationPoint)
     requireWithinReach(origin, destinationPoint)
     return RouteQuery(
@@ -84,7 +84,7 @@ fun RouteRequest.toValidatedQuery(): RouteQuery {
  * destination 은 항상 필요하므로 @NotNull(누락 시 400)로 두고, origin 만 이렇게 구분 처리한다.
  */
 fun RouteRequest.requireOrigin(): GeoPoint {
-    val origin = origin ?: throw OriginRequiredException()
+    val origin: LatLng = origin ?: throw OriginRequiredException()
     return origin.toGeoPoint()
 }
 
@@ -104,7 +104,7 @@ private fun NamedLatLng.toGeoPoint(): GeoPoint =
  * 도착지를 잘못 고른 복구 가능 상태다.
  */
 fun requireDistinctEndpoints(origin: GeoPoint, destination: GeoPoint) {
-    val meters = SpatialMath.haversineMeters(origin, destination)
+    val meters: Double = SpatialMath.haversineMeters(origin, destination)
     if (meters < MIN_TRIP_DISTANCE_METERS) {
         throw SameOriginDestinationException(distanceMeters = meters.roundToInt())
     }
@@ -114,7 +114,7 @@ fun requireDistinctEndpoints(origin: GeoPoint, destination: GeoPoint) {
  * 출발지=도착지로 간주하는 최소 직선거리(미터). 이 미만이면 사실상 같은 지점(GPS 정밀도 이하)으로 보고 거부한다.
  * 정상적인 도보 귀가 경로는 수십 m 이상이므로 근거리 이동을 막지 않으면서 동일 좌표만 차단하도록 작게 잡는다.
  */
-const val MIN_TRIP_DISTANCE_METERS = 1.0
+const val MIN_TRIP_DISTANCE_METERS: Double = 1.0
 
 /**
  * 출발지-도착지 직선거리가 [MAX_TRIP_DISTANCE_METERS]를 넘으면 [TripTooFarException]→422 `TRIP_TOO_FAR`.
@@ -123,7 +123,7 @@ const val MIN_TRIP_DISTANCE_METERS = 1.0
  * [requireDistinctEndpoints] 와 짝을 이뤄 거리의 하한·상한을 함께 막는다.
  */
 fun requireWithinReach(origin: GeoPoint, destination: GeoPoint) {
-    val meters = SpatialMath.haversineMeters(origin, destination)
+    val meters: Double = SpatialMath.haversineMeters(origin, destination)
     if (meters > MAX_TRIP_DISTANCE_METERS) {
         throw TripTooFarException(
             distanceMeters = meters.roundToInt(),
@@ -136,4 +136,4 @@ fun requireWithinReach(origin: GeoPoint, destination: GeoPoint) {
  * 도보 귀가 경로로 허용하는 최대 출발지-도착지 직선거리(미터). 100km — 한 도시 안의 어떤 귀가도 넘지 않으면서
  * 도시 간(예: 서울-부산 ~325km) 좌표 오선택은 분명히 거른다. 정상 입력을 막지 않도록 넉넉히 잡되 비현실적 입력만 차단.
  */
-const val MAX_TRIP_DISTANCE_METERS = 100_000.0
+const val MAX_TRIP_DISTANCE_METERS: Double = 100_000.0

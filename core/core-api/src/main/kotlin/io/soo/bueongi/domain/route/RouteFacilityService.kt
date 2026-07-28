@@ -26,11 +26,11 @@ class RouteFacilityService(
 
         // 실측 마커(출발/도착 + 회랑 내 실 시설). 가로등(lamp)은 이 엔드포인트 요약 대상이 아니고
         // 프론트 /facilities 파서도 수용하지 않으므로 제외한다(가로등 마커 자체는 safe-compare 에서 노출).
-        val pois = markerBuilder.buildMarkers(origin, destination, listOf(origin, destination))
+        val pois: List<FacilityPoi> = markerBuilder.buildMarkers(origin, destination, listOf(origin, destination))
             .filterNot { it.type == FacilityPoiType.LAMP }
 
         // 요약은 생성된 POI 를 그대로 집계(start/end 제외) — 표시와 불일치 불가. store 는 지도 제외(마커 미생성) → 항상 0.
-        val summary = FacilitySummary(
+        val summary: FacilitySummary = FacilitySummary(
             cctv = pois.count { it.type == FacilityPoiType.CCTV },
             bell = pois.count { it.type == FacilityPoiType.BELL },
             store = pois.count { it.type == FacilityPoiType.STORE },
@@ -42,7 +42,7 @@ class RouteFacilityService(
     }
 
     private companion object {
-        val SAFETY_TYPES = setOf(
+        val SAFETY_TYPES: Set<FacilityPoiType> = setOf(
             FacilityPoiType.CCTV,
             FacilityPoiType.BELL,
             FacilityPoiType.STORE,

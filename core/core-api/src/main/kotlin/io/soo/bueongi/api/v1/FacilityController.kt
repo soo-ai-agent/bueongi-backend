@@ -3,6 +3,7 @@ package io.soo.bueongi.api.v1
 import io.soo.bueongi.domain.facility.NearestPoliceFinder
 import io.soo.bueongi.domain.facility.NearestPoliceResponse
 import io.soo.bueongi.api.v1.request.toValidatedGeoPoint
+import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -29,7 +30,7 @@ class FacilityController(
         @RequestParam(name = "radius_m", required = false) radiusM: Double?,
         @RequestParam(required = false) limit: Int?,
     ): NearestPoliceResponse {
-        val origin = toValidatedGeoPoint(lat, lng) // 경계 검증(본문 DTO 의 @Valid 와 같은 역할, 400 INVALID_COORDINATE)
+        val origin: GeoPoint = toValidatedGeoPoint(lat, lng) // 경계 검증(본문 DTO 의 @Valid 와 같은 역할, 400 INVALID_COORDINATE)
         return NearestPoliceResponse(nearestPoliceFinder.findNearest(origin, radiusM, limit))
     }
 }
