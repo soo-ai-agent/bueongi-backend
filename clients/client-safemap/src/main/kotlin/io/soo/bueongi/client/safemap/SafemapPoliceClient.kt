@@ -33,6 +33,7 @@ class SafemapPoliceClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
+    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /**

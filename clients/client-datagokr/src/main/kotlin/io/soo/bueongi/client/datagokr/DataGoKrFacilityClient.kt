@@ -37,6 +37,7 @@ class DataGoKrFacilityClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
+    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /** 전국 CCTV 전량. 실패 시 null(기존 데이터 유지 신호). */

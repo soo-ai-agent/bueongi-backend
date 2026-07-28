@@ -9,6 +9,13 @@ spring:
     multipart:
       max-file-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:64MB}
       max-request-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:64MB}
+  # 외부 API(Tmap·Kakao·data.go.kr·safemap) 호출 타임아웃 — 자동구성 RestClient.Builder 에 전역 적용된다.
+  # 미설정 시 무한대라, 외부가 응답을 지연시키는 슬로우 장애에서 워커 스레드가 무한 점유돼 전체 장애로 번진다.
+  # 4개 클라이언트가 모두 이 빌더를 clone().build() 해 쓰므로 이 한 곳으로 전부 적용된다.
+  http:
+    client:
+      connect-timeout: ${BUEONGI_HTTP_CONNECT_TIMEOUT:3s}
+      read-timeout: ${BUEONGI_HTTP_READ_TIMEOUT:10s}
   # 모듈별 설정 합성(soo-spring-kotlin-starter 방식) — 각 모듈이 자기 설정 파일을 소유한다.
   config:
     import:

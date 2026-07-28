@@ -36,6 +36,7 @@ class TmapRouteClient(
     val isEnabled: Boolean
         get() = appKey.isNotEmpty()
 
+    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     // P0-2 쿼터 거버넌스: 동일 출발/도착/옵션/경유지 재요청은 TTL(10분) 동안 캐시를 재사용해
