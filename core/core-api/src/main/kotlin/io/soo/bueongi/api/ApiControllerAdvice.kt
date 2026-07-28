@@ -11,6 +11,7 @@ import io.soo.bueongi.support.error.SameOriginDestinationException
 import io.soo.bueongi.support.error.ShareSessionNotFoundException
 import io.soo.bueongi.support.error.TripTooFarException
 import io.soo.bueongi.support.error.UnknownFacilityTypeException
+import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import org.slf4j.LoggerFactory
@@ -363,6 +364,34 @@ class ApiControllerAdvice(
         }
 
     /**
+     * 위치 공유 저장소(Redis) 접근 불가 → 503 + `code:"SHARE_STORE_UNAVAILABLE"`. 런타임에 Redis 가 죽으면
+     * 위치 공유 읽기/쓰기가 [LocationStoreUnavailableException] 을 던지는데, 이는 잘못된 요청(500)이 아니라
+     * "일시적으로 의존 인프라에 닿을 수 없는" 복구 가능 상태다. 불명확한 500 대신 503 으로 구분해, 앱의 위치
+     * 전송 루프는 이를 일시 오류로 보고 재시도하고(만료 404 처럼 종료하지 않음), 보호자는 재시도 안내를 받는다.
+     * 저장소 장애는 사람 개입이 필요하므로 운영 알림(스로틀)을 함께 보낸다. 응답 본문에 내부 원인은 노출하지 않는다.
+     */
+    @ExceptionHandler(LocationStoreUnavailableException::class)
+    fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
+        log.error("위치 공유 저장소 접근 실패 — 503 SHARE_STORE_UNAVAILABLE 로 응답합니다.", ex)
+        alertNotifier?.notify(
+            key = "share-store-unavailable",
+            title = "위치 공유 저장소(Redis) 접근 실패",
+            detail = "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
+        )
+        val body = ProblemDetail.forStatusAndDetail(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "일시적으로 위치 공유 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        ).apply {
+            title = "Service Unavailable"
+            setProperty("code", "SHARE_STORE_UNAVAILABLE")
+        }
+        // 회복 가능 신호 — 클라이언트/프록시가 잠시 후 재시도하도록 Retry-After(초)를 함께 준다.
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS.toString())
+            .body(body)
+    }
+
+    /**
      * 위에서 처리되지 않은 모든 예외(미처리 런타임 오류 등) → 500 + `code:"INTERNAL_ERROR"`.
      * "모든 에러 응답에 code" 계약을 프레임워크 경계까지 마무리한다(이전엔 500 이 `code` 없는 응답이었음).
      *
@@ -386,5 +415,10 @@ class ApiControllerAdvice(
             title = "Internal Server Error"
             setProperty("code", "INTERNAL_ERROR")
         }
+    }
+
+    private companion object {
+        /** 503 응답의 Retry-After(초) — 저장소 장애는 대개 짧게 지나가므로 앱/프록시가 곧 재시도하게 유도. */
+        const val RETRY_AFTER_SECONDS = 5
     }
 }

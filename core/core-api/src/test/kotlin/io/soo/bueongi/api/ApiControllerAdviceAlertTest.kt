@@ -1,9 +1,11 @@
 package io.soo.bueongi.api
 
+import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 
 /**
@@ -36,6 +38,25 @@ class ApiControllerAdviceAlertTest {
         assertThat(body.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(body.properties?.get("code")).isEqualTo("INTERNAL_ERROR")
         assertThat(body.detail).doesNotContain("내부 상태 오류")
+    }
+
+    @Test
+    fun `저장소 장애(503)면 share-store-unavailable key 로 알림 + Retry-After 를 주고 원인은 비노출한다`() {
+        val notifier = RecordingNotifier()
+        val advice = ApiControllerAdvice(notifier)
+
+        val response = advice.handleShareStoreUnavailable(
+            LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
+        )
+
+        assertThat(notifier.notified).hasSize(1)
+        assertThat(notifier.notified[0].first).isEqualTo("share-store-unavailable")
+        // 만료(404)와 구분되는 503 + 안정 코드 + 재시도 힌트.
+        assertThat(response.statusCode.value()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
+        assertThat(response.body?.properties?.get("code")).isEqualTo("SHARE_STORE_UNAVAILABLE")
+        assertThat(response.headers.getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("5")
+        // 내부 원인(예외 메시지)은 응답 본문에 노출하지 않는다.
+        assertThat(response.body?.detail).doesNotContain("redis down")
     }
 
     @Test

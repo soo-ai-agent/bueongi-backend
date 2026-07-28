@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataAccessException
 import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Clock
@@ -20,6 +21,10 @@ import java.time.Instant
  *
  * 상한 만료는 Redis native TTL 이 강제한다 — [findByToken] 은 `share:{token}` 키 존재 여부만 보면 되고(키가 없으면
  * 만료/미존재), 별도 시각 비교가 필요 없다(인메모리 폴백의 lazy 비교와 동치 결과).
+ *
+ * 런타임에 Redis 가 죽으면 모든 연산이 Spring Data `DataAccessException` 을 던진다. [onRedis] 가 이를
+ * [LocationStoreUnavailableException] 으로 변환해 "없음"(null)과 "인프라 장애"를 분리한다 — 상위(API)는
+ * 만료/미존재는 404, 장애는 503 으로 다르게 응답한다(불명확한 500 로 뭉뚱그리지 않는다).
  */
 class RedisLocationStore(
     private val redis: StringRedisTemplate,
@@ -36,47 +41,49 @@ class RedisLocationStore(
     override val backend: String = "redis"
 
     override fun save(session: ShareSession) {
-        val ttl = ttlFrom(session.expiresAt)
-        val shareKey = shareKey(session.token)
-        redis.opsForHash<String, String>().putAll(
-            shareKey,
-            mapOf(
-                FIELD_CREATED_AT to session.createdAt.toString(),
-                FIELD_EXPIRES_AT to session.expiresAt.toString(),
-                // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
-                FIELD_OWNER_SECRET to session.ownerSecret,
-            ),
-        )
-        redis.expire(shareKey, ttl)
+        onRedis("save") {
+            val ttl = ttlFrom(session.expiresAt)
+            val shareKey = shareKey(session.token)
+            redis.opsForHash<String, String>().putAll(
+                shareKey,
+                mapOf(
+                    FIELD_CREATED_AT to session.createdAt.toString(),
+                    FIELD_EXPIRES_AT to session.expiresAt.toString(),
+                    // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
+                    FIELD_OWNER_SECRET to session.ownerSecret,
+                ),
+            )
+            redis.expire(shareKey, ttl)
 
-        session.location?.let { loc ->
-            val locKey = locationKey(session.token)
-            // 잔여 거리/시간은 앱이 보고했을 때만 필드를 추가한다 — 없을 땐 HASH 에 넣지 않아 기존 {lat,lng,updated_at} 형태를 유지.
-            val fields = buildMap {
-                put(FIELD_LAT, loc.lat.toString())
-                put(FIELD_LNG, loc.lng.toString())
-                put(FIELD_UPDATED_AT, loc.updatedAt.toString())
-                loc.remainingM?.let { put(FIELD_REMAINING_M, it.toString()) }
-                loc.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
+            session.location?.let { loc ->
+                val locKey = locationKey(session.token)
+                // 잔여 거리/시간은 앱이 보고했을 때만 필드를 추가한다 — 없을 땐 HASH 에 넣지 않아 기존 {lat,lng,updated_at} 형태를 유지.
+                val fields = buildMap {
+                    put(FIELD_LAT, loc.lat.toString())
+                    put(FIELD_LNG, loc.lng.toString())
+                    put(FIELD_UPDATED_AT, loc.updatedAt.toString())
+                    loc.remainingM?.let { put(FIELD_REMAINING_M, it.toString()) }
+                    loc.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
+                }
+                redis.opsForHash<String, String>().putAll(locKey, fields)
+                // 위치 키도 공유 상한과 동일 TTL — 공유가 만료되면 위치도 함께 사라진다(잔존 추적 금지).
+                redis.expire(locKey, ttl)
             }
-            redis.opsForHash<String, String>().putAll(locKey, fields)
-            // 위치 키도 공유 상한과 동일 TTL — 공유가 만료되면 위치도 함께 사라진다(잔존 추적 금지).
-            redis.expire(locKey, ttl)
-        }
 
-        session.route?.let { route ->
-            val routeKey = routeKey(session.token)
-            // 경로 컨텍스트는 JSON 문자열 값 키로 저장 — 리스트(경로선·마커) 때문에 flat HASH 로 못 담는다. 동일 상한 TTL.
-            redis.opsForValue().set(routeKey, objectMapper.writeValueAsString(route), ttl)
+            session.route?.let { route ->
+                val routeKey = routeKey(session.token)
+                // 경로 컨텍스트는 JSON 문자열 값 키로 저장 — 리스트(경로선·마커) 때문에 flat HASH 로 못 담는다. 동일 상한 TTL.
+                redis.opsForValue().set(routeKey, objectMapper.writeValueAsString(route), ttl)
+            }
         }
     }
 
-    override fun findByToken(token: String): ShareSession? {
+    override fun findByToken(token: String): ShareSession? = onRedis("findByToken") {
         val shareHash = redis.opsForHash<String, String>().entries(shareKey(token))
-        if (shareHash.isEmpty()) return null // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
-        val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return null
-        val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return null
-        val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return null // 비밀 없는 손상 데이터는 미존재 취급.
+        if (shareHash.isEmpty()) return@onRedis null // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
+        val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
+        val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
+        val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.
 
         val locHash = redis.opsForHash<String, String>().entries(locationKey(token))
         val location = if (locHash.isEmpty()) {
@@ -110,7 +117,7 @@ class RedisLocationStore(
                 null
             }
         }
-        return ShareSession(
+        ShareSession(
             token = token,
             ownerSecret = ownerSecret,
             createdAt = createdAt,
@@ -121,16 +128,22 @@ class RedisLocationStore(
     }
 
     override fun deleteByToken(token: String) {
-        // 공유/위치/경로/시청 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
-        redis.delete(listOf(shareKey(token), locationKey(token), routeKey(token), viewerKey(token)))
+        onRedis("deleteByToken") {
+            // 공유/위치/경로/시청 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
+            redis.delete(listOf(shareKey(token), locationKey(token), routeKey(token), viewerKey(token)))
+        }
     }
 
     override fun markViewed(token: String) {
-        // 보호자 조회 시각을 짧은 TTL 키로 기록 — 폴링이 끊기면(창 닫힘) TTL 로 자동 소멸(시청 종료).
-        redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(VIEWER_WINDOW_SECONDS))
+        onRedis("markViewed") {
+            // 보호자 조회 시각을 짧은 TTL 키로 기록 — 폴링이 끊기면(창 닫힘) TTL 로 자동 소멸(시청 종료).
+            redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(VIEWER_WINDOW_SECONDS))
+        }
     }
 
-    override fun isWatched(token: String): Boolean = redis.hasKey(viewerKey(token)) == true
+    override fun isWatched(token: String): Boolean = onRedis("isWatched") {
+        redis.hasKey(viewerKey(token)) == true
+    }
 
     override fun countActiveSessions(): Int {
         // KEYS 금지 — SCAN 으로 비차단 순회하며 세션 키(share:{token})만 센다. 만료 키는 native TTL 로 이미 없다.
@@ -153,13 +166,28 @@ class RedisLocationStore(
 
     /** 세션 키(`share:{token}`)를 SCAN 으로 비차단 순회한다(KEYS 금지). 커서는 [use] 로 항상 닫는다. */
     private fun forEachSessionKey(action: (String) -> Unit) {
-        redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
-            .use { cursor ->
-                while (cursor.hasNext()) {
-                    action(cursor.next())
+        onRedis("scanSessions") {
+            redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
+                .use { cursor ->
+                    while (cursor.hasNext()) {
+                        action(cursor.next())
+                    }
                 }
-            }
+        }
     }
+
+    /**
+     * Redis I/O 를 실행하고, 연결 실패·타임아웃(Spring Data [DataAccessException])을
+     * [LocationStoreUnavailableException] 으로 변환한다. "없음"(빈 결과 → null)과 "장애"(예외)를 분리해,
+     * 상위(API)가 만료/미존재(404)와 인프라 장애(503)를 다르게 응답하게 한다. token 은 로깅하지 않는다(PII·추적 방지).
+     */
+    private fun <T> onRedis(operation: String, block: () -> T): T =
+        try {
+            block()
+        } catch (e: DataAccessException) {
+            log.warn("Redis 접근 실패(operation={}): {}", operation, e.javaClass.simpleName)
+            throw LocationStoreUnavailableException(operation, e)
+        }
 
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
@@ -11,6 +12,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.redis.RedisConnectionFailureException
 import org.springframework.data.redis.core.Cursor
 import org.springframework.data.redis.core.HashOperations
 import org.springframework.data.redis.core.ScanOptions
@@ -237,6 +239,22 @@ class RedisLocationStoreTest {
         assertEquals(1, active.size)
         assertEquals("tok", active[0].token)
         verify(cursor).close() // .use 로 커서를 닫는다
+    }
+
+    @Test
+    fun `읽기 중 Redis 연결 실패는 LocationStoreUnavailableException 으로 변환된다`() {
+        // Redis 가 죽으면 Spring Data 가 DataAccessException(연결 실패)을 던진다.
+        whenever(hashOps.entries(any())).thenThrow(RedisConnectionFailureException("redis down"))
+        // "없음"(null)이 아니라 저장소 장애로 표면화 — 상위가 404 가 아니라 503 으로 응답하게.
+        assertThrows<LocationStoreUnavailableException> { store.findByToken("tok") }
+    }
+
+    @Test
+    fun `쓰기 중 Redis 연결 실패는 LocationStoreUnavailableException 으로 변환된다`() {
+        whenever(hashOps.putAll(any(), any())).thenThrow(RedisConnectionFailureException("redis down"))
+        assertThrows<LocationStoreUnavailableException> {
+            store.save(ShareSession("tok", "sek", clock.now, clock.now.plusSeconds(3600)))
+        }
     }
 
     private companion object {
