@@ -44,9 +44,9 @@ class SafemapPoliceClient(
      */
     fun fetchPoliceFacilities(): List<SafemapPoliceFacility>? {
         check(isEnabled) { "생활안전지도 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
-        val facilities = ArrayList<SafemapPoliceFacility>()
-        var pageNo = 1
-        var received = 0L
+        val facilities: ArrayList<SafemapPoliceFacility> = ArrayList<SafemapPoliceFacility>()
+        var pageNo: Int = 1
+        var received: Long = 0L
         var totalCount: Long? = null
 
         while (pageNo <= MAX_PAGES) {

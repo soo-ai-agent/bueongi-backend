@@ -21,7 +21,7 @@ class KakaoRemotePlaceProviderTest {
         whenever(client.search("강남")).thenReturn(
             listOf(KakaoPlace(name = "강남역 2번 출구", address = "서울 강남구 강남대로 396", lat = 37.4979, lng = 127.0276)),
         )
-        val provider = KakaoRemotePlaceProvider(client)
+        val provider: KakaoRemotePlaceProvider = KakaoRemotePlaceProvider(client)
 
         assertThat(provider.search("강남")).containsExactly(
             PlaceItem(name = "강남역 2번 출구", address = "서울 강남구 강남대로 396", lat = 37.4979, lng = 127.0276),

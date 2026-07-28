@@ -240,7 +240,7 @@ class ShareService(
 
     /** 추측 불가능한 128-bit URL-safe 랜덤 토큰(22자, 패딩 없음). */
     private fun newToken(): String {
-        val bytes = ByteArray(TOKEN_BYTES)
+        val bytes: ByteArray = ByteArray(TOKEN_BYTES)
         random.nextBytes(bytes)
         return tokenEncoder.encodeToString(bytes)
     }

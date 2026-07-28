@@ -32,9 +32,9 @@ class FacilityUploadStore(
 
     /** [type] 업로드분을 `{uploadDir}/{cdnType}.json` 에 원자적으로 저장한다. */
     fun save(type: FacilityType, points: List<FacilityPoint>) {
-        val dir = File(uploadDir)
+        val dir: File = File(uploadDir)
         Files.createDirectories(dir.toPath())
-        val target = File(dir, "${type.cdnType}.json")
+        val target: File = File(dir, "${type.cdnType}.json")
         val collection = FacilityCollectionDto(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
@@ -56,7 +56,7 @@ class FacilityUploadStore(
 
     /** [type] 업로드 파일이 있으면 그 시설 목록을, 없거나 파싱 실패면 null(부팅 적재가 CDN/CSV 로 폴백). */
     fun findByType(type: FacilityType): List<FacilityPoint>? {
-        val file = File(uploadDir, "${type.cdnType}.json")
+        val file: File = File(uploadDir, "${type.cdnType}.json")
         if (!file.isFile) {
             return null
         }

@@ -70,7 +70,7 @@ class MissedArrivalWatchdogTest {
             lastLocationAt = now.minusSeconds(MISSED_ARRIVAL_STOPPED_SECONDS + 60),
         )
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
-        val notifier = RecordingNotifier()
+        val notifier: RecordingNotifier = RecordingNotifier()
         val watchdog = MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), notifier)
 
         watchdog.scan()

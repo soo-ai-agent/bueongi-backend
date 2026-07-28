@@ -28,7 +28,7 @@ object SpatialMath {
 
     /** 경로(폴리라인) 전체 길이(m). 좌표 2개 미만이면 0. */
     fun pathLengthMeters(path: List<GeoPoint>): Double {
-        var total = 0.0
+        var total: Double = 0.0
         for (i in 1 until path.size) {
             total += haversineMeters(path[i - 1], path[i])
         }
@@ -96,7 +96,7 @@ object SpatialMath {
         if (base.size < 2 || other.size < 2) {
             return 0.0
         }
-        var overlap = 0.0
+        var overlap: Double = 0.0
         for (i in 1 until base.size) {
             val a = base[i - 1]
             val b = base[i]

@@ -212,7 +212,7 @@ class SafeRouteServiceTest {
     fun `Tmap 미설정 폴백은 compare 를 record 하지 않고 safe-compare 만 1회 집계한다`() {
         // 이중 카운트 방지 계약: 폴백은 routeService.buildRoutes(집계 없음)를 호출해야 한다.
         // RouteService 에도 같은 기록 저장소를 물려, compare 로 폴백했다면 "compare" 도 남아 실패하도록 한다.
-        val recording = RecordingRouteStatsStore()
+        val recording: RecordingRouteStatsStore = RecordingRouteStatsStore()
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
         val svc = SafeRouteService(
@@ -234,7 +234,7 @@ class SafeRouteServiceTest {
 
     @Test
     fun `Tmap 전부 실패 폴백도 safe-compare 만 1회 집계한다`() {
-        val recording = RecordingRouteStatsStore()
+        val recording: RecordingRouteStatsStore = RecordingRouteStatsStore()
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
@@ -276,7 +276,7 @@ class SafeRouteServiceTest {
 
 /** 추천 집계 기록을 그대로 모아두는 테스트 대역 — 이중 카운트/엔드포인트 라벨을 검증한다(같은 패키지 테스트 공용). */
 class RecordingRouteStatsStore : RouteStatsStore {
-    val records = mutableListOf<RouteRecommendationLog>()
+    val records: MutableList<RouteRecommendationLog> = mutableListOf<RouteRecommendationLog>()
 
     override fun record(log: RouteRecommendationLog) {
         records.add(log)

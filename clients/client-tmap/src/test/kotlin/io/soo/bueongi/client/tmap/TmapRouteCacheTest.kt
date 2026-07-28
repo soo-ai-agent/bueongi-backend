@@ -15,7 +15,7 @@ class TmapRouteCacheTest {
 
     @Test
     fun `동일 출발-도착-옵션 재요청은 캐시 히트`() {
-        val cache = TmapRouteCache(clock = { 0L })
+        val cache: TmapRouteCache = TmapRouteCache(clock = { 0L })
         assertThat(cache.get(origin, dest, "0", null)).isNull()
         cache.put(origin, dest, "0", null, route)
         assertThat(cache.get(origin, dest, "0", null)).isEqualTo(route)
@@ -23,8 +23,8 @@ class TmapRouteCacheTest {
 
     @Test
     fun `TTL 지나면 만료되어 miss`() {
-        var now = 0L
-        val cache = TmapRouteCache(ttlMillis = 1000, clock = { now })
+        var now: Long = 0L
+        val cache: TmapRouteCache = TmapRouteCache(ttlMillis = 1000, clock = { now })
         cache.put(origin, dest, "0", null, route)
         now = 999
         assertThat(cache.get(origin, dest, "0", null)).isEqualTo(route)
@@ -34,19 +34,19 @@ class TmapRouteCacheTest {
 
     @Test
     fun `좌표 소수 5자리 반올림 - GPS 미세 흔들림에도 히트`() {
-        val cache = TmapRouteCache(clock = { 0L })
+        val cache: TmapRouteCache = TmapRouteCache(clock = { 0L })
         cache.put(origin, dest, "0", null, route)
         // ~0.1m 차이(6번째 자리) → 같은 키.
-        val jitter = TmapCoord(37.500001, 127.000004)
+        val jitter: TmapCoord = TmapCoord(37.500001, 127.000004)
         assertThat(cache.get(jitter, dest, "0", null)).isEqualTo(route)
         // ~11m 차이(4번째 자리) → 다른 키(miss).
-        val far = TmapCoord(37.5001, 127.0)
+        val far: TmapCoord = TmapCoord(37.5001, 127.0)
         assertThat(cache.get(far, dest, "0", null)).isNull()
     }
 
     @Test
     fun `옵션-경유지가 다르면 키 분리`() {
-        val cache = TmapRouteCache(clock = { 0L })
+        val cache: TmapRouteCache = TmapRouteCache(clock = { 0L })
         cache.put(origin, dest, "0", null, route)
         assertThat(cache.get(origin, dest, "10", null)).isNull()
         assertThat(cache.get(origin, dest, "0", listOf(TmapCoord(37.505, 127.005)))).isNull()
@@ -54,7 +54,7 @@ class TmapRouteCacheTest {
 
     @Test
     fun `용량 상한 초과 시 비워지고 이후 정상 동작`() {
-        val cache = TmapRouteCache(maxEntries = 2, clock = { 0L })
+        val cache: TmapRouteCache = TmapRouteCache(maxEntries = 2, clock = { 0L })
         cache.put(origin, dest, "0", null, route)
         cache.put(origin, dest, "4", null, route)
         assertThat(cache.size()).isEqualTo(2)

@@ -25,50 +25,50 @@ class SpatialMathTest {
 
     @Test
     fun `distancePointToSegment - 선분 위 점은 0에 가깝다`() {
-        val a = GeoPoint(37.5, 127.0)
-        val b = GeoPoint(37.5, 127.01)
-        val mid = GeoPoint(37.5, 127.005)
+        val a: GeoPoint = GeoPoint(37.5, 127.0)
+        val b: GeoPoint = GeoPoint(37.5, 127.01)
+        val mid: GeoPoint = GeoPoint(37.5, 127.005)
         assertThat(SpatialMath.distancePointToSegmentMeters(mid, a, b)).isLessThan(1.0)
     }
 
     @Test
     fun `distancePointToSegment - 수직 이탈 거리(약 111m)`() {
         // 위도 0.001도 ≈ 111m 떨어진 점의 수직거리.
-        val a = GeoPoint(37.5, 127.0)
-        val b = GeoPoint(37.5, 127.01)
-        val off = GeoPoint(37.501, 127.005)
+        val a: GeoPoint = GeoPoint(37.5, 127.0)
+        val b: GeoPoint = GeoPoint(37.5, 127.01)
+        val off: GeoPoint = GeoPoint(37.501, 127.005)
         assertThat(SpatialMath.distancePointToSegmentMeters(off, a, b)).isCloseTo(111.0, within(5.0))
     }
 
     @Test
     fun `distancePointToSegment - 퇴화 선분은 점-점 거리`() {
-        val a = GeoPoint(37.5, 127.0)
-        val p = GeoPoint(37.501, 127.0)
+        val a: GeoPoint = GeoPoint(37.5, 127.0)
+        val p: GeoPoint = GeoPoint(37.501, 127.0)
         assertThat(SpatialMath.distancePointToSegmentMeters(p, a, a))
             .isCloseTo(SpatialMath.haversineMeters(GeoPoint(37.5, 127.0), GeoPoint(37.501, 127.0)), within(1.0))
     }
 
     @Test
     fun `projectOntoSegment - 중점은 t 약 0_5`() {
-        val a = GeoPoint(37.5, 127.0)
-        val b = GeoPoint(37.5, 127.01)
-        val mid = GeoPoint(37.5, 127.005)
+        val a: GeoPoint = GeoPoint(37.5, 127.0)
+        val b: GeoPoint = GeoPoint(37.5, 127.01)
+        val mid: GeoPoint = GeoPoint(37.5, 127.005)
         val (t, _) = SpatialMath.projectOntoSegment(mid, a, b)
         assertThat(t).isCloseTo(0.5, within(0.02))
     }
 
     @Test
     fun `projectOntoSegment - 선분 너머는 t 1 초과(클램프 전)`() {
-        val a = GeoPoint(37.5, 127.0)
-        val b = GeoPoint(37.5, 127.01)
-        val beyond = GeoPoint(37.5, 127.02)
+        val a: GeoPoint = GeoPoint(37.5, 127.0)
+        val b: GeoPoint = GeoPoint(37.5, 127.01)
+        val beyond: GeoPoint = GeoPoint(37.5, 127.02)
         val (t, _) = SpatialMath.projectOntoSegment(beyond, a, b)
         assertThat(t).isGreaterThan(1.0)
     }
 
     @Test
     fun `minDistanceToPath - 빈 경로는 무한대, 단일 점은 점-점 거리`() {
-        val p = GeoPoint(37.5, 127.0)
+        val p: GeoPoint = GeoPoint(37.5, 127.0)
         assertThat(SpatialMath.minDistanceToPathMeters(p, emptyList())).isInfinite()
         assertThat(SpatialMath.minDistanceToPathMeters(p, listOf(GeoPoint(37.501, 127.0))))
             .isCloseTo(SpatialMath.haversineMeters(GeoPoint(37.5, 127.0), GeoPoint(37.501, 127.0)), within(1.0))

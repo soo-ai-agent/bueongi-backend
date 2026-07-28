@@ -24,7 +24,7 @@ class GridSpatialIndexTest {
     @Test
     fun `withinRadius - 셀 경계를 넘는 이웃도 누락 없이 찾는다`() {
         // 중심을 셀 경계 근처에 두고, 경계 건너편 ~약 90m 점을 200m 반경으로 찾는다.
-        val center = GeoPoint(37.50049, 127.0)
+        val center: GeoPoint = GeoPoint(37.50049, 127.0)
         val acrossCell = cctv(37.5013, 127.0) // 다른 위도 셀이지만 반경 안
         val index = GridSpatialIndex(listOf(acrossCell))
         assertThat(index.withinRadius(center, 200.0)).contains(acrossCell)

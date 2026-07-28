@@ -24,8 +24,8 @@ class ApiControllerAdviceAlertTest {
 
     @Test
     fun `미처리 예외(500)면 예외 클래스별 key 로 알림을 보낸다 — 응답 본문 비노출 계약은 유지`() {
-        val notifier = RecordingNotifier()
-        val advice = ApiControllerAdvice(notifier)
+        val notifier: RecordingNotifier = RecordingNotifier()
+        val advice: ApiControllerAdvice = ApiControllerAdvice(notifier)
 
         val body = advice.handleUncaught(IllegalStateException("내부 상태 오류"))
 
@@ -42,8 +42,8 @@ class ApiControllerAdviceAlertTest {
 
     @Test
     fun `저장소 장애(503)면 share-store-unavailable key 로 알림 + Retry-After 를 주고 원인은 비노출한다`() {
-        val notifier = RecordingNotifier()
-        val advice = ApiControllerAdvice(notifier)
+        val notifier: RecordingNotifier = RecordingNotifier()
+        val advice: ApiControllerAdvice = ApiControllerAdvice(notifier)
 
         val response = advice.handleShareStoreUnavailable(
             LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
@@ -61,7 +61,7 @@ class ApiControllerAdviceAlertTest {
 
     @Test
     fun `알림기가 없어도(null) 500 처리는 그대로 동작한다`() {
-        val advice = ApiControllerAdvice()
+        val advice: ApiControllerAdvice = ApiControllerAdvice()
 
         assertThatCode {
             val body = advice.handleUncaught(RuntimeException("x"))

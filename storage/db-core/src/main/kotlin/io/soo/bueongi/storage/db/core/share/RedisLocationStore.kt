@@ -160,7 +160,7 @@ class RedisLocationStore(
     override fun countActiveSessions(): Int {
         // KEYS 금지 — SCAN 으로 비차단 순회하며 세션 키(share:{token})만 센다. 만료 키는 native TTL 로 이미 없다.
         // location/route/viewer 키는 패턴에서 제외되어 중복 카운트되지 않는다.
-        var count = 0
+        var count: Int = 0
         forEachSessionKey { count++ }
         return count
     }
@@ -168,7 +168,7 @@ class RedisLocationStore(
     override fun findActiveSessions(): List<ShareSession> {
         // 카운트와 같은 SCAN 순회를 재사용하되, 키에서 토큰을 뽑아 세션을 복원한다.
         // findByToken 이 만료/손상 키를 null 로 걸러내므로(native TTL 과 lazy 정합) 활성 세션만 남는다.
-        val sessions = mutableListOf<ShareSession>()
+        val sessions: MutableList<ShareSession> = mutableListOf<ShareSession>()
         forEachSessionKey { sessionKey ->
             val token = sessionKey.removePrefix(SESSION_KEY_PREFIX)
             findByToken(token)?.let { sessions.add(it) }

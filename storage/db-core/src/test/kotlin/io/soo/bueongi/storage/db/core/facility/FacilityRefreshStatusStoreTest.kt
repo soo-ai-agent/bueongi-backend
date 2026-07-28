@@ -12,14 +12,14 @@ class FacilityRefreshStatusStoreTest {
 
     @Test
     fun `기록 전에는 어떤 종류도 null 이다`() {
-        val store = FacilityRefreshStatusStore()
+        val store: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
 
         assertThat(store.findByType(FacilityType.CCTV)).isNull()
     }
 
     @Test
     fun `기록한 결과를 종류별로 되돌려주고 미포함 종류는 null 이다`() {
-        val store = FacilityRefreshStatusStore()
+        val store: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
 
         store.record(
             mapOf(
@@ -39,7 +39,7 @@ class FacilityRefreshStatusStoreTest {
 
     @Test
     fun `다시 기록하면 최근 1회분으로 교체된다`() {
-        val store = FacilityRefreshStatusStore()
+        val store: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
 
         store.record(mapOf(FacilityType.CCTV to 100), atEpochMs = 1L)
         store.record(mapOf(FacilityType.BELL to 5), atEpochMs = 2L)

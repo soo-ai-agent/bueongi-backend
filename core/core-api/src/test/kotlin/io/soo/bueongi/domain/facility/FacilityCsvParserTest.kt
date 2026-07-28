@@ -134,7 +134,7 @@ class FacilityCsvParserTest {
 
     @Test
     fun `따옴표로 감싼 필드 안의 콤마는 하나의 값으로 읽는다`() {
-        val csv = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,\"안심, 편의점\",\"서울 종로구, 11\""
+        val csv: String = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,\"안심, 편의점\",\"서울 종로구, 11\""
 
         val result = parser.parse(bytes(csv), FacilityCsvSpec.forType(FacilityType.SAFEHOUSE))
 

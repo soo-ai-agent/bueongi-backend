@@ -37,7 +37,7 @@ class SafeDetourPlanner(
 
         // ~80m 그리드 버킷으로 클러스터링. 버킷 중심 = 구성 시설 좌표 평균.
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
-        val clusters = LinkedHashMap<Long, ClusterAccumulator>()
+        val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap<Long, ClusterAccumulator>()
         for (facility in facilities) {
             val cx = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
             val cy = floor(facility.lng / CLUSTER_CELL_DEG).toInt()

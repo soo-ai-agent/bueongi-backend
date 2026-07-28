@@ -55,8 +55,8 @@ class TmapRouteClient(
         if (!isEnabled) {
             return emptyList()
         }
-        val routes = ArrayList<TmapRoute>()
-        val seen = HashSet<Long>()
+        val routes: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
+        val seen: HashSet<Long> = HashSet<Long>()
         for (option in DEFAULT_SEARCH_OPTIONS) {
             val route = call(origin, dest, destName, option, passList = null) ?: continue
             if (!seen.add(route.identityKey)) {
@@ -159,10 +159,10 @@ object TmapGeoJson {
             return null
         }
 
-        val path = ArrayList<TmapCoord>()
-        val steps = ArrayList<NavStep>()
-        var distanceM = 0.0
-        var timeS = 0
+        val path: ArrayList<TmapCoord> = ArrayList<TmapCoord>()
+        val steps: ArrayList<NavStep> = ArrayList<NavStep>()
+        var distanceM: Double = 0.0
+        var timeS: Int = 0
         for (feature in features) {
             val props = feature.get("properties")
             if (props != null) {
@@ -248,7 +248,7 @@ object TmapGeoJson {
      * 클라이언트 내부 구현 — 도메인 공용 공간 연산의 단일 출처는 storage 의 SpatialMath 다.
      */
     private fun pathLengthMeters(path: List<TmapCoord>): Double {
-        var sum = 0.0
+        var sum: Double = 0.0
         for (i in 0 until path.size - 1) sum += haversineMeters(path[i], path[i + 1])
         return sum
     }

@@ -91,7 +91,7 @@ class AdControllerTest(
         fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)
 
         companion object {
-            val recorded = mutableListOf<AdEvent>()
+            val recorded: MutableList<AdEvent> = mutableListOf<AdEvent>()
         }
     }
 }

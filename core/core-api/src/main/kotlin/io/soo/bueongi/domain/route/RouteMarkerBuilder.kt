@@ -44,7 +44,7 @@ class RouteMarkerBuilder(
         alertIfIndexEmpty()
 
         val corridor = SafetyScorer.DEFAULT_CORRIDOR_METERS
-        val raw = ArrayList<FacilityPoi>()
+        val raw: ArrayList<FacilityPoi> = ArrayList<FacilityPoi>()
         raw.add(FacilityPoi(type = FacilityPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 

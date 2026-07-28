@@ -116,7 +116,7 @@ class SafeRouteService(
 
     /** 같은 경로([TmapRoute.identityKey] 동일) 중복 제거 — 기본+우회 합류 시. 판정 키는 클라이언트와 단일 출처. */
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
-        val seen = HashSet<Long>()
+        val seen: HashSet<Long> = HashSet<Long>()
         return routes.filter { seen.add(it.identityKey) }
     }
 
@@ -142,7 +142,7 @@ class SafeRouteService(
         val mainIdx = scored.indices.filter { it !in used }
             .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
 
-        val picks = LinkedHashMap<Int, RouteType>()
+        val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap<Int, RouteType>()
         picks[safeIdx] = RouteType.SAFE
         if (fastIdx != null) {
             picks[fastIdx] = RouteType.FAST

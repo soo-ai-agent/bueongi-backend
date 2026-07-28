@@ -45,7 +45,7 @@ class SafetyScorer(
         val bellDensity = bellCount / km
 
         // 안심귀갓길 겹침 비율(0~1): 후보 경로 길이 대비 겹침 길이의 최댓값.
-        var safePathOverlap = 0.0
+        var safePathOverlap: Double = 0.0
         if (lengthM > 0 && repository.safePaths.isNotEmpty()) {
             for (safePath in repository.safePaths) {
                 if (safePath.coords.size < 2) {

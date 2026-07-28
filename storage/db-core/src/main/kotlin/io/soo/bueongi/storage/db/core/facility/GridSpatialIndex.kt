@@ -54,7 +54,7 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         if (path.size < 2) {
             return path
         }
-        val out = ArrayList<GeoPoint>()
+        val out: ArrayList<GeoPoint> = ArrayList<GeoPoint>()
         out.add(path[0])
         for (i in 1 until path.size) {
             val a = path[i - 1]
@@ -80,8 +80,8 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         // 경도 1°의 최소 폭(한국 최북단 ~38.7°N)으로 보수적 환산 → 셀 반경 개수.
         val cellSpanMinM = CELL_DEG * MIN_LNG_DEG_METERS
         val ring = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
-        val seenCells = HashSet<Long>()
-        val result = ArrayList<FacilityPoint>()
+        val seenCells: HashSet<Long> = HashSet<Long>()
+        val result: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
         for (anchor in anchors) {
             val cx = cellIndex(anchor.lat, CELL_DEG)
             val cy = cellIndex(anchor.lng, CELL_DEG)

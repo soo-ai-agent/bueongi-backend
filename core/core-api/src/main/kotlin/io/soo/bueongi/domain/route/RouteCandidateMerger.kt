@@ -17,7 +17,7 @@ class RouteCandidateMerger {
 
     /** 입력 순서를 보존하며 근접 중복 후보를 제거한 목록을 돌려준다. */
     fun mergeNearDuplicates(candidates: List<RouteCandidate>): List<RouteCandidate> {
-        val kept = ArrayList<RouteCandidate>()
+        val kept: ArrayList<RouteCandidate> = ArrayList<RouteCandidate>()
         for (candidate in candidates) {
             if (kept.none { isNearDuplicate(it, candidate) }) {
                 kept.add(candidate)

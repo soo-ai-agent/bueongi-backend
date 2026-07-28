@@ -243,7 +243,7 @@ class ShareControllerTest(
         // reflected XSS 가 된다(보호자가 메신저 링크로 여는 공개 페이지). 단일 세그먼트라 `/` 는 못 들어오지만
         // `";alert(1)<>` 처럼 `"`<`>` 는 한 세그먼트로 도달한다 → escapeJs 의 `"`→\" / `<`→< / `>`→> 분기를
         // 고정한다. page 가 깨끗한 base64url 토큰만 받던 기존 테스트는 escapeJs 가 no-op 으로만 돌아 이 방어가 미고정이었다.
-        val malicious = "a\"b<>"
+        val malicious: String = "a\"b<>"
         mockMvc.get("/share/{token}", malicious).andExpect {
             status { isOk() }
             content { contentTypeCompatibleWith(MediaType.TEXT_HTML) }

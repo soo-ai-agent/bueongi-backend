@@ -113,7 +113,7 @@ class RequestMetricsService(
 
     /** 창 내 각 clientId 의 최초 관측 시각(epoch ms). clientId 없는 요청은 제외. */
     private fun firstSeenByClient(metrics: List<RequestMetric>): Map<String, Long> {
-        val firstSeen = mutableMapOf<String, Long>()
+        val firstSeen: MutableMap<String, Long> = mutableMapOf<String, Long>()
         metrics.forEach { metric ->
             val clientId = metric.clientId ?: return@forEach
             val previous = firstSeen[clientId]

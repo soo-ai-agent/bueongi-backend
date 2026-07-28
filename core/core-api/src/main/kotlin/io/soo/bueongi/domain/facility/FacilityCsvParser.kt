@@ -92,7 +92,7 @@ class FacilityCsvParser {
 
     /** 헤더명(trim)→인덱스. 같은 이름이 여러 번이면 첫 열을 쓴다. */
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
-        val map = LinkedHashMap<String, Int>()
+        val map: LinkedHashMap<String, Int> = LinkedHashMap<String, Int>()
         header.forEachIndexed { index, raw ->
             val key = raw.trim()
             if (key.isNotEmpty() && !map.containsKey(key)) {
@@ -136,10 +136,10 @@ class FacilityCsvParser {
     /** RFC 4180 형 CSV 토크나이저 — 따옴표 필드(내부 콤마·개행·`""` 이스케이프)를 처리하고 레코드(행) 목록을 만든다. */
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records = ArrayList<List<String>>()
-        var record = ArrayList<String>()
-        val field = StringBuilder()
-        var inQuotes = false
-        var i = 0
+        var record: ArrayList<String> = ArrayList<String>()
+        val field: StringBuilder = StringBuilder()
+        var inQuotes: Boolean = false
+        var i: Int = 0
         val n = text.length
         while (i < n) {
             val c = text[i]

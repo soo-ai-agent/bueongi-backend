@@ -62,8 +62,8 @@ class FacilityRepository(
     @PostConstruct
     fun load() {
         val byType = LinkedHashMap<FacilityType, MutableList<FacilityPoint>>()
-        val paths = ArrayList<SafePath>()
-        var fileCount = 0
+        val paths: ArrayList<SafePath> = ArrayList<SafePath>()
+        var fileCount: Int = 0
 
         // CDN 디렉터리(있으면) 적재. 없으면 CDN 적재는 건너뛰고 업로드분만으로 동작한다(업로드는 CDN 유무와 무관하게 유지).
         val dir = resolveDataDir()
@@ -75,7 +75,7 @@ class FacilityRepository(
         } else {
             // 컬렉션 디렉터리(type 별 하위 폴더)를 훑어 *.json 을 적재. safepath 는 좌표열로 따로.
             for (type in FacilityType.entries) {
-                val typeDir = File(dir, type.cdnType)
+                val typeDir: File = File(dir, type.cdnType)
                 if (!typeDir.isDirectory) {
                     continue
                 }
@@ -118,7 +118,7 @@ class FacilityRepository(
         }
 
         // 관리자 업로드분 우선 — 해당 종류가 업로드된 적 있으면 CDN/CSV 적재분을 통째로 교체한다(재기동해도 마지막 업로드 유지).
-        var uploadedTypes = 0
+        var uploadedTypes: Int = 0
         for (type in FacilityType.entries) {
             val uploaded = uploadStore.findByType(type) ?: continue
             byType[type] = uploaded.toMutableList()

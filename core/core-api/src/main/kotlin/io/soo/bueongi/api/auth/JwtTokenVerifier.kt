@@ -76,7 +76,7 @@ class JwtTokenVerifier(props: JwtProperties) {
                 .replace("-----END PUBLIC KEY-----", "")
                 .replace("\\s".toRegex(), "")
             val decoded = Base64.getDecoder().decode(stripped)
-            val keySpec = X509EncodedKeySpec(decoded)
+            val keySpec: X509EncodedKeySpec = X509EncodedKeySpec(decoded)
             return KeyFactory.getInstance("RSA").generatePublic(keySpec) as RSAPublicKey
         }
     }

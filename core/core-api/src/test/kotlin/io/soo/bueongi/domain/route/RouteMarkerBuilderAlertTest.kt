@@ -20,7 +20,7 @@ class RouteMarkerBuilderAlertTest {
     private val destination = GeoPoint(37.5, 127.020)
 
     private class RecordingNotifier : AlertNotifier {
-        val keys = ArrayList<String>()
+        val keys: ArrayList<String> = ArrayList<String>()
         override val isEnabled = true
         override fun notify(key: String, title: String, detail: String) {
             keys.add(key)
@@ -32,7 +32,7 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `장애 - 시설 인덱스가 통째로 비면(총 적재 0) 데이터 제공 실패로 알린다`() {
-        val notifier = RecordingNotifier()
+        val notifier: RecordingNotifier = RecordingNotifier()
 
         val markers = build(FakeFacilitySource(), notifier)
 
@@ -43,7 +43,7 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `정상 - 시설이 적재됐고 회랑에만 없으면(적재량 GT 0, 회랑 0) 알리지 않는다`() {
-        val notifier = RecordingNotifier()
+        val notifier: RecordingNotifier = RecordingNotifier()
         // 시설은 적재됐지만(size>0) 경로 회랑(30m)에서 멀리 떨어져 실측 0 인 소스 — 정직한 0.
         val farAway = FakeFacilitySource(
             mapOf(FacilityType.CCTV to listOf(FacilityPoint(FacilityType.CCTV, 38.0, 128.0))),
@@ -57,8 +57,8 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `스로틀 - 빈 인덱스로 반복 호출해도 항상 같은 상수 key 를 써서 폭주가 억제된다`() {
-        val notifier = RecordingNotifier()
-        val source = FakeFacilitySource()
+        val notifier: RecordingNotifier = RecordingNotifier()
+        val source: FakeFacilitySource = FakeFacilitySource()
 
         repeat(3) { build(source, notifier) }
 

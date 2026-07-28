@@ -21,7 +21,7 @@ class AdStatsServiceTest {
 
     @Test
     fun `record 는 현재시각으로 AdEvent 를 만들어 저장소에 넣는다`() {
-        val recorded = mutableListOf<AdEvent>()
+        val recorded: MutableList<AdEvent> = mutableListOf<AdEvent>()
         val capturing = object : AdEventStore {
             override fun record(event: AdEvent) {
                 recorded += event

@@ -29,7 +29,7 @@ class FacilityRefreshServiceTest {
     }
 
     private class RecordingNotifier : AlertNotifier {
-        val keys = ArrayList<String>()
+        val keys: ArrayList<String> = ArrayList<String>()
         override val isEnabled = true
         override fun notify(key: String, title: String, detail: String) {
             keys.add(key)
@@ -165,7 +165,7 @@ class FacilityRefreshServiceTest {
         whenever(dataGoKr.fetchCctv()).thenReturn(listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)))
         whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null) // 수집 실패 → kept(count=null)
         whenever(dataGoKr.fetchSafehouses()).thenReturn(listOf(DataGoKrPoint(lat = 37.6, lng = 127.1)))
-        val holder = FacilityRefreshStatusStore()
+        val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
         val serviceWithHolder = FacilityRefreshService(
             dataGoKr, safemap, store, notifier, refreshStatusStore = holder,
         )

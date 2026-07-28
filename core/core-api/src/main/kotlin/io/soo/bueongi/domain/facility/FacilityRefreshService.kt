@@ -53,7 +53,7 @@ class FacilityRefreshService(
      * 반환: 종류별 교체 건수(실패/건너뜀은 null, 키 없는 원천의 종류는 미포함) — 로그·테스트 판정용.
      */
     fun refreshAll(): Map<FacilityType, Int?> {
-        val result = LinkedHashMap<FacilityType, Int?>()
+        val result: LinkedHashMap<FacilityType, Int?> = LinkedHashMap<FacilityType, Int?>()
         if (dataGoKrClient.isEnabled) {
             result[FacilityType.CCTV] = refresh(FacilityType.CCTV) {
                 measureFetch("DATAGOKR", "cctv") { dataGoKrClient.fetchCctv() }

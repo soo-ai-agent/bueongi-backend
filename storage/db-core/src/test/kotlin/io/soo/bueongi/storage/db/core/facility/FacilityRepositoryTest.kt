@@ -19,7 +19,7 @@ class FacilityRepositoryTest {
     private val mapper = ObjectMapper()
 
     private fun write(dir: File, rel: String, json: String) {
-        val file = File(dir, rel)
+        val file: File = File(dir, rel)
         file.parentFile.mkdirs()
         file.writeText(json)
     }
@@ -102,7 +102,7 @@ class FacilityRepositoryTest {
         val dir = tmp.toFile()
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
         // CP949(MS949)로 인코딩된 표준 18컬럼 CSV: 헤더 1 + 방범 정상행 2 + 좌표불량 1 + 비방범(교통단속) 1.
-        val csv = File(dir, "CCTV정보.csv")
+        val csv: File = File(dir, "CCTV정보.csv")
         // 후행 12컬럼(카메라대수~최종수정시점)으로 좌표/목적을 뒤 오프셋으로 읽는다.
         fun row(id: String, lat: String, purpose: String) =
             "3000000,$id,서울 종로구청,종로 $id,,$purpose,2,200,360도 전방면,30,202005," +
@@ -183,7 +183,7 @@ class FacilityRepositoryTest {
             ),
         )
 
-        val repo = FacilityRepository(dir.absolutePath, mapper, store, "")
+        val repo: FacilityRepository = FacilityRepository(dir.absolutePath, mapper, store, "")
         repo.load()
 
         assertThat(repo.index(FacilityType.CCTV).size).isEqualTo(3) // CDN 1건이 아니라 업로드 3건으로 교체

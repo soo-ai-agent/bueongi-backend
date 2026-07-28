@@ -76,8 +76,8 @@ class RouteServiceTest {
     @Test
     fun `compare 는 추천 요청을 compare 로 1회 집계하고 buildRoutes 는 집계하지 않는다`() {
         // 추천 집계 계약: compare 만 기록(부수효과), 순수 생성(buildRoutes)은 기록 없음 → safe-compare 폴백이 이중 카운트 없이 재사용.
-        val recording = RecordingRouteStatsStore()
-        val recordingService = RouteService(recording)
+        val recording: RecordingRouteStatsStore = RecordingRouteStatsStore()
+        val recordingService: RouteService = RouteService(recording)
 
         recordingService.compare(request())
         assertThat(recording.records.map { it.endpoint }).containsExactly("compare")

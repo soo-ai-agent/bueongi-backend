@@ -33,7 +33,7 @@ class SlackAlertNotifierTest {
     ): Pair<SlackAlertNotifier, MockRestServiceServer> {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
-        val config = SlackAlertConfig(webhookUrl = url, throttleMinutes = throttleMinutes)
+        val config: SlackAlertConfig = SlackAlertConfig(webhookUrl = url, throttleMinutes = throttleMinutes)
         if (mutedCategories.isNotEmpty()) {
             config.update(enabled = true, throttleMinutes = throttleMinutes, mutedCategories = mutedCategories)
         }

@@ -71,7 +71,7 @@ class SlackAlertNotifier internal constructor(
             return
         }
         val now = nowMs()
-        var allowed = false
+        var allowed: Boolean = false
         lastSentAtMs.compute(key) { _, last ->
             if (last == null || now - last >= config.throttleMillis()) {
                 allowed = true

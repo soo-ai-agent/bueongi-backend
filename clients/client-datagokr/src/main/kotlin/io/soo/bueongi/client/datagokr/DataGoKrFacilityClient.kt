@@ -56,9 +56,9 @@ class DataGoKrFacilityClient(
      */
     private fun fetchAll(endpoint: String, fields: FieldNames): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
-        val points = ArrayList<DataGoKrPoint>()
-        var pageNo = 1
-        var received = 0L
+        val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
+        var pageNo: Int = 1
+        var received: Long = 0L
         var totalCount = Long.MAX_VALUE
 
         while (pageNo <= MAX_PAGES && received < totalCount) {

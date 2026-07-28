@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 class PlaceSearchInstrumentationTest {
 
     private class RecordingStore : ApiCallLogStore {
-        val logs = ArrayList<ApiCallLog>()
+        val logs: ArrayList<ApiCallLog> = ArrayList<ApiCallLog>()
         override fun record(log: ApiCallLog) {
             logs.add(log)
         }

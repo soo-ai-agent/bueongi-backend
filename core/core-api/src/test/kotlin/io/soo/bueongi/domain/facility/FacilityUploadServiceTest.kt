@@ -42,8 +42,8 @@ class FacilityUploadServiceTest {
 
     @Test
     fun `업로드는 파일 저장 + 라이브 교체 + 상태 기록을 하고 집계를 반환한다`(@TempDir tmp: Path) {
-        val liveStore = FakeLiveStore()
-        val statusStore = FacilityRefreshStatusStore()
+        val liveStore: FakeLiveStore = FakeLiveStore()
+        val statusStore: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
         val csv = """
             위도,경도,관리기관명,소재지지번주소,설치목적구분,카메라대수
             37.5,127.0,종로구청,서울 종로구 1,생활방범,4
@@ -71,7 +71,7 @@ class FacilityUploadServiceTest {
 
     @Test
     fun `유효 0건이면 교체하지 않고 EmptyFacilityUploadException`(@TempDir tmp: Path) {
-        val liveStore = FakeLiveStore()
+        val liveStore: FakeLiveStore = FakeLiveStore()
         // 좌표 없는 police 표준데이터(관서명·주소만) → 전부 skip → 유효 0건.
         val csv = """
             관서명,소재지도로명주소,전화번호

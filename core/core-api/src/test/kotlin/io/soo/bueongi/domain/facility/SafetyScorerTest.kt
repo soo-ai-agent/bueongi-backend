@@ -62,7 +62,7 @@ class SafetyScorerTest {
     @Test
     fun `결정론 - 같은 경로와 데이터는 같은 점수`() {
         val source = FakeFacilitySource.of(FacilityType.BELL, listOf(GeoPoint(37.5, 127.005)))
-        val scorer = SafetyScorer(source)
+        val scorer: SafetyScorer = SafetyScorer(source)
         assertThat(scorer.score(path)).isEqualTo(scorer.score(path))
     }
 

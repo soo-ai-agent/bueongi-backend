@@ -59,7 +59,7 @@ class HttpClientTimeoutTest(
     fun `느린 응답은 read 타임아웃으로 끊긴다`() {
         // 클라이언트 모듈과 동일하게 주입된 빌더를 clone().build() 해 사용한다.
         val restClient = restClientBuilder.clone().build()
-        val slowUrl = "http://127.0.0.1:${slowServer.address.port}/slow"
+        val slowUrl: String = "http://127.0.0.1:${slowServer.address.port}/slow"
         val startedAtMillis = System.currentTimeMillis()
 
         assertThatThrownBy {
