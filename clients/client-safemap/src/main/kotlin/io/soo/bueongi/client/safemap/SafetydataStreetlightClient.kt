@@ -23,9 +23,12 @@ import java.net.URI
 class SafetydataStreetlightClient(
     @Value("\${bueongi.safetydata.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
+    // 기본은 실 호스트. 스테이징/로컬 목 게이트를 가리키게 오버라이드할 수 있다(bueongi.safetydata.base-url).
+    @Value("\${bueongi.safetydata.base-url:$DEFAULT_BASE_URL}") baseUrl: String = DEFAULT_BASE_URL,
 ) {
     private val log = LoggerFactory.getLogger(SafetydataStreetlightClient::class.java)
     private val serviceKey: String = serviceKey.trim()
+    private val endpoint: String = "${baseUrl.trimEnd('/')}$PATH"
 
     /** 키가 설정돼 있으면 true. false 면 호출하지 말 것(상위가 라이브 갱신 자체를 건너뛴다). */
     val isEnabled: Boolean
@@ -48,7 +51,7 @@ class SafetydataStreetlightClient(
         while (pageNo <= MAX_PAGES) {
             val body = try {
                 restClient.get()
-                    .uri(URI.create("$ENDPOINT?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=json"))
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=json"))
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
@@ -140,7 +143,11 @@ class SafetydataStreetlightClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     companion object {
-        const val ENDPOINT: String = "https://www.safetydata.go.kr/V2/api/DSSP-IF-00084"
+        const val DEFAULT_BASE_URL: String = "https://www.safetydata.go.kr"
+        const val PATH: String = "/V2/api/DSSP-IF-00084"
+
+        /** 기본(실 호스트) 전체 엔드포인트 — 테스트·로그용. 실제 호출 URL 은 base-url + PATH 로 조립한다. */
+        const val ENDPOINT: String = "$DEFAULT_BASE_URL$PATH"
 
         /** 페이지당 요청 건수 — 서버가 상한을 낮게 잡아도 totalCount 순회로 전량을 받는다. */
         const val PAGE_SIZE: Int = 1000
