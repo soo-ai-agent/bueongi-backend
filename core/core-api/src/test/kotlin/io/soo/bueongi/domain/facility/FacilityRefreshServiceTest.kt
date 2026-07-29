@@ -4,6 +4,8 @@ import io.soo.bueongi.client.datagokr.DataGoKrFacilityClient
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPoliceFacility
+import io.soo.bueongi.client.safemap.SafetydataStreetlight
+import io.soo.bueongi.client.safemap.SafetydataStreetlightClient
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
@@ -38,12 +40,15 @@ class FacilityRefreshServiceTest {
 
     private val dataGoKr: DataGoKrFacilityClient = mock()
     private val safemap: SafemapPoliceClient = mock()
+    private val streetlight: SafetydataStreetlightClient = mock()
     private val store: FakeStore = FakeStore()
     private val notifier: RecordingNotifier = RecordingNotifier()
-    private val service: FacilityRefreshService = FacilityRefreshService(dataGoKr, safemap, store, notifier)
+    private val service: FacilityRefreshService =
+        FacilityRefreshService(dataGoKr, safemap, streetlight, store, notifier)
 
     private fun enableDataGoKr() = whenever(dataGoKr.isEnabled).thenReturn(true)
     private fun enableSafemap() = whenever(safemap.isEnabled).thenReturn(true)
+    private fun enableStreetlight() = whenever(streetlight.isEnabled).thenReturn(true)
 
     @Test
     fun `정상 - 두 원천의 수집분을 도메인 모델로 매핑해 종류별 인덱스를 교체한다`() {
@@ -97,6 +102,28 @@ class FacilityRefreshServiceTest {
         assertThat(result.keys).containsExactly(FacilityType.POLICE)
         assertThat(result[FacilityType.POLICE]).isEqualTo(1)
         assertThat(store.replaced.keys).containsExactly(FacilityType.POLICE)
+    }
+
+    @Test
+    fun `가로등 - safetydata 원천의 수집분을 LAMP 인덱스로 교체한다(주소·시군구 매핑)`() {
+        enableStreetlight() // 다른 원천은 미설정 → LAMP 만 갱신
+        whenever(streetlight.fetchStreetlights()).thenReturn(
+            listOf(
+                SafetydataStreetlight(lat = 37.5, lng = 127.0, address = "테헤란로 5", sigungu = "11680"),
+                SafetydataStreetlight(lat = 37.51, lng = 127.02),
+            ),
+        )
+
+        val result = service.refreshAll()
+
+        assertThat(result.keys).containsExactly(FacilityType.LAMP)
+        assertThat(result[FacilityType.LAMP]).isEqualTo(2)
+        assertThat(store.replaced.keys).containsExactly(FacilityType.LAMP)
+        val lamps: List<FacilityPoint> = store.replaced[FacilityType.LAMP]!!
+        assertThat(lamps[0].type).isEqualTo(FacilityType.LAMP)
+        assertThat(lamps[0].address).isEqualTo("테헤란로 5")
+        assertThat(lamps[0].sigungu).isEqualTo("11680")
+        assertThat(notifier.keys).isEmpty()
     }
 
     @Test
@@ -167,7 +194,7 @@ class FacilityRefreshServiceTest {
         whenever(dataGoKr.fetchSafehouses()).thenReturn(listOf(DataGoKrPoint(lat = 37.6, lng = 127.1)))
         val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
         val serviceWithHolder = FacilityRefreshService(
-            dataGoKr, safemap, store, notifier, refreshStatusStore = holder,
+            dataGoKr, safemap, streetlight, store, notifier, refreshStatusStore = holder,
         )
 
         serviceWithHolder.refreshAll()

@@ -124,8 +124,8 @@ class SafemapPoliceClient(
 
     /** 행 → 시설(WGS84 확정). 좌표를 판별 못 하면 null(건너뜀). */
     private fun JsonNode.toFacility(): SafemapPoliceFacility? {
-        val point: Wgs84Point = resolveWgs84(text("x"), text("y"))
-            ?: resolveWgs84(text("tmp_x"), text("tmp_y"))
+        val point: Wgs84Point = resolveKoreanWgs84OrNull(text("x"), text("y"))
+            ?: resolveKoreanWgs84OrNull(text("tmp_x"), text("tmp_y"))
             ?: return null
         return SafemapPoliceFacility(
             lat = point.lat,
@@ -135,18 +135,6 @@ class SafemapPoliceClient(
             phone = text("telno"),
             sigungu = text("sgg_cd"),
         )
-    }
-
-    /** 좌표 문자열 쌍 → WGS84. 값 범위로 좌표계를 판별한다(경위도 그대로 / 순서 뒤바뀜 / EPSG:5179). */
-    private fun resolveWgs84(xText: String?, yText: String?): Wgs84Point? {
-        val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-        val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-        return when {
-            Epsg5179.inKoreaBounds(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x) // x=경도, y=위도
-            Epsg5179.inKoreaBounds(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어
-            x in UTMK_EASTING_RANGE && y in UTMK_NORTHING_RANGE -> Epsg5179.toWgs84(x, y)
-            else -> null
-        }
     }
 
     private fun JsonNode.text(field: String): String? =
@@ -163,14 +151,6 @@ class SafemapPoliceClient(
 
         /** 폭주 방지 상한 — 전국 지역경찰관서(수천 관서)에 충분한 여유. */
         const val MAX_PAGES: Int = 500
-
-        /**
-         * EPSG:5179 로 판별하는 동경(easting)/북위(northing) 미터 범위 — false easting/northing
-         * (1,000,000/2,000,000m) 기준 한반도 유효 범위. 경위도(±180/±90)와 자릿수가 달라 겹치지 않으므로
-         * 이 범위에 들면 미터 좌표로 보고 역변환한다.
-         */
-        val UTMK_EASTING_RANGE = 400_000.0..1_600_000.0
-        val UTMK_NORTHING_RANGE = 1_100_000.0..2_900_000.0
     }
 }
 

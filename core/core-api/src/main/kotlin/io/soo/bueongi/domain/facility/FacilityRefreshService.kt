@@ -4,6 +4,8 @@ import io.soo.bueongi.client.datagokr.DataGoKrFacilityClient
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPoliceFacility
+import io.soo.bueongi.client.safemap.SafetydataStreetlight
+import io.soo.bueongi.client.safemap.SafetydataStreetlightClient
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service
  * 원천은 소스별로 독립 게이트된다(키 있는 것만 갱신, 없는 것은 파일 적재분 유지):
  * - data.go.kr(행안부 조회서비스·표준데이터): CCTV·비상벨·여성안심지킴이집 — `DATA_GO_KR_SERVICE_KEY`
  * - 생활안전지도(safemap, 경찰청): 치안시설(지구대·파출소·치안센터) — `SAFEMAP_SERVICE_KEY`
+ * - 재난안전데이터(safetydata, 행안부): 가로등(공통POI DSSP-IF-00084) — `SAFETYDATA_SERVICE_KEY`
  * 좌표 변환·지오코딩을 파이프라인에만 맡기던 원칙에서 EPSG:5179 는 예외로 클라이언트가 자체 변환한다
  * (client-safemap [io.soo.bueongi.client.safemap.Epsg5179] — 원천이 좌표를 직접 주는 경우만).
  *
@@ -34,6 +37,7 @@ import org.springframework.stereotype.Service
 class FacilityRefreshService(
     private val dataGoKrClient: DataGoKrFacilityClient,
     private val safemapClient: SafemapPoliceClient,
+    private val streetlightClient: SafetydataStreetlightClient,
     private val liveStore: FacilityLiveStore,
     /** 운영 알림(없으면 null 무해) — 키가 있는 원천의 갱신 실패/0건만 알린다(미설정 건너뜀은 정상이라 제외). */
     private val alertNotifier: AlertNotifier? = null,
@@ -46,7 +50,7 @@ class FacilityRefreshService(
 
     /** 어느 원천이든 키가 있어 라이브 갱신이 동작 가능한지. false 면 호출측이 갱신 자체를 건너뛴다. */
     val isEnabled: Boolean
-        get() = dataGoKrClient.isEnabled || safemapClient.isEnabled
+        get() = dataGoKrClient.isEnabled || safemapClient.isEnabled || streetlightClient.isEnabled
 
     /**
      * 키가 설정된 원천의 지원 종류 전부를 갱신한다.
@@ -77,6 +81,14 @@ class FacilityRefreshService(
             }
         } else {
             log.info("safemap 키 미설정 — 치안시설(파출소) 라이브 갱신 건너뜀(파일 적재분 유지)")
+        }
+        if (streetlightClient.isEnabled) {
+            result[FacilityType.LAMP] = refresh(FacilityType.LAMP) {
+                measureFetch("SAFETYDATA", "streetlight") { streetlightClient.fetchStreetlights() }
+                    ?.map { it.toFacilityPoint() }
+            }
+        } else {
+            log.info("safetydata 키 미설정 — 가로등 라이브 갱신 건너뜀(파일 적재분 유지)")
         }
         log.info(
             "안심시설 라이브 갱신 완료: {}",
@@ -152,4 +164,13 @@ private fun SafemapPoliceFacility.toFacilityPoint(): FacilityPoint = FacilityPoi
     sigungu = sigungu,
     address = address,
     phone = phone,
+)
+
+/** safetydata 가로등 → 저장 모델. 좌표는 클라이언트가 이미 WGS84 로 변환을 마쳤다(가로등은 이름·전화 없음). */
+private fun SafetydataStreetlight.toFacilityPoint(): FacilityPoint = FacilityPoint(
+    type = FacilityType.LAMP,
+    lat = lat,
+    lng = lng,
+    sigungu = sigungu,
+    address = address,
 )

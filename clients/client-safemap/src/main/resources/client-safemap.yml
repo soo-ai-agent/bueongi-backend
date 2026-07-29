@@ -1,6 +1,10 @@
-# clients:client-safemap 소유 설정 — 생활안전지도(safemap.go.kr) 인증키.
+# clients:client-safemap 소유 설정 — 생활안전지도(safemap.go.kr) + 재난안전데이터(safetydata.go.kr) 인증키.
 bueongi:
   safemap:
     # 미설정(빈 값)이면 치안시설(파출소 등) 라이브 갱신 비활성(파일 적재분 유지).
     # 생활안전지도에서 발급받은 URL-인코딩된 키를 그대로 넣는다(재인코딩 금지).
     service-key: ${SAFEMAP_SERVICE_KEY:}
+  safetydata:
+    # 미설정(빈 값)이면 가로등 라이브 갱신 비활성(파일 적재분 유지).
+    # 재난안전데이터 공유 플랫폼(safetydata.go.kr) 공통POI 가로등(DSSP-IF-00084) 활용신청 승인 키를 그대로 넣는다.
+    service-key: ${SAFETYDATA_SERVICE_KEY:}
