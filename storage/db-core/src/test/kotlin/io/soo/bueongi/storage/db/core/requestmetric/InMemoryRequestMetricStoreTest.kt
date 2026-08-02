@@ -55,8 +55,8 @@ class InMemoryRequestMetricStoreTest {
         val all: List<RequestMetric> = store.findRecent(REQUEST_METRIC_CAP + 100)
 
         assertEquals(REQUEST_METRIC_CAP, all.size)
-        assertEquals(total, all.first().atEpochMs) // 최신 유지
-        assertEquals(51L, all.last().atEpochMs) // 1..50 은 축출됨
+        assertEquals(total, all.first().atEpochMs)
+        assertEquals(51L, all.last().atEpochMs)
     }
 
     @Test

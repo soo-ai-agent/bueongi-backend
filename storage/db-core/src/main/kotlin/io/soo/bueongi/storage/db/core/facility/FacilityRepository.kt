@@ -67,7 +67,6 @@ class FacilityRepository(
         val paths: ArrayList<SafePath> = ArrayList<SafePath>()
         var fileCount: Int = 0
 
-        // CDN 디렉터리(있으면) 적재. 없으면 CDN 적재는 건너뛰고 업로드분만으로 동작한다(업로드는 CDN 유무와 무관하게 유지).
         val dir: File? = resolveDataDir()
         if (dir == null) {
             log.warn(
@@ -75,7 +74,6 @@ class FacilityRepository(
                 configuredDir,
             )
         } else {
-            // 컬렉션 디렉터리(type 별 하위 폴더)를 훑어 *.json 을 적재. safepath 는 좌표열로 따로.
             for (type in FacilityType.entries) {
                 val typeDir: File = File(dir, type.cdnType)
                 if (!typeDir.isDirectory) {
@@ -91,14 +89,12 @@ class FacilityRepository(
                     }
                 }
             }
-            // safepath(안심귀갓길) 좌표열.
             File(dir, "safepath").takeIf { it.isDirectory }?.listJsonFiles()?.forEach { file ->
                 val collection: FacilityCollectionDto = parseCollection(file) ?: return@forEach
                 fileCount++
                 collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
             }
 
-            // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
             _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
                 try {
                     val manifestJson: JsonNode = objectMapper.readTree(file)
@@ -113,13 +109,11 @@ class FacilityRepository(
             }
         }
 
-        // 전국 CCTV 실데이터 CSV(있으면) 적재 — JSON CCTV 포인트와 합쳐 단일 인덱스를 만든다.
         val csvCctv: List<FacilityPoint> = loadCctvCsv()
         if (csvCctv.isNotEmpty()) {
             byType.getOrPut(FacilityType.CCTV) { ArrayList() }.addAll(csvCctv)
         }
 
-        // 관리자 업로드분 우선 — 해당 종류가 업로드된 적 있으면 CDN/CSV 적재분을 통째로 교체한다(재기동해도 마지막 업로드 유지).
         var uploadedTypes: Int = 0
         for (type in FacilityType.entries) {
             val uploaded: List<FacilityPoint> = uploadStore.findByType(type) ?: continue
@@ -156,7 +150,7 @@ class FacilityRepository(
         }
         return try {
             file.bufferedReader(CP949).useLines { lines ->
-                lines.drop(1) // 헤더 건너뜀
+                lines.drop(1)
                     .mapNotNull { parseCctvCsvLine(it) }
                     .toList()
             }
@@ -187,7 +181,6 @@ class FacilityRepository(
     private fun resolveDataDir(): File? {
         val candidates: List<String> = buildList {
             add(configuredDir)
-            // backend cwd 기준 흔한 위치들(테스트/실행 환경 차이 흡수).
             add("../cdn")
             add("../../cdn")
             add("cdn")
@@ -241,11 +234,9 @@ val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "�
  */
 internal fun parseCctvCsvLine(line: String): FacilityPoint? {
     val parts: List<String> = line.split(',')
-    // 최소: 설치목적구분(parts[N-13]) + 좌표(parts[N-6]) + name(parts[2]) 가 모두 존재해야 함.
     if (parts.size < 13) {
         return null
     }
-    // 용도(설치목적구분) 필터 — 방범 성격이 아니면 적재 제외.
     val purpose: String = parts[parts.size - 13].trim().trim('"')
     if (purpose !in CCTV_SECURITY_PURPOSES) {
         return null
@@ -255,7 +246,6 @@ internal fun parseCctvCsvLine(line: String): FacilityPoint? {
         lng = parts[parts.size - 5].trim().toDoubleOrNull(),
     ) ?: return null
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
-    // 카메라대수(N-12) — 적재 대상(목적 정상 판독) 행은 후행 구조가 안정적이라 신뢰 가능. 표시용.
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     return FacilityPoint(
         type = FacilityType.CCTV,
@@ -312,7 +302,6 @@ data class FacilityItemDto(
         if (!coordList.isNullOrEmpty()) {
             return SafePath(coords = coordList, name = name)
         }
-        // coords 없으면 단일 점 폴백.
         val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
         return SafePath(coords = listOf(point), name = name)
     }

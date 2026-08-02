@@ -54,7 +54,6 @@ class Epsg5174Test {
 
     @Test
     fun `범위 - 변환 결과가 한국 범위 밖이거나 비유한값이면 null`() {
-        // proj4 기준: x=2,000,000 → lng≈145.9°(동쪽 밖), y=-2,000,000 → lat≈15.4°(남쪽 밖).
         assertThat(Epsg5174.toWgs84(2_000_000.0, 0.0)).isNull()
         assertThat(Epsg5174.toWgs84(0.0, -2_000_000.0)).isNull()
         assertThat(Epsg5174.toWgs84(Double.NaN, 500000.0)).isNull()

@@ -56,15 +56,12 @@ class FacilityUploadServiceTest {
         assertThat(result.type).isEqualTo(FacilityType.CCTV)
         assertThat(result.coordSystem).isEqualTo(FacilityCoordSystem.WGS84)
         assertThat(result.received).isEqualTo(3)
-        assertThat(result.saved).isEqualTo(2) // 교통단속(비방범) 제외
+        assertThat(result.saved).isEqualTo(2)
         assertThat(result.skipped).isEqualTo(1)
 
-        // 디스크 저장 확인.
         assertThat(File(tmp.toFile(), "cctv.json")).exists()
-        // 라이브 교체가 저장 건수와 동일하게 호출됨.
         assertThat(liveStore.lastType).isEqualTo(FacilityType.CCTV)
         assertThat(liveStore.lastPoints).hasSize(2)
-        // 상태에 replaced 로 기록됨.
         val record = statusStore.findByType(FacilityType.CCTV)!!
         assertThat(record.replacedCount).isEqualTo(2)
     }
@@ -72,7 +69,6 @@ class FacilityUploadServiceTest {
     @Test
     fun `유효 0건이면 교체하지 않고 EmptyFacilityUploadException`(@TempDir tmp: Path) {
         val liveStore: FakeLiveStore = FakeLiveStore()
-        // 좌표 없는 police 표준데이터(관서명·주소만) → 전부 skip → 유효 0건.
         val csv = """
             관서명,소재지도로명주소,전화번호
             종로파출소,서울 종로구 대로 8,02-100
@@ -81,7 +77,6 @@ class FacilityUploadServiceTest {
         assertThatThrownBy { service(tmp, liveStore, null).upload(FacilityType.POLICE, csv.toByteArray()) }
             .isInstanceOf(EmptyFacilityUploadException::class.java)
 
-        // 교체·저장 모두 일어나지 않는다(기존 데이터 보존).
         assertThat(liveStore.lastPoints).isNull()
         assertThat(File(tmp.toFile(), "police.json")).doesNotExist()
     }

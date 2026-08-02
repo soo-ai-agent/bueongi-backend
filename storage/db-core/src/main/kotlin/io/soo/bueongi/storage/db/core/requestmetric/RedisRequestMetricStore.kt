@@ -22,7 +22,6 @@ class RedisRequestMetricStore(
     private val logger: Logger = LoggerFactory.getLogger(RedisRequestMetricStore::class.java)
 
     override fun record(metric: RequestMetric) {
-        // 계측 실패가 실제 요청을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             redis.opsForList().leftPush(KEY, objectMapper.writeValueAsString(metric))
             redis.opsForList().trim(KEY, 0, (REQUEST_METRIC_CAP - 1).toLong())

@@ -68,7 +68,6 @@ class ApiLogsControllerTest(
     fun `limit 은 상한(500)으로 절삭되어 저장소에 전달된다`() {
         mockMvc.get("/api/admin/api-logs") { param("limit", "9999") }
             .andExpect { status { isOk() } }
-        // FakeStore 가 전달받은 limit 을 기록 — coerceIn(1,500) 결과 검증.
         org.assertj.core.api.Assertions.assertThat(FakeStoreConfig.lastLimit).isEqualTo(500)
     }
 
@@ -164,7 +163,6 @@ class ApiLogsControllerTest(
                 status { isOk() }
                 content { contentTypeCompatibleWith("application/json") }
                 jsonPath("$.sessions.length()") { value(3) }
-                // tok0(위치 보고됨)이 updatedAtMs 비null 이라 목록 맨 위 — shareUrl·lat/lng·ttl·viewerActive 계약 확인.
                 jsonPath("$.sessions[0].token") { value("tok0") }
                 jsonPath("$.sessions[0].shareUrl") { value("http://localhost:3619/share/tok0") }
                 jsonPath("$.sessions[0].lat") { value(37.5) }
@@ -172,11 +170,9 @@ class ApiLogsControllerTest(
                 jsonPath("$.sessions[0].updatedAtMs") { isNumber() }
                 jsonPath("$.sessions[0].ttlSeconds") { value(3600) }
                 jsonPath("$.sessions[0].viewerActive") { value(false) }
-                // 위치 미보고(tok1)는 좌표·updatedAtMs 가 null.
                 jsonPath("$.sessions[1].token") { value("tok1") }
                 jsonPath("$.sessions[1].lat") { value(null) }
                 jsonPath("$.sessions[1].updatedAtMs") { value(null) }
-                // owner_secret·경로 상세는 어떤 표기로도 노출되지 않는다.
                 jsonPath("$.sessions[0].ownerSecret") { doesNotExist() }
                 jsonPath("$.sessions[0].owner_secret") { doesNotExist() }
                 jsonPath("$.sessions[0].route") { doesNotExist() }
@@ -185,7 +181,6 @@ class ApiLogsControllerTest(
 
     @Test
     fun `share-sessions token location 은 200 과 snake_case LocationView 를 반환한다`() {
-        // tok0 은 FakeStore 에서 위치(37.5, 127.0)를 보고한 세션 — 공개 LocationView 계약(snake_case)과 일치해야 한다.
         mockMvc.get("/api/admin/share-sessions/tok0/location")
             .andExpect {
                 status { isOk() }
@@ -196,18 +191,15 @@ class ApiLogsControllerTest(
                 jsonPath("$.expired") { value(false) }
                 jsonPath("$.remaining_m") { value(null) }
                 jsonPath("$.remaining_s") { value(null) }
-                // @JsonProperty 회귀 시 나타날 camelCase 형태가 없어야 한다(보호자 화면과 동일 필드명).
                 jsonPath("$.updatedAt") { doesNotExist() }
             }
     }
 
     @Test
     fun `share-sessions token location 반복 열람은 viewerActive 를 올리지 않는다(비집계)`() {
-        // 관리자 열람을 여러 번 해도(markViewed 미호출)
         repeat(3) {
             mockMvc.get("/api/admin/share-sessions/tok0/location").andExpect { status { isOk() } }
         }
-        // 목록의 viewerActive 는 여전히 false — 관리자 열람이 보호자 시청으로 집계되지 않는다.
         mockMvc.get("/api/admin/share-sessions")
             .andExpect {
                 status { isOk() }
@@ -332,7 +324,6 @@ class ApiLogsControllerTest(
                         ownerSecret = "sek",
                         createdAt = FIXED_NOW,
                         expiresAt = FIXED_NOW.plusSeconds(3600),
-                        // tok0 만 위치 보고 — share-sessions 목록에서 lat/lng/updatedAtMs 채움(나머지 null) 검증용.
                         location = if (i == 0) {
                             StoredLocation(37.5, 127.0, FIXED_NOW)
                         } else {

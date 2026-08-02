@@ -31,7 +31,7 @@ class InvalidKeywordException(
 class InvalidCoordinateException(
     val lat: Double,
     val lng: Double,
-) : RuntimeException("위경도 범위가 올바르지 않습니다.") // detail 은 기존 응답 계약값 그대로(좌표는 필드로만 보존)
+) : RuntimeException("위경도 범위가 올바르지 않습니다.")
 
 /**
  * compare/facilities 요청의 출발지와 도착지가 사실상 같은 지점일 때 던진다.

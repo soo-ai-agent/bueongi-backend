@@ -18,7 +18,7 @@ class ShareServiceWatchingTest : ShareServiceTestSupport() {
     fun `보호자 조회가 있으면 watching=true, 없으면 false`() {
         val s = service.create(null)
         assertFalse(service.getWatchingStatus(s.token, s.ownerSecret).watching)
-        service.getLocation(s.token) // 보호자 조회 → 시청 기록
+        service.getLocation(s.token)
         assertTrue(service.getWatchingStatus(s.token, s.ownerSecret).watching)
     }
 

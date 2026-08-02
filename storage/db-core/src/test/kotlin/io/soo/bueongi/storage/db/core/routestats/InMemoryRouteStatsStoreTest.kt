@@ -42,8 +42,8 @@ class InMemoryRouteStatsStoreTest {
         val all: List<RouteRecommendationLog> = store.findRecent(ROUTE_STATS_CAP + 100)
 
         assertEquals(ROUTE_STATS_CAP, all.size)
-        assertEquals(total, all.first().atEpochMs) // 최신 유지
-        assertEquals(51L, all.last().atEpochMs) // 1..50 은 축출됨
+        assertEquals(total, all.first().atEpochMs)
+        assertEquals(51L, all.last().atEpochMs)
     }
 
     @Test

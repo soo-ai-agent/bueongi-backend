@@ -196,8 +196,6 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
 
     @Test
     fun `type·provenance 생략 시 GET route 는 두 값이 null(하위호환)`() {
-        // routeBody 는 type/provenance 를 담지 않는다 — 기존 클라이언트 요청과 동일. 저장/조회가 그대로 동작하고
-        // 두 필드는 null 로 응답돼야 한다(미전송 시 기존 동작 완전 동일 — additive 계약).
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
@@ -234,7 +232,7 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
     @Test
     fun `길이 초과 provenance 는 422 INVALID_ROUTE_META`() {
         val (token, secret) = createSharePair()
-        val tooLong: String = "가".repeat(201) // MAX_ROUTE_PROVENANCE_LENGTH(200) 초과
+        val tooLong: String = "가".repeat(201)
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
             content = """
@@ -258,9 +256,7 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
             contentType = MediaType.APPLICATION_JSON
             content = routeBody(secret)
         }.andExpect { status { isOk() } }
-        // 보호자 경로 조회를 여러 번 해도
         repeat(3) { mockMvc.get("/share/$token/route").andExpect { status { isOk() } } }
-        // 관리자 watching 은 여전히 false(경로 조회는 markViewed 하지 않음).
         mockMvc.post("/share/$token/watching") {
             contentType = MediaType.APPLICATION_JSON
             content = "{\"owner_secret\": \"$secret\"}"

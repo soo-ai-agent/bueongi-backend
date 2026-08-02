@@ -28,8 +28,6 @@ import org.springframework.test.web.servlet.post
  * [RouteController] 를 통해 실제 `@Valid` 흐름을 태운다.
  */
 @WebMvcTest(RouteController::class)
-// 관리자 인증 도입 후 spring-security 기본 필터체인이 슬라이스를 잠그므로, 컨트롤러 계약만 검증하는
-// 이 슬라이스는 보안 필터를 끈다(실 보안 게이트는 AdminAuthGateTest 가 end-to-end 로 검증).
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
     RouteService::class,
@@ -47,7 +45,6 @@ class ApiExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,
 ) {
 
-    // TmapRouteClient 는 RestClient.Builder(웹 슬라이스 미제공) 의존이라 목으로 주입한다(@Valid 흐름만 검증).
     @MockBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
@@ -70,7 +67,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `origin 누락은 422 와 ORIGIN_REQUIRED 코드를 반환`() {
-        // 출발지 미확보(위치 권한 거부 등)는 "잘못된 입력"(400)이 아니라 복구 가능한 422 로 구분된다.
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"destination":{"lat":37.5572,"lng":126.9245}}"""
@@ -84,7 +80,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `출발지와 도착지가 같은 좌표면 422 와 SAME_ORIGIN_DESTINATION 코드를 반환`() {
-        // 좌표는 유효하지만(400 아님) 같은 지점 경로는 의미 없는 복구 가능 상태 → 422 + destination 필드 errors.
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.5,"lng":127.0},"destination":{"lat":37.5,"lng":127.0}}"""
@@ -100,7 +95,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `출발지-도착지가 너무 멀면 422 와 TRIP_TOO_FAR 코드를 반환`() {
-        // 좌표는 유효(범위 내)하지만 도보 귀가로는 비현실적 원거리(위도 1.5도 ≈ 167km) → 422 + destination errors.
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.0,"lng":127.0},"destination":{"lat":38.5,"lng":127.0}}"""
@@ -138,7 +132,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `origin 이 있지만 좌표 범위가 틀리면 422 가 아니라 400`() {
-        // 값이 존재하면 @Valid 가 우선 — 미확보(422)와 잘못된 입력(400)을 분명히 구분한다.
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":100.0,"lng":127.0},"destination":{"lat":37.5,"lng":126.9}}"""
@@ -162,7 +155,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `POST 전용 엔드포인트에 GET 하면 405 와 METHOD_NOT_ALLOWED 코드 및 Allow 헤더를 반환`() {
-        // 프레임워크 레벨 에러도 "모든 에러 응답에 code" 계약을 지켜야 한다(Spring 기본은 code 없음).
         mockMvc.get("/api/routes/compare").andExpect {
             status { isMethodNotAllowed() }
             header { string("Allow", org.hamcrest.Matchers.containsString("POST")) }
@@ -187,7 +179,6 @@ class ApiExceptionHandlerTest(
 
     @Test
     fun `매핑되지 않은 경로는 404 와 NOT_FOUND 코드를 반환`() {
-        // 오타·폐기된 엔드포인트 호출도 "모든 에러 응답에 code" 계약을 지켜야 한다(Spring 기본은 code 없음).
         mockMvc.get("/api/does-not-exist").andExpect {
             status { isNotFound() }
             jsonPath("$.title") { value("Not Found") }

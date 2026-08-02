@@ -22,7 +22,6 @@ class RedisRouteStatsStore(
     private val logger: Logger = LoggerFactory.getLogger(RedisRouteStatsStore::class.java)
 
     override fun record(log: RouteRecommendationLog) {
-        // 집계 실패가 추천 응답을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             redis.opsForList().leftPush(KEY, objectMapper.writeValueAsString(log))
             redis.opsForList().trim(KEY, 0, (ROUTE_STATS_CAP - 1).toLong())

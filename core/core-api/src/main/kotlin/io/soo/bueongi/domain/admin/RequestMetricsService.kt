@@ -57,7 +57,7 @@ class RequestMetricsService(
             .sortedByDescending { it.count }
 
     private fun aggregateEndpoint(key: EndpointKey, group: List<RequestMetric>): EndpointTraffic {
-        val count: Int = group.size // groupBy 결과라 최소 1건 — 0 나눗셈 없음
+        val count: Int = group.size
         val successCount: Int = group.count { it.status in SUCCESS_STATUS_RANGE }
         val successRate: Double = successCount.toDouble() / count
         val avgDurationMs: Long = (group.sumOf { it.durationMs }.toDouble() / count).roundToLong()

@@ -148,8 +148,6 @@ class ShareService(
     fun getLocation(token: String): LocationView {
         val session: ShareSession = store.findByToken(token)
             ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
-        // 이 조회는 보호자(뷰어)다 — '시청 중'으로 기록한다. 관리자 열람은 이 경로가 아니라 집계하지 않는
-        // [getLocationForAdmin] 을 쓰고, 사용자 본인은 owner_secret 이 필요한 POST /watching 으로만 확인한다.
         store.markViewed(token)
         return locationViewOf(session)
     }
@@ -203,7 +201,7 @@ class ShareService(
      * 없는/이미 만료된 토큰은 멱등 no-op(200). 비밀 불일치는 종료하지 않고 404 — 임의 종료(가용성 공격) 차단.
      */
     fun end(token: String, ownerSecret: String?) {
-        val session: ShareSession = store.findByToken(token) ?: return // 이미 없음/만료 → 멱등.
+        val session: ShareSession = store.findByToken(token) ?: return
         requireOwner(session, ownerSecret)
         store.deleteByToken(token)
     }

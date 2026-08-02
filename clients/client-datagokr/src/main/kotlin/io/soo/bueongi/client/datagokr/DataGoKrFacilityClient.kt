@@ -38,7 +38,6 @@ class DataGoKrFacilityClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
-    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /** 전국 CCTV 전량. 실패 시 null(기존 데이터 유지 신호). */
@@ -131,8 +130,6 @@ class DataGoKrFacilityClient(
         /** 폭주 방지 상한(1000행 × 1000페이지 = 100만 행) — 전국 CCTV(약 37만행)에 충분한 여유. */
         const val MAX_PAGES: Int = 1000
 
-        // 서비스별 원천 필드명(파이프라인 LIVE_SPEC B-1/D-1/B-2와 동일 매핑). 각 필드는 후보를 순서대로
-        // 시도한다 — 표준데이터 계열은 영문 camelCase 가 규격이지만 서비스·시기별 편차가 있어 폴백을 둔다.
         private val CCTV_FIELDS: FieldNames = FieldNames(
             lat = listOf("latitude"), lng = listOf("longitude"),
             name = listOf("institutionNm"), address = listOf("rdnmadr"), sigungu = emptyList(),
@@ -192,7 +189,6 @@ private fun JsonNode.text(candidates: List<String>): String? =
         get(field)?.asText()?.trim()?.takeIf { it.isNotEmpty() && it != "null" }
     }
 
-// ---- 응답 DTO (표준 조회서비스 공통 envelope) ----
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class DataGoKrEnvelope(val response: DataGoKrResponse? = null)

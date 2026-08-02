@@ -28,7 +28,6 @@ class FacilityUploadStore(
 ) {
     private val log: Logger = LoggerFactory.getLogger(FacilityUploadStore::class.java)
 
-    // 업로드 파일은 null 필드를 생략해 컴팩트하게 쓴다(대용량 CCTV 대비). 주입 mapper 를 건드리지 않도록 독립 사본을 만든다.
     private val writeMapper: ObjectMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     /** [type] 업로드분을 `{uploadDir}/{cdnType}.json` 에 원자적으로 저장한다. */

@@ -386,7 +386,6 @@ class ApiControllerAdvice(
             title = "Service Unavailable"
             setProperty("code", "SHARE_STORE_UNAVAILABLE")
         }
-        // 회복 가능 신호 — 클라이언트/프록시가 잠시 후 재시도하도록 Retry-After(초)를 함께 준다.
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS.toString())
             .body(body)
@@ -403,7 +402,6 @@ class ApiControllerAdvice(
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
         log.error("처리되지 않은 예외 — 500 INTERNAL_ERROR 로 응답합니다.", ex)
-        // 서비스 이상 운영 알림 — 예외 클래스별로 스로틀(같은 원인 폭주 방지). 응답 본문 비노출 원칙은 그대로.
         alertNotifier?.notify(
             key = "api-500:${ex.javaClass.simpleName}",
             title = "처리되지 않은 서버 오류(500)",

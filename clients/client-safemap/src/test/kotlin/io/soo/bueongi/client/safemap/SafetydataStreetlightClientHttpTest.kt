@@ -30,7 +30,6 @@ class SafetydataStreetlightClientHttpTest {
     @Test
     fun `정상 - EPSG5179 XMAP·YMAP 를 WGS84 로 변환하고 도로명주소·시군구를 매핑한다`() {
         val (client, server) = bind()
-        // 강남역(37.4981, 127.0276)의 EPSG:5179 좌표를 forward 로 만들어 응답에 심는다.
         val (x, y) = Epsg5179.fromWgs84(lat = 37.4981, lng = 127.0276)
         val body: String = """
             {"resultCode":"00","resultMsg":"NORMAL","totalCount":1,
@@ -47,7 +46,7 @@ class SafetydataStreetlightClientHttpTest {
         val s: SafetydataStreetlight = streetlights!![0]
         assertThat(s.lat).isCloseTo(37.4981, within(1e-6))
         assertThat(s.lng).isCloseTo(127.0276, within(1e-6))
-        assertThat(s.address).isEqualTo("서울 강남구 테헤란로 1") // 도로명 우선
+        assertThat(s.address).isEqualTo("서울 강남구 테헤란로 1")
         assertThat(s.sigungu).isEqualTo("11680")
         server.verify()
     }
@@ -65,9 +64,9 @@ class SafetydataStreetlightClientHttpTest {
 
         val streetlights: List<SafetydataStreetlight>? = client.fetchStreetlights()
 
-        assertThat(streetlights).hasSize(1) // 불량 좌표 행은 버려진다
+        assertThat(streetlights).hasSize(1)
         assertThat(streetlights!![0].lat).isCloseTo(37.50, within(1e-9))
-        assertThat(streetlights[0].address).isEqualTo("지번주소만") // 도로명 없으면 ADDR 폴백
+        assertThat(streetlights[0].address).isEqualTo("지번주소만")
     }
 
     @Test

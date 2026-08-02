@@ -42,8 +42,6 @@ class KakaoPlaceClientHttpTest {
     @Test
     fun `성공 응답 - URI 쿼리·인증헤더 전송 + JSON 본문을 KakaoPlace 으로 매핑`() {
         val (provider, server) = bind()
-        // 검색어는 ASCII("gangnam") 로 검증한다 — queryParam 매처는 와이어의 raw(percent-encoded) 값을 비교하므로
-        // 한글이면 인코딩 노이즈가 생긴다. 한글 응답 본문→KakaoPlace 매핑은 아래 별도 테스트가 커버.
         server.expect(requestTo(containsString("https://dapi.kakao.com/v2/local/search/keyword.json")))
             .andExpect(method(HttpMethod.GET))
             .andExpect(queryParam("query", "gangnam"))
@@ -51,7 +49,6 @@ class KakaoPlaceClientHttpTest {
             .andExpect(header(HttpHeaders.AUTHORIZATION, "KakaoAK $apiKey"))
             .andRespond(
                 withSuccess(
-                    // 실제 Kakao Local 응답을 단순화: meta(무시) + documents 2건.
                     """
                     {
                       "meta": { "total_count": 2, "is_end": true },
@@ -82,9 +79,7 @@ class KakaoPlaceClientHttpTest {
 
         server.verify()
         assertThat(result).containsExactly(
-            // 1건: 도로명주소 우선, x=lng / y=lat.
             KakaoPlace("강남역 2번 출구", "서울 강남구 강남대로 396", 37.4979, 127.0276),
-            // 2건: 도로명주소 비어있으면 지번주소 폴백.
             KakaoPlace("강남파출소", "서울 강남구 역삼동 800", 37.4990, 127.0250),
         )
     }

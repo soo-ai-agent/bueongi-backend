@@ -41,7 +41,7 @@ class SlackAlertNotifierTest {
             config = config,
             restClientBuilder = builder,
             objectMapper = ObjectMapper(),
-            executor = Executor { it.run() }, // 테스트: 동기 발송
+            executor = Executor { it.run() },
             nowMs = { now },
         )
         return notifier to server
@@ -74,14 +74,13 @@ class SlackAlertNotifierTest {
     @Test
     fun `스로틀 - 같은 key 는 창 안에서 1회만, 다른 key 는 발송, 창 경과 후 재발송`() {
         val (notifier, server) = bind(throttleMinutes = 10)
-        // 발송 3회만 기대: key-a(최초) + key-b + key-a(창 경과 후).
         server.expect(ExpectedCount.times(3), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
 
-        notifier.notify("key-a", "t", "d") // 발송 1
-        notifier.notify("key-a", "t", "d") // 억제(같은 key, 창 내)
-        notifier.notify("key-b", "t", "d") // 발송 2(다른 key)
-        now += 10 * 60_000L // 스로틀 창 경과
-        notifier.notify("key-a", "t", "d") // 발송 3
+        notifier.notify("key-a", "t", "d")
+        notifier.notify("key-a", "t", "d")
+        notifier.notify("key-b", "t", "d")
+        now += 10 * 60_000L
+        notifier.notify("key-a", "t", "d")
 
         server.verify()
     }
@@ -96,15 +95,15 @@ class SlackAlertNotifierTest {
 
     @Test
     fun `이력 - notify 마다 기록하고 최신순으로 반환한다(비활성이어도 기록)`() {
-        val (notifier, _) = bind(url = " ") // 비활성 — 발송은 없지만 이력은 남는다
+        val (notifier, _) = bind(url = " ")
         now = 100L
         notifier.notify("k1", "t1", "d1")
         now = 200L
         notifier.notify("k2", "t2", "d2")
 
         val recent: List<AlertRecord> = notifier.findRecentAlerts(10)
-        assertThat(recent.map { it.key }).containsExactly("k2", "k1") // 최신순
-        assertThat(recent[0].atEpochMs).isEqualTo(200L) // 시각도 nowMs 로 기록
+        assertThat(recent.map { it.key }).containsExactly("k2", "k1")
+        assertThat(recent[0].atEpochMs).isEqualTo(200L)
     }
 
     @Test
@@ -112,11 +111,11 @@ class SlackAlertNotifierTest {
         val (notifier, server) = bind(throttleMinutes = 10)
         server.expect(ExpectedCount.times(1), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
 
-        notifier.notify("k", "t", "d") // 발송 1
-        notifier.notify("k", "t", "d") // 억제(같은 key, 창 내) — 발송은 1회
+        notifier.notify("k", "t", "d")
+        notifier.notify("k", "t", "d")
 
         server.verify()
-        assertThat(notifier.findRecentAlerts(10)).hasSize(2) // 이력은 2건
+        assertThat(notifier.findRecentAlerts(10)).hasSize(2)
     }
 
     @Test
@@ -125,21 +124,20 @@ class SlackAlertNotifierTest {
         repeat(250) { notifier.notify("k$it", "t", "d") }
 
         val recent: List<AlertRecord> = notifier.findRecentAlerts(1000)
-        assertThat(recent).hasSize(200) // 링버퍼 상한
-        assertThat(recent.first().key).isEqualTo("k249") // 가장 최근
-        assertThat(recent.last().key).isEqualTo("k50") // 오래된 k0~k49 는 폐기
+        assertThat(recent).hasSize(200)
+        assertThat(recent.first().key).isEqualTo("k249")
+        assertThat(recent.last().key).isEqualTo("k50")
     }
 
     @Test
     fun `뮤트 - key 의 카테고리(콜론 앞부분)가 뮤트면 발송 생략, 이력은 남긴다`() {
         val (notifier, server) = bind(mutedCategories = setOf("api-500"))
-        // 발송은 한 건도 나가면 안 된다(뮤트).
         server.expect(ExpectedCount.never(), requestTo(webhook)).andRespond(withSuccess())
 
-        notifier.notify("api-500:NullPointerException", "t", "d") // 카테고리 api-500 뮤트
+        notifier.notify("api-500:NullPointerException", "t", "d")
 
         server.verify()
-        assertThat(notifier.findRecentAlerts(10)).hasSize(1) // 이력은 남는다(뮤트 독립)
+        assertThat(notifier.findRecentAlerts(10)).hasSize(1)
     }
 
     @Test
@@ -147,7 +145,7 @@ class SlackAlertNotifierTest {
         val (notifier, server) = bind(mutedCategories = setOf("api-500"))
         server.expect(ExpectedCount.times(1), requestTo(webhook)).andRespond(withSuccess("ok", MediaType.TEXT_PLAIN))
 
-        notifier.notify("tmap-route-fallback", "t", "d") // 뮤트 아님 → 발송
+        notifier.notify("tmap-route-fallback", "t", "d")
 
         server.verify()
     }

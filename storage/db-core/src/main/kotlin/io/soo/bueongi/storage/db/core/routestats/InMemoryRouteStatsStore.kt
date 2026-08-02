@@ -16,7 +16,6 @@ class InMemoryRouteStatsStore : RouteStatsStore {
     private val lock: Any = Any()
 
     override fun record(log: RouteRecommendationLog) {
-        // 집계 실패가 추천 응답을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             synchronized(lock) {
                 logs.addFirst(log)
@@ -30,7 +29,7 @@ class InMemoryRouteStatsStore : RouteStatsStore {
     }
 
     override fun findRecent(limit: Int): List<RouteRecommendationLog> {
-        val snapshot: List<RouteRecommendationLog> = synchronized(lock) { logs.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<RouteRecommendationLog> = synchronized(lock) { logs.toList() }
         return snapshot.take(limit.coerceAtLeast(0))
     }
 }

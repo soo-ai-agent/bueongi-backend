@@ -34,7 +34,6 @@ class ApiControllerAdviceAlertTest {
         assertThat(key).isEqualTo("api-500:IllegalStateException")
         assertThat(title).contains("500")
         assertThat(detail).contains("IllegalStateException").contains("내부 상태 오류")
-        // 응답 본문은 기존 계약 그대로(내부 메시지 비노출).
         assertThat(body.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(body.properties?.get("code")).isEqualTo("INTERNAL_ERROR")
         assertThat(body.detail).doesNotContain("내부 상태 오류")
@@ -51,11 +50,9 @@ class ApiControllerAdviceAlertTest {
 
         assertThat(notifier.notified).hasSize(1)
         assertThat(notifier.notified[0].first).isEqualTo("share-store-unavailable")
-        // 만료(404)와 구분되는 503 + 안정 코드 + 재시도 힌트.
         assertThat(response.statusCode.value()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
         assertThat(response.body?.properties?.get("code")).isEqualTo("SHARE_STORE_UNAVAILABLE")
         assertThat(response.headers.getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("5")
-        // 내부 원인(예외 메시지)은 응답 본문에 노출하지 않는다.
         assertThat(response.body?.detail).doesNotContain("redis down")
     }
 

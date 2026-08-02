@@ -16,7 +16,6 @@ class InMemoryRequestMetricStore : RequestMetricStore {
     private val lock: Any = Any()
 
     override fun record(metric: RequestMetric) {
-        // 계측 실패가 실제 요청을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             synchronized(lock) {
                 metrics.addFirst(metric)
@@ -30,7 +29,7 @@ class InMemoryRequestMetricStore : RequestMetricStore {
     }
 
     override fun findRecent(limit: Int): List<RequestMetric> {
-        val snapshot: List<RequestMetric> = synchronized(lock) { metrics.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<RequestMetric> = synchronized(lock) { metrics.toList() }
         return snapshot.take(limit.coerceAtLeast(0))
     }
 }

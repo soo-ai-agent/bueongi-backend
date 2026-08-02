@@ -54,7 +54,6 @@ class PlaceSearchServiceTest {
 
     @Test
     fun `최대 길이 이하 검색어는 정상 동작(경계값 포함)`() {
-        // 경계: 정확히 MAX_KEYWORD_LENGTH 자는 거부되지 않는다(일치 없으면 빈 목록).
         val boundary = "가".repeat(PlaceSearchService.MAX_KEYWORD_LENGTH)
         assertThat(service.search(boundary)).isEmpty()
     }
@@ -70,7 +69,6 @@ class PlaceSearchServiceTest {
 
     @Test
     fun `길이는 트림 후 기준 - 공백 패딩은 길이에 포함되지 않음`() {
-        // 트림 후 정확히 상한이면(주변 공백 무시) 거부되지 않는다.
         val padded = "  " + "가".repeat(PlaceSearchService.MAX_KEYWORD_LENGTH) + "  "
         assertThat(service.search(padded)).isEmpty()
     }

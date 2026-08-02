@@ -23,8 +23,8 @@ class FacilityRefreshStatusStoreTest {
 
         store.record(
             mapOf(
-                FacilityType.CCTV to 372,   // 교체 성공
-                FacilityType.POLICE to null, // 수집 실패·0건 유지
+                FacilityType.CCTV to 372,
+                FacilityType.POLICE to null,
             ),
             atEpochMs = 1_700_000_000_000L,
         )
@@ -33,7 +33,6 @@ class FacilityRefreshStatusStoreTest {
             .isEqualTo(FacilityRefreshRecord(atEpochMs = 1_700_000_000_000L, replacedCount = 372))
         assertThat(store.findByType(FacilityType.POLICE))
             .isEqualTo(FacilityRefreshRecord(atEpochMs = 1_700_000_000_000L, replacedCount = null))
-        // 갱신 대상이 아니던 lamp 는 기록되지 않는다.
         assertThat(store.findByType(FacilityType.LAMP)).isNull()
     }
 
@@ -44,7 +43,7 @@ class FacilityRefreshStatusStoreTest {
         store.record(mapOf(FacilityType.CCTV to 100), atEpochMs = 1L)
         store.record(mapOf(FacilityType.BELL to 5), atEpochMs = 2L)
 
-        assertThat(store.findByType(FacilityType.CCTV)).isNull() // 직전 스냅샷은 대체됨
+        assertThat(store.findByType(FacilityType.CCTV)).isNull()
         assertThat(store.findByType(FacilityType.BELL))
             .isEqualTo(FacilityRefreshRecord(atEpochMs = 2L, replacedCount = 5))
     }

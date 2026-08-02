@@ -103,7 +103,6 @@ class SlackAlertConfig(
             return conservativeMask(url)
         }
         val maskedSegments: List<String> = segments.mapIndexed { index, segment ->
-            // 마지막(토큰) 세그먼트는 완전 마스킹, 앞 세그먼트는 유형 접두 1글자만 표기(T***/B***).
             if (index == segments.lastIndex) {
                 MASK
             } else {

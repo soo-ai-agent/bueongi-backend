@@ -33,7 +33,6 @@ class RouteCandidateMerger {
         if (shorter <= 0.0) {
             return false
         }
-        // 양방향 겹침 중 큰 값 — 한 경로가 다른 경로에 거의 포함되면 같은 길로 본다.
         val overlap: Double = maxOf(
             SpatialMath.overlapLengthMeters(first.path, second.path, MERGE_CORRIDOR_METERS),
             SpatialMath.overlapLengthMeters(second.path, first.path, MERGE_CORRIDOR_METERS),

@@ -32,7 +32,7 @@ class PlaceSearchInstrumentationTest {
 
         val result = service.search("강남")
 
-        assertThat(result.map { it.name }).containsExactly("리모트결과") // 시드 아닌 실결과
+        assertThat(result.map { it.name }).containsExactly("리모트결과")
         assertThat(store.logs).hasSize(1)
         assertThat(store.logs[0].provider).isEqualTo("KAKAO")
         assertThat(store.logs[0].endpoint).isEqualTo("search")
@@ -50,7 +50,7 @@ class PlaceSearchInstrumentationTest {
 
         val result = service.search("강남")
 
-        assertThat(result).isNotEmpty // 시드 폴백 결과
+        assertThat(result).isNotEmpty
         assertThat(store.logs).hasSize(1)
         assertThat(store.logs[0].provider).isEqualTo("KAKAO")
         assertThat(store.logs[0].success).isFalse()

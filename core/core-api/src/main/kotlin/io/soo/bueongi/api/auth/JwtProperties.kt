@@ -15,7 +15,6 @@ data class JwtProperties(
     val issuer: String = "soo-auth",
 ) {
     init {
-        // blank 또는 미해소 placeholder("${...}")면 즉시 실패 — 운영 무주입 기동을 막는다.
         require(publicKey.isNotBlank() && !publicKey.trim().startsWith("\${")) {
             "JWT_PUBLIC_KEY must be provided via the JWT_PUBLIC_KEY env var (got blank or unresolved placeholder)"
         }

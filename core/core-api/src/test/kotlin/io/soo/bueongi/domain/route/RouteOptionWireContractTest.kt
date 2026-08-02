@@ -38,18 +38,14 @@ class RouteOptionWireContractTest {
     fun `RouteOption JSON 필드명은 프론트 계약 그대로다(path·steps 포함)`() {
         val json = mapper.readTree(mapper.writeValueAsString(richOption()))
 
-        // 최상위 필드(프론트 MockRoute + safe-compare 확장 필드).
         assertThat(json.fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "id", "name", "time", "dist", "desc", "tags", "type",
             "path", "steps", "score", "markers", "breakdown", "provenance",
         )
-        // path 좌표 필드명(storage GeoPoint 프로퍼티명이 곧 계약).
         assertThat(json.at("/path/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("lat", "lng")
-        // steps 필드명(client-tmap NavStep 프로퍼티명이 곧 계약 — 프론트 utils/tmap.ts NavStep 동형).
         assertThat(json.at("/steps/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "index", "lat", "lng", "description", "turnType", "distanceM", "timeS", "pointType",
         )
-        // tags·breakdown·provenance 필드명.
         assertThat(json.at("/tags/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("text", "variant")
         assertThat(json.at("/breakdown").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "routeKm", "cctvDensity", "lampDensity", "bellDensity", "safehouseCount", "policeCount", "safePathOverlap",
@@ -61,7 +57,6 @@ class RouteOptionWireContractTest {
     fun `enum 판별자는 기존 소문자 와이어 문자열로 직렬화된다`() {
         val json = mapper.readTree(mapper.writeValueAsString(richOption()))
 
-        // type/variant/marker.type 은 enum 이지만 @JsonValue 로 기존 문자열을 그대로 낸다(값 계약 고정).
         assertThat(json.get("type").asText()).isEqualTo("safe")
         assertThat(json.at("/tags/0/variant").asText()).isEqualTo("mint")
         assertThat(json.at("/markers/0/type").asText()).isEqualTo("cctv")
@@ -85,7 +80,6 @@ class RouteOptionWireContractTest {
             id = "1", name = "추천 경로", time = "7분", dist = "460m", desc = "d",
             tags = listOf(RouteTag("안심", RouteTagVariant.MINT)), type = RouteType.SAFE,
         )
-        // 기대 JSON = enum 전환 이전과 완전히 동일한 필드·값·shape(확장 필드는 NON_NULL 로 부재).
         val expected = mapper.readTree(
             """{"id":"1","name":"추천 경로","time":"7분","dist":"460m","desc":"d",""" +
                 """"tags":[{"text":"안심","variant":"mint"}],"type":"safe"}""",

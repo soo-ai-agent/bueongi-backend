@@ -47,7 +47,7 @@ class TmapGeoJsonTest {
         """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
-        assertThat(route!!.distanceM).isGreaterThan(800.0) // 약 888m
+        assertThat(route!!.distanceM).isGreaterThan(800.0)
     }
 
     @Test
@@ -70,6 +70,6 @@ class TmapGeoJsonTest {
         """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
-        assertThat(route!!.path).hasSize(2) // 범위 밖 [999,37.5] 제외
+        assertThat(route!!.path).hasSize(2)
     }
 }

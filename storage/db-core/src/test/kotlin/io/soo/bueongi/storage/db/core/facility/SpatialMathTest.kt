@@ -33,7 +33,6 @@ class SpatialMathTest {
 
     @Test
     fun `distancePointToSegment - 수직 이탈 거리(약 111m)`() {
-        // 위도 0.001도 ≈ 111m 떨어진 점의 수직거리.
         val a: GeoPoint = GeoPoint(37.5, 127.0)
         val b: GeoPoint = GeoPoint(37.5, 127.01)
         val off: GeoPoint = GeoPoint(37.501, 127.005)

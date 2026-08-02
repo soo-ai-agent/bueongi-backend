@@ -50,7 +50,6 @@ class RedisLocationStore(
                 put(FIELD_EXPIRES_AT, session.expiresAt.toString())
                 // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
                 put(FIELD_OWNER_SECRET, session.ownerSecret)
-                // 예정 도착 시각은 있을 때만 저장한다(ETA 미제공 세션은 필드 없음 → 감시 제외, 하위호환).
                 session.expectedArrivalAt?.let { put(FIELD_EXPECTED_ARRIVAL_AT, it.toString()) }
             }
             redis.opsForHash<String, String>().putAll(shareKey, shareFields)
@@ -58,7 +57,6 @@ class RedisLocationStore(
 
             session.location?.let { loc ->
                 val locKey: String = locationKey(session.token)
-                // 잔여 거리/시간은 앱이 보고했을 때만 필드를 추가한다 — 없을 땐 HASH 에 넣지 않아 기존 {lat,lng,updated_at} 형태를 유지.
                 val fields: Map<String, String> = buildMap {
                     put(FIELD_LAT, loc.lat.toString())
                     put(FIELD_LNG, loc.lng.toString())
@@ -67,13 +65,11 @@ class RedisLocationStore(
                     loc.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
                 }
                 redis.opsForHash<String, String>().putAll(locKey, fields)
-                // 위치 키도 공유 상한과 동일 TTL — 공유가 만료되면 위치도 함께 사라진다(잔존 추적 금지).
                 redis.expire(locKey, ttl)
             }
 
             session.route?.let { route ->
                 val routeKey: String = routeKey(session.token)
-                // 경로 컨텍스트는 JSON 문자열 값 키로 저장 — 리스트(경로선·마커) 때문에 flat HASH 로 못 담는다. 동일 상한 TTL.
                 redis.opsForValue().set(routeKey, objectMapper.writeValueAsString(route), ttl)
             }
         }
@@ -81,14 +77,12 @@ class RedisLocationStore(
 
     override fun findByToken(token: String): ShareSession? = onRedis("findByToken") {
         val shareHash: Map<String, String> = redis.opsForHash<String, String>().entries(shareKey(token))
-        // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
         if (shareHash.isEmpty()) {
             return@onRedis null
         }
         val createdAt: Instant = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
         val expiresAt: Instant = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
         val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.
-        // 예정 도착 시각(선택). 없으면(ETA 미제공·구세션) null. 손상값은 null 로 관용 처리(감시만 제외, 세션은 살린다).
         val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
 
         val locHash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
@@ -103,7 +97,6 @@ class RedisLocationStore(
                     lat = lat,
                     lng = lng,
                     updatedAt = updatedAt,
-                    // 누락(구세션/미보고) 시 null — 안전한 기본값.
                     remainingM = locHash[FIELD_REMAINING_M]?.toDoubleOrNull(),
                     remainingS = locHash[FIELD_REMAINING_S]?.toDoubleOrNull(),
                 )
@@ -112,13 +105,10 @@ class RedisLocationStore(
             }
         }
 
-        // 경로 컨텍스트: JSON 값 키. 없으면(미저장/구세션) null. 손상 JSON 은 미존재 취급(경로만 없는 것으로, 위치는 살린다).
         val route: StoredRoute? = redis.opsForValue().get(routeKey(token))?.let { json ->
             try {
                 objectMapper.readValue<StoredRoute>(json)
             } catch (e: Exception) {
-                // 다른 파싱 실패 지점(FacilityRepository·클라이언트)과 동일하게 경고를 남긴다 —
-                // 모델 변경/데이터 손상으로 보호자 경로 표시가 조용히 사라지는 것을 관측 가능하게(token 은 비로깅).
                 log.warn("공유 경로 JSON 역직렬화 실패(경로 표시 생략): {}", e.message)
                 null
             }
@@ -145,14 +135,12 @@ class RedisLocationStore(
 
     override fun deleteByToken(token: String) {
         onRedis("deleteByToken") {
-            // 공유/위치/경로/시청 키를 함께 삭제 → 즉시 종료(만료 전에 사용자가 도착/중단). 없는 키 삭제는 무해(멱등).
             redis.delete(listOf(shareKey(token), locationKey(token), routeKey(token), viewerKey(token)))
         }
     }
 
     override fun markViewed(token: String) {
         onRedis("markViewed") {
-            // 보호자 조회 시각을 짧은 TTL 키로 기록 — 폴링이 끊기면(창 닫힘) TTL 로 자동 소멸(시청 종료).
             redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(VIEWER_WINDOW_SECONDS))
         }
     }
@@ -163,7 +151,6 @@ class RedisLocationStore(
 
     override fun countActiveSessions(): Int {
         // KEYS 금지 — SCAN 으로 비차단 순회하며 세션 키(share:{token})만 센다. 만료 키는 native TTL 로 이미 없다.
-        // location/route/viewer 키는 패턴에서 제외되어 중복 카운트되지 않는다.
         var count: Int = 0
         forEachSessionKey { count++ }
         return count
@@ -171,7 +158,6 @@ class RedisLocationStore(
 
     override fun findActiveSessions(): List<ShareSession> {
         // 카운트와 같은 SCAN 순회를 재사용하되, 키에서 토큰을 뽑아 세션을 복원한다.
-        // findByToken 이 만료/손상 키를 null 로 걸러내므로(native TTL 과 lazy 정합) 활성 세션만 남는다.
         val sessions: MutableList<ShareSession> = mutableListOf<ShareSession>()
         forEachSessionKey { sessionKey ->
             val token: String = sessionKey.removePrefix(SESSION_KEY_PREFIX)

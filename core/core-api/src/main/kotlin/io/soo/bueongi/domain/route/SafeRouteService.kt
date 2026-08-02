@@ -52,11 +52,8 @@ class SafeRouteService(
 ) {
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
-        // 추천 요청 집계(safe-compare)는 진입 시 정확히 1회만 기록한다 — 아래 폴백은 routeService.buildRoutes(집계 없음)를
-        // 호출하므로 이중 카운트가 나지 않는다(compare 로 폴백하면 compare 로도 한 번 더 집계되는 문제를 막는다).
         routeStatsStore.recordRecommendation("safe-compare", query)
 
-        // Tmap 미설정이면 기존 결정론적 폴백(점수/마커 없는 RouteOption).
         if (!tmapClient.isEnabled) {
             return routeService.buildRoutes(query)
         }
@@ -66,7 +63,6 @@ class SafeRouteService(
         val budget: Double = query.safetyPreference.detourBudget
 
         // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
-        // 경유(fetchRouteVia) 다건 호출은 개별 계측하지 않는다(요청당 다수라 로그 폭주 방지) — 대표 fetchRoutes 만 기록.
         val base: List<TmapRoute> = apiCallLogStore.measure(
             provider = ApiProvider.TMAP,
             endpoint = "route",
@@ -81,7 +77,6 @@ class SafeRouteService(
         ) {
             tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
         }
-        // Tmap 전부 실패 → 폴백(추천 끊김 방지). 키가 설정된 상태의 전면 실패는 운영 이상 신호라 알린다.
         if (base.isEmpty()) {
             alertNotifier?.notify(
                 key = "tmap-route-fallback",
@@ -93,7 +88,6 @@ class SafeRouteService(
 
         val baseShortestM: Double = base.minOf { it.distanceM }
 
-        // 안심 경유지 우회 후보: 추천 경로 주변 시설 앵커 → 경유지 조합 → Tmap 경유 호출.
         val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
         val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
         val waypointCombos: List<List<GeoPoint>> = detourPlanner.pickDetourWaypoints(origin, destination, anchors)
@@ -105,11 +99,8 @@ class SafeRouteService(
                 destName = query.destinationName,
             )
         }
-            // 과도 우회 차단: 기본 최단거리의 (1+budget) 이내만 채택.
             .filter { it.distanceM <= baseShortestM * (1 + budget) }
 
-        // 1) 완전 동일(identityKey) 제거 → 2) 도메인 후보로 매핑 → 3) 거의 겹치는 경로 병합 →
-        // 4) 정확히 유형당 1개(최대 3개)로 정규화.
         val candidates: List<RouteCandidate> = candidateMerger.mergeNearDuplicates(
             dedupeByIdentity(base + detours).map { it.toCandidate() },
         )
@@ -135,13 +126,10 @@ class SafeRouteService(
         }
         val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path)) }
 
-        // safe: 최고점(동률이면 먼저 나온 후보). 위 isEmpty 가드로 비어있지 않음이 보장되므로 비-널 maxBy.
         val safeIdx: Int = scored.indices.maxBy { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
-        // fast: safe 제외 최소시간(동률이면 먼저 나온 후보).
         val fastIdx: Int? = scored.indices.filter { it != safeIdx }
             .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
         val used: Set<Int> = setOfNotNull(safeIdx, fastIdx)
-        // main: 남은 후보 중 최고점.
         val mainIdx: Int? = scored.indices.filter { it !in used }
             .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
 
@@ -184,7 +172,6 @@ class SafeRouteService(
                         destination,
                         candidate.path,
                     ),
-                    // P0-4 점수 근거 — 프론트가 "CCTV n/km · 비상벨 n …"으로 그대로 렌더한다.
                     breakdown = ScoreBreakdown(
                         routeKm = breakdown.routeKm,
                         cctvDensity = breakdown.cctvDensity,
@@ -250,7 +237,6 @@ class SafeRouteService(
         /** 기준일 표기용 "YYYY-MM" 길이 — generatedAt(ISO)에서 연·월만 잘라 쓴다. */
         const val YEAR_MONTH_LENGTH: Int = 7
 
-        // 태그 부여 임계(MVP 캘리브레이션) — 점수 SAT_* 상수와 별개로, "표시할 만큼 두드러진가"의 기준.
         /** "CCTV 많음" 태그: 회랑 내 CCTV 밀도(개/km)가 이 값 이상. */
         const val TAG_CCTV_DENSITY_MIN_PER_KM: Double = 5.0
 

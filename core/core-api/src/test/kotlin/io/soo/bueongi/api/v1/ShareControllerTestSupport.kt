@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.post
  * 경로([ShareControllerRouteTest]).
  */
 @WebMvcTest(ShareController::class)
-// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ShareControllerTestSupport.ShareTestConfig::class)
 @ActiveProfiles("test")

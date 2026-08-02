@@ -36,9 +36,8 @@ class FacilityStatusServiceTest {
         val holder = FacilityRefreshStatusStore().apply {
             record(
                 mapOf(
-                    FacilityType.CCTV to 372,   // replaced
-                    FacilityType.SAFEHOUSE to null, // kept (수집 실패·0건 유지)
-                    // BELL·POLICE·LAMP 미포함 → never
+                    FacilityType.CCTV to 372,
+                    FacilityType.SAFEHOUSE to null,
                 ),
                 atEpochMs = 1_700_000_000_000L,
             )
@@ -46,7 +45,6 @@ class FacilityStatusServiceTest {
 
         val summary = FacilityStatusService(source, holder).summarize()
 
-        // 5종 전부 cdnType 문자열로 노출.
         assertThat(summary.facilities.map { it.type })
             .containsExactly(FacilityType.CCTV, FacilityType.LAMP, FacilityType.BELL, FacilityType.SAFEHOUSE, FacilityType.POLICE)
 
@@ -64,7 +62,6 @@ class FacilityStatusServiceTest {
         assertThat(safehouse.lastRefreshCount).isNull()
         assertThat(safehouse.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
 
-        // lamp 는 라이브 갱신 대상이 아님 → never, 적재분(CDN)은 유지.
         val lamp = summary.facilities.first { it.type == FacilityType.LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
         assertThat(lamp.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.NEVER)

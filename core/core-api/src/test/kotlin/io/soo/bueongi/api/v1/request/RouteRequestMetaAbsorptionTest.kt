@@ -19,7 +19,6 @@ class RouteRequestMetaAbsorptionTest {
 
     private val mapper = jacksonObjectMapper()
 
-    // 가드(출발지·동일좌표·원거리)를 모두 통과하는 유효 좌표(서초→마포).
     private val origin: LatLng = LatLng(37.4979, 127.0276)
     private val destination: NamedLatLng = NamedLatLng(37.5572, 126.9245, name = "집")
 
@@ -64,8 +63,6 @@ class RouteRequestMetaAbsorptionTest {
 
     @Test
     fun `비문자 숫자 입력은 400 이 아니라 기존처럼 기본값으로 흡수된다`() {
-        // enum 역직렬화였다면 숫자는 타입 불일치로 400 이 될 수 있다. String 유지라 Jackson 이 "999"로 흡수하고
-        // from() 이 미상→SAFE 로 정규화한다(어떤 id 와도 겹치지 않는 999 를 골라 관용 흡수만 검증).
         val json: String = """
             {"origin":{"lat":37.4979,"lng":127.0276},
              "destination":{"lat":37.5572,"lng":126.9245,"name":"집"},

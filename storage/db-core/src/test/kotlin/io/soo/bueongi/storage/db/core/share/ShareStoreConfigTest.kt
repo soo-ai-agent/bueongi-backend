@@ -46,7 +46,7 @@ class ShareStoreConfigTest {
     @Test
     fun `빈 redis-url 은 인메모리 폴백만 매칭(빈 env 함정 회피)`() {
         val ctx = contextWith("")
-        assertFalse(redisConfigured.matches(ctx, metadata)) // @ConditionalOnProperty 였다면 여기서 true 로 새는 함정
+        assertFalse(redisConfigured.matches(ctx, metadata))
         assertTrue(redisNotConfigured.matches(ctx, metadata))
     }
 
@@ -66,7 +66,6 @@ class ShareStoreConfigTest {
 
     @Test
     fun `두 Condition 은 모든 입력에서 정확한 여집합(locationStore 빈 항상 1개)`() {
-        // 미설정·빈·공백·실 URL·공백 패딩된 URL 전 구간에서 정확히 하나만 매칭됨을 보장.
         listOf(null, "", "   ", "redis://localhost:6379", "  redis://host:6379  ").forEach { url ->
             val ctx = contextWith(url)
             assertTrue(

@@ -170,13 +170,11 @@ class RedisLocationStoreTest {
                 route = SAMPLE_ROUTE,
             ),
         )
-        // route:{token} 값 키에 JSON + 상한 TTL(3600s). 위치가 없으므로 location HASH 는 쓰지 않는다.
         verify(valueOps).set(eq("route:tok"), any(), eq(Duration.ofSeconds(3600)))
     }
 
     @Test
     fun `find 는 route JSON 을 StoredRoute 로 역직렬화한다(왕복)`() {
-        // save 가 쓰는 정확한 JSON 을 캡처해 find 가 되읽도록 연결(실제 직렬화 형식으로 왕복).
         val json = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(SAMPLE_ROUTE)
         whenever(hashOps.entries("share:tok")).thenReturn(
             mapOf(
@@ -210,21 +208,20 @@ class RedisLocationStoreTest {
     @Test
     fun `countActiveSessions 는 share 키를 SCAN 으로 세고 KEYS 를 쓰지 않는다`() {
         val cursor = mock<Cursor<String>>()
-        whenever(cursor.hasNext()).thenReturn(true, true, false) // share:a, share:b
+        whenever(cursor.hasNext()).thenReturn(true, true, false)
         whenever(cursor.next()).thenReturn("share:a", "share:b")
         whenever(redis.scan(any<ScanOptions>())).thenReturn(cursor)
 
         assertEquals(2, store.countActiveSessions())
-        verify(cursor).close() // .use 로 커서를 닫는다
+        verify(cursor).close()
     }
 
     @Test
     fun `findActiveSessions 는 SCAN 세션키에서 토큰을 뽑아 세션을 복원한다`() {
         val cursor = mock<Cursor<String>>()
-        whenever(cursor.hasNext()).thenReturn(true, false) // share:tok
+        whenever(cursor.hasNext()).thenReturn(true, false)
         whenever(cursor.next()).thenReturn("share:tok")
         whenever(redis.scan(any<ScanOptions>())).thenReturn(cursor)
-        // 키에서 뽑은 토큰으로 findByToken("tok") 이 세션을 재구성하도록 스텁.
         whenever(hashOps.entries("share:tok")).thenReturn(
             mapOf(
                 "created_at" to clock.now.toString(),
@@ -238,7 +235,7 @@ class RedisLocationStoreTest {
         val active = store.findActiveSessions()
         assertEquals(1, active.size)
         assertEquals("tok", active[0].token)
-        verify(cursor).close() // .use 로 커서를 닫는다
+        verify(cursor).close()
     }
 
     @Test
@@ -273,9 +270,7 @@ class RedisLocationStoreTest {
 
     @Test
     fun `읽기 중 Redis 연결 실패는 LocationStoreUnavailableException 으로 변환된다`() {
-        // Redis 가 죽으면 Spring Data 가 DataAccessException(연결 실패)을 던진다.
         whenever(hashOps.entries(any())).thenThrow(RedisConnectionFailureException("redis down"))
-        // "없음"(null)이 아니라 저장소 장애로 표면화 — 상위가 404 가 아니라 503 으로 응답하게.
         assertThrows<LocationStoreUnavailableException> { store.findByToken("tok") }
     }
 

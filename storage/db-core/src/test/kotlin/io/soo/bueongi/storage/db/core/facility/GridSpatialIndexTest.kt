@@ -14,8 +14,8 @@ class GridSpatialIndexTest {
 
     @Test
     fun `withinRadius - 반경 안만 반환(셀 경계 무관)`() {
-        val near = cctv(37.5001, 127.0001) // 중심에서 ~약 14m
-        val far = cctv(37.6, 127.1) // 수 km 밖
+        val near = cctv(37.5001, 127.0001)
+        val far = cctv(37.6, 127.1)
         val index = GridSpatialIndex(listOf(near, far))
         val found = index.withinRadius(GeoPoint(37.5, 127.0), 100.0)
         assertThat(found).containsExactly(near)
@@ -23,9 +23,8 @@ class GridSpatialIndexTest {
 
     @Test
     fun `withinRadius - 셀 경계를 넘는 이웃도 누락 없이 찾는다`() {
-        // 중심을 셀 경계 근처에 두고, 경계 건너편 ~약 90m 점을 200m 반경으로 찾는다.
         val center: GeoPoint = GeoPoint(37.50049, 127.0)
-        val acrossCell = cctv(37.5013, 127.0) // 다른 위도 셀이지만 반경 안
+        val acrossCell = cctv(37.5013, 127.0)
         val index = GridSpatialIndex(listOf(acrossCell))
         assertThat(index.withinRadius(center, 200.0)).contains(acrossCell)
     }
@@ -34,7 +33,7 @@ class GridSpatialIndexTest {
     fun `withinCorridor - 회랑 안 점만(점-선분 거리)`() {
         val path = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01))
         val onPath = cctv(37.5, 127.005)
-        val offPath = cctv(37.5020, 127.005) // 경로에서 ~약 222m
+        val offPath = cctv(37.5020, 127.005)
         val index = GridSpatialIndex(listOf(onPath, offPath))
         assertThat(index.withinCorridor(path, 30.0)).containsExactly(onPath)
     }

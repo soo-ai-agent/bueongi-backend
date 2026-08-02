@@ -69,7 +69,6 @@ class KakaoPlaceClientTest {
 
     @Test
     fun `문서 매핑 - 비유한 좌표(NaN, Infinity)는 제외(null)`() {
-        // "NaN".toDoubleOrNull()=NaN, "Infinity"=∞ 로 파싱은 통과하지만 좌표로는 무효 → 제외.
         assertThat(
             KakaoPlaceDocument(placeName = "x", roadAddressName = "주소", lng = "127.0", lat = "NaN").toKakaoPlace(),
         ).isNull()
@@ -83,7 +82,6 @@ class KakaoPlaceClientTest {
 
     @Test
     fun `문서 매핑 - 지리 범위 밖 좌표는 제외(null)`() {
-        // 파싱은 되지만 위도 -90~90 / 경도 -180~180 을 벗어난 좌표는 제외(downstream 가드 우회 방지).
         assertThat(
             KakaoPlaceDocument(placeName = "x", roadAddressName = "주소", lng = "127.0", lat = "91.0").toKakaoPlace(),
         ).isNull()

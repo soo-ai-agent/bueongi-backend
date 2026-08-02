@@ -27,11 +27,11 @@ class ShareServiceEndTest : ShareServiceTestSupport() {
         assertThrows(ShareSessionNotFoundException::class.java) {
             service.end(s.token, "wrong")
         }
-        assertEquals(37.1, service.getLocation(s.token).lat) // 종료되지 않음
+        assertEquals(37.1, service.getLocation(s.token).lat)
     }
 
     @Test
     fun `없는 token end 는 멱등(no-op)`() {
-        service.end("nonexistent", "x") // 예외 없이 통과
+        service.end("nonexistent", "x")
     }
 }

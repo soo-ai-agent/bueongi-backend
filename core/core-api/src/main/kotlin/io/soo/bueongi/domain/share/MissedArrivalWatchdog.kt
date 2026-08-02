@@ -40,7 +40,7 @@ class MissedArrivalWatchdog(
     }
 
     private fun alert(session: ShareSession, now: Instant) {
-        val expected: Instant = session.expectedArrivalAt ?: return // 술어가 보장하지만 스마트캐스트/방어 목적.
+        val expected: Instant = session.expectedArrivalAt ?: return
         val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
         val stoppedSeconds: Long? = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
         val stoppedText: String = stoppedSeconds?.let { "위치가 ${it}초째 정지" } ?: "위치 보고 없음"

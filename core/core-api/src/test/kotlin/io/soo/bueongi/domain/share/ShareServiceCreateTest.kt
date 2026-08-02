@@ -60,10 +60,10 @@ class ShareServiceCreateTest : ShareServiceTestSupport() {
     @Test
     fun `token 은 매번 다르고 추측 불가능(128-bit URL-safe 22자)`() {
         val tokens = (1..50).map { service.create(null).token }
-        assertEquals(50, tokens.toSet().size) // 충돌 없음
+        assertEquals(50, tokens.toSet().size)
         tokens.forEach { t ->
-            assertEquals(22, t.length) // 16바이트 base64url(패딩 제거) = 22자
-            assertTrue(t.all { it.isLetterOrDigit() || it == '-' || it == '_' }) // URL-safe 문자만
+            assertEquals(22, t.length)
+            assertTrue(t.all { it.isLetterOrDigit() || it == '-' || it == '_' })
         }
     }
 }

@@ -23,8 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *  - @Order(1) 나머지: 전 경로 permitAll. **이게 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다.**
  */
 @Configuration
-// 필터체인·JWT 빈은 servlet 웹 컨텍스트(HttpSecurity 제공)에서만 구성한다. webEnvironment=NONE 및 @WebMvcTest
-// 슬라이스는 이 설정을 로드하지 않으므로 JwtProperties(공개키) 주입을 강제받지 않는다(운영은 항상 servlet).
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(JwtProperties::class)
 class SecurityConfig(

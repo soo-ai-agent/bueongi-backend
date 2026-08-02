@@ -14,7 +14,6 @@ class ShareControllerWatchingTest : ShareControllerTestSupport() {
     @Test
     fun `POST watching 은 보호자 GET 전엔 false, 후엔 true (owner_secret 필요)`() {
         val (token, secret) = createSharePair()
-        // 보호자 조회 전 → 보는 사람 없음
         mockMvc.post("/share/$token/watching") {
             contentType = MediaType.APPLICATION_JSON
             content = "{\"owner_secret\": \"$secret\"}"
@@ -22,7 +21,6 @@ class ShareControllerWatchingTest : ShareControllerTestSupport() {
             status { isOk() }
             jsonPath("$.watching") { value(false) }
         }
-        // 보호자 GET location → 시청 기록
         mockMvc.get("/share/$token/location").andExpect { status { isOk() } }
         mockMvc.post("/share/$token/watching") {
             contentType = MediaType.APPLICATION_JSON
@@ -50,7 +48,6 @@ class ShareControllerWatchingTest : ShareControllerTestSupport() {
             jsonPath("$.lng") { value(127.02) }
             jsonPath("$.updated_at") { exists() }
             jsonPath("$.expired") { value(false) }
-            // 관리자 미리보기 폴링은 GET /location 과 달리 시청자로 집계되면 안 된다 — 여러 번 봐도 watching=false.
             jsonPath("$.watching") { value(false) }
         }
     }

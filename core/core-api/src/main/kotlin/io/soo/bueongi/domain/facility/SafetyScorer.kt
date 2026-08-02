@@ -26,7 +26,6 @@ class SafetyScorer(
         val corridorMeters: Double = DEFAULT_CORRIDOR_METERS
         val lengthM: Double = SpatialMath.pathLengthMeters(path)
         val routeKm: Double = lengthM / 1000.0
-        // 0 길이 경로 방어: 밀도 분모를 최소 1m(0.001km)로 잡아 폭주를 막는다.
         val km: Double = if (routeKm > 0) {
             routeKm
         } else {
@@ -37,14 +36,12 @@ class SafetyScorer(
         val lampCount: Int = repository.index(FacilityType.LAMP).withinCorridor(path, corridorMeters).size
         val bellCount: Int = repository.index(FacilityType.BELL).withinCorridor(path, corridorMeters).size
         val safehouseCount: Int = repository.index(FacilityType.SAFEHOUSE).withinCorridor(path, corridorMeters).size
-        // 지구대·파출소도 안전 점수에 반영한다(긴급 도움처). 희소 시설이라 개수 기반으로 정규화.
         val policeCount: Int = repository.index(FacilityType.POLICE).withinCorridor(path, corridorMeters).size
 
         val cctvDensity: Double = cctvCount / km
         val lampDensity: Double = lampCount / km
         val bellDensity: Double = bellCount / km
 
-        // 안심귀갓길 겹침 비율(0~1): 후보 경로 길이 대비 겹침 길이의 최댓값.
         var safePathOverlap: Double = 0.0
         if (lengthM > 0 && repository.safePaths.isNotEmpty()) {
             for (safePath in repository.safePaths) {
@@ -93,7 +90,6 @@ class SafetyScorer(
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0
 
-        // 각 밀도/개수가 만점(정규화 1.0)에 이르는 기준값(MVP 캘리브레이션).
         const val SAT_CCTV_PER_KM: Double = 20.0
         const val SAT_LAMP_PER_KM: Double = 40.0
         const val SAT_BELL_PER_KM: Double = 5.0
@@ -101,7 +97,6 @@ class SafetyScorer(
         /** 지구대·파출소 개수 — 희소 시설이라 2곳이면 만점 기여. */
         const val SAT_POLICE_COUNT: Double = 2.0
 
-        // 설계 가중치(합 1.0). 지구대·파출소(0.10)·여성안심지킴이집(0.07) 반영분만큼 CCTV/조명/비상벨을 재배분.
         const val WEIGHT_CCTV: Double = 0.30
         const val WEIGHT_LAMP: Double = 0.20
         const val WEIGHT_BELL: Double = 0.18

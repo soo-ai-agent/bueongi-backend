@@ -37,13 +37,11 @@ class SafeDetourPlanner(
             return emptyList()
         }
 
-        // ~80m 그리드 버킷으로 클러스터링. 버킷 중심 = 구성 시설 좌표 평균.
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
         val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap<Long, ClusterAccumulator>()
         for (facility in facilities) {
             val cx: Int = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
             val cy: Int = floor(facility.lng / CLUSTER_CELL_DEG).toInt()
-            // 셀 키 패킹은 storage 그리드 인덱스와 동일 규약(단일 출처 재사용).
             val key: Long = GridSpatialIndex.cellKey(cx, cy)
             val cluster: ClusterAccumulator = clusters.getOrPut(key) { ClusterAccumulator() }
             cluster.sumLat += facility.lat
@@ -58,7 +56,6 @@ class SafeDetourPlanner(
                     weight = cluster.facilityCount,
                 )
             }
-            // weight 내림차순, 동률은 좌표로 결정론적 정렬.
             .sortedWith(compareByDescending<SafeAnchor> { it.weight }.thenBy { it.center.lat }.thenBy { it.center.lng })
             .take(MAX_ANCHORS)
     }
@@ -80,13 +77,11 @@ class SafeDetourPlanner(
         }
         val maxLateralMeters: Double = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
 
-        // 직선 origin→dest 에 투영해 진행방향 위치 t(0~1)와 측방거리(m)를 구한다.
         data class Placed(val anchor: SafeAnchor, val progress: Double)
         val placed: List<Placed> = anchors.mapNotNull { anchor ->
             val projection: SegmentProjection = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
             val progressRaw: Double = projection.t
             val lateral: Double = projection.distanceMeters
-            // 중간 구간(끝점 근처 제외) + 과도 측방이탈 제외.
             if (progressRaw <= MIDDLE_MIN_T || progressRaw >= MIDDLE_MAX_T) {
                 return@mapNotNull null
             }
@@ -99,15 +94,12 @@ class SafeDetourPlanner(
             return emptyList()
         }
 
-        // weight 내림차순(동률은 t 오름차순)으로 고가중 우선.
         val byWeight: List<Placed> = placed.sortedWith(
             compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
         )
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet<List<GeoPoint>>()
-        // 앵커 1개짜리 조합 2~3개.
         byWeight.take(SINGLE_ANCHOR_COMBOS).forEach { combos.add(listOf(it.anchor.center)) }
-        // 앵커 2개짜리 조합 1개(상위 2개를 출발거리순 정렬).
         if (byWeight.size >= 2) {
             val pair: List<GeoPoint> = byWeight.take(2).sortedBy { it.progress }.map { it.anchor.center }
             combos.add(pair)
@@ -132,8 +124,6 @@ class SafeDetourPlanner(
         /** 앵커 1개짜리 조합 최대 개수(2~3개 중 3). */
         const val SINGLE_ANCHOR_COMBOS: Int = 3
 
-        // 우회 거점 후보 시설. 지구대·파출소도 포함하되, 앵커는 directPath 회랑(ANCHOR_RADIUS_METERS=150m)
-        // 안에서만 추출되므로 '가는 길 근처'의 지구대만 우회 거점이 되고, 멀리 떨어진 지구대로는 우회하지 않는다.
         val ANCHOR_TYPES: List<FacilityType> = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
     }
 }

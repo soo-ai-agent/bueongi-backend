@@ -37,7 +37,6 @@ class FacilityRefreshScheduler(
         }
     }
 
-    // cron 기본값은 application.yml(bueongi.facility.refresh-cron) 한 곳에만 둔다(중복 정의 방지).
     @Scheduled(cron = "\${bueongi.facility.refresh-cron}", zone = "Asia/Seoul")
     fun onSchedule() {
         if (!refreshService.isEnabled) {

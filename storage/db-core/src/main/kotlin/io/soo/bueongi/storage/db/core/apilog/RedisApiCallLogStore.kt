@@ -22,7 +22,6 @@ class RedisApiCallLogStore(
     private val logger: Logger = LoggerFactory.getLogger(RedisApiCallLogStore::class.java)
 
     override fun record(log: ApiCallLog) {
-        // 계측 실패가 서비스 호출을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             redis.opsForList().leftPush(KEY, objectMapper.writeValueAsString(log))
             redis.opsForList().trim(KEY, 0, (API_CALL_LOG_CAP - 1).toLong())

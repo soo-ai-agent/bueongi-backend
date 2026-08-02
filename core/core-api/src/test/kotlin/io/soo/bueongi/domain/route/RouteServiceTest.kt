@@ -15,8 +15,8 @@ class RouteServiceTest {
     private val service: RouteService = RouteService()
 
     private fun request() = RouteQuery(
-        origin = GeoPoint(37.4979, 127.0276), // 강남역
-        destination = GeoPoint(37.5572, 126.9245), // 홍대입구역
+        origin = GeoPoint(37.4979, 127.0276),
+        destination = GeoPoint(37.5572, 126.9245),
         destinationName = "홍대입구역",
         routeType = RouteType.SAFE,
         safetyPreference = SafetyPreference.SAFE,
@@ -60,22 +60,18 @@ class RouteServiceTest {
 
     @Test
     fun `출발지와 도착지가 1m 이상 떨어지면 정상적으로 경로를 만든다`() {
-        // 경계 방어: 임계값(1m) 이상이면 근거리여도 막지 않는다. 위도 0.001도 ≈ 111m.
-        // (동일 좌표/원거리 거부는 API 경계 가드의 책임 — RouteRequestGuardTest 가 고정한다.)
         val near = request().copy(origin = GeoPoint(37.5, 127.0), destination = GeoPoint(37.501, 127.0))
         assertThat(service.compare(near)).hasSize(3)
     }
 
     @Test
     fun `최대 거리 이내의 장거리 경로는 정상적으로 만든다`() {
-        // 경계 방어: 상한(100km) 바로 아래(위도 0.8도 ≈ 89km)면 막지 않고 3개 경로를 만든다.
         val long = request().copy(origin = GeoPoint(37.0, 127.0), destination = GeoPoint(37.8, 127.0))
         assertThat(service.compare(long)).hasSize(3)
     }
 
     @Test
     fun `compare 는 추천 요청을 compare 로 1회 집계하고 buildRoutes 는 집계하지 않는다`() {
-        // 추천 집계 계약: compare 만 기록(부수효과), 순수 생성(buildRoutes)은 기록 없음 → safe-compare 폴백이 이중 카운트 없이 재사용.
         val recording: RecordingRouteStatsStore = RecordingRouteStatsStore()
         val recordingService: RouteService = RouteService(recording)
 

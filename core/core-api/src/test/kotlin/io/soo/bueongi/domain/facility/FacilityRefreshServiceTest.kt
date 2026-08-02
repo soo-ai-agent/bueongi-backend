@@ -84,15 +84,14 @@ class FacilityRefreshServiceTest {
         assertThat(store.replaced[FacilityType.CCTV]!![0].type).isEqualTo(FacilityType.CCTV)
         assertThat(store.replaced[FacilityType.BELL]!![0].sigungu).isEqualTo("11680")
         assertThat(store.replaced[FacilityType.SAFEHOUSE]!![0].name).isEqualTo("GS25 강남점")
-        // 치안시설은 전화번호까지 저장돼야 한다(긴급 시트 파출소 연결).
         assertThat(store.replaced[FacilityType.POLICE]!![0].phone).isEqualTo("02-123-4567")
         assertThat(store.replaced[FacilityType.POLICE]!![0].name).isEqualTo("역삼지구대")
-        assertThat(notifier.keys).isEmpty() // 전부 성공 → 운영 알림 없음
+        assertThat(notifier.keys).isEmpty()
     }
 
     @Test
     fun `게이트 - 키 없는 원천의 종류는 시도조차 하지 않는다(결과 미포함)`() {
-        enableSafemap() // data.go.kr 는 미설정
+        enableSafemap()
         whenever(safemap.fetchPoliceFacilities()).thenReturn(
             listOf(SafemapPoliceFacility(lat = 37.5, lng = 127.0, name = "파출소")),
         )
@@ -106,7 +105,7 @@ class FacilityRefreshServiceTest {
 
     @Test
     fun `가로등 - safetydata 원천의 수집분을 LAMP 인덱스로 교체한다(주소·시군구 매핑)`() {
-        enableStreetlight() // 다른 원천은 미설정 → LAMP 만 갱신
+        enableStreetlight()
         whenever(streetlight.fetchStreetlights()).thenReturn(
             listOf(
                 SafetydataStreetlight(lat = 37.5, lng = 127.0, address = "테헤란로 5", sigungu = "11680"),
@@ -143,7 +142,6 @@ class FacilityRefreshServiceTest {
         assertThat(result[FacilityType.POLICE]).isNull()
         assertThat(store.replaced.keys).containsExactly(FacilityType.BELL)
         assertThat(result[FacilityType.BELL]).isEqualTo(1)
-        // 실패한 종류(cctv·safehouse·police)만 알림 — 성공한 bell 은 미포함.
         assertThat(notifier.keys).containsExactlyInAnyOrder(
             "facility-refresh:cctv", "facility-refresh:safehouse", "facility-refresh:police",
         )
@@ -153,7 +151,6 @@ class FacilityRefreshServiceTest {
     fun `실패 - 유효 좌표 0건이면 교체하지 않는다(데이터 소멸 방지)`() {
         enableDataGoKr()
         whenever(dataGoKr.fetchCctv()).thenReturn(emptyList())
-        // 전부 좌표 범위 밖 → 매핑 후 0건.
         whenever(dataGoKr.fetchEmergencyBells()).thenReturn(
             listOf(DataGoKrPoint(lat = 95.0, lng = 127.0), DataGoKrPoint(lat = 37.5, lng = 200.0)),
         )
@@ -165,7 +162,7 @@ class FacilityRefreshServiceTest {
         assertThat(result[FacilityType.BELL]).isNull()
         assertThat(result[FacilityType.SAFEHOUSE]).isNull()
         assertThat(store.replaced).isEmpty()
-        assertThat(notifier.keys).hasSize(3) // 0건 이상 신호도 종류별 알림
+        assertThat(notifier.keys).hasSize(3)
     }
 
     @Test
@@ -190,7 +187,7 @@ class FacilityRefreshServiceTest {
     fun `부수효과 - refreshAll 종료 시 반환 결과를 상태 홀더에 기록한다`() {
         enableDataGoKr()
         whenever(dataGoKr.fetchCctv()).thenReturn(listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)))
-        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null) // 수집 실패 → kept(count=null)
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
         whenever(dataGoKr.fetchSafehouses()).thenReturn(listOf(DataGoKrPoint(lat = 37.6, lng = 127.1)))
         val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
         val serviceWithHolder = FacilityRefreshService(
@@ -199,15 +196,15 @@ class FacilityRefreshServiceTest {
 
         serviceWithHolder.refreshAll()
 
-        assertThat(holder.findByType(FacilityType.CCTV)?.replacedCount).isEqualTo(1) // replaced
-        assertThat(holder.findByType(FacilityType.BELL)?.replacedCount).isNull() // kept
-        assertThat(holder.findByType(FacilityType.BELL)).isNotNull // 기록은 됨(never 아님)
-        assertThat(holder.findByType(FacilityType.POLICE)).isNull() // 키 없는 원천 → never
+        assertThat(holder.findByType(FacilityType.CCTV)?.replacedCount).isEqualTo(1)
+        assertThat(holder.findByType(FacilityType.BELL)?.replacedCount).isNull()
+        assertThat(holder.findByType(FacilityType.BELL)).isNotNull
+        assertThat(holder.findByType(FacilityType.POLICE)).isNull()
     }
 
     @Test
     fun `게이트 - isEnabled 는 두 원천 중 하나라도 키가 있으면 true`() {
-        assertThat(service.isEnabled).isFalse() // 둘 다 미설정
+        assertThat(service.isEnabled).isFalse()
 
         whenever(safemap.isEnabled).thenReturn(true)
         assertThat(service.isEnabled).isTrue()

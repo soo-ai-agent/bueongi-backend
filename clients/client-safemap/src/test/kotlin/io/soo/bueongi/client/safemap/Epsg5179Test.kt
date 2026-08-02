@@ -19,11 +19,11 @@ class Epsg5179Test {
     @Test
     fun `왕복 - 한반도 주요 지점 forward-inverse 오차가 1e-7도(약 1cm) 이내`() {
         val points: List<Pair<Double, Double>> = listOf(
-            37.5665 to 126.9780, // 서울시청
-            37.4981 to 127.0276, // 강남역
-            35.1796 to 129.0756, // 부산
-            33.4996 to 126.5312, // 제주
-            38.2070 to 128.5918, // 속초(기준위도 북쪽)
+            37.5665 to 126.9780,
+            37.4981 to 127.0276,
+            35.1796 to 129.0756,
+            33.4996 to 126.5312,
+            38.2070 to 128.5918,
         )
         for ((lat, lng) in points) {
             val (x, y) = Epsg5179.fromWgs84(lat, lng)
@@ -38,7 +38,6 @@ class Epsg5179Test {
         val (x, y) = Epsg5179.fromWgs84(lat = 37.5665, lng = 126.9780)
         assertThat(x).isLessThan(1_000_000.0)
         assertThat(y).isLessThan(2_000_000.0)
-        // 대략 자릿수 검증: 서울은 x 90만대, y 195만대(UTM-K 통례).
         assertThat(x).isBetween(900_000.0, 1_000_000.0)
         assertThat(y).isBetween(1_900_000.0, 2_000_000.0)
     }

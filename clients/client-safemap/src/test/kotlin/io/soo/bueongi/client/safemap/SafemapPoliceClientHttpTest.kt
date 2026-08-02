@@ -30,7 +30,6 @@ class SafemapPoliceClientHttpTest {
     @Test
     fun `정상 - EPSG5179 x·y 를 WGS84 로 변환하고 관서명·주소·전화·시군구를 매핑한다`() {
         val (client, server) = bind()
-        // 강남역(37.4981, 127.0276)의 EPSG:5179 좌표를 forward 로 만들어 응답에 심는다.
         val (x, y) = Epsg5179.fromWgs84(lat = 37.4981, lng = 127.0276)
         val body: String = """
             {"resultCode":"00","resultMsg":"NORMAL","numOfRows":10,"pageNo":1,"totalCount":1,
@@ -49,7 +48,7 @@ class SafemapPoliceClientHttpTest {
         assertThat(f.lat).isCloseTo(37.4981, within(1e-6))
         assertThat(f.lng).isCloseTo(127.0276, within(1e-6))
         assertThat(f.name).isEqualTo("역삼지구대")
-        assertThat(f.address).isEqualTo("서울 강남구 테헤란로 1") // 도로명 우선
+        assertThat(f.address).isEqualTo("서울 강남구 테헤란로 1")
         assertThat(f.phone).isEqualTo("02-123-4567")
         assertThat(f.sigungu).isEqualTo("11680")
         server.verify()
@@ -70,10 +69,10 @@ class SafemapPoliceClientHttpTest {
 
         val facilities: List<SafemapPoliceFacility>? = client.fetchPoliceFacilities()
 
-        assertThat(facilities).hasSize(2) // 불량 1행만 제외
+        assertThat(facilities).hasSize(2)
         assertThat(facilities!![0].lat).isCloseTo(37.4981, within(1e-9))
         assertThat(facilities[0].lng).isCloseTo(127.0276, within(1e-9))
-        assertThat(facilities[1].lat).isCloseTo(37.51, within(1e-9)) // 뒤바뀜 방어
+        assertThat(facilities[1].lat).isCloseTo(37.51, within(1e-9))
     }
 
     @Test
@@ -83,7 +82,6 @@ class SafemapPoliceClientHttpTest {
             """{"resultCode":"00","totalCount":5,"items":[${
                 names.joinToString(",") { """{"fclty_nm":"$it","x":"127.0","y":"37.5"}""" }
             }]}"""
-        // 서버 페이지 상한이 2라고 가정 — 요청 numOfRows(1000)보다 적지만 totalCount(5)까지 계속.
         server.expect(requestTo(containsString("pageNo=1"))).andRespond(withSuccess(page("a", "b"), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=2"))).andRespond(withSuccess(page("c", "d"), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=3"))).andRespond(withSuccess(page("e"), MediaType.APPLICATION_JSON))

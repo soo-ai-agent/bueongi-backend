@@ -31,7 +31,7 @@ class FacilityCsvParserTest {
 
         assertThat(result.coordSystem).isEqualTo(FacilityCoordSystem.WGS84)
         assertThat(result.received).isEqualTo(4)
-        assertThat(result.points).hasSize(2) // 교통단속(비방범)·좌표불량 제외
+        assertThat(result.points).hasSize(2)
         assertThat(result.skipped).isEqualTo(2)
         val first = result.points.first()
         assertThat(first.name).isEqualTo("종로구청")
@@ -103,7 +103,6 @@ class FacilityCsvParserTest {
 
     @Test
     fun `police 주소만 있고 좌표가 없으면 전부 skip(에러 아님)`() {
-        // B-3 표준데이터 형태(관서명·도로명주소·전화번호만, 좌표 없음) → 지오코더 없어 skip.
         val csv = """
             관서명,소재지도로명주소,전화번호
             종로파출소,서울 종로구 대로 8,02-100
@@ -119,7 +118,6 @@ class FacilityCsvParserTest {
 
     @Test
     fun `범용 폴백 - 투영 종류라도 위도·경도 헤더가 있으면 WGS84 로 읽는다`() {
-        // police(기본 epsg5179)인데 표준데이터가 위도/경도를 직접 주는 경우.
         val csv = """
             위도,경도,시설명,주소
             37.5,127.0,종로치안센터,서울 종로구 10

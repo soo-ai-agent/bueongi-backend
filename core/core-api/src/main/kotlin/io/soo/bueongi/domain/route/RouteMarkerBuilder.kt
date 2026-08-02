@@ -40,8 +40,6 @@ class RouteMarkerBuilder(
         destination: GeoPoint,
         path: List<GeoPoint>,
     ): List<FacilityPoi> {
-        // 시설 데이터 제공 실패(인덱스 적재 실패/부재)를 회랑-정상-0 과 구분해 알린다. 마커 생성 자체는 계속한다
-        // (start/end 는 항상 나가 지도가 그려진다) — 알림은 부수효과일 뿐 응답 계약·결정성에 영향 없다.
         alertIfIndexEmpty()
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
@@ -49,8 +47,6 @@ class RouteMarkerBuilder(
         raw.add(FacilityPoi(type = FacilityPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
-        // 회랑 내 실 시설(실좌표·메타 포함)만 담는다. 유형별 마커 수 상한으로 가로등처럼 밀집한 시설이 지도를
-        // 가리지 않도록 방어한다(점수 계산은 SafetyScorer 가 전체 개수를 그대로 쓴다 — 여기 상한과 무관).
         for ((markerType, facilityType) in MARKER_TYPES) {
             val facilities: List<FacilityPoint> =
                 repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
@@ -80,7 +76,6 @@ class RouteMarkerBuilder(
         val spanLat: Double = maxLat - minLat
         val spanLng: Double = maxLng - minLng
         return raw.map { marker ->
-            // 한 축이 퇴화(모든 좌표 동일)하면 가운데(50). 위도는 위쪽이 큰 값이라 y축을 뒤집는다.
             val x: Int = if (spanLng == 0.0) {
                 50
             } else {
@@ -118,14 +113,11 @@ class RouteMarkerBuilder(
     }
 
     private companion object {
-        // 마커 표시 종류(POI 어휘) → 시설 인덱스(회랑 실측; 실좌표·메타 포함).
         val MARKER_TYPES: List<Pair<FacilityPoiType, FacilityType>> = listOf(
             FacilityPoiType.CCTV to FacilityType.CCTV,
             FacilityPoiType.SAFEHOUSE to FacilityType.SAFEHOUSE,
             FacilityPoiType.BELL to FacilityType.BELL,
-            // 지구대·파출소도 경로변 거점 마커로 표시한다(여성안심지킴이집과 함께 지도에 노출).
             FacilityPoiType.POLICE to FacilityType.POLICE,
-            // 가로등·조명은 점수(밀도)에도 쓰이고, 지도에도 표시한다(상한으로 밀집 방어).
             FacilityPoiType.LAMP to FacilityType.LAMP,
         )
 

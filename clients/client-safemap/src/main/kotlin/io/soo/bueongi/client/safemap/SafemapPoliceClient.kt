@@ -34,7 +34,6 @@ class SafemapPoliceClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
-    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /**
@@ -65,7 +64,6 @@ class SafemapPoliceClient(
                 log.warn("safemap 빈 응답(page={}) — 갱신 중단(기존 데이터 유지)", pageNo)
                 return null
             }
-            // resultCode: 0/00 정상(숫자·문자 모두 수용), 그 외는 중단. 필드 위치는 envelope 편차에 대비해 재귀 탐색.
             val code: String? = body.findValue("resultCode")?.asText()?.trim()
             if (!code.isNullOrBlank() && code != "0" && code != "00") {
                 log.warn(

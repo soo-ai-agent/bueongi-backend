@@ -46,7 +46,7 @@ class RouteRequestGuardTest {
     fun `원거리 상한 초과면 TRIP_TOO_FAR`() {
         val request: RouteRequest = RouteRequest(
             origin = LatLng(37.0, 127.0),
-            destination = NamedLatLng(38.5, 127.0),   // 위도 1.5도 ≈ 167km > 100km
+            destination = NamedLatLng(38.5, 127.0),
         )
         assertThatThrownBy { request.toValidatedQuery() }
             .isInstanceOf(TripTooFarException::class.java)
@@ -54,8 +54,6 @@ class RouteRequestGuardTest {
 
     @Test
     fun `가드 순서 - origin 누락이 거리 가드보다 먼저다`() {
-        // origin 이 없으면 거리(동일좌표/원거리)를 따질 출발지조차 없다 → ORIGIN_REQUIRED 가 우선.
-        // (destination 만으로는 SAME/TRIP 판정 불가하므로 순서가 뒤바뀌면 NPE 가 날 위험 → 순서를 못 박는다.)
         val request: RouteRequest = RouteRequest(origin = null, destination = NamedLatLng(37.5, 127.0))
         assertThatThrownBy { request.toValidatedQuery() }
             .isInstanceOf(OriginRequiredException::class.java)

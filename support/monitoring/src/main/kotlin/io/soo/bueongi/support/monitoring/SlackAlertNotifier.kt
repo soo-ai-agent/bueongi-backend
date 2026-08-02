@@ -62,7 +62,6 @@ class SlackAlertNotifier internal constructor(
         get() = config.sendEnabled()
 
     override fun notify(key: String, title: String, detail: String) {
-        // 이력은 발송 스로틀·활성·뮤트와 독립하게 매 호출 기록한다 — 전송이 생략돼도 "장애 발생"은 남긴다.
         recordAlert(key, title, detail)
         if (!config.sendEnabled()) {
             log.debug("Slack 알림 비활성(webhook 미설정 또는 토글 off) — 무시: {}", key)
@@ -91,7 +90,6 @@ class SlackAlertNotifier internal constructor(
 
     override fun findRecentAlerts(limit: Int): List<AlertRecord> {
         val snapshot: List<AlertRecord> = synchronized(recentAlerts) { recentAlerts.toList() }
-        // 버퍼는 오래된→최신 순으로 쌓이므로 뒤집어 최신순으로 돌려준다.
         return snapshot.asReversed().take(limit)
     }
 
@@ -129,7 +127,6 @@ class SlackAlertNotifier internal constructor(
             restClient.post()
                 .uri(URI.create(config.webhookUrl()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                // 사전 직렬화(String) — Content-Length 전송(chunked 미사용)으로 수신측 호환성을 높인다.
                 .body(objectMapper.writeValueAsString(mapOf("text" to ":rotating_light: *$title*\n$detail")))
                 .retrieve()
                 .toBodilessEntity()

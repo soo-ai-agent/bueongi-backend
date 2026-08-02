@@ -29,16 +29,16 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
     fun `getLocationForAdmin 은 시청자로 집계되지 않는다(isWatched 불변 - 비집계 핵심)`() {
         val s = service.create(null)
         service.updateLocation(s.token, s.ownerSecret, report())
-        repeat(3) { service.getLocationForAdmin(s.token) } // 관리자 열람 반복
-        assertFalse(store.isWatched(s.token)) // 보호자 시청으로 집계되지 않는다
+        repeat(3) { service.getLocationForAdmin(s.token) }
+        assertFalse(store.isWatched(s.token))
     }
 
     @Test
     fun `대조 - 공개 getLocation 은 여전히 markViewed 를 호출한다(isWatched true, 회귀 없음)`() {
         val s = service.create(null)
         service.updateLocation(s.token, s.ownerSecret, report())
-        assertFalse(store.isWatched(s.token)) // 조회 전
-        service.getLocation(s.token) // 보호자 조회 → 시청 기록
+        assertFalse(store.isWatched(s.token))
+        service.getLocation(s.token)
         assertTrue(store.isWatched(s.token))
     }
 
@@ -46,7 +46,7 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
     fun `만료된 공유의 getLocationForAdmin 은 expired=true 에 좌표 null`() {
         val s = service.create(1)
         service.updateLocation(s.token, s.ownerSecret, report())
-        clock.advanceSeconds(3600) // 정확히 1시간 → 만료
+        clock.advanceSeconds(3600)
         val view = service.getLocationForAdmin(s.token)
         assertTrue(view.expired)
         assertNull(view.lat)
@@ -58,7 +58,7 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
         val view = service.getLocationForAdmin("nonexistent")
         assertTrue(view.expired)
         assertNull(view.lat)
-        assertFalse(store.isWatched("nonexistent")) // 없는 토큰도 집계하지 않는다
+        assertFalse(store.isWatched("nonexistent"))
     }
 
     @Test
@@ -69,6 +69,6 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
         assertNull(view.lat)
         assertNull(view.lng)
         assertNull(view.updatedAt)
-        assertFalse(store.isWatched(token)) // 첫 위치 전에도 비집계
+        assertFalse(store.isWatched(token))
     }
 }

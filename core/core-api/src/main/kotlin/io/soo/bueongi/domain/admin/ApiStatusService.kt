@@ -42,7 +42,6 @@ class ApiStatusService(
         val now: Long = System.currentTimeMillis()
         val logs: List<ApiCallLog> = apiCallLogStore.findRecent(provider = null, limit = API_CALL_LOG_CAP)
         val todayStartMs: Long = todayStartMs(now)
-        // 저장된 provider 는 [ApiProvider] 의 이름 문자열이라 enum 이름으로 묶음을 찾는다(저장 포맷 유지).
         val byProvider: Map<String, List<ApiCallLog>> = logs.groupBy { it.provider }
         val providers: List<ProviderStatus> = TRACKED_PROVIDERS.map { provider ->
             aggregate(provider, byProvider[provider.name] ?: emptyList(), now, todayStartMs)
@@ -81,7 +80,6 @@ class ApiStatusService(
         val quotaWarning: Boolean = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
         val quotaBurnPerHour: Double? = quotaBurnPerHour(quotaLimit, todayCount, nowMs, todayStartMs)
         return ProviderStatus(
-            // 응답 필드는 기존 문자열 그대로 — enum 은 내부 표현이고 와이어 표현은 이름이다(계약 불변).
             provider = provider.name,
             total = total,
             successCount = successCount,

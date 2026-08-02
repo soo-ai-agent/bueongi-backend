@@ -16,7 +16,6 @@ class InMemoryApiCallLogStore : ApiCallLogStore {
     private val lock: Any = Any()
 
     override fun record(log: ApiCallLog) {
-        // 계측 실패가 서비스 호출을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             synchronized(lock) {
                 logs.addFirst(log)
@@ -30,7 +29,7 @@ class InMemoryApiCallLogStore : ApiCallLogStore {
     }
 
     override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> {
-        val snapshot: List<ApiCallLog> = synchronized(lock) { logs.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<ApiCallLog> = synchronized(lock) { logs.toList() }
         return snapshot.asSequence()
             .filter { provider == null || it.provider == provider }
             .take(limit.coerceAtLeast(0))

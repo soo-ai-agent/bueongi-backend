@@ -33,12 +33,6 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
 
     @Test
     fun `GET location 의 갱신 시각은 snake_case updated_at 로 직렬화된다(guardian html 폴링 계약)`() {
-        // guardian.html 의 renderLive(data) 는 `data.updated_at`(snake_case)로 '마지막 갱신' 시각을 그린다(guardian.html:84).
-        // LocationView.updatedAt 은 @JsonProperty("updated_at") 로 그 계약을 맞춘다. 그런데 위 좌표 회수 테스트는
-        // lat/lng/expired 만 단언하고 updated_at 필드명은 미검증이다(POST location 의 updated_at 단언은 보호자가 읽지 않는
-        // 다른 DTO=UpdateLocationResponse 다). 따라서 누가 LocationView 에서 @JsonProperty 를 "정리"로 제거해 서버가
-        // camelCase `updatedAt` 으로 직렬화해도 모든 테스트가 통과하지만, 서버가 서빙하는 보호자 페이지의 `data.updated_at`
-        // 이 undefined 가 되어 '마지막 갱신' 표시가 조용히 사라진다(backend 가 소유한 client 의 깨진 계약). 이를 고정한다.
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
@@ -47,9 +41,7 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
 
         mockMvc.get("/share/$token/location").andExpect {
             status { isOk() }
-            // guardian.html:84 가 읽는 정확한 필드명.
             jsonPath("$.updated_at") { exists() }
-            // @JsonProperty 회귀(제거/약화) 시 나타날 camelCase 형태가 응답에 없어야 한다.
             jsonPath("$.updatedAt") { doesNotExist() }
         }
     }
@@ -116,7 +108,7 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 91.0, \"lng\": 127.0, \"owner_secret\": \"$secret\"}" // lat > 90
+            content = "{\"lat\": 91.0, \"lng\": 127.0, \"owner_secret\": \"$secret\"}"
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }
@@ -128,7 +120,7 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
         val token: String = createShare()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": NaN, \"lng\": 127.0}" // 비숫자 리터럴 → Jackson 파싱 거부
+            content = "{\"lat\": NaN, \"lng\": 127.0}"
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("MALFORMED_REQUEST") }
@@ -163,7 +155,7 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
         val (token, _) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.0}" // owner_secret 없음
+            content = "{\"lat\": 37.5, \"lng\": 127.0}"
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }

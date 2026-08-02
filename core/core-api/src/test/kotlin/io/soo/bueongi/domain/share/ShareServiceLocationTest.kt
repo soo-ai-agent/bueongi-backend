@@ -47,7 +47,7 @@ class ShareServiceLocationTest : ShareServiceTestSupport() {
     fun `만료 후 조회는 expired=true 에 좌표 null`() {
         val created = service.create(1)
         service.updateLocation(created.token, created.ownerSecret, report())
-        clock.advanceSeconds(3600) // 정확히 1시간 → 만료
+        clock.advanceSeconds(3600)
         val view = service.getLocation(created.token)
         assertTrue(view.expired)
         assertNull(view.lat)

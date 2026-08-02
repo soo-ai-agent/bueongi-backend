@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
  */
 class SafetyScorerTest {
 
-    // 약 888m 동서 직선 경로(lat 37.5, lng 127.0→127.01).
     private val path = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01))
 
     @Test
@@ -26,18 +25,17 @@ class SafetyScorerTest {
 
     @Test
     fun `회랑 안 CCTV 가 점수와 밀도를 올린다`() {
-        val cctv = (1..9).map { GeoPoint(37.5, 127.0 + it * 0.001) } // 경로 위 9개
+        val cctv = (1..9).map { GeoPoint(37.5, 127.0 + it * 0.001) }
         val scorer = SafetyScorer(FakeFacilitySource.of(FacilityType.CCTV, cctv))
         val result = scorer.score(path)
         assertThat(result.score).isGreaterThan(0)
         assertThat(result.score).isLessThanOrEqualTo(100)
-        // 9개 / 약 0.888km ≈ 10/km.
         assertThat(result.breakdown.cctvDensity).isGreaterThan(9.0)
     }
 
     @Test
     fun `회랑 안 지구대·파출소가 점수와 개수에 기여한다`() {
-        val police = listOf(GeoPoint(37.5, 127.005)) // 경로 위 1곳
+        val police = listOf(GeoPoint(37.5, 127.005))
         val result = SafetyScorer(FakeFacilitySource.of(FacilityType.POLICE, police)).score(path)
         assertThat(result.breakdown.policeCount).isEqualTo(1)
         assertThat(result.score).isGreaterThan(0)
@@ -45,14 +43,13 @@ class SafetyScorerTest {
 
     @Test
     fun `회랑 밖 시설은 점수에 반영되지 않는다`() {
-        val offCorridor = listOf(GeoPoint(37.502, 127.005)) // 경로에서 ~약 222m
+        val offCorridor = listOf(GeoPoint(37.502, 127.005))
         val scorer = SafetyScorer(FakeFacilitySource.of(FacilityType.CCTV, offCorridor))
         assertThat(scorer.score(path).breakdown.cctvDensity).isZero()
     }
 
     @Test
     fun `안심귀갓길 겹침은 safePath 가중치(약 15점)만큼 기여`() {
-        // 경로와 동일한 좌표열의 안심귀갓길 → overlap 비율 ≈ 1.0 → 0.15 * 100 = 15점.
         val source = FakeFacilitySource(safePaths = listOf(SafePath(path)))
         val result = SafetyScorer(source).score(path)
         assertThat(result.breakdown.safePathOverlap).isGreaterThan(0.9)

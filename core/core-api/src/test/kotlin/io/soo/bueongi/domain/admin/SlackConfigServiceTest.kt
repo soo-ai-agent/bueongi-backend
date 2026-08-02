@@ -38,10 +38,9 @@ class SlackConfigServiceTest {
 
         assertThat(summary.webhookConfigured).isTrue()
         assertThat(summary.webhookMasked).isEqualTo("https://hooks.slack.com/services/T***/B***/***")
-        // 원문 시크릿 조각이 새어나가지 않음.
         assertThat(summary.webhookMasked).doesNotContain("T00000000")
         assertThat(summary.webhookMasked).doesNotContain("abcdefghijklmnop")
-        assertThat(summary.enabled).isTrue() // webhook 설정 → 기본 on
+        assertThat(summary.enabled).isTrue()
         assertThat(summary.throttleMinutes).isEqualTo(10)
     }
 
@@ -86,9 +85,8 @@ class SlackConfigServiceTest {
         assertThat(updated.categories.first { it.key == "api-500" }.muted).isTrue()
         assertThat(updated.categories.first { it.key == "facility-refresh" }.muted).isTrue()
         assertThat(updated.categories.first { it.key == "tmap-route-fallback" }.muted).isFalse()
-        // 홀더에도 반영되어 발송 판정이 뮤트를 본다.
         assertThat(config.isMuted("api-500:NullPointerException")).isTrue()
-        assertThat(config.sendEnabled()).isFalse() // 토글 off
+        assertThat(config.sendEnabled()).isFalse()
     }
 
     @Test
@@ -101,7 +99,6 @@ class SlackConfigServiceTest {
             )
         }.isInstanceOf(InvalidSlackCategoryException::class.java)
 
-        // 거부됐으니 아무 뮤트도 적용되지 않았다(부분 적용 없음 — 검증이 config.update 앞).
         assertThat(config.mutedCategories()).isEmpty()
     }
 
@@ -112,6 +109,6 @@ class SlackConfigServiceTest {
         val result = svc.test()
 
         assertThat(result.sent).isTrue()
-        assertThat(result.enabled).isTrue() // webhook 설정 + 기본 on
+        assertThat(result.enabled).isTrue()
     }
 }

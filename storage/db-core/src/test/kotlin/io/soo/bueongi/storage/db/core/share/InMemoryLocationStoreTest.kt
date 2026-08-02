@@ -40,12 +40,11 @@ class InMemoryLocationStoreTest {
     @Test
     fun `상한 만료가 지나면 find 는 null 이고 엔트리도 제거된다`() {
         store.save(session("abc", clock.now.plusSeconds(3600)))
-        assertNotNull(store.findByToken("abc")) // 만료 전엔 조회됨
+        assertNotNull(store.findByToken("abc"))
 
-        clock.advanceSeconds(3600) // 정확히 만료 시각 → 만료로 간주(now >= expiresAt)
+        clock.advanceSeconds(3600)
         assertNull(store.findByToken("abc"))
 
-        // lazy 제거 확인: 시계를 되돌려도(현실엔 없지만 제거 여부 확인용) 다시 살아나지 않는다.
         clock.now = clock.now.minusSeconds(7200)
         assertNull(store.findByToken("abc"))
     }
@@ -69,7 +68,7 @@ class InMemoryLocationStoreTest {
 
     @Test
     fun `없는 token delete 는 무해(멱등)`() {
-        store.deleteByToken("nope") // 예외 없이 통과
+        store.deleteByToken("nope")
         assertNull(store.findByToken("nope"))
     }
 
@@ -77,7 +76,7 @@ class InMemoryLocationStoreTest {
     fun `markViewed 후 isWatched 는 true, 유효시간(12초) 지나면 false`() {
         store.markViewed("abc")
         assertTrue(store.isWatched("abc"))
-        clock.advanceSeconds(12) // 유효시간 경계 → 시청 종료
+        clock.advanceSeconds(12)
         assertFalse(store.isWatched("abc"))
     }
 
@@ -105,7 +104,7 @@ class InMemoryLocationStoreTest {
     fun `countActiveSessions 는 만료 세션을 제외한다(Redis TTL 동치)`() {
         store.save(session("live", clock.now.plusSeconds(3600)))
         store.save(session("dead", clock.now.plusSeconds(10)))
-        clock.advanceSeconds(20) // dead 만 만료 시각 통과
+        clock.advanceSeconds(20)
         assertEquals(1, store.countActiveSessions())
     }
 
@@ -123,7 +122,7 @@ class InMemoryLocationStoreTest {
     fun `findActiveSessions 는 만료 세션을 제외한다(Redis SCAN 동치)`() {
         store.save(session("live", clock.now.plusSeconds(3600)))
         store.save(session("dead", clock.now.plusSeconds(10)))
-        clock.advanceSeconds(20) // dead 만 만료 시각 통과
+        clock.advanceSeconds(20)
         assertEquals(listOf("live"), store.findActiveSessions().map { it.token })
     }
 }

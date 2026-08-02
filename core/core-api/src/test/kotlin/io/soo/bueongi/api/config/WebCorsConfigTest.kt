@@ -39,7 +39,6 @@ class WebCorsConfigTest(
             header { string("Access-Control-Allow-Origin", allowedOrigin) }
             header { string("Access-Control-Allow-Methods", org.hamcrest.Matchers.containsString("GET")) }
             header { string("Access-Control-Allow-Methods", org.hamcrest.Matchers.containsString("POST")) }
-            // 위험 동사는 허용 목록에 없어야 한다(메서드 확장 회귀 가드).
             header { string("Access-Control-Allow-Methods", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("DELETE"))) }
             header { string("Access-Control-Allow-Methods", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("PUT"))) }
             header { string("Access-Control-Allow-Methods", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("PATCH"))) }
@@ -52,7 +51,6 @@ class WebCorsConfigTest(
             header("Origin", "http://evil.example")
             header("Access-Control-Request-Method", "GET")
         }.andExpect {
-            // 임의 origin 이 허용되면(allowedOrigins("*")) 200 + allow-origin 헤더가 돌아온다 → 그 회귀를 차단.
             status { isForbidden() }
             header { doesNotExist("Access-Control-Allow-Origin") }
         }

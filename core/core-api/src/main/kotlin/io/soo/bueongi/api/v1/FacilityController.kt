@@ -30,7 +30,7 @@ class FacilityController(
         @RequestParam(name = "radius_m", required = false) radiusM: Double?,
         @RequestParam(required = false) limit: Int?,
     ): NearestPoliceResponse {
-        val origin: GeoPoint = toValidatedGeoPoint(lat, lng) // 경계 검증(본문 DTO 의 @Valid 와 같은 역할, 400 INVALID_COORDINATE)
+        val origin: GeoPoint = toValidatedGeoPoint(lat, lng)
         return NearestPoliceResponse(nearestPoliceFinder.findNearest(origin, radiusM, limit))
     }
 }

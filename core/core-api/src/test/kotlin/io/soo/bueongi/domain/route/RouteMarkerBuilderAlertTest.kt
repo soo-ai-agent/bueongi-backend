@@ -36,7 +36,6 @@ class RouteMarkerBuilderAlertTest {
 
         val markers = build(FakeFacilitySource(), notifier)
 
-        // 인덱스 적재 실패라도 마커 생성은 계속(start/end 유지) — 알림은 부수효과.
         assertThat(markers.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
         assertThat(notifier.keys).containsExactly("facility-index-empty")
     }
@@ -44,7 +43,6 @@ class RouteMarkerBuilderAlertTest {
     @Test
     fun `정상 - 시설이 적재됐고 회랑에만 없으면(적재량 GT 0, 회랑 0) 알리지 않는다`() {
         val notifier: RecordingNotifier = RecordingNotifier()
-        // 시설은 적재됐지만(size>0) 경로 회랑(30m)에서 멀리 떨어져 실측 0 인 소스 — 정직한 0.
         val farAway = FakeFacilitySource(
             mapOf(FacilityType.CCTV to listOf(FacilityPoint(FacilityType.CCTV, 38.0, 128.0))),
         )
@@ -62,7 +60,6 @@ class RouteMarkerBuilderAlertTest {
 
         repeat(3) { build(source, notifier) }
 
-        // 실제 억제(창당 1회)는 SlackAlertNotifier 스로틀이 수행한다. 여기선 그 대상이 되는 단일 key 를 단언.
         assertThat(notifier.keys).allMatch { it == "facility-index-empty" }
         assertThat(notifier.keys.toSet()).containsExactly("facility-index-empty")
     }

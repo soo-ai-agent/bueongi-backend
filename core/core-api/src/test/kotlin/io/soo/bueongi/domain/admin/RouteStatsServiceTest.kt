@@ -63,26 +63,26 @@ class RouteStatsServiceTest {
 
         val top = RouteStatsService(store(busy)).summarize().topDestinations
 
-        assertThat(top).hasSize(10) // 상위 10건으로 절삭
+        assertThat(top).hasSize(10)
         assertThat(top.first().name).isEqualTo("강남역")
         assertThat(top.first().count).isEqualTo(3)
-        assertThat(top.map { it.name }).doesNotContain("  ") // 빈 이름 제외
-        assertThat(top.map { it.count }).isSortedAccordingTo(reverseOrder()) // 내림차순
+        assertThat(top.map { it.name }).doesNotContain("  ")
+        assertThat(top.map { it.count }).isSortedAccordingTo(reverseOrder())
     }
 
     @Test
     fun `hourlyTrend 는 24개 버킷이고 오래된→최신 순이며 창 밖 요청은 제외한다`() {
         val now = System.currentTimeMillis()
         val logs = listOf(
-            log(at = now), // 창 안(최근 시간 버킷)
-            log(at = now - 25 * HOUR_MS), // 25시간 전 → 24시간 창 밖
+            log(at = now),
+            log(at = now - 25 * HOUR_MS),
         )
 
         val trend = RouteStatsService(store(logs)).summarize().hourlyTrend
 
         assertThat(trend).hasSize(24)
-        assertThat(trend.map { it.hourStartMs }).isSorted() // 오래된→최신(오름차순)
-        assertThat(trend.sumOf { it.count }).isEqualTo(1) // 창 안 1건만, 25시간 전은 제외
+        assertThat(trend.map { it.hourStartMs }).isSorted()
+        assertThat(trend.sumOf { it.count }).isEqualTo(1)
     }
 
     @Test

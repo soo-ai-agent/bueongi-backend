@@ -28,7 +28,6 @@ class CdnResourceConfig(
 
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         val root: Path = Path.of(dataDir).toAbsolutePath().normalize()
-        // file: 리소스 위치는 디렉터리를 뜻하려면 반드시 '/' 로 끝나야 한다.
         val rootUri: String = root.toUri().toString()
         val location: String = if (rootUri.endsWith("/")) {
             rootUri

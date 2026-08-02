@@ -33,7 +33,7 @@ class ShareControllerCreateTest : ShareControllerTestSupport() {
     fun `expires_in_hours 범위 밖이면 400 VALIDATION_FAILED`() {
         mockMvc.post("/share/create") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"expires_in_hours\": 4}" // 1~3 초과
+            content = "{\"expires_in_hours\": 4}"
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }

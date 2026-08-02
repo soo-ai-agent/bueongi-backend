@@ -44,7 +44,7 @@ class AdStatsServiceTest {
         val events: List<AdEvent> = listOf(
             event(at = now),
             event(at = now),
-            event(at = now - 40 * DAY_MS), // 창엔 있으나 오늘은 아님
+            event(at = now - 40 * DAY_MS),
         )
 
         val summary: AdStatsSummary = AdStatsService(store(events)).summarize()
@@ -83,14 +83,14 @@ class AdStatsServiceTest {
         val now: Long = System.currentTimeMillis()
         val events: List<AdEvent> = listOf(
             event(at = now),
-            event(at = now - 25 * HOUR_MS), // 24시간 창 밖
+            event(at = now - 25 * HOUR_MS),
         )
 
         val trend: List<HourlyBucket> = AdStatsService(store(events)).summarize().hourlyTrend
 
         assertThat(trend).hasSize(24)
         assertThat(trend.map { it.hourStartMs }).isSorted()
-        assertThat(trend.sumOf { it.count }).isEqualTo(1) // 창 안 1건만
+        assertThat(trend.sumOf { it.count }).isEqualTo(1)
     }
 
     @Test

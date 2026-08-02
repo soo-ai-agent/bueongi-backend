@@ -17,7 +17,6 @@ class InMemoryAdEventStore : AdEventStore {
     private val lock: Any = Any()
 
     override fun record(event: AdEvent) {
-        // 기록 실패가 실제 요청을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
         try {
             synchronized(lock) {
                 events.addFirst(event)
@@ -31,7 +30,7 @@ class InMemoryAdEventStore : AdEventStore {
     }
 
     override fun findRecent(limit: Int): List<AdEvent> {
-        val snapshot: List<AdEvent> = synchronized(lock) { events.toList() } // 이미 최신순(addFirst)
+        val snapshot: List<AdEvent> = synchronized(lock) { events.toList() }
         return snapshot.take(limit.coerceAtLeast(0))
     }
 }

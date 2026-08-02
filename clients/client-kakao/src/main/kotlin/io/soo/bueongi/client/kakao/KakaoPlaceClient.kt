@@ -27,7 +27,6 @@ class KakaoPlaceClient(
     val isEnabled: Boolean
         get() = apiKey.isNotEmpty()
 
-    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone()
         .baseUrl(KAKAO_BASE_URL)
         .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK ${this.apiKey}")

@@ -21,8 +21,6 @@ import org.junit.jupiter.api.Test
  */
 class PlaceCatalogTest {
 
-    // 안심앱은 국내(수도권 중심) 귀가 서비스 — 모든 시드는 대한민국 본토 bbox 안이어야 한다.
-    // 이 bbox 는 위경도 swap(swap 시 lat≈127 로 범위 초과)·도메인 이탈 오타를 함께 잡는다.
     private val koreaLat = 33.0..39.0
     private val koreaLng = 124.0..132.0
 

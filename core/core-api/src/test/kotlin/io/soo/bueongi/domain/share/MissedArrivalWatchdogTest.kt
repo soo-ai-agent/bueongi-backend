@@ -42,8 +42,8 @@ class MissedArrivalWatchdogTest {
 
     @Test
     fun `예정 초과했으나 위치가 계속 갱신 중이면(늦지만 이동 중) 의심하지 않는다`() {
-        val expected = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 60) // 예정 초과
-        val movingLate = session(expectedArrivalAt = expected, lastLocationAt = now.minusSeconds(10)) // 위치 최신
+        val expected = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 60)
+        val movingLate = session(expectedArrivalAt = expected, lastLocationAt = now.minusSeconds(10))
         assertThat(isMissedArrivalSuspect(movingLate, now)).isFalse()
     }
 
@@ -79,7 +79,6 @@ class MissedArrivalWatchdogTest {
         val (key, title, detail) = notifier.notified[0]
         assertThat(key).isEqualTo("missed-arrival:tok-ab…")
         assertThat(title).contains("미도착")
-        // 원문 토큰·좌표는 알림 본문에 싣지 않는다(프라이버시).
         assertThat(detail).doesNotContain(suspect.token)
         assertThat(detail).doesNotContain("37.5")
     }

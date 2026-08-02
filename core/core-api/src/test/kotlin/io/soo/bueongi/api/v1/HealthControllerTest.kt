@@ -74,7 +74,6 @@ class HealthControllerTest {
                     status { isOk() }
                     jsonPath("$.status") { value("UP") }
                     jsonPath("$.placeSource") { value("live") }
-                    // 시크릿 비노출: 응답 본문 어디에도 키 문자열이 없어야 한다.
                     content { string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(SECRET_KEY))) }
                 }
         }

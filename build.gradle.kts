@@ -32,9 +32,6 @@ subprojects {
         testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     }
 
-    // 부팅 모듈(core:core-api)만 bootJar/bootRun 을 켠다 — 라이브러리 모듈은 일반 jar.
-    // 루트에서 `./gradlew bootJar`/`./gradlew bootRun` 하면 비활성 태스크는 SKIPPED 되어
-    // 정확히 core-api 하나만 실행된다(기존 단일 모듈 시절의 명령이 그대로 동작).
     tasks.getByName("bootJar") { enabled = false }
     tasks.getByName("bootRun") { enabled = false }
     tasks.getByName("jar") { enabled = true }

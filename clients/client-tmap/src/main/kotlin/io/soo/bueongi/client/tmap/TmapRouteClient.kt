@@ -37,11 +37,8 @@ class TmapRouteClient(
     val isEnabled: Boolean
         get() = appKey.isNotEmpty()
 
-    // connect/read 타임아웃은 전역 설정(application.yml: spring.http.client.*)이 이 빌더에 적용된다.
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    // P0-2 쿼터 거버넌스: 동일 출발/도착/옵션/경유지 재요청은 TTL(10분) 동안 캐시를 재사용해
-    // Tmap 호출(일 쿼터·요금)을 줄인다. 실패(null)는 캐시하지 않는다.
     private val cache: TmapRouteCache = TmapRouteCache()
 
     /**
@@ -88,7 +85,6 @@ class TmapRouteClient(
         searchOption: String,
         passList: List<TmapCoord>?,
     ): TmapRoute? {
-        // 캐시 히트면 Tmap 호출 없이 재사용(동일 출발/도착 재요청 — P0-2 AC).
         cache.get(origin, dest, searchOption, passList)?.let { return it }
         return try {
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
@@ -167,7 +163,6 @@ object TmapGeoJson {
         for (feature in features) {
             val props: JsonNode? = feature.get("properties")
             if (props != null) {
-                // 총 거리/시간은 첫 유효값만 채택한다(첫 Point 의 totalDistance/totalTime).
                 val totalDistance: JsonNode? = props.get("totalDistance")
                 if (distanceM == 0.0 && totalDistance != null && totalDistance.isNumber) {
                     distanceM = totalDistance.asDouble()
@@ -182,8 +177,6 @@ object TmapGeoJson {
                 "LineString" -> {
                     val coords: JsonNode = geom.get("coordinates") ?: continue
                     for (coordNode in coords) parseLngLat(coordNode)?.let { path.add(it) }
-                    // Tmap 구조상 거리/시간은 Point 가 아니라 그 뒤 LineString 의 properties 에 있다.
-                    // 이 구간값을 직전 안내지점(Point) step 에 부여한다(= 그 지점→다음 지점 구간 거리/시간).
                     if (steps.isNotEmpty() && props != null) {
                         val segDist: Int = props.get("distance")?.takeIf { it.isNumber }?.asInt() ?: 0
                         val segTime: Int = props.get("time")?.takeIf { it.isNumber }?.asInt() ?: 0
@@ -203,7 +196,6 @@ object TmapGeoJson {
                             lng = point.lng,
                             description = props?.get("description")?.asText() ?: "",
                             turnType = props?.get("turnType")?.asInt() ?: 0,
-                            // 거리/시간은 뒤따르는 LineString 구간에서 채운다(Point 자체엔 없음).
                             distanceM = 0,
                             timeS = 0,
                             pointType = props?.get("pointType")?.asText() ?: "",

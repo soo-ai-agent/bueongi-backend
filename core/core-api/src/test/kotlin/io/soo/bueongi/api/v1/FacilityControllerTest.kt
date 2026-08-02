@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.get
  * HTTP 계약을 고정한다 — 위급 기능 폴백 API라 계약이 흔들리면 프론트 긴급 시트가 조용히 깨진다.
  */
 @WebMvcTest(FacilityController::class)
-// 보안 필터 비활성(슬라이스는 컨트롤러 계약만 검증 — 실 보안은 AdminAuthGateTest).
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class, NearestPoliceFinder::class, FacilityControllerTest.FakeSourceConfig::class)
 class FacilityControllerTest(
@@ -36,11 +35,8 @@ class FacilityControllerTest(
             FakeFacilitySource(
                 mapOf(
                     FacilityType.POLICE to listOf(
-                        // 강남역(37.4981, 127.0276) 기준: 멀리(약 1.5km) → 가까이(약 120m) 순서로 저장해
-                        // 응답이 거리순으로 재정렬되는지 검증한다.
                         FacilityPoint(FacilityType.POLICE, 37.5117, 127.0276, name = "먼 지구대", phone = "02-000-0001"),
                         FacilityPoint(FacilityType.POLICE, 37.4992, 127.0276, name = "가까운 파출소", phone = "02-000-0002"),
-                        // 반경(10km) 밖(약 45km) — 결과에서 제외되어야 한다.
                         FacilityPoint(FacilityType.POLICE, 37.9000, 127.0276, name = "반경 밖 파출소"),
                     ),
                 ),

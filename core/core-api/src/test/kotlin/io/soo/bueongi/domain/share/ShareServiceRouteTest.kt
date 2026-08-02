@@ -91,9 +91,7 @@ class ShareServiceRouteTest : ShareServiceTestSupport() {
         val s = service.create(null)
         service.updateLocation(s.token, s.ownerSecret, report(37.1, 127.1))
         service.saveRoute(s.token, s.ownerSecret, route())
-        // 경로 저장 후에도 위치 유지
         assertEquals(37.1, service.getLocation(s.token).lat)
-        // 위치 갱신 후에도 경로 유지
         service.updateLocation(s.token, s.ownerSecret, report(37.2, 127.2))
         assertEquals("집", service.getRoute(s.token).route!!.destination.name)
     }

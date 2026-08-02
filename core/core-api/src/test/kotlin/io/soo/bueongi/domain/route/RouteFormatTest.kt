@@ -20,7 +20,6 @@ class RouteFormatTest {
 
     @Test
     fun `haversine - 강남역에서 홍대입구역 직선거리는 약 11 2km`() {
-        // 시드 카탈로그 좌표 기준 알려진 근사값(허용 오차 ±500m).
         val meters = SpatialMath.haversineMeters(GeoPoint(37.4979, 127.0276), GeoPoint(37.5572, 126.9245))
         assertThat(meters).isCloseTo(11_230.0, within(500.0))
     }

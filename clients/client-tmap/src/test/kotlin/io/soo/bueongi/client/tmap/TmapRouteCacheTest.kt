@@ -36,10 +36,8 @@ class TmapRouteCacheTest {
     fun `좌표 소수 5자리 반올림 - GPS 미세 흔들림에도 히트`() {
         val cache: TmapRouteCache = TmapRouteCache(clock = { 0L })
         cache.put(origin, dest, "0", null, route)
-        // ~0.1m 차이(6번째 자리) → 같은 키.
         val jitter: TmapCoord = TmapCoord(37.500001, 127.000004)
         assertThat(cache.get(jitter, dest, "0", null)).isEqualTo(route)
-        // ~11m 차이(4번째 자리) → 다른 키(miss).
         val far: TmapCoord = TmapCoord(37.5001, 127.0)
         assertThat(cache.get(far, dest, "0", null)).isNull()
     }
@@ -58,7 +56,7 @@ class TmapRouteCacheTest {
         cache.put(origin, dest, "0", null, route)
         cache.put(origin, dest, "4", null, route)
         assertThat(cache.size()).isEqualTo(2)
-        cache.put(origin, dest, "10", null, route) // 상한 도달 → clear 후 저장
+        cache.put(origin, dest, "10", null, route)
         assertThat(cache.size()).isEqualTo(1)
         assertThat(cache.get(origin, dest, "10", null)).isEqualTo(route)
     }

@@ -65,8 +65,8 @@ class ApiStatusServiceTest {
 
         val summary: ApiStatusSummary = ApiStatusService(store(logs)).summarize()
 
-        assertThat(summary.providers.first { it.provider == "KAKAO" }.p95DurationMs).isEqualTo(190L) // ceil(0.95*20)=19번째
-        assertThat(summary.providers.first { it.provider == "TMAP" }.p95DurationMs).isEqualTo(0L) // 로그 0건
+        assertThat(summary.providers.first { it.provider == "KAKAO" }.p95DurationMs).isEqualTo(190L)
+        assertThat(summary.providers.first { it.provider == "TMAP" }.p95DurationMs).isEqualTo(0L)
     }
 
     @Test
@@ -81,10 +81,10 @@ class ApiStatusServiceTest {
 
         val kakao: ProviderStatus = summary.providers.first { it.provider == "KAKAO" }
         assertThat(kakao.hourlyCalls).hasSize(24)
-        assertThat(kakao.hourlyCalls.last().count).isEqualTo(2) // KAKAO 만
+        assertThat(kakao.hourlyCalls.last().count).isEqualTo(2)
         assertThat(kakao.hourlyCalls.dropLast(1).sumOf { it.count }).isEqualTo(0)
-        assertThat(summary.providers.first { it.provider == "TMAP" }.hourlyCalls.last().count).isEqualTo(1) // TMAP 만
-        assertThat(summary.hourlyTrend.last().count).isEqualTo(3) // 전체는 원천 합산
+        assertThat(summary.providers.first { it.provider == "TMAP" }.hourlyCalls.last().count).isEqualTo(1)
+        assertThat(summary.hourlyTrend.last().count).isEqualTo(3)
     }
 
     @Test
@@ -99,10 +99,8 @@ class ApiStatusServiceTest {
         assertThat(datagokr.todayCount).isEqualTo(10)
         val burn: Double = requireNotNull(datagokr.quotaBurnPerHour)
         assertThat(datagokr.quotaProjectedTodayTotal).isEqualTo((burn * 24).roundToInt())
-        // 하루 경과율 ≤ 100% 라 현재 속도의 24시간 외삽은 오늘 실적 이상이다.
         assertThat(datagokr.quotaProjectedTodayTotal).isGreaterThanOrEqualTo(10)
 
-        // 쿼터 없는 원천은 예측이 없다.
         val kakao: ProviderStatus = summary.providers.first { it.provider == "KAKAO" }
         assertThat(kakao.quotaBurnPerHour).isNull()
         assertThat(kakao.quotaProjectedTodayTotal).isNull()
@@ -146,7 +144,6 @@ class ApiStatusServiceTest {
 
         assertThat(trend).hasSize(24)
         assertThat(trend.map { it.count }).allMatch { it == 0 }
-        // 버킷 시작 시각이 오래된→최신 순으로 1시간(3_600_000ms)씩 증가한다.
         val starts = trend.map { it.hourStartMs }
         assertThat(starts).isSorted()
         assertThat(starts.last() - starts.first()).isEqualTo(23L * 3_600_000L)
@@ -161,7 +158,6 @@ class ApiStatusServiceTest {
 
         val trend: List<HourlyBucket> = ApiStatusService(store(logs)).summarize().hourlyTrend
 
-        // 현재 시각 정각 버킷(마지막)에 2건(원천 합산), 나머지 23버킷은 0.
         assertThat(trend.last().count).isEqualTo(2)
         assertThat(trend.dropLast(1).sumOf { it.count }).isEqualTo(0)
     }
