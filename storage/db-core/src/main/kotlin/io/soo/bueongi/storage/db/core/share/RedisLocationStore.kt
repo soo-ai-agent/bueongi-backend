@@ -80,7 +80,10 @@ class RedisLocationStore(
 
     override fun findByToken(token: String): ShareSession? = onRedis("findByToken") {
         val shareHash = redis.opsForHash<String, String>().entries(shareKey(token))
-        if (shareHash.isEmpty()) return@onRedis null // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
+        // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
+        if (shareHash.isEmpty()) {
+            return@onRedis null
+        }
         val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
         val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
         val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.

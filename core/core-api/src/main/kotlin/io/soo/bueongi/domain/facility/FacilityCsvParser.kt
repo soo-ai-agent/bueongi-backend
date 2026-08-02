@@ -41,7 +41,11 @@ class FacilityCsvParser {
         val latIdx: Int? = firstIndexOf(headerIndex, spec.latHeaders)
         val lngIdx: Int? = firstIndexOf(headerIndex, spec.lngHeaders)
         val useWgs84: Boolean = latIdx != null && lngIdx != null
-        val effectiveCoordSystem: FacilityCoordSystem = if (useWgs84) FacilityCoordSystem.WGS84 else spec.coordSystem
+        val effectiveCoordSystem: FacilityCoordSystem = if (useWgs84) {
+            FacilityCoordSystem.WGS84
+        } else {
+            spec.coordSystem
+        }
 
         val xIdx: Int? = firstIndexOf(headerIndex, spec.xHeaders)
         val yIdx: Int? = firstIndexOf(headerIndex, spec.yHeaders)
