@@ -11,9 +11,9 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 /**
- * 관리자 페이지용 "외부 API 상태 요약·쿼터" 집계 — 이미 저장된 접속 내역([ApiCallLogStore])만 읽어
- * 원천(provider)별로 성공률·평균/95분위 소요시간·최근 성공/실패 시각·오늘 호출 수(쿼터)·시간별 호출빈도·
- * 쿼터 소진 예측을 계산한다(새 저장소 없음).
+ * 관리자 페이지용 "외부 API 접속 내역" 도메인 — 저장된 계측([ApiCallLogStore])을 소유해 목록 조회([listRecentCalls])와
+ * 상태 요약([summarize])을 함께 제공한다. 요약은 원천(provider)별로 성공률·평균/95분위 소요시간·
+ * 최근 성공/실패 시각·오늘 호출 수(쿼터)·시간별 호출빈도·쿼터 소진 예측을 계산한다(새 저장소 없음).
  *
  * 원천은 4종([TRACKED_PROVIDERS]) 고정 노출한다 — 로그가 0건인 원천도 total=0 으로 항상 나온다.
  * 쿼터는 data.go.kr 일 1000건 제한만 실재하므로 DATAGOKR 에만 [quotaLimit] 을 둔다.
@@ -25,6 +25,14 @@ import kotlin.math.roundToLong
 class ApiStatusService(
     private val apiCallLogStore: ApiCallLogStore,
 ) {
+
+    /**
+     * 외부 API 접속 내역 목록(최근순) — 관리자 화면의 원본 로그 뷰.
+     * 컨트롤러가 저장소를 직접 주입받지 않도록 접속 내역을 소유한 이 도메인이 조회를 중계한다.
+     * [provider] 는 화면 필터(자유 문자열)이며 null 이면 전체다.
+     */
+    fun listRecentCalls(provider: String?, limit: Int): List<ApiCallLog> =
+        apiCallLogStore.findRecent(provider = provider, limit = limit)
 
     fun summarize(): ApiStatusSummary {
         val now: Long = System.currentTimeMillis()

@@ -74,6 +74,13 @@ class ShareService(
             .sortedWith(ACTIVE_SHARE_ORDER)
     }
 
+    /**
+     * 활성(상한 미만료) 공유 세션 수(관리자 전용). 컨트롤러가 storage 계층([LocationStore])을 직접 주입받지 않도록
+     * 도메인이 개수만 중계한다([storeBackendLabel] 과 같은 이유 — Controller 의존은 domain 까지).
+     * 세션 복원 없이 세기만 하므로 [listActiveSessions] 보다 가볍다(현황 배지 전용).
+     */
+    fun countActiveSessions(): Int = store.countActiveSessions()
+
     /** 활성 세션 1건 → 관리자 뷰. lat/lng/updatedAtMs 는 위치 미보고 시 null, TTL 은 expiresAt 에서 파생(추가 왕복 없음). */
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
         val location: StoredLocation? = session.location
