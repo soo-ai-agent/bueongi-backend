@@ -6,7 +6,6 @@ import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 
 /**
  * 관리자 페이지용 "광고 노출" 집계 — 이미 저장된 광고 노출 기록([AdEventStore])만 읽어 총 노출 수·
@@ -49,22 +48,11 @@ class AdStatsService(
     }
 
     /**
-     * 최근 24시간을 1시간 단위로 버킷팅한 노출 수(오래된→최신, Asia/Seoul 정각 경계).
-     * [RequestMetricsService.hourlyCalls]·[RouteStatsService] 와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
-     * 현재 시각을 Seoul 기준 정각으로 내림한 버킷을 마지막으로, 그 앞 23개를 채운다 — 노출이 0건인 시간도 노출한다.
+     * 최근 24시간 시간대별 광고 노출 수 — 버킷 경계는 [HourlyBuckets] 가 단일 정의한다(노출 0건인 시간도 노출).
+     * 다른 관리자 지표와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
      */
-    private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> {
-        val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
-            .atZone(SEOUL)
-            .truncatedTo(ChronoUnit.HOURS)
-        return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
-            val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs: Long = bucketStart.toInstant().toEpochMilli()
-            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count: Int = events.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
-            HourlyBucket(hourStartMs = startMs, count = count)
-        }
-    }
+    private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> =
+        HourlyBuckets.countOf(events.map { it.atEpochMs })
 
     private fun todayStartMs(nowMs: Long): Long {
         val today = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
@@ -74,9 +62,6 @@ class AdStatsService(
     companion object {
         /** 항상 노출하는 광고 지면 2종. 노출이 없어도 count=0 으로 나온다(요청 DTO 의 허용값과 같은 집합). */
         val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")
-
-        /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위) — [RouteStatsService]·[RequestMetricsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT: Int = 24
 
         private val SEOUL = ZoneId.of("Asia/Seoul")
     }

@@ -7,7 +7,6 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -20,8 +19,8 @@ import kotlin.math.roundToLong
  * 계측만 하고 화면에는 싣지 않는 원천(SAFETYDATA)은 여기 없다(응답 계약 유지).
  * 쿼터는 data.go.kr 일 1000건 제한만 실재하므로 DATAGOKR 에만 [quotaLimit] 을 둔다.
  *
- * [hourlyTrend] 는 원천 무관 전체 호출량을 최근 24시간 1시간 단위로 버킷팅한다([RouteStatsService] 와 동일 방식·
- * 동일 [HourlyBucket] 재사용) — 관리자가 "외부 API 호출 횟수"를 시간축으로 본다.
+ * [hourlyTrend] 는 원천 무관 전체 호출량을 최근 24시간 1시간 단위로 버킷팅한다
+ * (경계는 [HourlyBuckets] 단일 정의) — 관리자가 "외부 API 호출 횟수"를 시간축으로 본다.
  */
 @Service
 class ApiStatusService(
@@ -55,23 +54,12 @@ class ApiStatusService(
     }
 
     /**
-     * 최근 24시간을 1시간 단위로 버킷팅한다(오래된→최신, Asia/Seoul 정각 경계) — 넘겨준 로그 집합의 호출량.
-     * 현재 시각을 Seoul 기준 정각으로 내림한 버킷을 마지막으로, 그 앞 23개를 채운다(호출이 0건인 시간도 노출).
-     * 전체([ApiStatusSummary.hourlyTrend])와 원천별([ProviderStatus.hourlyCalls])이 **같은 함수·같은 경계**를 써
-     * 프론트가 같은 축으로 겹쳐 그릴 수 있다. [RouteStatsService.hourlyTrend] 와도 같은 [HourlyBucket] 이다.
+     * 넘겨준 로그 집합의 최근 24시간 시간별 호출량 — 버킷 경계는 [HourlyBuckets] 가 단일 정의한다.
+     * 전체([ApiStatusSummary.hourlyTrend])와 원천별([ProviderStatus.hourlyCalls])이 **같은 경계**를 써
+     * 프론트가 같은 축으로 겹쳐 그릴 수 있다.
      */
-    private fun hourlyBuckets(logs: List<ApiCallLog>): List<HourlyBucket> {
-        val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
-            .atZone(SEOUL)
-            .truncatedTo(ChronoUnit.HOURS)
-        return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
-            val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs: Long = bucketStart.toInstant().toEpochMilli()
-            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count: Int = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
-            HourlyBucket(hourStartMs = startMs, count = count)
-        }
-    }
+    private fun hourlyBuckets(logs: List<ApiCallLog>): List<HourlyBucket> =
+        HourlyBuckets.countOf(logs.map { it.atEpochMs })
 
     private fun aggregate(provider: ApiProvider, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
         val total: Int = logs.size
@@ -158,9 +146,6 @@ class ApiStatusService(
 
         /** 오늘 호출 수가 일일 쿼터 상한의 이 비율 이상이면 경고(quotaWarning). */
         const val QUOTA_WARNING_RATIO: Double = 0.8
-
-        /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위) — [RouteStatsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT: Int = 24
 
         /** 쿼터 소진율 계산용 1시간(ms). */
         const val HOUR_MS: Long = 3_600_000L

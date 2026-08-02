@@ -5,9 +5,6 @@ import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
-import java.time.Instant
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 
 /**
  * 관리자 페이지용 "추천 통계" 집계 — 이미 저장된 추천 요청 기록([RouteStatsStore])만 읽어
@@ -57,22 +54,9 @@ class RouteStatsService(
             .take(TOP_DESTINATIONS_LIMIT)
             .map { DestinationCount(name = it.key, count = it.value) }
 
-    /**
-     * 최근 24시간을 1시간 단위로 버킷팅한다(오래된→최신, Asia/Seoul 정각 경계).
-     * 현재 시각을 Seoul 기준 정각으로 내림한 버킷을 마지막으로, 그 앞 23개를 채운다 — 요청이 0건인 시간도 노출한다.
-     */
-    private fun hourlyTrend(logs: List<RouteRecommendationLog>): List<HourlyBucket> {
-        val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
-            .atZone(SEOUL)
-            .truncatedTo(ChronoUnit.HOURS)
-        return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
-            val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs: Long = bucketStart.toInstant().toEpochMilli()
-            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            val count: Int = logs.count { it.atEpochMs >= startMs && it.atEpochMs < endMs }
-            HourlyBucket(hourStartMs = startMs, count = count)
-        }
-    }
+    /** 최근 24시간 시간대별 추천 요청 수 — 버킷 경계는 [HourlyBuckets] 가 단일 정의한다(요청 0건인 시간도 노출). */
+    private fun hourlyTrend(logs: List<RouteRecommendationLog>): List<HourlyBucket> =
+        HourlyBuckets.countOf(logs.map { it.atEpochMs })
 
     companion object {
         /** 항상 노출하는 추천 엔드포인트 2종. 요청이 없어도 count=0 으로 나온다. */
@@ -80,11 +64,6 @@ class RouteStatsService(
 
         /** 상위 목적지 최대 노출 건수. */
         const val TOP_DESTINATIONS_LIMIT: Int = 10
-
-        /** 시간대 트렌드 버킷 수(최근 24시간, 1시간 단위). */
-        const val HOURLY_BUCKET_COUNT: Int = 24
-
-        private val SEOUL = ZoneId.of("Asia/Seoul")
     }
 }
 
@@ -104,12 +83,6 @@ data class PreferenceCount(
 /** 목적지별 추천 요청 수 1건(상위 노출용). */
 data class DestinationCount(
     val name: String,
-    val count: Int,
-)
-
-/** 시간대 트렌드 버킷 1건. [hourStartMs] 는 해당 1시간 버킷의 시작(epoch ms, Asia/Seoul 정각). */
-data class HourlyBucket(
-    val hourStartMs: Long,
     val count: Int,
 )
 

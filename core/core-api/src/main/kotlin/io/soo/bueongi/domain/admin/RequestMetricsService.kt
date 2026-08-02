@@ -6,7 +6,6 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import kotlin.math.roundToLong
 
 /**
@@ -132,35 +131,21 @@ class RequestMetricsService(
         metrics.mapNotNull { it.clientId }.distinct().size
 
     /**
-     * 최근 24시간을 1시간 단위로 버킷팅한 호출수(오래된→최신, Asia/Seoul 정각 경계).
-     * [ApiStatusService.hourlyTrend]·[RouteStatsService] 와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
+     * 최근 24시간 시간대별 수신 호출수 — 버킷 경계는 [HourlyBuckets] 가 단일 정의한다.
+     * 다른 관리자 지표와 같은 경계·같은 [HourlyBucket] 이라 프론트 막대 렌더를 공유한다.
      */
     private fun hourlyCalls(metrics: List<RequestMetric>): List<HourlyBucket> =
-        hourlyBuckets { startMs, endMs -> metrics.count { it.atEpochMs >= startMs && it.atEpochMs < endMs } }
+        HourlyBuckets.countOf(metrics.map { it.atEpochMs })
 
     /**
      * 최근 24시간 시간대별 **에러 건수**(2xx·3xx 가 아닌 status). [hourlyCalls] 와 같은 경계·같은 [HourlyBucket] 이라
      * 프론트가 호출량 막대 위에 에러를 겹쳐 그릴 수 있다(에러 0건 시간도 노출).
      */
-    private fun hourlyErrors(metrics: List<RequestMetric>): List<HourlyBucket> =
-        hourlyBuckets { startMs, endMs ->
-            metrics.count { it.atEpochMs >= startMs && it.atEpochMs < endMs && it.status !in SUCCESS_STATUS_RANGE }
-        }
-
-    /**
-     * 최근 24시간을 1시간 버킷 24개로 만들고(오래된→최신, Asia/Seoul 정각 경계) 각 버킷 값을 [countInBucket] 로 센다.
-     * 호출량·에러가 **정확히 같은 경계**를 쓰도록 버킷 골격을 단일화한다 — 경계 정의가 갈라지는 것을 원천 차단.
-     */
-    private fun hourlyBuckets(countInBucket: (startMs: Long, endMs: Long) -> Int): List<HourlyBucket> {
-        val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
-            .atZone(SEOUL)
-            .truncatedTo(ChronoUnit.HOURS)
-        return (HOURLY_BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
-            val bucketStart = currentHour.minusHours(hoursAgo.toLong())
-            val startMs: Long = bucketStart.toInstant().toEpochMilli()
-            val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
-            HourlyBucket(hourStartMs = startMs, count = countInBucket(startMs, endMs))
-        }
+    private fun hourlyErrors(metrics: List<RequestMetric>): List<HourlyBucket> {
+        val errorTimestampsMs: List<Long> = metrics
+            .filter { it.status !in SUCCESS_STATUS_RANGE }
+            .map { it.atEpochMs }
+        return HourlyBuckets.countOf(errorTimestampsMs)
     }
 
     /**
@@ -198,9 +183,6 @@ class RequestMetricsService(
     companion object {
         /** 성공으로 보는 status 범위(2xx·3xx). */
         val SUCCESS_STATUS_RANGE: IntRange = 200..399
-
-        /** 시간대 추이 버킷 수(최근 24시간, 1시간 단위) — [ApiStatusService]·[RouteStatsService] 와 동일. */
-        const val HOURLY_BUCKET_COUNT: Int = 24
 
         /** 일자별 활성 사용자 노출 일수(최근 7일). */
         const val DAILY_ACTIVE_DAYS: Int = 7
