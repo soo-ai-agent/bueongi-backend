@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.adevent
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory
  */
 class InMemoryAdEventStore : AdEventStore {
 
-    private val logger = LoggerFactory.getLogger(InMemoryAdEventStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(InMemoryAdEventStore::class.java)
     private val events: ArrayDeque<AdEvent> = ArrayDeque<AdEvent>()
     private val lock: Any = Any()
 

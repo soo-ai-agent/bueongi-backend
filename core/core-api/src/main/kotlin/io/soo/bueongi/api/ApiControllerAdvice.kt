@@ -14,6 +14,7 @@ import io.soo.bueongi.support.error.UnknownFacilityTypeException
 import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -41,7 +42,7 @@ class ApiControllerAdvice(
     private val alertNotifier: AlertNotifier? = null,
 ) {
 
-    private val log = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
+    private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     /** `@Valid` 본문 검증 실패 → 400 + 필드별 `errors`(중첩 필드는 `origin.lat` 형태). */
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -322,7 +323,7 @@ class ApiControllerAdvice(
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
     fun handleMethodNotAllowed(ex: HttpRequestMethodNotSupportedException): ResponseEntity<ProblemDetail> {
-        val body = ProblemDetail.forStatusAndDetail(
+        val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.METHOD_NOT_ALLOWED,
             "지원하지 않는 요청 메서드입니다.",
         ).apply {
@@ -378,7 +379,7 @@ class ApiControllerAdvice(
             title = "위치 공유 저장소(Redis) 접근 실패",
             detail = "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
         )
-        val body = ProblemDetail.forStatusAndDetail(
+        val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.SERVICE_UNAVAILABLE,
             "일시적으로 위치 공유 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
         ).apply {

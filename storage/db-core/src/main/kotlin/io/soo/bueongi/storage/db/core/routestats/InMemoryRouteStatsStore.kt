@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.routestats
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
  */
 class InMemoryRouteStatsStore : RouteStatsStore {
 
-    private val logger = LoggerFactory.getLogger(InMemoryRouteStatsStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(InMemoryRouteStatsStore::class.java)
     private val logs: ArrayDeque<RouteRecommendationLog> = ArrayDeque<RouteRecommendationLog>()
     private val lock: Any = Any()
 

@@ -30,7 +30,7 @@ class ShareService(
     @Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
     private val random: SecureRandom = SecureRandom()
-    private val tokenEncoder = Base64.getUrlEncoder().withoutPadding()
+    private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
     /**
      * 공유 생성 → token·share_url·상한 만료 반환. expiresInHours 미지정이면 [DEFAULT_EXPIRES_HOURS].
@@ -40,9 +40,9 @@ class ShareService(
         val hours: Int = expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token: String = newToken()
         val ownerSecret: String = newToken() // 읽기 토큰과 동일 엔트로피(128-bit)의 별도 쓰기 비밀.
-        val now = clock.instant()
-        val expiresAt = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
-        val expectedArrivalAt = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
+        val now: Instant = clock.instant()
+        val expiresAt: Instant = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
+        val expectedArrivalAt: Instant? = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
         store.save(
             ShareSession(
                 token = token,
@@ -68,7 +68,7 @@ class ShareService(
      * 동률은 token 오름차순 — 최근 움직인 공유가 위로 오되 위치 미보고 세션은 아래로 모은다.
      */
     fun listActiveSessions(): List<ActiveShareView> {
-        val now = clock.instant()
+        val now: Instant = clock.instant()
         return store.findActiveSessions()
             .map { session -> toActiveShareView(session, now) }
             .sortedWith(ACTIVE_SHARE_ORDER)
@@ -106,7 +106,7 @@ class ShareService(
     fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret) // 쓰기 비밀 검증 — 공유 URL만 아는 사람의 위치 조작 차단.
-        val now = clock.instant()
+        val now: Instant = clock.instant()
         val location: StoredLocation = StoredLocation(
             lat = report.lat,
             lng = report.lng,
@@ -125,7 +125,7 @@ class ShareService(
     fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
-        val now = clock.instant()
+        val now: Instant = clock.instant()
         store.save(session.withRoute(route))
         return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
     }

@@ -6,6 +6,7 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -124,7 +125,7 @@ class ApiStatusService(
     }
 
     private fun todayStartMs(nowMs: Long): Long {
-        val today = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
+        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
         return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
     }
 
@@ -153,7 +154,7 @@ class ApiStatusService(
         /** 하루 시간 수 — 쿼터 마감 예상 총량 = 시간당 소진율 × 이 값. */
         const val HOURS_PER_DAY: Int = 24
 
-        private val SEOUL = ZoneId.of("Asia/Seoul")
+        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }
 

@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.requestmetric
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
  */
 class InMemoryRequestMetricStore : RequestMetricStore {
 
-    private val logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
     private val metrics: ArrayDeque<RequestMetric> = ArrayDeque<RequestMetric>()
     private val lock: Any = Any()
 

@@ -36,7 +36,7 @@ class KakaoPlaceClient(
     /** 키워드 검색. 경계 검증(이름/주소/좌표 유효성)을 통과한 장소만 반환한다. */
     fun search(keyword: String): List<KakaoPlace> {
         check(isEnabled) { "Kakao REST API key 미설정 — isEnabled 확인 후 호출해야 한다." }
-        val response = restClient.get()
+        val response: KakaoKeywordResponse? = restClient.get()
             .uri { builder ->
                 builder.path(KEYWORD_SEARCH_PATH)
                     .queryParam("query", keyword)
@@ -90,12 +90,12 @@ data class KakaoPlaceDocument(
      * 무의미한 경로/시설을 만든다. 외부 데이터 경계에서 "파싱 실패 제외"와 같은 정책으로 비유효 좌표도 제외한다.
      */
     fun toKakaoPlace(): KakaoPlace? {
-        val name = placeName?.takeIf { it.isNotBlank() } ?: return null
-        val address = roadAddressName?.takeIf { it.isNotBlank() }
+        val name: String = placeName?.takeIf { it.isNotBlank() } ?: return null
+        val address: String = roadAddressName?.takeIf { it.isNotBlank() }
             ?: addressName?.takeIf { it.isNotBlank() }
             ?: return null
-        val latValue = lat?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
-        val lngValue = lng?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
+        val latValue: Double = lat?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
+        val lngValue: Double = lng?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
         return KakaoPlace(name = name, address = address, lat = latValue, lng = lngValue)
     }
 }

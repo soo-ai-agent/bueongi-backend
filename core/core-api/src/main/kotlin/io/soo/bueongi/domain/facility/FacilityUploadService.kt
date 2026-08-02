@@ -5,6 +5,7 @@ import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
 import io.soo.bueongi.support.error.EmptyFacilityUploadException
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -22,7 +23,7 @@ class FacilityUploadService(
     /** 관리자 상태 조회용 갱신 기록(없으면 null 무해) — 업로드를 replaced 이벤트로 남긴다. 순수 부수효과. */
     private val refreshStatusStore: FacilityRefreshStatusStore? = null,
 ) {
-    private val log = LoggerFactory.getLogger(FacilityUploadService::class.java)
+    private val log: Logger = LoggerFactory.getLogger(FacilityUploadService::class.java)
 
     fun upload(type: FacilityType, bytes: ByteArray): FacilityUploadResult {
         val spec: FacilityCsvSpec = FacilityCsvSpec.forType(type)

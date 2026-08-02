@@ -5,6 +5,7 @@ import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -55,7 +56,7 @@ class AdStatsService(
         HourlyBuckets.countOf(events.map { it.atEpochMs })
 
     private fun todayStartMs(nowMs: Long): Long {
-        val today = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
+        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
         return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
     }
 
@@ -63,7 +64,7 @@ class AdStatsService(
         /** 항상 노출하는 광고 지면 2종. 노출이 없어도 count=0 으로 나온다(요청 DTO 의 허용값과 같은 집합). */
         val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")
 
-        private val SEOUL = ZoneId.of("Asia/Seoul")
+        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }
 

@@ -15,6 +15,7 @@ import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.support.monitoring.AlertNotifier
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -47,7 +48,7 @@ class FacilityRefreshService(
     /** 관리자 상태 조회용 마지막 갱신 결과 홀더(없으면 null 무해) — 순수 부수효과, 반환/로그 흐름 불변. */
     private val refreshStatusStore: FacilityRefreshStatusStore? = null,
 ) {
-    private val log = LoggerFactory.getLogger(FacilityRefreshService::class.java)
+    private val log: Logger = LoggerFactory.getLogger(FacilityRefreshService::class.java)
 
     /** 어느 원천이든 키가 있어 라이브 갱신이 동작 가능한지. false 면 호출측이 갱신 자체를 건너뛴다. */
     val isEnabled: Boolean

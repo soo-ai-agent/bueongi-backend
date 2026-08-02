@@ -1,6 +1,7 @@
 package io.soo.bueongi.client.safemap
 
 import com.fasterxml.jackson.databind.JsonNode
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -26,7 +27,7 @@ class SafetydataStreetlightClient(
     // 기본은 실 호스트. 스테이징/로컬 목 게이트를 가리키게 오버라이드할 수 있다(bueongi.safetydata.base-url).
     @Value("\${bueongi.safetydata.base-url:$DEFAULT_BASE_URL}") baseUrl: String = DEFAULT_BASE_URL,
 ) {
-    private val log = LoggerFactory.getLogger(SafetydataStreetlightClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(SafetydataStreetlightClient::class.java)
     private val serviceKey: String = serviceKey.trim()
     private val endpoint: String = "${baseUrl.trimEnd('/')}$PATH"
 
@@ -49,7 +50,7 @@ class SafetydataStreetlightClient(
         var totalCount: Long? = null
 
         while (pageNo <= MAX_PAGES) {
-            val body = try {
+            val body: JsonNode? = try {
                 restClient.get()
                     .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=json"))
                     .retrieve()
@@ -64,7 +65,7 @@ class SafetydataStreetlightClient(
                 return null
             }
             // resultCode: 0/00 정상(숫자·문자 모두 수용), 그 외는 중단. 필드 위치는 envelope 편차에 대비해 재귀 탐색.
-            val code = body.findValue("resultCode")?.asText()?.trim()
+            val code: String? = body.findValue("resultCode")?.asText()?.trim()
             if (!code.isNullOrBlank() && code != "0" && code != "00") {
                 log.warn(
                     "safetydata resultCode={}({}) — 갱신 중단(기존 데이터 유지)",
@@ -74,7 +75,7 @@ class SafetydataStreetlightClient(
             }
 
             val rows: List<JsonNode> = findStreetlightRows(body)
-            val parsedTotalCount = body.findValue("totalCount")?.asLong()
+            val parsedTotalCount: Long? = body.findValue("totalCount")?.asLong()
             if (parsedTotalCount != null && parsedTotalCount >= 0) {
                 totalCount = parsedTotalCount
             }
@@ -102,7 +103,7 @@ class SafetydataStreetlightClient(
      */
     private fun findStreetlightRows(node: JsonNode): List<JsonNode> {
         if (node.isArray) {
-            val objects = node.filter { it.isObject }
+            val objects: List<JsonNode> = node.filter { it.isObject }
             if (objects.isNotEmpty() && objects.any { it.has("XMAP_CRTS") && it.has("YMAP_CRTS") }) {
                 return objects
             }

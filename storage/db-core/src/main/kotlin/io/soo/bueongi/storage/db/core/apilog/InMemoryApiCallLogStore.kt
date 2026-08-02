@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.apilog
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
  */
 class InMemoryApiCallLogStore : ApiCallLogStore {
 
-    private val logger = LoggerFactory.getLogger(InMemoryApiCallLogStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(InMemoryApiCallLogStore::class.java)
     private val logs: ArrayDeque<ApiCallLog> = ArrayDeque<ApiCallLog>()
     private val lock: Any = Any()
 

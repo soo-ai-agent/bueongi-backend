@@ -1,6 +1,7 @@
 package io.soo.bueongi.client.safemap
 
 import com.fasterxml.jackson.databind.JsonNode
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -26,7 +27,7 @@ class SafemapPoliceClient(
     @Value("\${bueongi.safemap.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
 ) {
-    private val log = LoggerFactory.getLogger(SafemapPoliceClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(SafemapPoliceClient::class.java)
     private val serviceKey: String = serviceKey.trim()
 
     /** 키가 설정돼 있으면 true. false 면 호출하지 말 것(상위가 라이브 갱신 자체를 건너뛴다). */
@@ -50,7 +51,7 @@ class SafemapPoliceClient(
         var totalCount: Long? = null
 
         while (pageNo <= MAX_PAGES) {
-            val body = try {
+            val body: JsonNode? = try {
                 restClient.get()
                     .uri(URI.create("$ENDPOINT?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=JSON"))
                     .retrieve()
@@ -65,7 +66,7 @@ class SafemapPoliceClient(
                 return null
             }
             // resultCode: 0/00 정상(숫자·문자 모두 수용), 그 외는 중단. 필드 위치는 envelope 편차에 대비해 재귀 탐색.
-            val code = body.findValue("resultCode")?.asText()?.trim()
+            val code: String? = body.findValue("resultCode")?.asText()?.trim()
             if (!code.isNullOrBlank() && code != "0" && code != "00") {
                 log.warn(
                     "safemap resultCode={}({}) — 갱신 중단(기존 데이터 유지)",
@@ -75,7 +76,7 @@ class SafemapPoliceClient(
             }
 
             val rows: List<JsonNode> = findFacilityRows(body)
-            val parsedTotalCount = body.findValue("totalCount")?.asLong()
+            val parsedTotalCount: Long? = body.findValue("totalCount")?.asLong()
             if (parsedTotalCount != null && parsedTotalCount >= 0) {
                 totalCount = parsedTotalCount
             }
@@ -99,7 +100,7 @@ class SafemapPoliceClient(
      */
     private fun findFacilityRows(node: JsonNode): List<JsonNode> {
         if (node.isArray) {
-            val objects = node.filter { it.isObject }
+            val objects: List<JsonNode> = node.filter { it.isObject }
             if (objects.isNotEmpty() && objects.any { it.has("fclty_nm") || (it.has("x") && it.has("y")) }) {
                 return objects
             }

@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.share
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
 import org.springframework.data.redis.core.ScanOptions
@@ -36,15 +37,15 @@ class RedisLocationStore(
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : LocationStore {
 
-    private val log = LoggerFactory.getLogger(RedisLocationStore::class.java)
+    private val log: Logger = LoggerFactory.getLogger(RedisLocationStore::class.java)
 
     override val backend: String = "redis"
 
     override fun save(session: ShareSession) {
         onRedis("save") {
-            val ttl = ttlFrom(session.expiresAt)
-            val shareKey = shareKey(session.token)
-            val shareFields = buildMap {
+            val ttl: Duration = ttlFrom(session.expiresAt)
+            val shareKey: String = shareKey(session.token)
+            val shareFields: Map<String, String> = buildMap {
                 put(FIELD_CREATED_AT, session.createdAt.toString())
                 put(FIELD_EXPIRES_AT, session.expiresAt.toString())
                 // 쓰기 비밀은 share 메타에만 보관한다 — 보호자 조회(보호자 조회 응답)엔 절대 싣지 않는다.
@@ -56,9 +57,9 @@ class RedisLocationStore(
             redis.expire(shareKey, ttl)
 
             session.location?.let { loc ->
-                val locKey = locationKey(session.token)
+                val locKey: String = locationKey(session.token)
                 // 잔여 거리/시간은 앱이 보고했을 때만 필드를 추가한다 — 없을 땐 HASH 에 넣지 않아 기존 {lat,lng,updated_at} 형태를 유지.
-                val fields = buildMap {
+                val fields: Map<String, String> = buildMap {
                     put(FIELD_LAT, loc.lat.toString())
                     put(FIELD_LNG, loc.lng.toString())
                     put(FIELD_UPDATED_AT, loc.updatedAt.toString())
@@ -71,7 +72,7 @@ class RedisLocationStore(
             }
 
             session.route?.let { route ->
-                val routeKey = routeKey(session.token)
+                val routeKey: String = routeKey(session.token)
                 // 경로 컨텍스트는 JSON 문자열 값 키로 저장 — 리스트(경로선·마커) 때문에 flat HASH 로 못 담는다. 동일 상한 TTL.
                 redis.opsForValue().set(routeKey, objectMapper.writeValueAsString(route), ttl)
             }
@@ -79,24 +80,24 @@ class RedisLocationStore(
     }
 
     override fun findByToken(token: String): ShareSession? = onRedis("findByToken") {
-        val shareHash = redis.opsForHash<String, String>().entries(shareKey(token))
+        val shareHash: Map<String, String> = redis.opsForHash<String, String>().entries(shareKey(token))
         // 키 없음/만료(Redis TTL 이 이미 삭제) → 미존재.
         if (shareHash.isEmpty()) {
             return@onRedis null
         }
-        val createdAt = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
-        val expiresAt = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
-        val ownerSecret = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.
+        val createdAt: Instant = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
+        val expiresAt: Instant = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
+        val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null // 비밀 없는 손상 데이터는 미존재 취급.
         // 예정 도착 시각(선택). 없으면(ETA 미제공·구세션) null. 손상값은 null 로 관용 처리(감시만 제외, 세션은 살린다).
-        val expectedArrivalAt = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
+        val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
 
-        val locHash = redis.opsForHash<String, String>().entries(locationKey(token))
-        val location = if (locHash.isEmpty()) {
+        val locHash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
+        val location: StoredLocation? = if (locHash.isEmpty()) {
             null
         } else {
-            val lat = locHash[FIELD_LAT]?.toDoubleOrNull()
-            val lng = locHash[FIELD_LNG]?.toDoubleOrNull()
-            val updatedAt = locHash[FIELD_UPDATED_AT]?.let(Instant::parse)
+            val lat: Double? = locHash[FIELD_LAT]?.toDoubleOrNull()
+            val lng: Double? = locHash[FIELD_LNG]?.toDoubleOrNull()
+            val updatedAt: Instant? = locHash[FIELD_UPDATED_AT]?.let(Instant::parse)
             if (lat != null && lng != null && updatedAt != null) {
                 StoredLocation(
                     lat = lat,
@@ -112,7 +113,7 @@ class RedisLocationStore(
         }
 
         // 경로 컨텍스트: JSON 값 키. 없으면(미저장/구세션) null. 손상 JSON 은 미존재 취급(경로만 없는 것으로, 위치는 살린다).
-        val route = redis.opsForValue().get(routeKey(token))?.let { json ->
+        val route: StoredRoute? = redis.opsForValue().get(routeKey(token))?.let { json ->
             try {
                 objectMapper.readValue<StoredRoute>(json)
             } catch (e: Exception) {
@@ -173,7 +174,7 @@ class RedisLocationStore(
         // findByToken 이 만료/손상 키를 null 로 걸러내므로(native TTL 과 lazy 정합) 활성 세션만 남는다.
         val sessions: MutableList<ShareSession> = mutableListOf<ShareSession>()
         forEachSessionKey { sessionKey ->
-            val token = sessionKey.removePrefix(SESSION_KEY_PREFIX)
+            val token: String = sessionKey.removePrefix(SESSION_KEY_PREFIX)
             findByToken(token)?.let { sessions.add(it) }
         }
         return sessions
@@ -206,7 +207,7 @@ class RedisLocationStore(
 
     /** 상한 만료까지 남은 TTL. 최소 1초 보장(만료 직전 0초/음수로 키가 즉시 삭제되는 경계 회피). */
     private fun ttlFrom(expiresAt: Instant): Duration {
-        val remaining = Duration.between(clock.instant(), expiresAt)
+        val remaining: Duration = Duration.between(clock.instant(), expiresAt)
         return if (remaining.isNegative || remaining.isZero) {
             Duration.ofSeconds(1)
         } else {

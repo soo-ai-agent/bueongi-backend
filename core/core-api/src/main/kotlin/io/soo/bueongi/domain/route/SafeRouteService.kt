@@ -5,7 +5,9 @@ import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.ApiProvider
+import io.soo.bueongi.domain.facility.SafeAnchor
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
+import io.soo.bueongi.domain.facility.SafetyBreakdown
 import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
@@ -93,7 +95,7 @@ class SafeRouteService(
 
         // 안심 경유지 우회 후보: 추천 경로 주변 시설 앵커 → 경유지 조합 → Tmap 경유 호출.
         val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
-        val anchors = detourPlanner.extractSafeAnchors(directPath)
+        val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
         val waypointCombos: List<List<GeoPoint>> = detourPlanner.pickDetourWaypoints(origin, destination, anchors)
         val detours: List<TmapRoute> = waypointCombos.mapNotNull { waypoints ->
             tmapClient.fetchRouteVia(
@@ -165,7 +167,7 @@ class SafeRouteService(
             .sortedByDescending { it.score.score }
             .mapIndexed { index, scoredRoute ->
                 val candidate: RouteCandidate = scoredRoute.candidate
-                val breakdown = scoredRoute.score.breakdown
+                val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
                 RouteOption(
                     id = "tmap-${candidate.searchOption}-$index",
                     name = TYPE_NAME.getValue(scoredRoute.type),
@@ -218,7 +220,7 @@ class SafeRouteService(
         if (scoredRoute.type == RouteType.FAST) {
             add(RouteTag("빠른길", RouteTagVariant.BLUE))
         }
-        val breakdown = scoredRoute.score.breakdown
+        val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
         if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) {
             add(RouteTag("CCTV 많음", RouteTagVariant.MINT))
         }

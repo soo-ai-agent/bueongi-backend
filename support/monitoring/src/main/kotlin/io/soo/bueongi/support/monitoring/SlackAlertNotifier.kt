@@ -1,10 +1,12 @@
 package io.soo.bueongi.support.monitoring
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.net.URI
@@ -49,8 +51,8 @@ class SlackAlertNotifier internal constructor(
         nowMs = System::currentTimeMillis,
     )
 
-    private val log = LoggerFactory.getLogger(SlackAlertNotifier::class.java)
-    private val restClient = restClientBuilder.clone().build()
+    private val log: Logger = LoggerFactory.getLogger(SlackAlertNotifier::class.java)
+    private val restClient: RestClient = restClientBuilder.clone().build()
     private val lastSentAtMs: ConcurrentHashMap<String, Long> = ConcurrentHashMap<String, Long>()
 
     /** 장애 이력 링버퍼 — 자기 자신을 락으로 삼아 동기화한다. 최신 [ALERT_HISTORY_CAP]건만 보관(오래된 것부터 폐기). */
@@ -98,7 +100,7 @@ class SlackAlertNotifier internal constructor(
             return false
         }
         return try {
-            val response = restClient.post()
+            val response: ResponseEntity<Void> = restClient.post()
                 .uri(URI.create(config.webhookUrl()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(objectMapper.writeValueAsString(mapOf("text" to TEST_MESSAGE)))

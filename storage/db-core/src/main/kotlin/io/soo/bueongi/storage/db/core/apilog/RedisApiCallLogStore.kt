@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.apilog
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 
@@ -18,7 +19,7 @@ class RedisApiCallLogStore(
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : ApiCallLogStore {
 
-    private val logger = LoggerFactory.getLogger(RedisApiCallLogStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(RedisApiCallLogStore::class.java)
 
     override fun record(log: ApiCallLog) {
         // 계측 실패가 서비스 호출을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
@@ -31,7 +32,7 @@ class RedisApiCallLogStore(
     }
 
     override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> {
-        val raw = try {
+        val raw: List<String> = try {
             redis.opsForList().range(KEY, 0, -1).orEmpty()
         } catch (e: Exception) {
             logger.warn("API 호출 로그 조회 실패: {}", e.message)

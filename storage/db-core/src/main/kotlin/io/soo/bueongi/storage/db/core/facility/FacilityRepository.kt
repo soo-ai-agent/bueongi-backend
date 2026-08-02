@@ -2,8 +2,10 @@ package io.soo.bueongi.storage.db.core.facility
 import io.soo.bueongi.core.enums.FacilityType
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.annotation.PostConstruct
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -28,7 +30,7 @@ class FacilityRepository(
     private val uploadStore: FacilityUploadStore,
     @Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
 ) : FacilitySpatialSource, FacilityLiveStore {
-    private val log = LoggerFactory.getLogger(FacilityRepository::class.java)
+    private val log: Logger = LoggerFactory.getLogger(FacilityRepository::class.java)
 
     @Volatile
     private var indexByType: Map<FacilityType, GridSpatialIndex> = emptyMap()
@@ -99,7 +101,7 @@ class FacilityRepository(
             // manifest.json 신선도(P0-3) — 생성 시점/버전을 점수·마커 표기에 노출한다. 실패해도 적재는 계속.
             _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
                 try {
-                    val manifestJson = objectMapper.readTree(file)
+                    val manifestJson: JsonNode = objectMapper.readTree(file)
                     FacilityFreshness(
                         generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
                         version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },

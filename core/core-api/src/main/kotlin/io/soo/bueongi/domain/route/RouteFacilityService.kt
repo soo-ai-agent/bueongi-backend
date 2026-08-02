@@ -1,5 +1,6 @@
 package io.soo.bueongi.domain.route
 
+import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.springframework.stereotype.Service
 
 /**
@@ -21,8 +22,8 @@ class RouteFacilityService(
 
     /** 출발→도착 직선 회랑의 실측 안심시설 POI + 집계 요약을 만든다. */
     fun alongRoute(query: RouteQuery): FacilitiesResponse {
-        val origin = query.origin
-        val destination = query.destination
+        val origin: GeoPoint = query.origin
+        val destination: GeoPoint = query.destination
 
         // 실측 마커(출발/도착 + 회랑 내 실 시설). 가로등(lamp)은 이 엔드포인트 요약 대상이 아니고
         // 프론트 /facilities 파서도 수용하지 않으므로 제외한다(가로등 마커 자체는 safe-compare 에서 노출).

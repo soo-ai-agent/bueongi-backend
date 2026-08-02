@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.facility
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -25,10 +26,10 @@ class FacilityUploadStore(
     objectMapper: ObjectMapper,
     @Value("\${bueongi.facility.upload-dir:./data/facility-uploads}") private val uploadDir: String,
 ) {
-    private val log = LoggerFactory.getLogger(FacilityUploadStore::class.java)
+    private val log: Logger = LoggerFactory.getLogger(FacilityUploadStore::class.java)
 
     // 업로드 파일은 null 필드를 생략해 컴팩트하게 쓴다(대용량 CCTV 대비). 주입 mapper 를 건드리지 않도록 독립 사본을 만든다.
-    private val writeMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    private val writeMapper: ObjectMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     /** [type] 업로드분을 `{uploadDir}/{cdnType}.json` 에 원자적으로 저장한다. */
     fun save(type: FacilityType, points: List<FacilityPoint>) {
@@ -39,7 +40,7 @@ class FacilityUploadStore(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
         )
-        val temp = File.createTempFile("${type.cdnType}-", ".json.tmp", dir)
+        val temp: File = File.createTempFile("${type.cdnType}-", ".json.tmp", dir)
         try {
             writeMapper.writeValue(temp, collection)
             Files.move(
@@ -61,7 +62,7 @@ class FacilityUploadStore(
             return null
         }
         return try {
-            val collection = writeMapper.readValue(file, FacilityCollectionDto::class.java)
+            val collection: FacilityCollectionDto = writeMapper.readValue(file, FacilityCollectionDto::class.java)
             collection.items.mapNotNull { it.toFacilityPoint(type) }
         } catch (e: Exception) {
             log.warn("시설 업로드 파일 읽기 실패(무시하고 CDN/CSV 폴백): {} ({})", file.path, e.message)

@@ -5,6 +5,7 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.support.error.InvalidKeywordException
 import io.soo.bueongi.support.monitoring.AlertNotifier
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -25,7 +26,7 @@ class PlaceSearchService(
     /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 검색 동작은 불변. */
     private val apiCallLogStore: ApiCallLogStore? = null,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     /**
      * 검색어로 장소를 찾는다. 빈/공백 검색어는 빈 목록(프론트가 '최근 검색'으로 폴백) — 추측 결과를 만들지 않는다.

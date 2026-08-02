@@ -5,6 +5,7 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.filter.OncePerRequestFilter
 
@@ -23,7 +24,7 @@ class RequestMetricsFilter(
     private val requestMetricStore: RequestMetricStore,
 ) : OncePerRequestFilter() {
 
-    private val log = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
+    private val log: Logger = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
 
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -39,7 +40,7 @@ class RequestMetricsFilter(
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        val path = request.requestURI
+        val path: String = request.requestURI
         return EXCLUDED_PREFIXES.any { prefix -> path == prefix || path.startsWith("$prefix/") }
     }
 

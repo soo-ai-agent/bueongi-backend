@@ -2,6 +2,7 @@ package io.soo.bueongi.domain.admin
 
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 /**
@@ -22,11 +23,11 @@ object HourlyBuckets {
      * 버킷 구간은 시작 포함·끝 제외(`start <= t < end`)라 경계 시각이 두 버킷에 겹쳐 세어지지 않는다.
      */
     fun countOf(timestampsMs: List<Long>): List<HourlyBucket> {
-        val currentHour = Instant.ofEpochMilli(System.currentTimeMillis())
+        val currentHour: ZonedDateTime = Instant.ofEpochMilli(System.currentTimeMillis())
             .atZone(SEOUL)
             .truncatedTo(ChronoUnit.HOURS)
         return (BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
-            val bucketStart = currentHour.minusHours(hoursAgo.toLong())
+            val bucketStart: ZonedDateTime = currentHour.minusHours(hoursAgo.toLong())
             val startMs: Long = bucketStart.toInstant().toEpochMilli()
             val endMs: Long = bucketStart.plusHours(1).toInstant().toEpochMilli()
             val count: Int = timestampsMs.count { it >= startMs && it < endMs }

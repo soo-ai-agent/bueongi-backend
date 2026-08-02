@@ -98,7 +98,7 @@ class FacilityCsvParser {
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
         val map: LinkedHashMap<String, Int> = LinkedHashMap<String, Int>()
         header.forEachIndexed { index, raw ->
-            val key = raw.trim()
+            val key: String = raw.trim()
             if (key.isNotEmpty() && !map.containsKey(key)) {
                 map[key] = index
             }

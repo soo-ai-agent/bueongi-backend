@@ -2,6 +2,7 @@ package io.soo.bueongi.client.datagokr
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -30,7 +31,7 @@ class DataGoKrFacilityClient(
     @Value("\${bueongi.datagokr.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
 ) {
-    private val log = LoggerFactory.getLogger(DataGoKrFacilityClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(DataGoKrFacilityClient::class.java)
     private val serviceKey: String = serviceKey.trim()
 
     /** 키가 설정돼 있으면 true. false 면 호출하지 말 것(상위가 라이브 갱신 자체를 건너뛴다). */
@@ -62,7 +63,7 @@ class DataGoKrFacilityClient(
         var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= MAX_PAGES && received < totalCount) {
-            val envelope = try {
+            val envelope: DataGoKrEnvelope? = try {
                 restClient.get()
                     .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&type=json"))
                     .retrieve()
@@ -106,7 +107,7 @@ class DataGoKrFacilityClient(
         items == null -> emptyList()
         items.isArray -> items.toList()
         items.isObject && items.has("item") -> {
-            val inner = items.get("item")
+            val inner: JsonNode = items.get("item")
             when {
                 inner.isArray -> inner.toList()
                 inner.isObject -> listOf(inner)

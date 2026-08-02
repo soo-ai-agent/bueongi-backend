@@ -1,5 +1,6 @@
 package io.soo.bueongi.api.auth
 
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -37,7 +38,7 @@ class JwtTokenVerifier(props: JwtProperties) {
         if (token.isBlank()) {
             throw InvalidTokenException("empty token")
         }
-        val claims = try {
+        val claims: Claims = try {
             Jwts.parser()
                 .verifyWith(key)
                 .build()
@@ -75,7 +76,7 @@ class JwtTokenVerifier(props: JwtProperties) {
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replace("\\s".toRegex(), "")
-            val decoded = Base64.getDecoder().decode(stripped)
+            val decoded: ByteArray = Base64.getDecoder().decode(stripped)
             val keySpec: X509EncodedKeySpec = X509EncodedKeySpec(decoded)
             return KeyFactory.getInstance("RSA").generatePublic(keySpec) as RSAPublicKey
         }

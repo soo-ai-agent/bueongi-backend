@@ -5,7 +5,9 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.math.roundToLong
 
 /**
@@ -153,9 +155,9 @@ class RequestMetricsService(
      * 각 버킷의 [DailyActive.dateEpochMs] 는 해당 날 자정(epoch ms), 요청 0건 날도 distinctClients=0 으로 노출한다.
      */
     private fun dailyActiveUsers(metrics: List<RequestMetric>): List<DailyActive> {
-        val today = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SEOUL).toLocalDate()
+        val today: LocalDate = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SEOUL).toLocalDate()
         return (DAILY_ACTIVE_DAYS - 1 downTo 0).map { daysAgo ->
-            val dayStart = today.minusDays(daysAgo.toLong()).atStartOfDay(SEOUL)
+            val dayStart: ZonedDateTime = today.minusDays(daysAgo.toLong()).atStartOfDay(SEOUL)
             val startMs: Long = dayStart.toInstant().toEpochMilli()
             val endMs: Long = dayStart.plusDays(1).toInstant().toEpochMilli()
             val ofDay: List<RequestMetric> = metrics.filter { it.atEpochMs >= startMs && it.atEpochMs < endMs }
@@ -164,7 +166,7 @@ class RequestMetricsService(
     }
 
     private fun todayStartMs(nowMs: Long): Long {
-        val today = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
+        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
         return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
     }
 
@@ -193,7 +195,7 @@ class RequestMetricsService(
         /** last30d 이동 창 길이(ms). */
         const val DAYS_30_MS: Long = 30L * 24 * 60 * 60 * 1000
 
-        private val SEOUL = ZoneId.of("Asia/Seoul")
+        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }
 

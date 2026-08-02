@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.routestats
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 
@@ -18,7 +19,7 @@ class RedisRouteStatsStore(
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : RouteStatsStore {
 
-    private val logger = LoggerFactory.getLogger(RedisRouteStatsStore::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(RedisRouteStatsStore::class.java)
 
     override fun record(log: RouteRecommendationLog) {
         // 집계 실패가 추천 응답을 깨면 안 된다 — 삼키고 경고만(계약: record 는 예외를 밖으로 던지지 않는다).
@@ -31,7 +32,7 @@ class RedisRouteStatsStore(
     }
 
     override fun findRecent(limit: Int): List<RouteRecommendationLog> {
-        val raw = try {
+        val raw: List<String> = try {
             redis.opsForList().range(KEY, 0, -1).orEmpty()
         } catch (e: Exception) {
             logger.warn("추천 통계 조회 실패: {}", e.message)

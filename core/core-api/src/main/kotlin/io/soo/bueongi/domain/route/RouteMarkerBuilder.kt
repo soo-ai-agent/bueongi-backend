@@ -2,6 +2,7 @@ package io.soo.bueongi.domain.route
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.domain.facility.SafetyScorer
+import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.support.monitoring.AlertNotifier
@@ -51,7 +52,8 @@ class RouteMarkerBuilder(
         // 회랑 내 실 시설(실좌표·메타 포함)만 담는다. 유형별 마커 수 상한으로 가로등처럼 밀집한 시설이 지도를
         // 가리지 않도록 방어한다(점수 계산은 SafetyScorer 가 전체 개수를 그대로 쓴다 — 여기 상한과 무관).
         for ((markerType, facilityType) in MARKER_TYPES) {
-            val facilities = repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
+            val facilities: List<FacilityPoint> =
+                repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
             for (facility in facilities) {
                 raw.add(
                     FacilityPoi(

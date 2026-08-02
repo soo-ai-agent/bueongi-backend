@@ -28,13 +28,13 @@ class JwtAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val header = request.getHeader("Authorization")
+        val header: String? = request.getHeader("Authorization")
         if (header.isNullOrBlank() || !header.startsWith("Bearer ")) {
             writeUnauthorized(response, "인증 토큰이 필요합니다.")
             return
         }
 
-        val verified = try {
+        val verified: JwtTokenVerifier.VerifiedToken = try {
             verifier.verify(header.removePrefix("Bearer ").trim())
         } catch (e: ExpiredTokenException) {
             writeUnauthorized(response, "인증 토큰이 만료되었습니다.")

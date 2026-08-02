@@ -26,7 +26,7 @@ class InMemoryLocationStore(
     }
 
     override fun findByToken(token: String): ShareSession? {
-        val session = sessions[token] ?: return null
+        val session: ShareSession = sessions[token] ?: return null
         if (session.isExpired(clock.instant())) {
             // 상한 만료 — lazy 제거 후 "없음"으로 응답(Redis TTL 과 동일 거동).
             // remove(key, value) 로 만료 판정 사이에 들어온 더 새 세션은 지우지 않는다(동시성 안전).
@@ -47,7 +47,7 @@ class InMemoryLocationStore(
     }
 
     override fun isWatched(token: String): Boolean {
-        val last = viewers[token] ?: return false
+        val last: Instant = viewers[token] ?: return false
         if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) {
             return true
         }
@@ -57,13 +57,13 @@ class InMemoryLocationStore(
 
     override fun countActiveSessions(): Int {
         // 만료 세션은 lazy 제거 전이라 map 에 남아 있을 수 있으므로 세지 않는다(Redis native TTL 카운트와 동치).
-        val now = clock.instant()
+        val now: Instant = clock.instant()
         return sessions.values.count { !it.isExpired(now) }
     }
 
     override fun findActiveSessions(): List<ShareSession> {
         // 카운트와 동일 기준 — 만료 세션은 제외해 열거한다(Redis SCAN+미존재 키 제외와 동치).
-        val now = clock.instant()
+        val now: Instant = clock.instant()
         return sessions.values.filter { !it.isExpired(now) }
     }
 }

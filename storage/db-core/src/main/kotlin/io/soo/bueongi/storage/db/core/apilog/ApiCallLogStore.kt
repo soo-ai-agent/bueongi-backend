@@ -65,7 +65,7 @@ inline fun <T> ApiCallLogStore?.measure(
         return block()
     }
     val startedAt: Long = System.currentTimeMillis()
-    val result = try {
+    val result: T = try {
         block()
     } catch (e: Exception) {
         record(

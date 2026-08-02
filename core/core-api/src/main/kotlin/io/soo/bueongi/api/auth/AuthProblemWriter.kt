@@ -20,7 +20,7 @@ object AuthProblemWriter {
         title: String,
         detail: String,
     ) {
-        val problem = ProblemDetail.forStatusAndDetail(status, detail).apply {
+        val problem: ProblemDetail = ProblemDetail.forStatusAndDetail(status, detail).apply {
             this.title = title
             setProperty("code", code)
         }

@@ -1,6 +1,7 @@
 package io.soo.bueongi.client.tmap
 
 import com.fasterxml.jackson.databind.JsonNode
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
@@ -30,7 +31,7 @@ class TmapRouteClient(
     @Value("\${bueongi.tmap.app-key:}") appKey: String,
     restClientBuilder: RestClient.Builder,
 ) {
-    private val log = LoggerFactory.getLogger(TmapRouteClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(TmapRouteClient::class.java)
     private val appKey: String = appKey.trim()
 
     val isEnabled: Boolean
@@ -91,7 +92,7 @@ class TmapRouteClient(
         cache.get(origin, dest, searchOption, passList)?.let { return it }
         return try {
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
-            val json = restClient.post()
+            val json: JsonNode? = restClient.post()
                 .uri(PEDESTRIAN_ENDPOINT)
                 .header("appKey", appKey)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -164,14 +165,14 @@ object TmapGeoJson {
         var distanceM: Double = 0.0
         var timeS: Int = 0
         for (feature in features) {
-            val props = feature.get("properties")
+            val props: JsonNode? = feature.get("properties")
             if (props != null) {
                 // 총 거리/시간은 첫 유효값만 채택한다(첫 Point 의 totalDistance/totalTime).
-                val totalDistance = props.get("totalDistance")
+                val totalDistance: JsonNode? = props.get("totalDistance")
                 if (distanceM == 0.0 && totalDistance != null && totalDistance.isNumber) {
                     distanceM = totalDistance.asDouble()
                 }
-                val totalTime = props.get("totalTime")
+                val totalTime: JsonNode? = props.get("totalTime")
                 if (timeS == 0 && totalTime != null && totalTime.isNumber) {
                     timeS = totalTime.asInt()
                 }
