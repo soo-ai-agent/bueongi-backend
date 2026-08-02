@@ -4,6 +4,7 @@ import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
+import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.domain.facility.SafetyScore
 import io.soo.bueongi.domain.facility.SafetyScorer
@@ -65,7 +66,7 @@ class SafeRouteService(
         // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
         // 경유(fetchRouteVia) 다건 호출은 개별 계측하지 않는다(요청당 다수라 로그 폭주 방지) — 대표 fetchRoutes 만 기록.
         val base: List<TmapRoute> = apiCallLogStore.measure(
-            provider = "TMAP",
+            provider = ApiProvider.TMAP,
             endpoint = "route",
             success = { it.isNotEmpty() },
             detail = {

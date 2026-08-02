@@ -1,5 +1,7 @@
 package io.soo.bueongi.storage.db.core.apilog
 
+import io.soo.bueongi.core.enums.ApiProvider
+
 /**
  * 외부 API 호출 1건의 계측 기록. 관리자 페이지의 "외부 API 접속 내역"에 그대로 노출된다 —
  * 어떤 원천([provider])의 어떤 종류 호출([endpoint])이 언제([atEpochMs]) 성공/실패했고([success]) 얼마나 걸렸는지([durationMs]).
@@ -8,7 +10,7 @@ package io.soo.bueongi.storage.db.core.apilog
 data class ApiCallLog(
     /** 호출 시작 시각(epoch ms). 최근순 정렬·표시용. */
     val atEpochMs: Long,
-    /** 원천 식별자: KAKAO | TMAP | DATAGOKR | SAFEMAP. */
+    /** 원천 식별자 — [ApiProvider] 의 이름 문자열(KAKAO|TMAP|DATAGOKR|SAFEMAP|SAFETYDATA). 저장 포맷이라 String 으로 둔다. */
     val provider: String,
     /** 호출 종류(원천 내 구분): 예 cctv/bell/safehouse/police/route/search. */
     val endpoint: String,
@@ -47,10 +49,13 @@ const val API_CALL_LOG_MAX_LIMIT: Int = 500
  * 성공 판정([success])·비고([detail])는 원천마다 의미가 달라(예: datagokr 는 null=실패, kakao 는 예외=실패)
  * 호출부가 명시한다. 예외가 나면 실패로 기록하고 **그대로 다시 던진다**(기존 폴백/예외처리 흐름 불변).
  *
+ * [provider] 는 닫힌 어휘([ApiProvider])로 받고 저장 직전에 [ApiProvider.name] 문자열로 옮긴다 —
+ * 원천 이름 오타를 컴파일 시점에 막으면서 저장 포맷(기존 문자열)은 그대로 유지하는 경계다.
+ *
  * store 가 null(테스트 슬라이스 등 계측 저장소 미주입)이면 [block] 만 실행한다 — 계측은 순수 부수효과다.
  */
 inline fun <T> ApiCallLogStore?.measure(
-    provider: String,
+    provider: ApiProvider,
     endpoint: String,
     success: (T) -> Boolean,
     detail: (T) -> String? = { null },
@@ -66,7 +71,7 @@ inline fun <T> ApiCallLogStore?.measure(
         record(
             ApiCallLog(
                 atEpochMs = startedAt,
-                provider = provider,
+                provider = provider.name,
                 endpoint = endpoint,
                 success = false,
                 durationMs = System.currentTimeMillis() - startedAt,
@@ -78,7 +83,7 @@ inline fun <T> ApiCallLogStore?.measure(
     record(
         ApiCallLog(
             atEpochMs = startedAt,
-            provider = provider,
+            provider = provider.name,
             endpoint = endpoint,
             success = success(result),
             durationMs = System.currentTimeMillis() - startedAt,

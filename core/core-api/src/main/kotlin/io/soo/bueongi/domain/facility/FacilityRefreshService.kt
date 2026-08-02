@@ -6,6 +6,7 @@ import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPoliceFacility
 import io.soo.bueongi.client.safemap.SafetydataStreetlight
 import io.soo.bueongi.client.safemap.SafetydataStreetlightClient
+import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
@@ -60,15 +61,15 @@ class FacilityRefreshService(
         val result: LinkedHashMap<FacilityType, Int?> = LinkedHashMap<FacilityType, Int?>()
         if (dataGoKrClient.isEnabled) {
             result[FacilityType.CCTV] = refresh(FacilityType.CCTV) {
-                measureFetch("DATAGOKR", "cctv") { dataGoKrClient.fetchCctv() }
+                measureFetch(ApiProvider.DATAGOKR, "cctv") { dataGoKrClient.fetchCctv() }
                     ?.mapNotNull { it.toFacilityPoint(FacilityType.CCTV) }
             }
             result[FacilityType.BELL] = refresh(FacilityType.BELL) {
-                measureFetch("DATAGOKR", "bell") { dataGoKrClient.fetchEmergencyBells() }
+                measureFetch(ApiProvider.DATAGOKR, "bell") { dataGoKrClient.fetchEmergencyBells() }
                     ?.mapNotNull { it.toFacilityPoint(FacilityType.BELL) }
             }
             result[FacilityType.SAFEHOUSE] = refresh(FacilityType.SAFEHOUSE) {
-                measureFetch("DATAGOKR", "safehouse") { dataGoKrClient.fetchSafehouses() }
+                measureFetch(ApiProvider.DATAGOKR, "safehouse") { dataGoKrClient.fetchSafehouses() }
                     ?.mapNotNull { it.toFacilityPoint(FacilityType.SAFEHOUSE) }
             }
         } else {
@@ -76,7 +77,7 @@ class FacilityRefreshService(
         }
         if (safemapClient.isEnabled) {
             result[FacilityType.POLICE] = refresh(FacilityType.POLICE) {
-                measureFetch("SAFEMAP", "police") { safemapClient.fetchPoliceFacilities() }
+                measureFetch(ApiProvider.SAFEMAP, "police") { safemapClient.fetchPoliceFacilities() }
                     ?.map { it.toFacilityPoint() }
             }
         } else {
@@ -84,7 +85,7 @@ class FacilityRefreshService(
         }
         if (streetlightClient.isEnabled) {
             result[FacilityType.LAMP] = refresh(FacilityType.LAMP) {
-                measureFetch("SAFETYDATA", "streetlight") { streetlightClient.fetchStreetlights() }
+                measureFetch(ApiProvider.SAFETYDATA, "streetlight") { streetlightClient.fetchStreetlights() }
                     ?.map { it.toFacilityPoint() }
             }
         } else {
@@ -103,7 +104,7 @@ class FacilityRefreshService(
      * 외부 수집 호출을 접속 내역에 계측한다 — datagokr/safemap 은 실패 시 예외가 아니라 null 을 주므로 success=(결과!=null).
      * ponytail: service 레벨 계측 — datagokr resultCode·HTTP status 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능
      */
-    private inline fun <T> measureFetch(provider: String, endpoint: String, fetch: () -> T?): T? =
+    private inline fun <T> measureFetch(provider: ApiProvider, endpoint: String, fetch: () -> T?): T? =
         apiCallLogStore.measure(
             provider = provider,
             endpoint = endpoint,

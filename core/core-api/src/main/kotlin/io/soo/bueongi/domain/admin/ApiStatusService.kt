@@ -1,5 +1,6 @@
 package io.soo.bueongi.domain.admin
 
+import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_CAP
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
@@ -12,10 +13,11 @@ import kotlin.math.roundToLong
 
 /**
  * 관리자 페이지용 "외부 API 접속 내역" 도메인 — 저장된 계측([ApiCallLogStore])을 소유해 목록 조회([listRecentCalls])와
- * 상태 요약([summarize])을 함께 제공한다. 요약은 원천(provider)별로 성공률·평균/95분위 소요시간·
+ * 상태 요약([summarize])을 함께 제공한다. 요약은 원천([ApiProvider])별로 성공률·평균/95분위 소요시간·
  * 최근 성공/실패 시각·오늘 호출 수(쿼터)·시간별 호출빈도·쿼터 소진 예측을 계산한다(새 저장소 없음).
  *
- * 원천은 4종([TRACKED_PROVIDERS]) 고정 노출한다 — 로그가 0건인 원천도 total=0 으로 항상 나온다.
+ * 노출 원천은 4종([TRACKED_PROVIDERS]) 고정이다 — 로그가 0건인 원천도 total=0 으로 항상 나오고,
+ * 계측만 하고 화면에는 싣지 않는 원천(SAFETYDATA)은 여기 없다(응답 계약 유지).
  * 쿼터는 data.go.kr 일 1000건 제한만 실재하므로 DATAGOKR 에만 [quotaLimit] 을 둔다.
  *
  * [hourlyTrend] 는 원천 무관 전체 호출량을 최근 24시간 1시간 단위로 버킷팅한다([RouteStatsService] 와 동일 방식·
@@ -29,7 +31,9 @@ class ApiStatusService(
     /**
      * 외부 API 접속 내역 목록(최근순) — 관리자 화면의 원본 로그 뷰.
      * 컨트롤러가 저장소를 직접 주입받지 않도록 접속 내역을 소유한 이 도메인이 조회를 중계한다.
-     * [provider] 는 화면 필터(자유 문자열)이며 null 이면 전체다.
+     *
+     * [provider] 는 화면 필터(자유 문자열)라 [ApiProvider] 로 좁히지 않는다 — 알 수 없는 값이면 빈 목록이 되고,
+     * 오타 섞인 필터가 4xx/5xx 로 번지지 않는다(기존 동작 보존). null 이면 전체.
      */
     fun listRecentCalls(provider: String?, limit: Int): List<ApiCallLog> =
         apiCallLogStore.findRecent(provider = provider, limit = limit)
@@ -38,9 +42,10 @@ class ApiStatusService(
         val now: Long = System.currentTimeMillis()
         val logs: List<ApiCallLog> = apiCallLogStore.findRecent(provider = null, limit = API_CALL_LOG_CAP)
         val todayStartMs: Long = todayStartMs(now)
+        // 저장된 provider 는 [ApiProvider] 의 이름 문자열이라 enum 이름으로 묶음을 찾는다(저장 포맷 유지).
         val byProvider: Map<String, List<ApiCallLog>> = logs.groupBy { it.provider }
         val providers: List<ProviderStatus> = TRACKED_PROVIDERS.map { provider ->
-            aggregate(provider, byProvider[provider] ?: emptyList(), now, todayStartMs)
+            aggregate(provider, byProvider[provider.name] ?: emptyList(), now, todayStartMs)
         }
         return ApiStatusSummary(
             providers = providers,
@@ -68,7 +73,7 @@ class ApiStatusService(
         }
     }
 
-    private fun aggregate(provider: String, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
+    private fun aggregate(provider: ApiProvider, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
         val total: Int = logs.size
         val successCount: Int = logs.count { it.success }
         val successRate: Double = if (total == 0) {
@@ -87,7 +92,8 @@ class ApiStatusService(
         val quotaWarning: Boolean = quotaLimit != null && todayCount >= quotaLimit * QUOTA_WARNING_RATIO
         val quotaBurnPerHour: Double? = quotaBurnPerHour(quotaLimit, todayCount, nowMs, todayStartMs)
         return ProviderStatus(
-            provider = provider,
+            // 응답 필드는 기존 문자열 그대로 — enum 은 내부 표현이고 와이어 표현은 이름이다(계약 불변).
+            provider = provider.name,
             total = total,
             successCount = successCount,
             successRate = successRate,
@@ -135,11 +141,20 @@ class ApiStatusService(
     }
 
     companion object {
-        /** 항상 노출하는 원천 4종. 로그가 없어도 total=0 으로 나온다. */
-        val TRACKED_PROVIDERS: List<String> = listOf("KAKAO", "TMAP", "DATAGOKR", "SAFEMAP")
+        /**
+         * 항상 노출하는 원천 4종(응답 순서도 이 순서). 로그가 없어도 total=0 으로 나온다.
+         * [ApiProvider] 전체가 아니라 **명시 목록**이다 — 계측만 하고 이 화면엔 싣지 않는 원천(SAFETYDATA)이 있어,
+         * enum 에 항목이 늘어도 응답 필드 수가 조용히 변하지 않게 한다(계약 고정).
+         */
+        val TRACKED_PROVIDERS: List<ApiProvider> = listOf(
+            ApiProvider.KAKAO,
+            ApiProvider.TMAP,
+            ApiProvider.DATAGOKR,
+            ApiProvider.SAFEMAP,
+        )
 
         /** 원천별 일일 쿼터 상한(있는 것만) — data.go.kr 은 승인 기본 1일 1000건. */
-        val QUOTA_LIMITS: Map<String, Int> = mapOf("DATAGOKR" to 1000)
+        val QUOTA_LIMITS: Map<ApiProvider, Int> = mapOf(ApiProvider.DATAGOKR to 1000)
 
         /** 오늘 호출 수가 일일 쿼터 상한의 이 비율 이상이면 경고(quotaWarning). */
         const val QUOTA_WARNING_RATIO: Double = 0.8
@@ -159,6 +174,7 @@ class ApiStatusService(
 
 /** 원천별 상태 요약 1건. */
 data class ProviderStatus(
+    /** 원천 이름 — [ApiProvider] 의 이름 문자열(KAKAO|TMAP|DATAGOKR|SAFEMAP). 응답 계약이라 String 으로 낸다. */
     val provider: String,
     val total: Int,
     val successCount: Int,
