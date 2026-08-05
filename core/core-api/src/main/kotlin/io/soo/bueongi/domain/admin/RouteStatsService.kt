@@ -66,34 +66,3 @@ class RouteStatsService(
         const val TOP_DESTINATIONS_LIMIT: Int = 10
     }
 }
-
-/** 엔드포인트별 추천 요청 수 1건. */
-data class EndpointCount(
-    /** compare | safe-compare. */
-    val endpoint: String,
-    val count: Int,
-)
-
-/** 안심강도 선호별 요청 수 1건. [preference] 는 JSON 으로 requestValue(balanced|safe|safest)로 직렬화된다. */
-data class PreferenceCount(
-    val preference: SafetyPreference,
-    val count: Int,
-)
-
-/** 목적지별 추천 요청 수 1건(상위 노출용). */
-data class DestinationCount(
-    val name: String,
-    val count: Int,
-)
-
-/**
- * route-stats 응답 전체. [total] 은 창 내 총 추천 요청 수, [windowSize] 는 집계에 쓴 기록 수(둘 다 창 상한 이하).
- */
-data class RouteStatsSummary(
-    val total: Int,
-    val windowSize: Int,
-    val byEndpoint: List<EndpointCount>,
-    val byPreference: List<PreferenceCount>,
-    val topDestinations: List<DestinationCount>,
-    val hourlyTrend: List<HourlyBucket>,
-)

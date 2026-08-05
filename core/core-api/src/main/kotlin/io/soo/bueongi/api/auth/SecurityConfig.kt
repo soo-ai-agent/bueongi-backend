@@ -24,7 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@EnableConfigurationProperties(JwtProperties::class)
+@EnableConfigurationProperties(JwtProperties::class, AdminAuthProperties::class)
 class SecurityConfig(
     private val objectMapper: ObjectMapper,
 ) {
@@ -32,6 +32,14 @@ class SecurityConfig(
     /** JWT 검증기는 이 설정 안에서만 생성한다(공개키 fail-fast 가 웹 컨텍스트로 국한되도록). */
     @Bean
     fun jwtTokenVerifier(props: JwtProperties): JwtTokenVerifier = JwtTokenVerifier(props)
+
+    @Bean
+    fun adminTokenService(jwt: JwtProperties, auth: AdminAuthProperties): AdminTokenService =
+        AdminTokenService(jwt, auth)
+
+    @Bean
+    fun adminAuthService(auth: AdminAuthProperties, tokens: AdminTokenService): AdminAuthService =
+        AdminAuthService(auth, tokens)
 
     @Bean
     @Order(0)

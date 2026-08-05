@@ -14,26 +14,7 @@ import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
 
-/** 좌표(위경도). 위도 -90~90, 경도 -180~180. */
-data class LatLng(
-    @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
-    val lat: Double?,
-    @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
-    val lng: Double?,
-)
 
-/** 목적지 좌표 + 표시명. */
-data class NamedLatLng(
-    @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
-    val lat: Double?,
-    @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
-    val lng: Double?,
-    val name: String? = null,
-)
 
 /** POST /api/routes/compare·safe-compare·facilities 공통 요청(출발/도착). */
 data class RouteRequest(

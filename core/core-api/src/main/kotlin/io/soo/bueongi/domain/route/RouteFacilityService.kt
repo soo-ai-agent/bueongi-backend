@@ -26,7 +26,6 @@ class RouteFacilityService(
         val destination: GeoPoint = query.destination
 
         val pois: List<FacilityPoi> = markerBuilder.buildMarkers(origin, destination, listOf(origin, destination))
-            .filterNot { it.type == FacilityPoiType.LAMP }
 
         val summary: FacilitySummary = FacilitySummary(
             cctv = pois.count { it.type == FacilityPoiType.CCTV },
@@ -34,6 +33,7 @@ class RouteFacilityService(
             store = pois.count { it.type == FacilityPoiType.STORE },
             police = pois.count { it.type == FacilityPoiType.POLICE },
             safehouse = pois.count { it.type == FacilityPoiType.SAFEHOUSE },
+            lamp = pois.count { it.type == FacilityPoiType.LAMP },
             total = pois.count { it.type in SAFETY_TYPES },
         )
         return FacilitiesResponse(pois = pois, summary = summary)
@@ -46,6 +46,7 @@ class RouteFacilityService(
             FacilityPoiType.STORE,
             FacilityPoiType.POLICE,
             FacilityPoiType.SAFEHOUSE,
+            FacilityPoiType.LAMP,
         )
     }
 }

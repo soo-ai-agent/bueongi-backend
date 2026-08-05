@@ -163,35 +163,10 @@ class AdminController(
     fun testSlackConfig(): SlackTestResult = slackConfigService.test()
 }
 
-/** share-status 응답 — 현재 활성 공유 세션 수. */
-data class ShareStatusResponse(
-    val activeSessions: Int,
-)
 
-/** share-sessions 응답 — 현재 이동 중인(활성) 위치공유 세션 목록(관리자). */
-data class ShareSessionsResponse(
-    val sessions: List<ActiveShareView>,
-)
 
-/** alerts 응답 — 최근 장애 알림 이력(최신순). */
-data class AlertsResponse(
-    val alerts: List<AlertRecord>,
-)
 
-data class AdminIdentity(
-    val userId: Long,
-    val roles: List<String>,
-)
 
-/** 외부 API 접속 내역 응답 1건 — 저장 모델([ApiCallLog])의 웹 표현(레이어 분리). */
-data class ApiCallLogResponse(
-    val atEpochMs: Long,
-    val provider: String,
-    val endpoint: String,
-    val success: Boolean,
-    val durationMs: Long,
-    val detail: String?,
-)
 
 private fun ApiCallLog.toResponse(): ApiCallLogResponse =
     ApiCallLogResponse(

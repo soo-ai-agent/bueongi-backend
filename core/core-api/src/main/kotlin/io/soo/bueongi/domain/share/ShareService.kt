@@ -265,11 +265,3 @@ class ShareService(
                 .thenBy { it.token }
     }
 }
-
-/** 위치 보고(도메인 입력) — API 경계 검증을 통과한 비null 좌표 + 선택 잔여 거리/시간. */
-data class LocationReport(
-    val lat: Double,
-    val lng: Double,
-    val remainingM: Double? = null,
-    val remainingS: Double? = null,
-)

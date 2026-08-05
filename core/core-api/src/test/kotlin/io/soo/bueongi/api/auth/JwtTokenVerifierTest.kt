@@ -21,7 +21,7 @@ class JwtTokenVerifierTest {
 
     private fun verifierFor(publicKey: RSAPublicKey): JwtTokenVerifier {
         val pem: String = Base64.getEncoder().encodeToString(publicKey.encoded)
-        return JwtTokenVerifier(JwtProperties(publicKey = pem))
+        return JwtTokenVerifier(JwtProperties(publicKey = pem, privateKey = "test-only"))
     }
 
     private fun token(
@@ -31,7 +31,9 @@ class JwtTokenVerifierTest {
         expiresAt: Date = Date(System.currentTimeMillis() + 60_000),
     ): String {
         val builder = Jwts.builder()
+            .issuer("bueongi")
             .subject(subject)
+            .claim("tokenKind", AdminTokenKind.ACCESS.name)
             .issuedAt(Date())
             .expiration(expiresAt)
         if (roles != null) {

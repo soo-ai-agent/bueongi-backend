@@ -79,12 +79,19 @@ class AdminAuthGateTest(
         @DynamicPropertySource
         fun jwtKey(registry: DynamicPropertyRegistry) {
             registry.add("bueongi.jwt.public-key") { Base64.getEncoder().encodeToString(keyPair.public.encoded) }
+            registry.add("bueongi.jwt.private-key") { Base64.getEncoder().encodeToString(keyPair.private.encoded) }
+            registry.add("bueongi.admin-auth.login-id") { "admin" }
+            registry.add("bueongi.admin-auth.password-hash") {
+                "\$2y\$10\$COO/27/JNmvhln4FMxHDveBYG3xOHtG8Bh/uP2LUEUAgt9X.8r06e"
+            }
         }
 
         private fun token(subject: String = "1", roles: List<String>): String =
             Jwts.builder()
+                .issuer("bueongi")
                 .subject(subject)
                 .claim("roles", roles)
+                .claim("tokenKind", "ACCESS")
                 .issuedAt(Date())
                 .expiration(Date(System.currentTimeMillis() + 60_000))
                 .signWith(keyPair.private, Jwts.SIG.RS256)

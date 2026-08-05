@@ -48,24 +48,3 @@ class NearestPoliceFinder(
         const val MAX_LIMIT: Int = 10
     }
 }
-
-/**
- * 최근접 파출소 1건 — 도메인 결과이자 프론트 응답 계약(거리 오름차순 정렬). 동일 필드의 응답 DTO 를
- * 한 벌 더 두는 이중 정의 대신 단일 출처로 유지한다(RouteOption·ShareResults 와 같은 결정).
- * 프론트 NearbyPolice 계약과 동형이라 필드명(tel·distance_m — phone 아님)은 리네임 금지.
- */
-data class NearestPolice(
-    val name: String?,
-    val address: String?,
-    val tel: String?,
-    val lat: Double,
-    val lng: Double,
-    @JsonProperty("distance_m")
-    val distanceM: Int,
-)
-
-/** `GET /api/facilities/police/nearest` 응답 봉투 — 프론트 NearbyPolice 계약(거리순 정렬)과 동형. */
-data class NearestPoliceResponse(val items: List<NearestPolice>)
-
-/** 중심에서의 거리(m)를 붙인 시설 점 — 거리순 정렬·상위 N 절단의 중간 표현. */
-private data class FacilityWithDistance(val point: FacilityPoint, val distanceMeters: Double)

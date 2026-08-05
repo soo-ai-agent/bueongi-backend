@@ -13,6 +13,7 @@ import io.soo.bueongi.support.error.TripTooFarException
 import io.soo.bueongi.support.error.UnknownFacilityTypeException
 import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
 import io.soo.bueongi.support.monitoring.AlertNotifier
+import io.soo.bueongi.api.auth.AdminAuthenticationException
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,6 +44,16 @@ class ApiControllerAdvice(
 ) {
 
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
+
+    @ExceptionHandler(AdminAuthenticationException::class)
+    fun handleAdminAuthentication(@Suppress("UNUSED_PARAMETER") ex: AdminAuthenticationException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            "아이디 또는 비밀번호가 올바르지 않거나 인증 토큰이 만료되었습니다.",
+        ).apply {
+            title = "Unauthorized"
+            setProperty("code", "UNAUTHORIZED")
+        }
 
     /** `@Valid` 본문 검증 실패 → 400 + 필드별 `errors`(중첩 필드는 `origin.lat` 형태). */
     @ExceptionHandler(MethodArgumentNotValidException::class)

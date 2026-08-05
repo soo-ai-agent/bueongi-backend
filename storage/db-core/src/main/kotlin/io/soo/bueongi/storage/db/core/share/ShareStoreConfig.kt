@@ -13,17 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import java.net.URI
 import java.time.Clock
 
-/** `bueongi.share.redis-url` 이 비어있지 않으면 매칭(Redis 모드). */
-class RedisConfigured : Condition {
-    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
-        !context.environment.getProperty("bueongi.share.redis-url", "").isNullOrBlank()
-}
 
-/** `bueongi.share.redis-url` 이 비었으면 매칭(인메모리 폴백 모드). [RedisConfigured] 의 정확한 여집합. */
-class RedisNotConfigured : Condition {
-    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
-        context.environment.getProperty("bueongi.share.redis-url", "").isNullOrBlank()
-}
 
 /**
  * 위치 공유 저장소([LocationStore]) 배선. **빈 env 함정**을 피하려고 `@ConditionalOnProperty`(빈 문자열도 "있음"으로 보는 경우가 있음)

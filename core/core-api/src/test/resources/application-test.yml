@@ -1,15 +1,44 @@
-# 테스트 전용 오버라이드. 운영은 JWT_PUBLIC_KEY env 로 주입하지만, 테스트에서는
-# 컨텍스트가 뜨도록(JwtProperties fail-fast 회피) 개발용 RSA 공개키를 고정 주입한다.
-# 이 키의 개인키는 앱에 존재하지 않는다 — 토큰 서명 검증 자체는 각 테스트가 자체 키쌍으로 수행한다.
 bueongi:
   jwt:
     public-key: |
       -----BEGIN PUBLIC KEY-----
-      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4KUGZ8mIur7mAkxoHcLl
-      P/EkpcjV95ydAj11JuSi9up9NQ+btGUTL9CIRH1lhvhNwdcCCqq8Woo9Z/Gk80n6
-      3xXaN3z16WlbEr9LWwMwzSkLRUM7uD0M9o6UvuoKQRdLoMEKiQ2Eu8LX8pB2uIs6
-      XpzwKYF1gYCId9f3gz6XGUzC9c0vkWDBYRbIAGbyCPda+V/kiIR829WpNPWmDiSG
-      MXq2Es+dXxMbyVKEc5XQ7et1g2ReoCz2Q17PHrtCKX95qavHtlkkviKB9W4KpgCZ
-      kXE++D0DUQDs3oAsxJFvzteYBUYNY3F2N/SNtcvm97SzyEvAj++poZ7ZhjVagVVc
-      0QIDAQAB
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtVm75iQnKUjjZHC55ovz
+      I++7BFgmHqPiuOtOuvtRHLbhrilSWgzRLCRl30ynwIDMLP4RhGRJ/Sj7Glsv/Yfj
+      +WJOF7KvIH+WOsgqLns6gBliSMNJ1vJOb/okcwNIotCJOCr/bmTYj3C1q2BMUN6m
+      L5vhYGUgS1u9URZWYL5Xr51fpC8v3ju7SazTa4XKOtqj8P+BVRDugVUEoZAX1nMF
+      7jXUJ8q5yXv7zO4EY+b90V9F04VuJbxAernMkkYTLF2aj7ceIHOPCDkTnjovzFkH
+      oVwG6PNJgmdFKYhvsM6G21lU29p/0IYSEOhrUk+itwomblRafW8mt2vIuUvK8VP0
+      IQIDAQAB
       -----END PUBLIC KEY-----
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC1WbvmJCcpSONk
+      cLnmi/Mj77sEWCYeo+K46066+1EctuGuKVJaDNEsJGXfTKfAgMws/hGEZEn9KPsa
+      Wy/9h+P5Yk4Xsq8gf5Y6yCouezqAGWJIw0nW8k5v+iRzA0ii0Ik4Kv9uZNiPcLWr
+      YExQ3qYvm+FgZSBLW71RFlZgvlevnV+kLy/eO7tJrNNrhco62qPw/4FVEO6BVQSh
+      kBfWcwXuNdQnyrnJe/vM7gRj5v3RX0XThW4lvEB6ucySRhMsXZqPtx4gc48IOROe
+      Oi/MWQehXAbo80mCZ0UpiG+wzobbWVTb2n/QhhIQ6GtST6K3CiZuVFp9bya3a8i5
+      S8rxU/QhAgMBAAECggEBAISgaJuKCx3VUX+uNTaXWS0J8PLfaJl176Sfakey7oIa
+      eXf+flyfDQbEY8Bn9jMBvtCUysjQ849yvhlrYPCAxkgnDcelBRC2Xm8E3lx6ALGY
+      XtmqAMFzGcwo2ylF2IRCEGiEgaQBmqNkoWgBGC74df9ReAUgT/rsz8qSlH9SFRy3
+      tsTqPjIVT6jtKNbqxe4dIPwHCjoeMQ4U4MlHoGlnAzsdUlZTki6A02zpidmjhjrv
+      g0TTMyvhaPtagLbPxt7g2nH5J3TOCIefFEZpEsnXrJPi6CaVpyPsJnwZGCMQpmHH
+      WnJVCKi04nVB9WNQk1GSuaaF5bJBEJ6bakGEdrufOMECgYEA4GBiDGfKykF9RCN9
+      8o3opdochWtOlM8ERfnKudcYmIFRdJZSHEXPn9DSalLXsujrgmRd+u++hdmGg3G9
+      eo4fftM9Tr2zuTSZayOiemCC33Ggo7XMSB1zpMVBoheU7iLbvAd/XjdZptZE4K5M
+      jX5mamrJMkqWepwVU299zvhNfBkCgYEAzujzxAdyl+VtDfg9cUz9XQ5Cq77mHUZp
+      g0Ps0bW2HJcngT8hlR90po99GhsSkqTHt0Ee76aJ22ZAe8VfQxXghdn45aoL/90v
+      woPIc6OYuEjcImh0HkmPbZseBYPbGNlnmx4DreR/ftt6KNoWPm2WRfijon2enR78
+      UJxDm4qqOUkCgYBV0wguDpV2/83Wfmzylm1i4yb9saoBKZ5M1dtBcpEp5G0v1z/Z
+      KKreSpXxrXZsLMPIwHNiRMnvkODu7la3xh0t+cb9k3pnYUM9xAemH7xvk5sKg8N7
+      4igV4o3UXojM/fBm38dMVoeoVVVLS+BkTvEFy4rh/b3JcGKH46GPxVJ+IQKBgQCR
+      u+J2IAjGlAHL5RzhwKhz8qdi8IKD/CQ1IJKc4q/yU0Sv9BdjQVSYPFiRGqBqSUWh
+      /Wwcv+A5eDvS8aG3TqFlpbF5kdwBy3joOInnaUMYCbmDQq8G5ijvumHa4JRhXD9t
+      MibFRDvIzi2suG8SaX1+qzIWMQSXBkwROv8jfveGgQKBgQDeEPVDcPZepqhv7Zrv
+      7eAue9Yvk4T5OF5qnku/wy0Mz3N/xNRYTI/NAkhhYgac8CQYwrm54yKA5+G2SSeJ
+      jwbGPotVb7e7E789StMhe6GXf7wQLZw5BjjF5gxG+ydtwUCIn0uNAA44m385tmJY
+      Ci0fY2D5ZnE5cO/AYANdm4a3uA==
+      -----END PRIVATE KEY-----
+  admin-auth:
+    login-id: admin
+    password-hash: '$2y$10$COO/27/JNmvhln4FMxHDveBYG3xOHtG8Bh/uP2LUEUAgt9X.8r06e'

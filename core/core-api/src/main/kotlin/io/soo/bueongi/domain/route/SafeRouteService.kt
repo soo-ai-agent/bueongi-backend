@@ -248,26 +248,8 @@ class SafeRouteService(
     }
 }
 
-/**
- * 채점 대상 도메인 경로 후보 — 클라이언트 [TmapRoute] 의 도메인 표현(좌표를 [GeoPoint] 로 매핑).
- * steps(단계 안내)는 값 그대로 응답에 실리므로 클라이언트 타입([NavStep])을 재사용한다.
- */
-data class RouteCandidate(
-    val searchOption: String,
-    val path: List<GeoPoint>,
-    val distanceM: Double,
-    val timeS: Int,
-    val steps: List<NavStep>,
-)
 
-/** 채점만 끝난 후보(유형 배정 전 중간 표현) — 안전점수·시간으로 safe/fast/main 을 고르는 입력. */
-private data class ScoredCandidate(val candidate: RouteCandidate, val score: SafetyScore)
 
-/**
- * 채점·유형 배정이 끝난 후보(응답 변환 직전의 중간 표현).
- * [type] 은 [RouteType] — TYPE_NAME 키 집합(전 유형)과 일치한다(toRouteOptions 의 getValue 전제).
- */
-private data class ScoredRoute(val candidate: RouteCandidate, val score: SafetyScore, val type: RouteType)
 
 private fun TmapRoute.toCandidate(): RouteCandidate =
     RouteCandidate(searchOption = searchOption, path = path.toGeoPoints(), distanceM = distanceM, timeS = timeS, steps = steps)

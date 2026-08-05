@@ -6,11 +6,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-/** WGS84 한 점(치안시설 좌표 변환 결과). */
-data class Wgs84Point(val lat: Double, val lng: Double)
 
-/** 투영 평면 좌표(TM): [x]=동쪽(easting, m), [y]=북쪽(northing, m). [Epsg5179]·[Epsg5174] 정투영 결과. */
-data class TmXy(val x: Double, val y: Double)
 
 /**
  * EPSG:5179(UTM-K, GRS80) ↔ WGS84 변환 — 치안시설(IF_0036)의 x/y 좌표용.

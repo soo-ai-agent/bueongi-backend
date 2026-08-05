@@ -51,12 +51,3 @@ class FacilityUploadService(
         )
     }
 }
-
-/** 업로드 반영 결과 — 컨트롤러가 응답 DTO 로 변환한다. */
-data class FacilityUploadResult(
-    val type: FacilityType,
-    val coordSystem: FacilityCoordSystem,
-    val received: Int,
-    val saved: Int,
-    val skipped: Int,
-)

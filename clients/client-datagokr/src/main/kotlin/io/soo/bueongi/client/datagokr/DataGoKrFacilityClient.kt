@@ -152,23 +152,7 @@ class DataGoKrFacilityClient(
     }
 }
 
-/** 조회서비스 한 행의 정규화 결과(WGS84). 도메인(FacilityPoint) 매핑·좌표 범위 검증은 상위(core-api)가 한다. */
-data class DataGoKrPoint(
-    val lat: Double,
-    val lng: Double,
-    val name: String? = null,
-    val address: String? = null,
-    val sigungu: String? = null,
-)
 
-/** 서비스별 원천 필드명 집합 — 필드마다 후보 목록을 순서대로 시도한다(빈 목록 = 미제공). */
-private data class FieldNames(
-    val lat: List<String>,
-    val lng: List<String>,
-    val name: List<String>,
-    val address: List<String>,
-    val sigungu: List<String>,
-)
 
 /** 행 JsonNode → [DataGoKrPoint]. 좌표가 숫자로 안 읽히면 null(건너뜀). */
 private fun JsonNode.toPoint(fields: FieldNames): DataGoKrPoint? {
@@ -188,17 +172,3 @@ private fun JsonNode.text(candidates: List<String>): String? =
     candidates.firstNotNullOfOrNull { field ->
         get(field)?.asText()?.trim()?.takeIf { it.isNotEmpty() && it != "null" }
     }
-
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class DataGoKrEnvelope(val response: DataGoKrResponse? = null)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class DataGoKrResponse(val header: DataGoKrHeader? = null, val body: DataGoKrBody? = null)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class DataGoKrHeader(val resultCode: String? = null, val resultMsg: String? = null)
-
-/** items 는 배열/`{item:...}` 두 형태가 있어 [JsonNode] 로 받고 클라이언트가 정규화한다. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class DataGoKrBody(val items: JsonNode? = null, val totalCount: Long? = null)

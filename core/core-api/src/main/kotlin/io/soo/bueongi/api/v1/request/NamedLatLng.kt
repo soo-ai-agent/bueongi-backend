@@ -1,0 +1,26 @@
+package io.soo.bueongi.api.v1.request
+
+import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.domain.route.RouteQuery
+import io.soo.bueongi.domain.route.RouteType
+import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.SpatialMath
+import io.soo.bueongi.support.error.OriginRequiredException
+import io.soo.bueongi.support.error.SameOriginDestinationException
+import io.soo.bueongi.support.error.TripTooFarException
+import jakarta.validation.Valid
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.NotNull
+import kotlin.math.roundToInt
+
+/** 목적지 좌표 + 표시명. */
+data class NamedLatLng(
+    @field:NotNull
+    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
+    val lat: Double?,
+    @field:NotNull
+    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
+    val lng: Double?,
+    val name: String? = null,
+)

@@ -30,7 +30,10 @@ App Factory 독립 프로젝트(`projectId=bueongi`)로, 별도 경로/포트/ka
 
 ```bash
 # 개발 서버 실행 → http://localhost:8119
-./gradlew bootRun
+set -a
+source .env.local
+set +a
+./gradlew bootRun --no-daemon
 
 # 전체 테스트
 ./gradlew test
@@ -41,6 +44,10 @@ App Factory 독립 프로젝트(`projectId=bueongi`)로, 별도 경로/포트/ka
 # 빌드된 jar 직접 실행
 java -jar core/core-api/build/libs/core-api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(core:core-api) 산출물
 ```
+
+개발 서버는 **반드시 `backend/.env.local`을 export한 뒤 실행한다.** `./gradlew bootRun`만
+단독으로 실행하면 Kakao·Tmap 등 외부 API 키와 시설 데이터 경로가 주입되지 않아 장소 검색이
+빈 결과로 폴백하고 실제 경로 좌표가 생성되지 않는다. 위 명령을 개발 실행의 단일 표준으로 사용한다.
 
 서버 포트는 **8119** 고정(`application.yml`의 `server.port`). 프론트 dev 서버는 3619(strictPort).
 
@@ -55,14 +62,20 @@ curl http://localhost:8119/api/health
 
 ## 환경변수 (설정)
 
-모든 설정은 환경변수로 주입하며, 미설정 시 기본값으로 동작한다. **시크릿 값은 코드/로그/커밋에 넣지 않는다.**
+모든 설정은 환경변수로 주입한다. 선택 설정은 미설정 시 기본값으로 동작하지만
+관리자 인증 관련 값은 모두 필수다. **시크릿 값은 코드/로그/커밋에 넣지 않는다.**
 
 | 환경변수 | 기본값 | 설명 |
 | --- | --- | --- |
+| `JWT_PUBLIC_KEY` | 없음 | 부엉이가 발급한 관리자 JWT 검증용 RSA 공개키. PEM 또는 base64-DER. |
+| `JWT_PRIVATE_KEY` | 없음 | 관리자 JWT 발급용 PKCS#8 RSA 개인키. **서버에만 보관하며 Git에 커밋하지 않는다.** |
+| `BUEONGI_ADMIN_LOGIN_ID` | 없음 | 관리자 로그인 아이디. |
+| `BUEONGI_ADMIN_PASSWORD_HASH` | 없음 | 관리자 비밀번호의 bcrypt 해시. 원문 비밀번호는 저장하지 않는다. |
+| `BUEONGI_ADMIN_EMAIL` | `admin@bueongi.local` | 로그인 응답에 표시할 관리자 이메일. |
 | `KAKAO_REST_API_KEY` | (빈 값) | Kakao Local REST 키. **미설정이면 내장 시드 카탈로그**로 장소 검색. 주입 시 실연동을 시도하되 실패하면 시드로 폴백(안심앱: 검색 불능보다 근사 결과가 안전). |
 | `DATA_GO_KR_SERVICE_KEY` | (빈 값) | 공공데이터포털(행안부 조회서비스) Encoding 키. **미설정이면 시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 CCTV·안전비상벨·여성안심지킴이집을 기동 직후 1회 + `BUEONGI_FACILITY_REFRESH_CRON`(기본 매월 1일 04:00 KST) 주기로 재수집해 인덱스를 무중단 교체. 수집 실패/0건이면 교체하지 않는다. |
 | `SAFEMAP_SERVICE_KEY` | (빈 값) | 생활안전지도(safemap.go.kr) 인증키. **미설정이면 치안시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 전국 지역경찰관서(지구대·파출소·치안센터)를 같은 스케줄로 재수집 — 좌표는 EPSG:5179/WGS84 자동판별 후 WGS84 로 변환·검증. |
-| `SAFETYDATA_SERVICE_KEY` | (빈 값) | 재난안전데이터 공유 플랫폼(safetydata.go.kr) 인증키. **미설정이면 가로등 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 공통POI 가로등(DSSP-IF-00084)을 같은 스케줄로 재수집 — 좌표(XMAP_CRTS/YMAP_CRTS)는 EPSG:5179/WGS84 자동판별 후 WGS84 로 변환·검증. |
+| `SAFETYDATA_SERVICE_KEY` | (빈 값) | 재난안전데이터 공유 플랫폼(safetydata.go.kr) 인증키. **미설정이면 가로등 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 공통POI 가로등(DSSP-IF-00084)을 같은 스케줄로 재수집 — 좌표(XMAP_CRTS/YMAP_CRTS)는 실응답 EPSG:3857과 EPSG:5179/WGS84를 자동판별한 뒤 WGS84로 변환·검증. |
 | `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 라이브 갱신 실패/0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백)를 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
 | `SLACK_ALERT_THROTTLE_MINUTES` | `10` | 같은 알림 key 의 재발송 억제 창(분) — 장애 중 알림 폭주 방지. |
 | `BUEONGI_FACILITY_REFRESH_CRON` | `0 0 4 1 * *` | 시설 라이브 갱신 cron(Asia/Seoul). 위 두 키 중 하나라도 있을 때만 동작. |
@@ -70,14 +83,53 @@ curl http://localhost:8119/api/health
 | `BUEONGI_REDIS_URL` | (빈 값) | 위치 공유 저장 Redis(예 `redis://localhost:6379`). **미설정이면 인메모리 폴백**(단일 인스턴스, 재시작 시 휘발). 운영 다중 인스턴스·내구성이 필요하면 주입. |
 | `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | 공유 URL(`share_url`)의 base. 운영은 보호자가 접근 가능한 공개 도메인으로 덮어쓴다. |
 
-예:
+### 관리자 로그인 키와 비밀번호 준비
+
+부엉이가 관리자 로그인과 JWT 발급을 직접 담당한다. 저장소 밖의 안전한 서버 위치에서 키쌍을 만들고,
+개인키는 부엉이 백엔드에만 주입한다.
 
 ```bash
-KAKAO_REST_API_KEY=<your-key> \
-BUEONGI_CORS_ORIGINS=http://localhost:3619,https://bueongi.example.com \
-BUEONGI_REDIS_URL=redis://localhost:6379 \
-BUEONGI_SHARE_BASE_URL=https://bueongi.example.com \
-./gradlew bootRun
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
+openssl pkey -in jwt-private.pem -pubout -out jwt-public.pem
+
+export JWT_PRIVATE_KEY="$(openssl pkey -in jwt-private.pem -outform DER | base64 | tr -d '\n')"
+export JWT_PUBLIC_KEY="$(openssl pkey -pubin -in jwt-public.pem -outform DER | base64 | tr -d '\n')"
+export BUEONGI_ADMIN_LOGIN_ID=admin
+export BUEONGI_ADMIN_PASSWORD_HASH="$(htpasswd -bnBC 12 admin '원하는 비밀번호' | cut -d: -f2 | tr -d '\n')"
+```
+
+`jwt-private.pem`, `.env.local`과 환경변수 출력값은 Git에 커밋하지 않는다. 키 교체 시 공개키와 개인키를
+같은 키쌍으로 함께 교체하며, 교체 전에 발급된 토큰은 즉시 무효화된다.
+
+#### 검증
+
+```bash
+curl --fail http://localhost:8119/api/health
+curl -i -H "Authorization: Bearer ${ADMIN_ACCESS_TOKEN}" \
+  http://localhost:8119/api/admin/me
+```
+
+먼저 `POST /api/v1/auth/admin/login`으로 토큰을 발급한 뒤 access token으로 `/api/admin/me`가
+200을 반환하는지 확인한다. 리프레시 토큰은 관리자 API에 사용할 수 없다.
+
+`backend/.env.local` 예:
+
+```dotenv
+JWT_PUBLIC_KEY=<base64-DER 또는 PEM 공개키>
+JWT_PRIVATE_KEY=<base64-DER 또는 PKCS#8 PEM 개인키>
+BUEONGI_ADMIN_LOGIN_ID=admin
+BUEONGI_ADMIN_PASSWORD_HASH='<bcrypt 해시>'
+KAKAO_REST_API_KEY=<your-key>
+BUEONGI_CORS_ORIGINS=http://localhost:3619,https://bueongi.example.com
+BUEONGI_REDIS_URL=redis://localhost:6379
+BUEONGI_SHARE_BASE_URL=https://bueongi.example.com
+```
+
+```bash
+set -a
+source .env.local
+set +a
+./gradlew bootRun --no-daemon
 ```
 
 ## 프로젝트 구조 (멀티모듈 — soo-spring-kotlin-starter 규약)
@@ -149,6 +201,8 @@ backend/
     어려운 코드는 한 파일에 격리하고 테스트(앵커·왕복 등)로 정답을 보증한다.
 16. 웹 DTO ↔ 도메인 입력 ↔ 저장 모델을 계층별로 분리하고, **변환 메서드(`toReport`·`toStoredRoute` 등)를
     DTO 안 한 곳에** 모은다. 저장 모델은 불변 data class 로 둔다.
+17. 최상위 `class`·`data class`·`enum class`·`interface`·`object`는 이름이 같은 개별 `.kt` 파일에 둔다.
+    구현 세부인 중첩 타입만 소유 클래스 파일 안에 둔다. 여러 DTO나 예외를 하나의 묶음 파일에 모으지 않는다.
 
 ## API 계약
 

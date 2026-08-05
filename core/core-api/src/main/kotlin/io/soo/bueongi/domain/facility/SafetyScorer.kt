@@ -105,20 +105,3 @@ class SafetyScorer(
         const val WEIGHT_SAFE_PATH: Double = 0.15
     }
 }
-
-/** 안전 점수 세부 지표(프론트 SafetyScoreBreakdown 동형). */
-data class SafetyBreakdown(
-    val routeKm: Double,
-    val cctvDensity: Double,
-    val lampDensity: Double,
-    val bellDensity: Double,
-    val safehouseCount: Int,
-    val policeCount: Int,
-    val safePathOverlap: Double,
-)
-
-/** 0~100 정수 안전 점수 + 세부 지표. */
-data class SafetyScore(
-    val score: Int,
-    val breakdown: SafetyBreakdown,
-)

@@ -127,9 +127,3 @@ class SafeDetourPlanner(
         val ANCHOR_TYPES: List<FacilityType> = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
     }
 }
-
-/** 안심 앵커: 클러스터 중심 좌표 + 구성 시설수(weight). */
-data class SafeAnchor(
-    val center: GeoPoint,
-    val weight: Int,
-)

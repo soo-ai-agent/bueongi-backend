@@ -30,13 +30,6 @@ interface AlertNotifier {
     fun sendTest(): Boolean = false
 }
 
-/** 장애 알림 이력 1건 — 발생 시각(epoch ms)·스로틀 key·제목·상세. */
-data class AlertRecord(
-    val atEpochMs: Long,
-    val key: String,
-    val title: String,
-    val detail: String,
-)
 
 /** alerts 조회 상한(관리자 API limit 절삭용). 버퍼 용량(200)보다 크게 둬도 실제 반환은 보관분까지다. */
 const val ALERT_HISTORY_MAX_LIMIT: Int = 500

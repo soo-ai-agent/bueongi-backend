@@ -10,9 +10,9 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
 /**
- * soo-auth-service 가 RS256 으로 발급한 access token 을 RSA 공개키로 오프라인 검증한다.
+ * 부엉이가 RS256 으로 발급한 access token 을 RSA 공개키로 검증한다.
  *
- * Claim 규약(auth-service 기준):
+ * Claim 규약:
  *  - `sub`   = userId (Long)
  *  - `roles` = 권한 목록(List<String>, 예: `["ROLE_ADMIN"]`)
  *  - `nickname` (선택)
@@ -27,6 +27,7 @@ import java.util.Base64
 class JwtTokenVerifier(props: JwtProperties) {
 
     private val key: RSAPublicKey = parsePemPublicKey(props.publicKey)
+    private val issuer: String = props.issuer
 
     data class VerifiedToken(
         val userId: Long,
@@ -41,6 +42,7 @@ class JwtTokenVerifier(props: JwtProperties) {
         val claims: Claims = try {
             Jwts.parser()
                 .verifyWith(key)
+                .requireIssuer(issuer)
                 .build()
                 .parseSignedClaims(token)
                 .payload
@@ -58,6 +60,10 @@ class JwtTokenVerifier(props: JwtProperties) {
         val roles: List<String> = (claims["roles"] as? List<*>)
             ?.mapNotNull { it as? String }
             ?: emptyList()
+
+        if (claims["tokenKind"] != AdminTokenKind.ACCESS.name) {
+            throw InvalidTokenException("access token required")
+        }
 
         return VerifiedToken(
             userId = userId,
@@ -82,9 +88,3 @@ class JwtTokenVerifier(props: JwtProperties) {
         }
     }
 }
-
-/** access token 이 만료됨 → 401. */
-class ExpiredTokenException(cause: Throwable? = null) : RuntimeException("access token expired", cause)
-
-/** access token 형식/서명/클레임이 무효 → 401. */
-class InvalidTokenException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

@@ -42,6 +42,14 @@ class SafetyScorerTest {
     }
 
     @Test
+    fun `회랑 안 가로등이 점수와 밀도에 기여한다`() {
+        val lamps = (1..12).map { GeoPoint(37.5, 127.0 + it * 0.0007) }
+        val result = SafetyScorer(FakeFacilitySource.of(FacilityType.LAMP, lamps)).score(path)
+        assertThat(result.breakdown.lampDensity).isGreaterThan(0.0)
+        assertThat(result.score).isGreaterThan(0)
+    }
+
+    @Test
     fun `회랑 밖 시설은 점수에 반영되지 않는다`() {
         val offCorridor = listOf(GeoPoint(37.502, 127.005))
         val scorer = SafetyScorer(FakeFacilitySource.of(FacilityType.CCTV, offCorridor))
