@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -31,11 +32,15 @@ class SecurityConfig(
 
     /** JWT 검증기는 이 설정 안에서만 생성한다(공개키 fail-fast 가 웹 컨텍스트로 국한되도록). */
     @Bean
-    fun jwtTokenVerifier(props: JwtProperties): JwtTokenVerifier = JwtTokenVerifier(props)
+    fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial =
+        JwtKeyMaterialFactory.create(props, environment.activeProfiles.contains("local"))
 
     @Bean
-    fun adminTokenService(jwt: JwtProperties, auth: AdminAuthProperties): AdminTokenService =
-        AdminTokenService(jwt, auth)
+    fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier = JwtTokenVerifier(keys.publicKey, keys.issuer)
+
+    @Bean
+    fun adminTokenService(keys: JwtKeyMaterial, auth: AdminAuthProperties): AdminTokenService =
+        AdminTokenService(keys, auth)
 
     @Bean
     fun adminAuthService(auth: AdminAuthProperties, tokens: AdminTokenService): AdminAuthService =

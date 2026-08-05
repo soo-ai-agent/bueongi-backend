@@ -18,7 +18,8 @@ class AdminAuthServiceTest {
         loginId = "admin",
         passwordHash = BCryptPasswordEncoder().encode("password"),
     )
-    private val tokens = AdminTokenService(jwt, auth)
+    private val keys = JwtKeyMaterialFactory.create(jwt, false)
+    private val tokens = AdminTokenService(keys, auth)
     private val service = AdminAuthService(auth, tokens)
 
     @Test

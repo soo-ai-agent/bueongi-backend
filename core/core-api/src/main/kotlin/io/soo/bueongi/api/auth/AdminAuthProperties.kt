@@ -12,10 +12,14 @@ data class AdminAuthProperties(
 ) {
     init {
         require(loginId.isNotBlank()) { "BUEONGI_ADMIN_LOGIN_ID must not be blank" }
-        require(passwordHash.startsWith("\$2")) { "BUEONGI_ADMIN_PASSWORD_HASH must be a bcrypt hash" }
+        require(BCRYPT_PATTERN.matches(passwordHash)) { "BUEONGI_ADMIN_PASSWORD_HASH must be a bcrypt hash" }
         require(accessTokenSeconds > 0) { "BUEONGI_ADMIN_ACCESS_TOKEN_SECONDS must be positive" }
         require(refreshTokenSeconds > accessTokenSeconds) {
             "BUEONGI_ADMIN_REFRESH_TOKEN_SECONDS must be greater than access token lifetime"
         }
+    }
+
+    private companion object {
+        val BCRYPT_PATTERN: Regex = Regex("^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$")
     }
 }

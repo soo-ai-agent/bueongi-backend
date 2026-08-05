@@ -45,9 +45,15 @@ set +a
 java -jar core/core-api/build/libs/core-api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(core:core-api) 산출물
 ```
 
-개발 서버는 **반드시 `backend/.env.local`을 export한 뒤 실행한다.** `./gradlew bootRun`만
-단독으로 실행하면 Kakao·Tmap 등 외부 API 키와 시설 데이터 경로가 주입되지 않아 장소 검색이
-빈 결과로 폴백하고 실제 경로 좌표가 생성되지 않는다. 위 명령을 개발 실행의 단일 표준으로 사용한다.
+`local` 프로파일은 `backend/.env.local`을 자동으로 읽는다. 로컬 실행은 아래 명령을 표준으로 사용한다.
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon
+```
+
+로컬에서 JWT 키가 없으면 실행 시 임시 RSA 키쌍을 생성하므로 별도 키 설정 없이 기동할 수 있다.
+서버를 재시작하면 기존 관리자 토큰은 무효화된다. 운영에서는 `JWT_PUBLIC_KEY`와
+`JWT_PRIVATE_KEY`가 모두 없으면 기동이 중단된다.
 
 서버 포트는 **8119** 고정(`application.yml`의 `server.port`). 프론트 dev 서버는 3619(strictPort).
 

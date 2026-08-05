@@ -24,10 +24,15 @@ import java.util.Base64
  * [SecurityConfig] 의 @Bean 으로만 등록된다(servlet 웹 컨텍스트 한정). @Component 로 두면 컴포넌트 스캔이
  * 비웹/슬라이스 컨텍스트에서도 생성해 JwtProperties(공개키) 주입을 강제하므로 @Bean 으로 격리한다.
  */
-class JwtTokenVerifier(props: JwtProperties) {
+class JwtTokenVerifier(
+    private val key: RSAPublicKey,
+    private val issuer: String,
+) {
 
-    private val key: RSAPublicKey = parsePemPublicKey(props.publicKey)
-    private val issuer: String = props.issuer
+    constructor(properties: JwtProperties) : this(
+        parsePemPublicKey(properties.publicKey),
+        properties.issuer,
+    )
 
     data class VerifiedToken(
         val userId: Long,

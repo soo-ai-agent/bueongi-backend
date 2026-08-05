@@ -11,13 +11,13 @@ import java.util.Date
 import java.util.UUID
 
 class AdminTokenService(
-    jwtProperties: JwtProperties,
+    keyMaterial: JwtKeyMaterial,
     private val authProperties: AdminAuthProperties,
     private val clock: Clock = Clock.systemUTC(),
 ) {
-    private val privateKey: RSAPrivateKey = JwtPrivateKeyParser.parse(jwtProperties.privateKey)
-    private val publicKey: RSAPublicKey = JwtTokenVerifier.parsePemPublicKey(jwtProperties.publicKey)
-    private val issuer: String = jwtProperties.issuer
+    private val privateKey: RSAPrivateKey = keyMaterial.privateKey
+    private val publicKey: RSAPublicKey = keyMaterial.publicKey
+    private val issuer: String = keyMaterial.issuer
 
     fun issue(): AdminTokenBundle = AdminTokenBundle(
         accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
