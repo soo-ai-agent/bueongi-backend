@@ -32,7 +32,7 @@ class DataGoKrFacilityClient(
     restClientBuilder: RestClient.Builder,
 ) {
     private val log: Logger = LoggerFactory.getLogger(DataGoKrFacilityClient::class.java)
-    private val serviceKey: String = serviceKey.trim()
+    private val serviceKey: String = serviceKey.trim().removeSurrounding("'").removeSurrounding("\"")
 
     /** 키가 설정돼 있으면 true. false 면 호출하지 말 것(상위가 라이브 갱신 자체를 건너뛴다). */
     val isEnabled: Boolean
@@ -79,10 +79,10 @@ class DataGoKrFacilityClient(
                 log.warn("data.go.kr 빈 응답(endpoint={}, page={}) — 갱신 중단(기존 데이터 유지)", endpoint, pageNo)
                 return null
             }
-            val response: DataGoKrResponse? = envelope.response
-            val header: DataGoKrHeader? = response?.header
+            val response: DataGoKrResponse = envelope.payload()
+            val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
-            if (!code.isNullOrBlank() && code != "00") {
+            if (!code.isNullOrBlank() && code !in SUCCESS_CODES) {
                 log.warn(
                     "data.go.kr resultCode={}({}) (endpoint={}) — 갱신 중단(기존 데이터 유지)",
                     code, header.resultMsg ?: "", endpoint,
@@ -90,15 +90,25 @@ class DataGoKrFacilityClient(
                 return null
             }
 
-            val rows: List<JsonNode> = extractItems(response?.body?.items)
-            response?.body?.totalCount?.let { totalCount = it }
+            val rows: List<JsonNode> = extractItems(response.body?.items)
+            response.body?.totalCount?.let { totalCount = it }
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
             if (rows.isEmpty() || rows.size < PAGE_SIZE) {
+                if (totalCount == Long.MAX_VALUE) {
+                    totalCount = received
+                }
                 break
             }
             pageNo += 1
+        }
+        if (received < totalCount) {
+            log.warn(
+                "data.go.kr 페이지 상한 도달(endpoint={}, received={}, total={}) — 갱신 중단(기존 데이터 유지)",
+                endpoint, received, totalCount,
+            )
+            return null
         }
         return points
     }
@@ -127,10 +137,11 @@ class DataGoKrFacilityClient(
         const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
         /** 표준 조회서비스 페이지당 최대 건수. */
-        const val PAGE_SIZE: Int = 1000
+        const val PAGE_SIZE: Int = 100
 
-        /** 폭주 방지 상한(1000행 × 1000페이지 = 100만 행) — 전국 CCTV(약 37만행)에 충분한 여유. */
-        const val MAX_PAGES: Int = 1000
+        /** 폭주 방지 상한(100행 × 5000페이지 = 50만 행) — 전국 CCTV 약 38만행을 전량 수집한다. */
+        const val MAX_PAGES: Int = 5000
+        private val SUCCESS_CODES: Set<String> = setOf("0", "00")
 
         private val CCTV_FIELDS: FieldNames = FieldNames(
             lat = listOf("WGS84_LAT", "latitude"),

@@ -31,13 +31,13 @@ class DataGoKrFacilityClientHttpTest {
         """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
 
     private fun envelope(items: String, totalCount: Int) =
-        """{"response":{"header":{"resultCode":"00","resultMsg":"NORMAL"},"body":{"items":[$items],"totalCount":$totalCount}}}"""
+        """{"response":{"header":{"resultCode":"0","resultMsg":"정상"},"body":{"items":[$items],"totalCount":$totalCount}}}"""
 
     @Test
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑(CCTV)`() {
         val (client, server) = bind()
         server.expect(requestTo(containsString("${DataGoKrFacilityClient.CCTV_ENDPOINT}?serviceKey=$serviceKey")))
-            .andExpect(requestTo(containsString("pageNo=1&numOfRows=1000&type=json")))
+            .andExpect(requestTo(containsString("pageNo=1&numOfRows=100&type=json")))
             .andRespond(withSuccess(envelope(cctvItem(), 1), MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchCctv()
@@ -51,13 +51,29 @@ class DataGoKrFacilityClientHttpTest {
     }
 
     @Test
+    fun `정상 - properties 파일에서 포함된 인증키 따옴표를 제거한다`() {
+        val (client, server) = bind(key = "'$serviceKey'")
+        server.expect(requestTo(containsString("serviceKey=$serviceKey")))
+            .andRespond(withSuccess(envelope(cctvItem(), 1), MediaType.APPLICATION_JSON))
+
+        assertThat(client.fetchCctv()).hasSize(1)
+        server.verify()
+    }
+
+    @Test
     fun `정상 - 가득 찬 페이지는 다음 페이지로 순회하고 마지막 페이지에서 멈춘다`() {
         val (client, server) = bind()
         val fullPage: String = (1..DataGoKrFacilityClient.PAGE_SIZE).joinToString(",") { cctvItem(name = "기관$it") }
+        val totalCount: Int = DataGoKrFacilityClient.PAGE_SIZE + 2
         server.expect(requestTo(containsString("pageNo=1")))
-            .andRespond(withSuccess(envelope(fullPage, 1002), MediaType.APPLICATION_JSON))
+            .andRespond(withSuccess(envelope(fullPage, totalCount), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=2")))
-            .andRespond(withSuccess(envelope("${cctvItem(name = "기관A")},${cctvItem(name = "기관B")}", 1002), MediaType.APPLICATION_JSON))
+            .andRespond(
+                withSuccess(
+                    envelope("${cctvItem(name = "기관A")},${cctvItem(name = "기관B")}", totalCount),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
         val points: List<DataGoKrPoint>? = client.fetchCctv()
 
@@ -88,10 +104,11 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `정상 - 여성안심지킴이집 표준 필드(storNm·latitude·rdnmadr) 매핑`() {
         val (client, server) = bind()
-        val body: String = envelope(
-            """{"storNm":"GS25 강남점","latitude":"37.498","longitude":"127.027","rdnmadr":"강남대로 396"}""",
-            1,
-        )
+        val body: String = """
+            {"header":{"resultCode":"00","resultMsg":"NORMAL SERVICE."},"body":{"items":{"item":[
+              {"storNm":"GS25 강남점","latitude":"37.498","longitude":"127.027","rdnmadr":"강남대로 396"}
+            ]},"totalCount":1}}
+        """.trimIndent()
         server.expect(requestTo(containsString(DataGoKrFacilityClient.SAFEHOUSE_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 

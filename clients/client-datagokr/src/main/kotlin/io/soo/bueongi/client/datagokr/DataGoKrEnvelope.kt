@@ -10,4 +10,10 @@ import org.springframework.web.client.RestClient
 import java.net.URI
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class DataGoKrEnvelope(val response: DataGoKrResponse? = null)
+data class DataGoKrEnvelope(
+    val response: DataGoKrResponse? = null,
+    val header: DataGoKrHeader? = null,
+    val body: DataGoKrBody? = null,
+) {
+    fun payload(): DataGoKrResponse = response ?: DataGoKrResponse(header, body)
+}
