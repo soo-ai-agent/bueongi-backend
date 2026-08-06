@@ -13,8 +13,8 @@ import java.net.URI
  * 공공데이터포털(data.go.kr) 행안부 표준 조회서비스 클라이언트 — 시설 데이터의 **라이브 갱신** 원천.
  *
  * 지원 서비스(모두 WGS84 좌표를 직접 제공해 좌표 변환이 불필요한 것만 라이브 대상으로 한다):
- * - CCTV: `/1741000/cctv_info` (파이프라인 소스 B-1과 동일 엔드포인트)
- * - 안전비상벨: `/1741000/emergency_call_box_info` (D-1과 동일)
+ * - CCTV: `/1741000/cctv_info/info` (파이프라인 소스 B-1과 동일 엔드포인트)
+ * - 안전비상벨: `/1741000/emergency_call_box_info/info` (D-1과 동일)
  * - 여성안심지킴이집: `openapi/tn_pubr_public_female_safety_prtchouse_api` (표준데이터, B-2)
  * 좌표 변환·지오코딩이 필요한 나머지 종류(주소만 주는 B-3 등)는 파이프라인(월 1회 CSV/CDN 산출) 담당으로 남긴다.
  *
@@ -79,17 +79,19 @@ class DataGoKrFacilityClient(
                 log.warn("data.go.kr 빈 응답(endpoint={}, page={}) — 갱신 중단(기존 데이터 유지)", endpoint, pageNo)
                 return null
             }
-            val code: String? = envelope.response?.header?.resultCode
+            val response: DataGoKrResponse? = envelope.response
+            val header: DataGoKrHeader? = response?.header
+            val code: String? = header?.resultCode
             if (!code.isNullOrBlank() && code != "00") {
                 log.warn(
                     "data.go.kr resultCode={}({}) (endpoint={}) — 갱신 중단(기존 데이터 유지)",
-                    code, envelope.response?.header?.resultMsg ?: "", endpoint,
+                    code, header.resultMsg ?: "", endpoint,
                 )
                 return null
             }
 
-            val rows: List<JsonNode> = extractItems(envelope.response?.body?.items)
-            envelope.response?.body?.totalCount?.let { totalCount = it }
+            val rows: List<JsonNode> = extractItems(response?.body?.items)
+            response?.body?.totalCount?.let { totalCount = it }
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
@@ -120,8 +122,8 @@ class DataGoKrFacilityClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     companion object {
-        const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info"
-        const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info"
+        const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info/info"
+        const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info/info"
         const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
         /** 표준 조회서비스 페이지당 최대 건수. */
@@ -131,12 +133,18 @@ class DataGoKrFacilityClient(
         const val MAX_PAGES: Int = 1000
 
         private val CCTV_FIELDS: FieldNames = FieldNames(
-            lat = listOf("latitude"), lng = listOf("longitude"),
-            name = listOf("institutionNm"), address = listOf("rdnmadr"), sigungu = emptyList(),
+            lat = listOf("WGS84_LAT", "latitude"),
+            lng = listOf("WGS84_LOT", "longitude"),
+            name = listOf("MNG_INST_NM", "institutionNm"),
+            address = listOf("LCTN_ROAD_NM_ADDR", "LCTN_LOTNO_ADDR", "rdnmadr"),
+            sigungu = emptyList(),
         )
         private val BELL_FIELDS: FieldNames = FieldNames(
-            lat = listOf("lat"), lng = listOf("lon"),
-            name = listOf("mng_inst"), address = listOf("rn_adres"), sigungu = listOf("sgg_cd"),
+            lat = listOf("WGS84_LAT", "lat"),
+            lng = listOf("WGS84_LOT", "lon"),
+            name = listOf("INSTL_PSTN", "MNG_INST_NM", "mng_inst"),
+            address = listOf("LCTN_ROAD_NM_ADDR", "LCTN_LOTNO_ADDR", "rn_adres"),
+            sigungu = listOf("sgg_cd"),
         )
 
         /**

@@ -28,7 +28,7 @@ class DataGoKrFacilityClientHttpTest {
     }
 
     private fun cctvItem(lat: Any = 37.5, lng: Any = 127.0, name: String = "관리기관") =
-        """{"latitude":"$lat","longitude":"$lng","institutionNm":"$name","rdnmadr":"서울시 도로명 1"}"""
+        """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
 
     private fun envelope(items: String, totalCount: Int) =
         """{"response":{"header":{"resultCode":"00","resultMsg":"NORMAL"},"body":{"items":[$items],"totalCount":$totalCount}}}"""
@@ -70,9 +70,9 @@ class DataGoKrFacilityClientHttpTest {
         val (client, server) = bind()
         val body: String = """
             {"response":{"header":{"resultCode":"00"},"body":{"items":{"item":[
-              {"lat":"37.51","lon":"127.02","mng_inst":"강남구청","rn_adres":"강남대로 1","sgg_cd":"11680"},
-              {"lat":"","lon":"127.02","mng_inst":"좌표없음"},
-              {"lat":"not-a-number","lon":"127.02","mng_inst":"좌표불량"}
+              {"WGS84_LAT":"37.51","WGS84_LOT":"127.02","INSTL_PSTN":"신문초삼거리","MNG_INST_NM":"강남구청","LCTN_ROAD_NM_ADDR":"강남대로 1"},
+              {"WGS84_LAT":"","WGS84_LOT":"127.02","INSTL_PSTN":"좌표없음"},
+              {"WGS84_LAT":"not-a-number","WGS84_LOT":"127.02","INSTL_PSTN":"좌표불량"}
             ]},"totalCount":3}}}
         """.trimIndent()
         server.expect(requestTo(containsString(DataGoKrFacilityClient.BELL_ENDPOINT)))
@@ -81,8 +81,8 @@ class DataGoKrFacilityClientHttpTest {
         val points: List<DataGoKrPoint>? = client.fetchEmergencyBells()
 
         assertThat(points).hasSize(1)
-        assertThat(points!![0].name).isEqualTo("강남구청")
-        assertThat(points[0].sigungu).isEqualTo("11680")
+        assertThat(points!![0].name).isEqualTo("신문초삼거리")
+        assertThat(points[0].address).isEqualTo("강남대로 1")
     }
 
     @Test

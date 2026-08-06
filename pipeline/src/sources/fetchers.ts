@@ -178,23 +178,20 @@ type LiveSpec = OdcloudLiveSpec | SeoulLiveSpec | DataGoKrLiveSpec;
 
 /** source 별 라이브 호출 스펙(키 등록 후 uddi/service 채움). */
 const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
-  // B-1: 전국 CCTV — 행정안전부_CCTV정보 조회서비스(apis.data.go.kr/1741000/cctv_info).
-  //  엔드포인트 확정(데이터포털 명시값). ⚠️ keyColumns(원천 필드명)는 키 활성화 후 실응답으로 최종 확정.
-  //  purpose(설치목적구분)/cameraCount(카메라대수)는 방범 필터·표시용 — 조회서비스 영문 필드명은
-  //  키 활성화 후 실응답으로 확정 필요(미설정 시 purpose 결측 → filterSecurityCctv 가 fail-open 통과).
+  // B-1: 전국 CCTV — 행정안전부_CCTV정보 조회서비스.
   "B-1": {
     kind: "datagokr",
-    endpoint: "https://apis.data.go.kr/1741000/cctv_info",
+    endpoint: "https://apis.data.go.kr/1741000/cctv_info/info",
     type: "cctv",
     coordSystem: "wgs84",
     keyColumns: {
-      lat: "latitude",
-      lng: "longitude",
-      name: "institutionNm",
-      address: "rdnmadr",
+      lat: "WGS84_LAT",
+      lng: "WGS84_LOT",
+      name: "MNG_INST_NM",
+      address: "LCTN_LOTNO_ADDR",
       sigungu: "",
-      purpose: "", // TODO(키 활성 후): 설치목적구분 영문 필드명 확정
-      cameraCount: "", // TODO(키 활성 후): 카메라대수 영문 필드명 확정
+      purpose: "INSTL_PRPS_SE_NM",
+      cameraCount: "CAM_CNTOM",
     },
   },
   // B-2: 여성안심지킴이집 (WGS84) — 표준데이터 조회서비스(활용신청 승인 2026-06-30, 일일 트래픽 1000).
@@ -242,15 +239,19 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
   },
-  // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스(apis.data.go.kr/1741000/emergency_call_box_info).
-  //  이 조회서비스는 lat/lon(WGS84)을 직접 제공하므로 좌표변환 불요.
-  //  ⚠️ data.go.kr 키 활성화 후 동작(키 미활성 시 liveApi 가 안전 통과). 필드명은 조회서비스 스펙 기준.
+  // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스.
   "D-1": {
     kind: "datagokr",
-    endpoint: "https://apis.data.go.kr/1741000/emergency_call_box_info",
+    endpoint: "https://apis.data.go.kr/1741000/emergency_call_box_info/info",
     type: "emergency_bell",
     coordSystem: "wgs84",
-    keyColumns: { lat: "lat", lng: "lon", name: "mng_inst", address: "rn_adres", sigungu: "sgg_cd" },
+    keyColumns: {
+      lat: "WGS84_LAT",
+      lng: "WGS84_LOT",
+      name: "INSTL_PSTN",
+      address: "LCTN_LOTNO_ADDR",
+      sigungu: "",
+    },
   },
   // A-4 / D-2 는 per-district(자치구별 상이) → 라이브 대상 아님. manual 유지.
 };
