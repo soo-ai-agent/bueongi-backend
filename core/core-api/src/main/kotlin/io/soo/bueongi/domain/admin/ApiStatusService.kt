@@ -146,10 +146,8 @@ class ApiStatusService(
         /** 오늘 호출 수가 일일 쿼터 상한의 이 비율 이상이면 경고(quotaWarning). */
         const val QUOTA_WARNING_RATIO: Double = 0.8
 
-        /** 쿼터 소진율 계산용 1시간(ms). */
         const val HOUR_MS: Long = 3_600_000L
 
-        /** 하루 시간 수 — 쿼터 마감 예상 총량 = 시간당 소진율 × 이 값. */
         const val HOURS_PER_DAY: Int = 24
 
         private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")

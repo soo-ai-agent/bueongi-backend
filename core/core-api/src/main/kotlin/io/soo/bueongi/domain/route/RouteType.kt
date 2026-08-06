@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue
  * 경로 유형. 직선거리(haversine)에 유형별 우회/단축 계수를 곱해 시간·거리를 만든다. 결정론적.
  *
  * 안심 귀가 도메인: safe(가장 밝고 안전) → main(주요 도로) → fast(최단)로 갈수록 우회가 준다.
- * (과거의 유형별 시설 밀도(perKm) 파라미터는 밀도 추정 폐기로 제거됐다 — 시설 개수는 회랑 실측만 쓴다.)
+ * (유형별 시설 밀도 추정 파라미터는 두지 않는다 — 시설 개수는 회랑 실측만 쓴다.)
  *
  * [apiType] 이 와이어 문자열이다([JsonValue]) — RouteOption.type 이 이 값('safe'|'main'|'fast')으로 직렬화되는
  * 프론트 응답 계약이므로, 정확히 이 문자열을 내야 한다. 역직렬화는 [from] 으로 고정한다([JsonCreator]).

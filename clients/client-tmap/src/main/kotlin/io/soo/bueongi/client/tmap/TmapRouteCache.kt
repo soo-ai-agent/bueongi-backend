@@ -3,7 +3,7 @@ package io.soo.bueongi.client.tmap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Tmap 보행자 경로 응답 캐시(P0-2 쿼터 거버넌스).
+ * Tmap 보행자 경로 응답 캐시(쿼터 거버넌스).
  *
  * 같은 출발/도착/옵션/경유지 조합은 짧은 시간 안에 재요청되는 일이 잦다(경로 비교 재진입,
  * 안심 강도 변경, 화면 왕복). 동일 키 재요청을 TTL 동안 재사용해 Tmap 일 쿼터/요금을 아낀다.

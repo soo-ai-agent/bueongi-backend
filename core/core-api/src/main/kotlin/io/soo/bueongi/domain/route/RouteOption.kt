@@ -31,8 +31,8 @@ data class RouteOption(
     val score: Int? = null,
     /** 경로변 안심시설 마커(회랑 내 CCTV/안심집/비상벨 + 출발/도착). safe-compare 전용. */
     val markers: List<FacilityPoi>? = null,
-    /** 안전 점수 근거(P0-4) — 회랑 내 시설 밀도/개수/겹침. safe-compare 전용. */
+    /** 안전 점수 근거 — 회랑 내 시설 밀도/개수/겹침. safe-compare 전용. */
     val breakdown: ScoreBreakdown? = null,
-    /** 데이터 출처/기준일(P0-1·P0-3). safe-compare(실데이터) 전용 — 폴백 응답엔 없어 프론트가 '예시'로 구분. */
+    /** 데이터 출처/기준일. safe-compare(실데이터) 전용 — 폴백 응답엔 없어 프론트가 '예시'로 구분. */
     val provenance: DataProvenance? = null,
 )

@@ -37,12 +37,10 @@ export interface FetchContext {
 const DEFAULT_RAW_DIR = join(import.meta.dirname, "..", "..", "data", "raw");
 const DEFAULT_CSV_DIR = join(import.meta.dirname, "..", "..", "data", "csv");
 
-// ---------------------------------------------------------------------------
 // CSV 입력 스펙 — sources.yaml 의 keyColumns(한글 원천 컬럼명)와 1:1.
 // 공공데이터포털에서 내려받은 표준데이터 CSV 를 data/csv/{id}.csv 로 두면
 // 이 스펙으로 RawRecord 매핑된다. A-4/D-2(자치구별 좌표계 상이·per-district)는
-// CSV 일괄 매핑 대상이 아니다(기존 manual 경로 유지).
-// ---------------------------------------------------------------------------
+// CSV 일괄 매핑 대상이 아니다(manual 경로 유지).
 
 type CsvSpec = {
   type: AssetType;
@@ -138,7 +136,6 @@ async function collect(
   return [];
 }
 
-// ---------------------------------------------------------------------------
 // 라이브 원천 스펙. fixtures/data/raw 가 없을 때만 사용된다.
 //
 // ⚠️ uddi(odcloud 데이터셋 식별자) / service(서울 service명) 는 키 등록 후
@@ -147,7 +144,6 @@ async function collect(
 //    keyColumns/type 매핑 로직 자체는 완성돼 있어 값만 채우면 동작한다.
 //
 // keyColumns 는 sources.yaml 의 정의와 1:1 로 맞춘다(논리필드→원천 컬럼명).
-// ---------------------------------------------------------------------------
 
 type OdcloudLiveSpec = {
   kind: "odcloud";
@@ -202,7 +198,7 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     },
   },
   // B-2: 여성안심지킴이집 (WGS84) — 표준데이터 조회서비스(활용신청 승인 2026-06-30, 일일 트래픽 1000).
-  //  odcloud(uddi 미확정) 대신 REST 조회서비스로 전환 — 백엔드 라이브 갱신(client-datagokr)과 동일 원천.
+  //  백엔드 라이브 갱신(client-datagokr)과 동일 원천.
   //  keyColumns 는 표준데이터 영문 규격 1순위(키 활성 후 실응답으로 확정; 백엔드 클라이언트는 한글 폴백도 가짐).
   "B-2": {
     kind: "datagokr",
@@ -246,9 +242,8 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
   },
-  // D-1: 전국 비상벨 (EPSG:5174) — catalogId 15028206
   // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스(apis.data.go.kr/1741000/emergency_call_box_info).
-  //  이 조회서비스는 lat/lon(WGS84)을 직접 제공하므로 좌표변환 불요(기존 odcloud EPSG5174 대비 단순).
+  //  이 조회서비스는 lat/lon(WGS84)을 직접 제공하므로 좌표변환 불요.
   //  ⚠️ data.go.kr 키 활성화 후 동작(키 미활성 시 liveApi 가 안전 통과). 필드명은 조회서비스 스펙 기준.
   "D-1": {
     kind: "datagokr",

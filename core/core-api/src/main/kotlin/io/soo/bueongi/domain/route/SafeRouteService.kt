@@ -187,7 +187,7 @@ class SafeRouteService(
     }
 
     /**
-     * 실데이터 출처/기준일(P0-1·P0-3). safe-compare 산출에만 붙는다(폴백엔 없음 → 프론트가 '예시'로 구분).
+     * 실데이터 출처/기준일. safe-compare 산출에만 붙는다(폴백엔 없음 → 프론트가 '예시'로 구분).
      * 기준일은 manifest generatedAt(ISO)의 연·월을 "YYYY.MM"로 표기(미상이면 생략).
      */
     private fun buildProvenance(): DataProvenance {
@@ -231,7 +231,7 @@ class SafeRouteService(
         /** 동률 처리용 인덱스 미세 가중 — "먼저 나온 후보 우선"을 점수 비교 한 번으로 표현한다. */
         const val TIE_BREAK_EPSILON: Double = 1e-9
 
-        /** 안심시설 데이터 원천 표기(P0-3). 파이프라인 sources.yaml 의 원천 계열. */
+        /** 안심시설 데이터 원천 표기. 파이프라인 sources.yaml 의 원천 계열. */
         const val DATA_ORIGIN: String = "공공데이터포털·서울 열린데이터광장"
 
         /** 기준일 표기용 "YYYY-MM" 길이 — generatedAt(ISO)에서 연·월만 잘라 쓴다. */

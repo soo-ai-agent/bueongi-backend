@@ -64,7 +64,6 @@ function collapse(rep: CdnItem, members: CdnItem[]): CdnItem {
   const b3 = members.find((m) => m.source === "B-3");
   const b4 = members.find((m) => m.source === "B-4");
 
-  // 좌표 선택: B-3 우선, 없으면 B-4.
   const coordSource = b3 ?? b4 ?? rep;
   const mergedSources = Array.from(new Set(members.map((m) => m.source)));
   const aliases = Array.from(

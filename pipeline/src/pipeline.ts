@@ -93,7 +93,6 @@ async function main(): Promise<void> {
     });
     b3stat.output = b3items.length;
 
-    // B-4: EPSG:5179 → WGS84
     const { items: b4items, stat: b4stat } = convertProjected(b4raw, "B-4", "epsg5179");
 
     const merged = mergePolice(b3items, b4items);
@@ -152,7 +151,6 @@ async function main(): Promise<void> {
     const d1Sigungus = new Set(d1items.map((i) => i.sigunguCode).filter((s): s is string => !!s));
     const merged = mergeEmergencyBell(d1items, d2items, d1Sigungus);
 
-    // 병합 결과를 시군구로 분할.
     for (const [sg, group] of splitBySigungu(merged.items)) {
       files.push(buildCollection("emergency_bell", sg, group, ["D-1", "D-2"], NOW, sg));
     }
@@ -203,8 +201,6 @@ async function main(): Promise<void> {
   console.log(`[pipeline] quarantined=${quarantine.length}, coordFailures=${coordFailures.length}`);
 }
 
-// ---------- 공통 변환 헬퍼 ----------
-
 function toItem(
   r: RawRecord,
   source: SourceId,
@@ -240,7 +236,7 @@ const CCTV_SECURITY_PURPOSES = new Set(["생활방범", "다목적", "어린이�
 function filterSecurityCctv(raw: RawRecord[]): RawRecord[] {
   let withPurpose = 0;
   const kept = raw.filter((r) => {
-    if (r.purpose == null) return true; // 목적 결측 → 필터 불가(보수적 통과)
+    if (r.purpose == null) return true;
     withPurpose++;
     return CCTV_SECURITY_PURPOSES.has(r.purpose);
   });

@@ -33,8 +33,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 /**
  * 검증/요청 파싱 실패를 표준 에러 스키마(RFC 7807 [ProblemDetail] + `errors[]`)로 변환한다.
  *
- * 기존엔 Spring 기본 포맷이라 프론트가 status 코드만 신뢰할 수 있었다. 이제 본문에
- * `errors`(field/message/rejectedValue)를 담아, 어떤 좌표 필드가 왜 거부됐는지 사용자에게 표시할 수 있다.
+ * 본문의 `errors`(field/message/rejectedValue)로 어떤 필드가 왜 거부됐는지 사용자에게 표시한다.
  * 응답 content-type 은 `application/problem+json`(Spring 표준).
  */
 @RestControllerAdvice
@@ -404,7 +403,7 @@ class ApiControllerAdvice(
 
     /**
      * 위에서 처리되지 않은 모든 예외(미처리 런타임 오류 등) → 500 + `code:"INTERNAL_ERROR"`.
-     * "모든 에러 응답에 code" 계약을 프레임워크 경계까지 마무리한다(이전엔 500 이 `code` 없는 응답이었음).
+     * "모든 에러 응답에 code" 계약을 프레임워크 경계까지 마무리한다.
      *
      * 안심앱 보안상 응답 본문에는 내부 details(스택트레이스·예외 메시지)를 절대 싣지 않는다 — 대신
      * 디버깅용 전체 스택트레이스는 **서버 로그**로만 남긴다(`log.error`). 즉 dev 가시성과 비노출을 양립시킨다.

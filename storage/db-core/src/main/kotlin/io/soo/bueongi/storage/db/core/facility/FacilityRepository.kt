@@ -44,7 +44,7 @@ class FacilityRepository(
     /** 적재된 안심귀갓길 좌표열(불변 스냅샷). */
     override val safePaths: List<SafePath> get() = _safePaths
 
-    /** manifest.json 기반 데이터 신선도(P0-3). manifest 부재/파싱 실패면 null(표기 생략). */
+    /** manifest.json 기반 데이터 신선도. manifest 부재/파싱 실패면 null(표기 생략). */
     override val freshness: FacilityFreshness? get() = _freshness
 
     /** 시설 종류별 공간 인덱스. 미적재 종류는 빈 인덱스를 돌려준다(NPE 방지). */

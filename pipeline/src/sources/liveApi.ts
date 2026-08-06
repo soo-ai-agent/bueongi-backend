@@ -1,9 +1,5 @@
 // 라이브 공공데이터 API 호출 헬퍼.
 //
-// 두 원천 계열을 지원한다:
-//   1) data.go.kr 표준데이터(odcloud)  — fetchOdcloud
-//   2) 서울 열린데이터광장(openapi)     — fetchSeoulOpenApi
-//
 // 공통 규약:
 //   - 키/식별자(uddi·service명)가 없으면 호출하지 않고 [] 로 안전 통과.
 //   - 네트워크/HTTP/파싱 에러도 [] 로 흡수해 파이프라인을 깨지 않는다.
@@ -44,10 +40,6 @@ async function fetchWithTimeout(
     clearTimeout(t);
   }
 }
-
-// ---------------------------------------------------------------------------
-// 1) data.go.kr 표준데이터 (odcloud)
-// ---------------------------------------------------------------------------
 
 export interface OdcloudOptions {
   /** sources.yaml 의 catalogId (예: "15013094"). */
@@ -102,7 +94,6 @@ export async function fetchOdcloud(
     return [];
   }
   if (!uddi) {
-    // uddi 미확정 → 키 등록 후 채워야 함. 호출 불가.
     console.warn(`[liveApi] odcloud uddi 미설정(catalogId=${catalogId}). 키 등록 후 uddi 확정 필요 → []`);
     return [];
   }
@@ -143,10 +134,6 @@ export async function fetchOdcloud(
 
   return rows;
 }
-
-// ---------------------------------------------------------------------------
-// 2) 서울 열린데이터광장 (openapi)
-// ---------------------------------------------------------------------------
 
 export interface SeoulOpenApiOptions {
   /** 서울 열린데이터광장 인증키. 없으면 [] 로 안전 통과. */
@@ -238,10 +225,6 @@ export async function fetchSeoulOpenApi(
 
   return rows;
 }
-
-// ---------------------------------------------------------------------------
-// 2-b) data.go.kr 표준 조회서비스 (REST, apis.data.go.kr/openapi/tn_pubr_*)
-// ---------------------------------------------------------------------------
 
 export interface DataGoKrStandardOptions {
   /** 전체 엔드포인트 URL (예: https://api.data.go.kr/openapi/tn_pubr_public_cctv_api). */
@@ -352,10 +335,6 @@ export async function fetchDataGoKrStandard(
   return rows;
 }
 
-// ---------------------------------------------------------------------------
-// 3) keyColumns → RawRecord 매퍼
-// ---------------------------------------------------------------------------
-
 /**
  * sources.yaml 의 keyColumns(논리필드 → 원천 컬럼명) 매핑.
  * 예: { lat: "위도", lng: "경도", name: "관리기관명", ... }
@@ -435,7 +414,6 @@ export function mapRowToRaw(
   return rec;
 }
 
-/** 원천 행 배열 전체를 RawRecord[] 로 매핑. */
 export function mapRowsToRaw(
   rows: Array<Record<string, unknown>>,
   opts: MapOptions,

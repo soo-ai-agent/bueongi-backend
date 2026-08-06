@@ -41,16 +41,13 @@ class SlackAlertConfig(
     /** 마스터 발송 토글(관리자 편집값) — 효과 발송 여부가 아니라 토글 그 자체(요약 표시용). */
     fun enabled(): Boolean = masterEnabled
 
-    /** 현재 스로틀 창(분). */
     fun throttleMinutes(): Int = throttleMinutesValue
 
     /** 현재 뮤트 카테고리 key 집합(불변 사본). */
     fun mutedCategories(): Set<String> = mutedCategorySet
 
-    /** 효과 발송 여부 = webhook 설정됨 && 마스터 토글 on. */
     fun sendEnabled(): Boolean = webhookConfigured() && masterEnabled
 
-    /** 스로틀 창(ms). */
     fun throttleMillis(): Long = throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
 
     /**
