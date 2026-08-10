@@ -5,17 +5,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
-/**
- * [PlaceSearchService] 의 소스 선택/폴백 로직 고정 테스트.
- * - 외부 키 미설정 → 시드.
- * - 외부 키 설정 + 성공 → 실연동 결과.
- * - 외부 키 설정 + 실패(예외) → 시드 폴백(검색 불능보다 근사 결과가 안전).
- */
 class PlaceSearchServiceSourceTest {
 
     private val seed: SeedPlaceProvider = SeedPlaceProvider()
 
-    /** 호출 여부/검색어를 캡처하는 테스트용 외부 소스. */
     private class FakeRemote(
         override val isEnabled: Boolean,
         private val behavior: (String) -> List<PlaceItem>,

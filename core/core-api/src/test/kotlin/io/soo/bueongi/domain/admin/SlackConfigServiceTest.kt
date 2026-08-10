@@ -7,10 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
-/**
- * [SlackConfigService] 계약 테스트 — 조회 시 webhook 마스킹·카테고리 5종 라벨, 편집 반영, 알 수 없는 카테고리 거부,
- * 테스트 발송 위임을 고정한다. 설정 홀더는 실제([SlackAlertConfig]), 알림기는 결과를 지정하는 페이크로 둔다.
- */
 class SlackConfigServiceTest {
 
     private val webhook: String = "https://hooks.slack.com/services/T00000000/B11111111/abcdefghijklmnop"

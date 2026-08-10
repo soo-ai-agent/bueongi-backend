@@ -7,13 +7,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 
-/**
- * Redis 기반 접속 내역 저장소. 공유 저장소([io.soo.bueongi.storage.db.core.share.RedisLocationStore])와 같은
- * `StringRedisTemplate` 을 재사용하며, `bueongi.share.redis-url` 주입 시에만 [ApiCallLogStoreConfig] 가 이 빈을 등록한다.
- *
- * 키 모델: 단일 리스트 `apilog` — [record] 는 `LPUSH`(최신을 머리에) 후 `LTRIM 0..CAP-1` 로 최근 [API_CALL_LOG_CAP] 건만 유지.
- * [findRecent] 는 `LRANGE 0 -1`(머리=최신부터) 후 provider 필터 + limit 절삭. 값은 공유 경로와 동일하게 JSON 문자열로 직렬화한다.
- */
 class RedisApiCallLogStore(
     private val redis: StringRedisTemplate,
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
@@ -44,7 +37,6 @@ class RedisApiCallLogStore(
             .toList()
     }
 
-    /** 손상 JSON 은 건너뛴다(모델 변경/데이터 손상이 접속 내역 조회 전체를 깨지 않게). */
     private fun parseOrNull(json: String): ApiCallLog? =
         try {
             objectMapper.readValue<ApiCallLog>(json)

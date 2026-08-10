@@ -3,10 +3,6 @@ package io.soo.bueongi.client.tmap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [TmapRouteCache] 단위 테스트(P0-2 쿼터 거버넌스). 동일 출발/도착 재요청 캐시 히트,
- * TTL 만료, 좌표 반올림 정규화(GPS 미세 흔들림), 경유지 키 분리, 용량 상한을 고정한다.
- */
 class TmapRouteCacheTest {
 
     private val origin: TmapCoord = TmapCoord(37.5, 127.0)

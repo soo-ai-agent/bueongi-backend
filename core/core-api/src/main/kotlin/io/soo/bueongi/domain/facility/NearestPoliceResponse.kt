@@ -9,5 +9,4 @@ import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
-/** `GET /api/facilities/police/nearest` 응답 봉투 — 프론트 NearbyPolice 계약(거리순 정렬)과 동형. */
 data class NearestPoliceResponse(val items: List<NearestPolice>)

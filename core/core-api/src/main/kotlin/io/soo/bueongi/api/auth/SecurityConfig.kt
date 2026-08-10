@@ -15,14 +15,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
-/**
- * 관리자 페이지 인증 필터체인. `/api/admin` 하위만 `ROLE_ADMIN` 으로 보호하고, 나머지 경로
- * (기존 `/api`·`/share` 등)는 무인증으로 100% 보존한다.
- *
- * 필터체인 2개:
- *  - @Order(0) admin: `/api/admin` 하위 → STATELESS + `hasRole("ADMIN")` + JWT 필터. 401·403 은 bueongi 표준 JSON.
- *  - @Order(1) 나머지: 전 경로 permitAll. **이게 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다.**
- */
+/** 필터체인 2개 — @Order(1) 전 경로 permitAll 체인이 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다. */
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(JwtProperties::class, AdminAuthProperties::class)
@@ -30,7 +23,6 @@ class SecurityConfig(
     private val objectMapper: ObjectMapper,
 ) {
 
-    /** JWT 검증기는 이 설정 안에서만 생성한다(공개키 fail-fast 가 웹 컨텍스트로 국한되도록). */
     @Bean
     fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial =
         JwtKeyMaterialFactory.create(props, environment.activeProfiles.contains("local"))
@@ -76,7 +68,6 @@ class SecurityConfig(
         return http.build()
     }
 
-    /** 인증 실패(토큰 없음/무효) → 401. 필터가 대개 먼저 처리하지만 방어적으로 둔다. */
     private fun unauthorizedEntryPoint() = AuthenticationEntryPoint { _, response, _ ->
         AuthProblemWriter.write(
             response = response,
@@ -88,7 +79,6 @@ class SecurityConfig(
         )
     }
 
-    /** 인증됐으나 ROLE_ADMIN 이 아님 → 403. */
     private fun forbiddenHandler() = AccessDeniedHandler { _, response, _ ->
         AuthProblemWriter.write(
             response = response,

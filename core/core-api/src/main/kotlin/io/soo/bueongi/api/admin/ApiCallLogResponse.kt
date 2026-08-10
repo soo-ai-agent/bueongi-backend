@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** 외부 API 접속 내역 응답 1건 — 저장 모델([ApiCallLog])의 웹 표현(레이어 분리). */
 data class ApiCallLogResponse(
     val atEpochMs: Long,
     val provider: String,

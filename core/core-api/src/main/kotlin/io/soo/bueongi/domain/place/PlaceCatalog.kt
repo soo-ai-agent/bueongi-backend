@@ -1,11 +1,5 @@
 package io.soo.bueongi.domain.place
 
-/**
- * 내장 시드 장소 카탈로그. 외부 지도 API 키(KAKAO_REST_API_KEY) 가 없을 때 검색 소스로 쓴다 —
- * 키가 주입되면 실 Kakao Local 검색으로 교체해도 응답 계약(PlaceItem)은 동일하다.
- *
- * 좌표는 실제 위치 근사값(수도권 주요 지점) — 경로 비교/안심시설 계산의 입력으로 바로 쓸 수 있다.
- */
 internal val SEED_PLACE_CATALOG: List<PlaceItem> = listOf(
     PlaceItem("강남역 2번 출구", "서울 강남구 강남대로 396", 37.4979, 127.0276),
     PlaceItem("강남대학교", "경기 용인시 기흥구 강남로 40", 37.2710, 127.1283),

@@ -5,10 +5,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
-/**
- * /share/{token}/location 왕복(POST 갱신 → GET 회수)과 종료(POST end), 그리고 좌표·owner_secret·remaining
- * 검증 및 만료/404 분기를 고정한다.
- */
 class ShareControllerLocationTest : ShareControllerTestSupport() {
 
     @Test

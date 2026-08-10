@@ -4,17 +4,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
-/**
- * [Epsg5174] 변환 검증 — 파이프라인 proj4(같은 `+towgs84` 정의)로 뽑은 기준값으로 datum shift 규약(위치벡터)과
- * 정확도를, 왕복(forward→inverse)으로 3단 변환 급수의 자기일관성을 고정한다.
- *
- * 기준값: proj4 로 WGS84(h=0) → EPSG:5174 변환한 (x,y)(pipeline transform.ts 와 동일 파라미터).
- * 이 x/y 를 [toWgs84] 에 넣어 원 WGS84 로 복원되는지 본다 — 잘못된 datum 규약(부호/전치)이면
- * 수백 m(≈1e-3° 이상) 어긋나므로, 1e-4°(≈11m) 대조가 규약 오류를 잡는다(실측 오차는 이보다 훨씬 작다).
- */
 class Epsg5174Test {
 
-    /** proj4 기준값: (설명, wgs84Lat, wgs84Lng, epsg5174X, epsg5174Y). */
+    /** 파이프라인 proj4(동일 +towgs84 정의, h=0)로 뽑은 기준값 — (설명, wgs84Lat, wgs84Lng, epsg5174X, epsg5174Y). */
     private val anchors: List<Anchor> = listOf(
         Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),
         Anchor("강남역", 37.4981, 127.0276, 202370.8770, 443988.3369),

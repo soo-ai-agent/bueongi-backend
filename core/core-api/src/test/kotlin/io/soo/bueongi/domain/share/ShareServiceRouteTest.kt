@@ -12,12 +12,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 경로 컨텍스트 저장(saveRoute)/조회(getRoute)의 왕복·만료, owner_secret 검증(404), 위치와의 독립 저장을 고정한다.
- */
 class ShareServiceRouteTest : ShareServiceTestSupport() {
 
-    /** 경로 컨텍스트(저장 모델). 쓰기 비밀은 saveRoute 호출부에서 별도 인자로 넘긴다. */
     private fun route() = StoredRoute(
         destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
         path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),

@@ -12,13 +12,6 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 
-/**
- * [AdminController] slack-config 슬라이스 테스트(@WebMvcTest). GET/PUT/POST 의 HTTP 계약과 PUT 후 GET 반영을
- * 고정한다. 편집이 공유 설정 홀더(싱글턴)를 바꾸므로 각 메서드마다 컨텍스트를 새로 세워 상호 간섭을 막는다.
- *
- * webhook 은 미설정 홀더([ApiLogsControllerTest.FakeStoreConfig])라 마스킹 형식은 도메인 테스트
- * ([io.soo.bueongi.domain.admin.SlackConfigServiceTest])가 커버하고, 여기선 미설정 상태 shape·반영만 본다.
- */
 @WebMvcTest(AdminController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiLogsControllerTest.FakeStoreConfig::class)

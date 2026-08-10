@@ -4,10 +4,6 @@ import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [GridSpatialIndex] 단위 테스트. 버킷은 후보만 좁히고 최종 포함은 정확한 거리로 거른다 —
- * 반경/회랑 질의가 셀 경계와 무관하게 정확한 결과를 내는지, 빈 인덱스 방어를 고정한다.
- */
 class GridSpatialIndexTest {
 
     private fun cctv(lat: Double, lng: Double) = FacilityPoint(FacilityType.CCTV, lat, lng)

@@ -14,11 +14,6 @@ import kotlin.math.roundToLong
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/**
- * Tmap 보행자 경로 GeoJSON 파서(순수 함수). LineString 좌표를 이어 경로 path 를, 첫 Point 의
- * totalDistance/totalTime 으로 거리·시간을, 각 Point 의 turnType/description 등으로 단계별 안내(steps)를 만든다.
- * 네트워크와 분리해 단위 검증 가능하게 둔다.
- */
 object TmapGeoJson {
 
     fun parse(root: JsonNode, searchOption: String): TmapRoute? {
@@ -91,7 +86,7 @@ object TmapGeoJson {
         )
     }
 
-    /** GeoJSON 좌표 [lng, lat] → TmapCoord. 비유효(NaN/∞/범위 밖)는 null. */
+    /** GeoJSON 좌표는 [lng, lat] 순서. */
     private fun parseLngLat(node: JsonNode): TmapCoord? {
         if (!node.isArray || node.size() < 2) {
             return null
@@ -107,10 +102,7 @@ object TmapGeoJson {
         return TmapCoord(lat, lng)
     }
 
-    /**
-     * totalDistance 결측 응답의 폴백용 경로 길이(하버사인 합). 자립 모듈 원칙(다른 모듈 미의존)을 위한
-     * 클라이언트 내부 구현 — 도메인 공용 공간 연산의 단일 출처는 storage 의 SpatialMath 다.
-     */
+    // 자립 모듈 원칙상 storage SpatialMath 를 참조하지 않는 의도적 내부 중복
     private fun pathLengthMeters(path: List<TmapCoord>): Double {
         var sum: Double = 0.0
         for (i in 0 until path.size - 1) sum += haversineMeters(path[i], path[i + 1])

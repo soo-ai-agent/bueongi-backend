@@ -17,10 +17,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
-/**
- * [FacilityController] 슬라이스 테스트. 가짜 시설 소스로 거리순 정렬·반경 제한·검증(400)의
- * HTTP 계약을 고정한다 — 위급 기능 폴백 API라 계약이 흔들리면 프론트 긴급 시트가 조용히 깨진다.
- */
 @WebMvcTest(FacilityController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class, NearestPoliceFinder::class, FacilityControllerTest.FakeSourceConfig::class)

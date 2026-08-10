@@ -4,10 +4,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 
-/**
- * GET /share/{token} 보호자 페이지(HTML)의 계약과 reflected-XSS/경로주입 방어(escapeJs 서버측 +
- * encodeURIComponent 클라이언트측)를 고정한다.
- */
 class ShareControllerGuardianPageTest : ShareControllerTestSupport() {
 
     @Test

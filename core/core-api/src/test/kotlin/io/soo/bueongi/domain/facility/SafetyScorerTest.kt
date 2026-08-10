@@ -6,10 +6,6 @@ import io.soo.bueongi.storage.db.core.facility.SafePath
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [SafetyScorer] 단위 테스트(프론트 safetyScore.ts 동형). 회랑 밀도/겹침 → 0~100 점 매핑과
- * 데이터 부재 시 0 수렴, 가중치(safePath 0.15) 기여를 고정한다.
- */
 class SafetyScorerTest {
 
     private val path = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01))

@@ -14,7 +14,6 @@ import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
 
-/** 좌표(위경도). 위도 -90~90, 경도 -180~180. */
 data class LatLng(
     @field:NotNull
     @field:DecimalMin("-90.0") @field:DecimalMax("90.0")

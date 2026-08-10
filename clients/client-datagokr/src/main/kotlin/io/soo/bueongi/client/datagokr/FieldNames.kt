@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.net.URI
 
-/** 서비스별 원천 필드명 집합 — 필드마다 후보 목록을 순서대로 시도한다(빈 목록 = 미제공). */
 internal data class FieldNames(
     val lat: List<String>,
     val lng: List<String>,

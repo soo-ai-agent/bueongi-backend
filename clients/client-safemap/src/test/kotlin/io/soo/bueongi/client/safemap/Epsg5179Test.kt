@@ -4,9 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
-/**
- * [Epsg5179] 변환 검증 — 앵커(투영 원점)로 파라미터(FE/FN·기준 위경도)를, 왕복으로 급수 자기일관성을 고정한다.
- */
 class Epsg5179Test {
 
     @Test

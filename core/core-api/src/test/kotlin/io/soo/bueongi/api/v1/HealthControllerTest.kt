@@ -17,14 +17,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
-/**
- * [HealthController] 슬라이스 테스트(@WebMvcTest). GET /api/health 의 HTTP 계약(상태 + JSON shape)을 고정하고,
- * 특히 활성 소스 라벨([HealthStatus.placeSource])이 [RemotePlaceProvider.isEnabled] 를 정확히 반영하면서
- * **시크릿(키 값)을 응답에 노출하지 않음**을 검증한다.
- */
 class HealthControllerTest {
 
-    /** 외부 키 미설정(remote disabled) → placeSource="seed". */
     @WebMvcTest(HealthController::class)
     @AutoConfigureMockMvc(addFilters = false)
     @Import(HealthControllerSeedTest.DisabledRemoteConfig::class)
@@ -59,7 +53,6 @@ class HealthControllerTest {
         }
     }
 
-    /** 외부 키 설정(remote enabled) → placeSource="live", 키 값은 응답 어디에도 없음. */
     @WebMvcTest(HealthController::class)
     @AutoConfigureMockMvc(addFilters = false)
     @Import(HealthControllerLiveTest.EnabledRemoteConfig::class)
@@ -92,20 +85,14 @@ class HealthControllerTest {
         }
 
         companion object {
-            /** 응답에 절대 나타나면 안 되는 가짜 시크릿(노출 회귀 가드용 상수). */
             const val SECRET_KEY: String = "super-secret-kakao-key-value"
         }
     }
 }
 
-/** health 는 [ShareService.storeBackendLabel] 라벨만 쓰므로 스텁 저장소("memory") 위의 실 서비스면 충분하다. */
 private fun stubShareService(): ShareService =
     ShareService(StubLocationStore("memory"), Clock.systemUTC(), "http://localhost:3619")
 
-/**
- * health 슬라이스 테스트용 [LocationStore] 스텁. health 는 backend 라벨만 읽으므로
- * 저장 동작은 사용되지 않는다(호출 시 단언 실패로 오용을 드러냄).
- */
 private class StubLocationStore(override val backend: String) : LocationStore {
     override fun save(session: ShareSession) = throw AssertionError("health 는 save 를 호출하지 않는다")
     override fun findByToken(token: String): ShareSession? = throw AssertionError("health 는 findByToken 을 호출하지 않는다")

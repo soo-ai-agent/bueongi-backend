@@ -7,7 +7,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
-/** Kakao Local 키워드 검색 응답 래퍼. meta 등 미사용 필드는 무시한다. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class KakaoKeywordResponse(
     val documents: List<KakaoPlaceDocument> = emptyList(),

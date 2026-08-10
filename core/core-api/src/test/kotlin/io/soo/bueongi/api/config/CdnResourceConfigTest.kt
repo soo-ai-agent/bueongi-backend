@@ -12,12 +12,6 @@ import org.springframework.test.web.servlet.get
 import java.nio.file.Files
 import java.nio.file.Path
 
-/**
- * [CdnResourceConfig] — 시설 데이터 디렉터리(`bueongi.facility.data-dir`)의 `/cdn` 하위 HTTP 서빙 계약.
- *
- * 배포에서 프론트의 `VITE_CDN_BASE_URL` 이 이 경로(nginx → 백엔드 프록시)를 가리키므로,
- * ① 파일이 그대로 내려오고 ② 없는 파일은 404 이며 ③ 월 1회 갱신 데이터답게 캐시 헤더가 붙는지 고정한다.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

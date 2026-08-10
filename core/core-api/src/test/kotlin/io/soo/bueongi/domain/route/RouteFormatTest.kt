@@ -7,10 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteFormat]·거리 계산 단위 테스트(하버사인 단일 출처 = SpatialMath). 거리·표기·소요시간은 프론트 표시(dist/time)와 직접 매핑되므로
- * 표기 형식과 경계(1km, 0거리)를 고정한다.
- */
 class RouteFormatTest {
 
     @Test

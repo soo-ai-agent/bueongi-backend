@@ -8,10 +8,6 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
 
-/**
- * [FacilityUploadStore] 저장/재적재 테스트. save 가 {cdnType}.json 을 만들고, findByType 이 그것을 되읽어
- * 필드(purpose/cameraCount/address/phone)까지 왕복 보존하는지, 파일 없음/디렉터리 자동생성을 고정한다.
- */
 class FacilityUploadStoreTest {
 
     private val mapper: ObjectMapper = ObjectMapper()

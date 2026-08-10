@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.post
 
-/** POST /share/create 의 HTTP 계약(응답 shape·기본 TTL·TTL 범위 검증)을 고정한다. */
 class ShareControllerCreateTest : ShareControllerTestSupport() {
 
     @Test

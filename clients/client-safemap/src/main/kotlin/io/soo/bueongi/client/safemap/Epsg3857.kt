@@ -6,7 +6,6 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.tan
 
-/** EPSG:3857(Web Mercator) ↔ WGS84 변환. 재난안전데이터 공통 POI 좌표에 사용한다. */
 object Epsg3857 {
     private const val EARTH_RADIUS_METERS: Double = 6_378_137.0
     private const val MAX_COORDINATE_METERS: Double = 20_037_508.342789244

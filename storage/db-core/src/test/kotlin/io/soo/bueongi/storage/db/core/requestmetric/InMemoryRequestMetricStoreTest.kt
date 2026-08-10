@@ -4,10 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * [InMemoryRequestMetricStore] 단위 테스트 — 저장소 계약([RequestMetricStore])의 핵심 불변식을 고정한다:
- * 최근순(최신 먼저) 반환, 상한([REQUEST_METRIC_CAP]) 초과 시 오래된 것 축출, limit 절삭, 빈 조회.
- */
 class InMemoryRequestMetricStoreTest {
 
     private val store: InMemoryRequestMetricStore = InMemoryRequestMetricStore()

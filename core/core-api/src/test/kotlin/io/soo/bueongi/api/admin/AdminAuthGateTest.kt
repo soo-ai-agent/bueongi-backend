@@ -17,12 +17,6 @@ import java.security.KeyPairGenerator
 import java.util.Base64
 import java.util.Date
 
-/**
- * 관리자 인증 게이트 통합테스트(전체 컨텍스트 + 실 HTTP). SecurityConfig 의 필터체인이 실제로
- * `/api/admin` 하위만 ROLE_ADMIN 으로 보호하고 나머지는 무인증 보존하는지 end-to-end 로 고정한다.
- *
- * 서명 키는 런타임에 생성해 [DynamicPropertySource] 로 공개키를 주입하므로, 토큰과 검증기가 항상 정합한다.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AdminAuthGateTest(
     @Autowired private val restTemplate: TestRestTemplate,

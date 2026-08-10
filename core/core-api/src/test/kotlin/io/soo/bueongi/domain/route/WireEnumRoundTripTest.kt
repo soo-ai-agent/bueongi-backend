@@ -9,12 +9,6 @@ import io.soo.bueongi.domain.facility.FacilityCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * 와이어 판별자 enum 왕복 계약 — String → enum 전환이 JSON 을 바꾸지 않음을 못 박는다.
- *
- * 각 enum 값을 직렬화하면 정확히 기존 소문자 문자열을 내고(@JsonValue), 그 문자열을 역직렬화하면
- * 같은 값으로 돌아온다(@JsonCreator). 프로덕션/Redis 와 동일한 kotlin 모듈 매퍼로 검증한다.
- */
 class WireEnumRoundTripTest {
 
     private val mapper = jacksonObjectMapper()

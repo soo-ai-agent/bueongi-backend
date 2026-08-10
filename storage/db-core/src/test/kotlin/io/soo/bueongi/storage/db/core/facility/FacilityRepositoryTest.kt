@@ -10,10 +10,6 @@ import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Path
 
-/**
- * [FacilityRepository] 적재 테스트. CDN 컬렉션(type 별 하위폴더)·safepath 좌표열 파싱과,
- * 일부 파일 누락/파싱 실패·빈 디렉터리에도 죽지 않는 회복력을 고정한다.
- */
 class FacilityRepositoryTest {
 
     private val mapper: ObjectMapper = ObjectMapper()
@@ -24,7 +20,6 @@ class FacilityRepositoryTest {
         file.writeText(json)
     }
 
-    /** 업로드 없는 시나리오용 — 존재하지 않는 uploads 하위 디렉터리를 가리켜 findByType 이 null(오버레이 없음). */
     private fun uploadStore(tmp: Path): FacilityUploadStore =
         FacilityUploadStore(mapper, File(tmp.toFile(), "uploads").absolutePath)
 

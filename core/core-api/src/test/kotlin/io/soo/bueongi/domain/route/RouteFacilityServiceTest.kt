@@ -9,11 +9,6 @@ import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteFacilityService.alongRoute] 단위 테스트 — 정직화(밀도 추정 폐기) 후 계약:
- * 출발→도착 직선 회랑(30m)의 **실측 시설만** 집계한다. 요약(summary)은 생성된 POI 를 그대로 세므로
- * 항상 지도 표시(POI)와 일치하고, 실 데이터가 없는 유형(편의점 등)·회랑에 시설이 없는 유형은 0 이다.
- */
 class RouteFacilityServiceTest {
 
     private val origin: GeoPoint = GeoPoint(37.5, 127.000)
@@ -30,7 +25,6 @@ class RouteFacilityServiceTest {
             ),
         )
 
-    /** 직선(위도 37.5) 회랑 안에 CCTV 2·안심집 1·비상벨 1·가로등 1 을 놓은 소스. store/police 는 없음. */
     private fun mixedSource() = FakeFacilitySource(
         mapOf(
             FacilityType.CCTV to listOf(

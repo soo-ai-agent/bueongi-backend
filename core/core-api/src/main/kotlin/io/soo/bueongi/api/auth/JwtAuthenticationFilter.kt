@@ -10,14 +10,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
-/**
- * `Authorization: Bearer <jwt>` 를 검증해 SecurityContext 를 채운다. SecurityConfig 의 admin 필터체인
- * (securityMatcher `/api/admin` 하위)에만 등록되므로 별도 shouldNotFilter 는 불필요하다.
- *
- * roles 클레임을 그대로 authority 로 매핑한다(ROLE_ 하드코딩 금지). 부엉이가 `roles=["ROLE_ADMIN"]`
- * 을 발급하면 SecurityConfig 의 `hasRole("ADMIN")` 이 이 authority 와 매칭된다.
- * Bearer 부재·검증 실패 시 bueongi 표준 401(problem+json)로 체인을 중단한다.
- */
 class JwtAuthenticationFilter(
     private val verifier: JwtTokenVerifier,
     private val objectMapper: ObjectMapper,

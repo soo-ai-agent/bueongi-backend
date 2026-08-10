@@ -7,11 +7,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-/**
- * [KakaoRemotePlaceProvider] — 클라이언트 모델(KakaoPlace) → 도메인 계약(PlaceItem) 매핑과
- * isEnabled 위임을 고정한다. 구 단일모듈 스위트는 JSON→PlaceItem 을 끝까지 단언했는데,
- * 모듈 분리로 이 마지막 구간(어댑터)이 무단언으로 남는 회귀를 막는다.
- */
 class KakaoRemotePlaceProviderTest {
 
     @Test

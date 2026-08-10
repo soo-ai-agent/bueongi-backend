@@ -6,10 +6,6 @@ import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [SafeDetourPlanner] 단위 테스트. 직접경로 주변 시설 클러스터 → 앵커, 진행방향 중간 구간의 고가중 앵커 →
- * 경유지 조합 생성, 끝점 근처/과도 측방이탈 제외와 출발거리순 정렬을 고정한다.
- */
 class SafeDetourPlannerTest {
 
     private val origin: GeoPoint = GeoPoint(37.5, 127.0)

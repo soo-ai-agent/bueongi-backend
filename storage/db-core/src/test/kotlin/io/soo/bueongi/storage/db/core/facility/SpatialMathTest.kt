@@ -4,10 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
-/**
- * [SpatialMath] 단위 테스트. 점-선분 거리/경로 길이/겹침은 안전 점수·우회의 기반이므로
- * 알려진 기하 값과 경계(퇴화 선분, 단일 점 경로)를 고정한다.
- */
 class SpatialMathTest {
 
     @Test

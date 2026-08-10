@@ -9,18 +9,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-/**
- * 관리자 시설 CSV 업로드 오케스트레이션 — 파싱 → 디스크 영속 → 인메모리 원자 교체 순으로 지휘한다.
- *
- * 디스크 저장([FacilityUploadStore])을 먼저 해서, 교체 후 재기동해도 마지막 업로드가 살아있게 한다(업로드 우선 적재).
- * 유효 시설 0건(빈 파일·좌표 없는 행뿐)이면 교체하지 않고 [EmptyFacilityUploadException] 을 던진다(기존 데이터 보존).
- */
 @Service
 class FacilityUploadService(
     private val parser: FacilityCsvParser,
     private val uploadStore: FacilityUploadStore,
     private val liveStore: FacilityLiveStore,
-    /** 관리자 상태 조회용 갱신 기록(없으면 null 무해) — 업로드를 replaced 이벤트로 남긴다. 순수 부수효과. */
     private val refreshStatusStore: FacilityRefreshStatusStore? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(FacilityUploadService::class.java)

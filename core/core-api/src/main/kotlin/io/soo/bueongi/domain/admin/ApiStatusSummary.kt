@@ -11,7 +11,6 @@ import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-/** api-status 응답 전체. [windowSize] 는 집계에 쓴 로그 총수, [hourlyTrend] 는 최근 24시간 전체 호출량 추이. */
 data class ApiStatusSummary(
     val providers: List<ProviderStatus>,
     val windowSize: Int,

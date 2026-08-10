@@ -20,20 +20,6 @@ import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/**
- * 안심 라우팅 서비스(POST /api/routes/safe-compare) — 유스케이스 오케스트레이션.
- *
- * Tmap 키가 있으면: 기본 후보(추천/대로/최단) + 안심 경유지 우회 후보를 모아 실 공공데이터(회랑 쿼리)로 채점하고,
- * 우회 후보는 "기본 최단거리 ×(1+detourBudget)" 이내만 채택한다. 안전점수 내림차순으로 유형(safe=최고점,
- * fast=최소시간, main=나머지)을 배정하고 경로변 시설 마커를 포함해 반환한다.
- * 키가 없거나 Tmap 전부 실패면 기존 [RouteService.compare] 로 폴백(점수/마커 없이).
- *
- * 클라이언트 모델([TmapRoute]/[TmapCoord])은 이 서비스 경계에서 도메인 후보([RouteCandidate]/[GeoPoint])로
- * 매핑한다 — clients 모듈은 자립(스타터 규약), 공간 연산(SpatialMath)은 도메인 쪽에서만 쓴다.
- *
- * 프론트 directRoute.ts(scoreAndType/toRouteOptions/buildRouteMarkers)의 Kotlin 이식 — 같은 입력/데이터 →
- * 같은 결과(결정론적).
- */
 @Service
 class SafeRouteService(
     private val routeService: RouteService,
@@ -43,11 +29,8 @@ class SafeRouteService(
     private val repository: FacilitySpatialSource,
     private val markerBuilder: RouteMarkerBuilder,
     private val candidateMerger: RouteCandidateMerger,
-    /** 운영 알림(없으면 null 무해) — Tmap 키가 있는데도 전부 실패해 폴백으로 전환될 때만 쓴다. */
     private val alertNotifier: AlertNotifier? = null,
-    /** 외부 API 접속 내역 계측(없으면 null 무해) — 순수 부수효과, 경로 산출은 불변. */
     private val apiCallLogStore: ApiCallLogStore? = null,
-    /** 추천 통계 집계(없으면 null 무해) — 순수 부수효과, 경로 산출은 불변. */
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
@@ -108,18 +91,11 @@ class SafeRouteService(
         return toRouteOptions(scored, origin, destination)
     }
 
-    /** 같은 경로([TmapRoute.identityKey] 동일) 중복 제거 — 기본+우회 합류 시. 판정 키는 클라이언트와 단일 출처. */
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
         val seen: HashSet<Long> = HashSet<Long>()
         return routes.filter { seen.add(it.identityKey) }
     }
 
-    /**
-     * 후보를 채점하고 **유형당 정확히 하나씩(최대 3개)** 골라 배정한다.
-     * safe=최고점, fast=최소시간(safe와 다른 후보), main=남은 후보 중 최고점.
-     * 후보가 3개 미만이면 있는 만큼만 반환한다(없는 유형을 억지로 만들지 않음 — 정직).
-     * 동률은 먼저 나온 후보 우선(인덱스 미세 가중 — 프론트 scoreAndType 동형).
-     */
     private fun scoreTypeAndLimit(candidates: List<RouteCandidate>): List<ScoredRoute> {
         if (candidates.isEmpty()) {
             return emptyList()
@@ -144,7 +120,6 @@ class SafeRouteService(
         return picks.map { (i, type) -> ScoredRoute(scored[i].candidate, scored[i].score, type) }
     }
 
-    /** ScoredRoute → 프론트 계약 RouteOption. 안전 점수 내림차순 정렬(동률은 입력 순서 유지). */
     private fun toRouteOptions(
         scoredRoutes: List<ScoredRoute>,
         origin: GeoPoint,
@@ -186,10 +161,6 @@ class SafeRouteService(
             }
     }
 
-    /**
-     * 실데이터 출처/기준일. safe-compare 산출에만 붙는다(폴백엔 없음 → 프론트가 '예시'로 구분).
-     * 기준일은 manifest generatedAt(ISO)의 연·월을 "YYYY.MM"로 표기(미상이면 생략).
-     */
     private fun buildProvenance(): DataProvenance {
         val generatedAt: String? = repository.freshness?.generatedAt
         val basedOn: String? = if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
@@ -228,22 +199,16 @@ class SafeRouteService(
     private companion object {
         val TYPE_NAME: Map<RouteType, String> = mapOf(RouteType.SAFE to "안심 경로", RouteType.MAIN to "기본 경로", RouteType.FAST to "빠른 경로")
 
-        /** 동률 처리용 인덱스 미세 가중 — "먼저 나온 후보 우선"을 점수 비교 한 번으로 표현한다. */
         const val TIE_BREAK_EPSILON: Double = 1e-9
 
-        /** 안심시설 데이터 원천 표기. 파이프라인 sources.yaml 의 원천 계열. */
         const val DATA_ORIGIN: String = "공공데이터포털·서울 열린데이터광장"
 
-        /** 기준일 표기용 "YYYY-MM" 길이 — generatedAt(ISO)에서 연·월만 잘라 쓴다. */
         const val YEAR_MONTH_LENGTH: Int = 7
 
-        /** "CCTV 많음" 태그: 회랑 내 CCTV 밀도(개/km)가 이 값 이상. */
         const val TAG_CCTV_DENSITY_MIN_PER_KM: Double = 5.0
 
-        /** "밝은 길" 태그: 가로등 밀도(개/km)가 이 값 이상. */
         const val TAG_LAMP_DENSITY_MIN_PER_KM: Double = 10.0
 
-        /** "안심귀갓길" 태그: 경로 길이 대비 안심귀갓길 겹침 비율(0~1)이 이 값 이상. */
         const val TAG_SAFE_PATH_OVERLAP_MIN: Double = 0.2
     }
 }

@@ -11,14 +11,8 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-/**
- * [DataGoKrFacilityClient] 의 실 HTTP 계층 테스트 — [MockRestServiceServer] 를 [RestClient.Builder] 에
- * 바인딩해 요청 URL(serviceKey 원형 유지·페이징 파라미터)과 응답 파싱(페이지 순회·items 형태 정규화·
- * 불량 행 skip), 실패 의미론(HTTP 오류/resultCode ≠ 00 → null)을 고정한다.
- */
 class DataGoKrFacilityClientHttpTest {
 
-    /** Encoding 키(이미 URL-인코딩된 형태)를 그대로 쓰는지 검증하기 위해 %2F 를 포함시킨다. */
     private val serviceKey: String = "enc%2Ftest-key"
 
     private fun bind(key: String = serviceKey): Pair<DataGoKrFacilityClient, MockRestServiceServer> {

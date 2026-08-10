@@ -3,9 +3,6 @@ package io.soo.bueongi.domain.route
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteType.from] 매핑 규칙 테스트. 미상/누락은 안전 우선(SAFE) 기본으로 떨어지는 것이 도메인 계약.
- */
 class RouteTypeTest {
 
     @Test

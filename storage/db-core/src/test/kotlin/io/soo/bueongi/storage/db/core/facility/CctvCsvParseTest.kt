@@ -4,10 +4,6 @@ import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * 전국 CCTV CSV 라인 파서([parseCctvCsvLine]) 단위 테스트. 문자열 입력만으로 검증하므로
- * 외부 78MB 파일에 의존하지 않는다. 정상 18컬럼·콤마밀린 행·헤더·좌표불량 케이스를 고정한다.
- */
 class CctvCsvParseTest {
 
     @Test

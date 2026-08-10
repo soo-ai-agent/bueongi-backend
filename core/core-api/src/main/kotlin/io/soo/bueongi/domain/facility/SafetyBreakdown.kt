@@ -9,7 +9,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/** 안전 점수 세부 지표(프론트 SafetyScoreBreakdown 동형). */
 data class SafetyBreakdown(
     val routeKm: Double,
     val cctvDensity: Double,

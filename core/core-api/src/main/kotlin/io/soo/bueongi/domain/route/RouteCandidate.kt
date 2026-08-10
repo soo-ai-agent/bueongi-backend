@@ -20,10 +20,6 @@ import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/**
- * 채점 대상 도메인 경로 후보 — 클라이언트 [TmapRoute] 의 도메인 표현(좌표를 [GeoPoint] 로 매핑).
- * steps(단계 안내)는 값 그대로 응답에 실리므로 클라이언트 타입([NavStep])을 재사용한다.
- */
 data class RouteCandidate(
     val searchOption: String,
     val path: List<GeoPoint>,

@@ -9,7 +9,6 @@ import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import org.springframework.stereotype.Service
 
-/** facility-status 응답 전체 — 종류별 현황 배열. */
 data class FacilityStatusSummary(
     val facilities: List<FacilityStatus>,
 )

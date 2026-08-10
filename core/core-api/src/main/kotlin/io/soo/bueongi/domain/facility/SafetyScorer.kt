@@ -9,19 +9,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/**
- * 안전 점수 산정(프론트 safetyScore.ts 의 Kotlin 이식).
- *
- * 경로 30m 버퍼(corridor) 안 CCTV/조명/비상벨/안심집 밀도(개수/km)와 안심귀갓길 겹침 비율을 가중 합산해
- * 0~100 점을 낸다. 밀도는 상한으로 정규화(0~1)하고 가중치를 곱한다. 입력 데이터가 비어도 0으로 수렴한다
- * (분모 폭주 금지). 같은 경로+같은 데이터 → 같은 점수(결정론적).
- */
 @Component
 class SafetyScorer(
     private val repository: FacilitySpatialSource,
 ) {
 
-    /** 한 경로의 안전 점수와 세부 지표를 계산한다. 회랑 폭은 [DEFAULT_CORRIDOR_METERS] 고정(조절 요구 없음). */
     fun score(path: List<GeoPoint>): SafetyScore {
         val corridorMeters: Double = DEFAULT_CORRIDOR_METERS
         val lengthM: Double = SpatialMath.pathLengthMeters(path)
@@ -76,7 +68,6 @@ class SafetyScorer(
         )
     }
 
-    /** [value] 를 [saturationCeiling](만점=정규화 1.0 에 이르는 기준값, SAT_* 상수) 대비 0~1 로 정규화한다. */
     private fun saturate(value: Double, saturationCeiling: Double): Double {
         if (saturationCeiling <= 0) {
             return 0.0
@@ -94,7 +85,6 @@ class SafetyScorer(
         const val SAT_LAMP_PER_KM: Double = 40.0
         const val SAT_BELL_PER_KM: Double = 5.0
         const val SAT_SAFEHOUSE_COUNT: Double = 3.0
-        /** 지구대·파출소 개수 — 희소 시설이라 2곳이면 만점 기여. */
         const val SAT_POLICE_COUNT: Double = 2.0
 
         const val WEIGHT_CCTV: Double = 0.30

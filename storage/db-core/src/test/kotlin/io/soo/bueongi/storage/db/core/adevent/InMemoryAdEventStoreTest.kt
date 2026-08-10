@@ -4,10 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * [InMemoryAdEventStore] 단위 테스트 — 저장소 계약([AdEventStore])의 핵심 불변식을 고정한다:
- * 최근순(최신 먼저) 반환, 상한([AD_EVENT_CAP]) 초과 시 오래된 것 축출, limit 절삭, 빈 조회.
- */
 class InMemoryAdEventStoreTest {
 
     private val store: InMemoryAdEventStore = InMemoryAdEventStore()

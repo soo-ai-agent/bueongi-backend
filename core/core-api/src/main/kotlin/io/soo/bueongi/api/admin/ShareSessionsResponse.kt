@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** share-sessions 응답 — 현재 이동 중인(활성) 위치공유 세션 목록(관리자). */
 data class ShareSessionsResponse(
     val sessions: List<ActiveShareView>,
 )

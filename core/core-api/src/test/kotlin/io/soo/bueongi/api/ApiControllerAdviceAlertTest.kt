@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 
-/**
- * [ApiControllerAdvice] 의 운영 알림 배선 테스트 — 처리되지 않은 예외(500)에서만 알림이 나가고,
- * 알림 유무와 무관하게 응답 계약(코드·비노출)은 그대로임을 고정한다.
- */
 class ApiControllerAdviceAlertTest {
 
     private class RecordingNotifier : AlertNotifier {

@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** alerts 응답 — 최근 장애 알림 이력(최신순). */
 data class AlertsResponse(
     val alerts: List<AlertRecord>,
 )

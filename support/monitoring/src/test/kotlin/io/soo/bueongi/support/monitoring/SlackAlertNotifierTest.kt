@@ -15,15 +15,10 @@ import org.springframework.web.client.RestClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.concurrent.Executor
 
-/**
- * [SlackAlertNotifier] 계약 테스트 — 발송 페이로드, 비활성 무해, 카테고리 뮤트, key 스로틀(억제/창 경과 재발송),
- * 발송 실패 삼킴, 테스트 발송(동기)을 고정한다. 발송은 동기 실행기로 바꿔 결정론적으로 검증한다.
- */
 class SlackAlertNotifierTest {
 
     private val webhook: String = "https://hooks.slack.com/services/T000/B000/XXXX"
 
-    /** 스로틀 검증용 가변 시계 — 테스트가 now 를 직접 진행시킨다. */
     private var now: Long = 1_000_000L
 
     private fun bind(

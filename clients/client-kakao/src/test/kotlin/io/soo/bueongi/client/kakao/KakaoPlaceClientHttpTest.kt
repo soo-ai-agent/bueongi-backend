@@ -17,21 +17,10 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-/**
- * [KakaoPlaceClient] 의 **실 HTTP 계층** 통합 테스트.
- *
- * 기존 [KakaoPlaceProviderTest] 는 isEnabled 게이트와 DTO 매핑만(네트워크 비의존) 고정한다. 여기서는
- * [MockRestServiceServer] 를 [RestClient.Builder] 에 바인딩해 실제 요청/응답 라운드트립을 e2e 로 고정한다:
- * 요청 URI/쿼리(query·size)·`KakaoAK` 인증 헤더·HTTP 메서드, 그리고 실제 Kakao JSON 응답이
- * 앱 Jackson 컨버터를 거쳐 [KakaoPlace] 으로 역직렬화·필터링되는 경로, 5xx 예외 전파(서비스 시드 폴백 트리거)까지.
- *
- * 한글 검색어는 와이어에서 percent-encoding 되므로 URI 문자열 비교 대신 [queryParam] 디코딩 매처로 검증한다.
- */
 class KakaoPlaceClientHttpTest {
 
     private val apiKey: String = "test-rest-key"
 
-    /** mock 서버를 바인딩한 builder 로 provider 를 만든다. provider 가 builder 를 clone 해도 mock 요청 팩토리는 보존된다. */
     private fun bind(): Pair<KakaoPlaceClient, MockRestServiceServer> {
         val builder: RestClient.Builder = RestClient.builder()
         val server: MockRestServiceServer = MockRestServiceServer.bindTo(builder).build()

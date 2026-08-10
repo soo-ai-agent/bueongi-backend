@@ -19,10 +19,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.multipart
 import java.nio.file.Files
 
-/**
- * [FacilityUploadController] 슬라이스 테스트(@WebMvcTest). 보안 필터는 끄고(실 게이트는 AdminAuthGateTest 커버)
- * multipart 업로드의 HTTP 계약 — 200 집계, 알 수 없는 종류 400, 유효 0건 400 — 을 고정한다.
- */
 @WebMvcTest(FacilityUploadController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(FacilityUploadControllerTest.TestConfig::class)

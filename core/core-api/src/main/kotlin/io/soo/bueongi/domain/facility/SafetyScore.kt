@@ -9,7 +9,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/** 0~100 정수 안전 점수 + 세부 지표. */
 data class SafetyScore(
     val score: Int,
     val breakdown: SafetyBreakdown,

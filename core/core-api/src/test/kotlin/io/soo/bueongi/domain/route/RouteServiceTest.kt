@@ -6,10 +6,6 @@ import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteService.compare] 단위 테스트. 항상 safe/main/fast 3개를 결정론적으로 만들고,
- * 응답 필드(프론트 MockRoute 계약)와 거리 정렬(안전>주요>최단)을 고정한다.
- */
 class RouteServiceTest {
 
     private val service: RouteService = RouteService()

@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
-/**
- * [InMemoryLocationStore] 단위 테스트. 저장소 계약([LocationStore])의 핵심 불변식을 결정론적 Clock 으로 고정한다:
- * 저장/조회 왕복, 상한 만료의 lazy 제거(Redis EXPIRE 동치), 위치 갱신 덮어쓰기, backend 라벨.
- */
 class InMemoryLocationStoreTest {
 
     private val clock: MutableTestClock = MutableTestClock()

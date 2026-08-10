@@ -7,14 +7,6 @@ import io.soo.bueongi.domain.route.RouteType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * 요청 DTO 메타(routeType/safetyPreference)의 **관용 흡수 동작 보존** 회귀 가드.
- *
- * 이 두 필드는 와이어 경계에서 String 으로 유지된다(enum 역직렬화로 바꾸지 않는다) — 도메인은 이미
- * [RouteQuery] 가 enum([RouteType]/[SafetyPreference])으로 정규화하므로 타입 정합성은 도메인에서 달성돼 있고,
- * 경계를 enum 으로 바꾸면 미상/누락/비문자(숫자) 입력의 흡수(→기본값)가 역직렬화 에러(400)로 바뀔 위험이 있다.
- * 그 동작이 바뀌지 않았음을 이 테스트가 못 박는다.
- */
 class RouteRequestMetaAbsorptionTest {
 
     private val mapper = jacksonObjectMapper()

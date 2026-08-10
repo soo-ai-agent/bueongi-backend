@@ -21,11 +21,6 @@ import org.springframework.data.redis.core.ValueOperations
 import java.time.Duration
 import java.time.Instant
 
-/**
- * [RedisLocationStore] 단위 테스트. 실제 Redis 없이(Mockito) **키 모델 계약**을 잠근다:
- * `share:{token}`/`location:{token}` HASH 필드명, 상한 TTL 적용, 조회 시 ShareSession 재구성.
- * (실 Redis 왕복은 인프라 통합 테스트 영역 — 여기선 키/필드/TTL 매핑의 회귀를 막는다.)
- */
 class RedisLocationStoreTest {
 
     private val clock: MutableTestClock = MutableTestClock()

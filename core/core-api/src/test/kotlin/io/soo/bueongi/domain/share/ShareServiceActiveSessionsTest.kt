@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 활성 세션 목록(listActiveSessions)의 매핑(shareUrl·ttl·viewerActive·lat 파생), 만료 제외, 정렬 규칙
- * (updatedAtMs 내림차순·미보고 마지막·동률 token 오름차순), owner_secret 미노출을 고정한다.
- */
 class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
 
     @Test

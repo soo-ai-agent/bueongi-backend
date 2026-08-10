@@ -5,13 +5,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
-/**
- * [PlaceSearchService] 단위 테스트. 프론트 filterPlaces(이름/주소 부분일치, 트림 + 라틴 대소문자 무시,
- * 빈 검색어→빈 결과)와 동형임을 고정한다. 외부 키 미설정(remote disabled) → 시드 카탈로그 경로.
- */
 class PlaceSearchServiceTest {
 
-    /** 키 미설정 외부 소스(폴백 경로). */
     private val disabledRemote = object : RemotePlaceProvider {
         override val isEnabled: Boolean = false
         override fun search(keyword: String): List<PlaceItem> =

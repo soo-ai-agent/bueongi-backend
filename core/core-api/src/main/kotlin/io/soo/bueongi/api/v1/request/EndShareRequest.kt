@@ -24,10 +24,6 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
-/**
- * `POST /share/{token}/end` 요청. 도착/중단 시 공유를 종료한다.
- * 쓰기 권한 비밀(owner_secret)이 일치해야 종료할 수 있다 — 공유 URL만 아는 사람의 임의 종료를 막는다.
- */
 data class EndShareRequest(
     @field:NotBlank
     @JsonProperty("owner_secret")

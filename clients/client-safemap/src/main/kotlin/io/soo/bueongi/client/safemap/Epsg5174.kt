@@ -7,20 +7,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-/**
- * EPSG:5174(Bessel 중부원점 TM) → WGS84 변환 — 안전비상벨(D-1) 표준데이터의 x/y 좌표용.
- *
- * Bessel 타원체는 WGS84 와 datum 이 달라 투영 역산만으로는 수백 m 오차가 난다. 파이프라인 proj4 정의
- * (`+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel
- * +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43`)와 동일 파라미터로 3단 변환한다:
- *   1) Bessel TM 역투영(Snyder 급수) → Bessel 측지좌표(φ, λ)
- *   2) Bessel 측지 → 지심 XYZ → 7-parameter Helmert(위치벡터 규약) → WGS84 지심 XYZ
- *   3) WGS84 지심 → WGS84 측지좌표(Bowring 반복)
- * datum shift 는 proj4 `+towgs84` 와 같은 위치벡터(Position Vector) 회전 규약을 쓴다.
- * 검증: 파이프라인 proj4 기준값 대조([Epsg5174Test]) + 왕복(forward→inverse) 자기일관성.
- *
- * [Epsg5179] 와 짝이 되는 좌표 유틸이라 같은 모듈([Wgs84Point] 공유)에 둔다.
- */
+/** EPSG:5174 — proj4 `+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43` 과 동일 파라미터, datum shift 는 위치벡터(Position Vector) 회전 규약. */
 object Epsg5174 {
     // Bessel 1841 타원체(원천 좌표계).
     private const val A_BESSEL: Double = 6377397.155
@@ -46,22 +33,20 @@ object Epsg5174 {
     private val RZ: Double = arcsecToRad(-1.63)
     private const val DS: Double = 6.43 * 1e-6
 
-    // Bessel 이심률.
     private const val E2_BESSEL: Double = F_BESSEL * (2 - F_BESSEL)
     private const val EP2_BESSEL: Double = E2_BESSEL / (1 - E2_BESSEL)
     private val E1_BESSEL: Double = (1 - sqrt(1 - E2_BESSEL)) / (1 + sqrt(1 - E2_BESSEL))
     private val M0_BESSEL: Double = meridianArc(LAT0)
 
-    // WGS84 이심률.
     private const val E2_WGS84: Double = F_WGS84 * (2 - F_WGS84)
 
     private const val BOWRING_ITERATIONS: Int = 5
 
-    /** 대한민국 WGS84 유효 범위(파이프라인 KOREA_BOUNDS와 동일). 밖이면 변환 오류로 보고 폐기. */
+    /** 파이프라인 KOREA_BOUNDS 와 동일 값. */
     fun inKoreaBounds(lat: Double, lng: Double): Boolean =
         lat.isFinite() && lng.isFinite() && lat in 33.0..39.0 && lng in 124.0..132.0
 
-    /** EPSG:5174 (x=동, y=북) → WGS84. 결과가 한국 범위 밖이면 null(원천 좌표 불량). */
+    /** x=동(easting), y=북(northing). */
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
         if (!x.isFinite() || !y.isFinite()) {
             return null
@@ -80,11 +65,7 @@ object Epsg5174 {
         }
     }
 
-    /**
-     * WGS84 → EPSG:5174. 왕복 테스트(변환 자기일관성 검증)용 — [toWgs84] 파이프라인을 단계별로 역행한다
-     * (지오이드고 미상이라 양방향 모두 h=0 을 가정한다. 높이 오차는 재투영 시 수평이 아닌 반경 성분이라
-     * 수평 왕복 오차는 무시할 수준이다).
-     */
+    /** 지오이드고 미상이라 양방향 모두 h=0 가정 — 수평 왕복 오차는 무시 수준. */
     fun fromWgs84(lat: Double, lng: Double): TmXy {
         val wgsEcef: Ecef = geodeticToEcef(Math.toRadians(lat), Math.toRadians(lng), A_WGS84, E2_WGS84)
         val besselEcef: Ecef = helmertWgs84ToBessel(wgsEcef)
@@ -92,7 +73,6 @@ object Epsg5174 {
         return forwardTm(besselGeodetic.latRad, besselGeodetic.lngRad)
     }
 
-    /** Bessel TM 역투영(Snyder) → Bessel 측지좌표. */
     private fun inverseTm(x: Double, y: Double): Geodetic {
         val m: Double = M0_BESSEL + (y - FALSE_NORTHING) / K0
         val mu: Double = m / (A_BESSEL * (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256))
@@ -124,7 +104,6 @@ object Epsg5174 {
         return Geodetic(lat, lng)
     }
 
-    /** Bessel 측지좌표 → Bessel TM(Snyder). [fromWgs84] 왕복용. */
     private fun forwardTm(latRad: Double, lngRad: Double): TmXy {
         val sinPhi: Double = sin(latRad)
         val cosPhi: Double = cos(latRad)
@@ -149,7 +128,6 @@ object Epsg5174 {
         return TmXy(x, y)
     }
 
-    /** 측지좌표(h=0) → 지심 직교좌표(ECEF). */
     private fun geodeticToEcef(latRad: Double, lngRad: Double, a: Double, e2: Double): Ecef {
         val sinLat: Double = sin(latRad)
         val cosLat: Double = cos(latRad)
@@ -160,7 +138,6 @@ object Epsg5174 {
         return Ecef(x, y, z)
     }
 
-    /** 지심 직교좌표 → 측지좌표(Bowring 반복). 높이는 버리고 위경도만 쓴다. */
     private fun ecefToGeodetic(ecef: Ecef, a: Double, e2: Double): Geodetic {
         val p: Double = sqrt(ecef.x * ecef.x + ecef.y * ecef.y)
         val lng: Double = atan2(ecef.y, ecef.x)
@@ -174,7 +151,6 @@ object Epsg5174 {
         return Geodetic(lat, lng)
     }
 
-    /** 7-parameter Helmert(위치벡터 규약) Bessel → WGS84. proj4 `+towgs84` 정방향과 동일. */
     private fun helmertBesselToWgs84(v: Ecef): Ecef {
         val s: Double = 1 + DS
         return Ecef(
@@ -184,7 +160,6 @@ object Epsg5174 {
         )
     }
 
-    /** 역방향 Helmert(파라미터 부호 반전) WGS84 → Bessel — 왕복 자기일관성 검증용. */
     private fun helmertWgs84ToBessel(v: Ecef): Ecef {
         val s: Double = 1 - DS
         return Ecef(
@@ -194,7 +169,6 @@ object Epsg5174 {
         )
     }
 
-    /** 적도에서 위도 [phi]까지의 자오선 호 길이(m) — Bessel 타원체 Snyder 급수. */
     private fun meridianArc(phi: Double): Double = A_BESSEL * (
         (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256) * phi -
             (3 * E2_BESSEL / 8 + 3 * E2_BESSEL * E2_BESSEL / 32 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(2 * phi) +
@@ -207,5 +181,4 @@ object Epsg5174 {
     private data class Ecef(val x: Double, val y: Double, val z: Double)
 }
 
-/** 각초(arcsecond) → 라디안. */
 private fun arcsecToRad(arcsec: Double): Double = Math.toRadians(arcsec / 3600.0)

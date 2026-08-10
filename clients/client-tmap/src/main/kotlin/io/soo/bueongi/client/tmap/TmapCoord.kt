@@ -14,5 +14,4 @@ import kotlin.math.roundToLong
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** Tmap 좌표 1점(WGS84). 자립 모듈 소유 — 도메인 GeoPoint 매핑은 상위가 한다. */
 data class TmapCoord(val lat: Double, val lng: Double)

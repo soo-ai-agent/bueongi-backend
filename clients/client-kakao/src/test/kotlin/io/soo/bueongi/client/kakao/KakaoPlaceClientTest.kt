@@ -5,10 +5,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.web.client.RestClient
 
-/**
- * [KakaoPlaceClient] 의 키 게이트([isEnabled]) 및 응답 매핑([KakaoPlaceDocument.toKakaoPlace]) 단위 테스트.
- * 실제 HTTP 호출은 하지 않는다(네트워크 비의존) — isEnabled 분기와 DTO→KakaoPlace 매핑 규칙만 고정.
- */
 class KakaoPlaceClientTest {
 
     private fun provider(apiKey: String) =

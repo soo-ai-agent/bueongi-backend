@@ -16,10 +16,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-/**
- * [FacilityRefreshService] 오케스트레이션 테스트 — 클라이언트(mock)와 가짜 싱크로
- * "성공 시에만 교체, 실패/0건은 기존 유지, 종류·원천별 독립 게이트" 안전 규칙을 고정한다.
- */
 class FacilityRefreshServiceTest {
 
     private class FakeStore : FacilityLiveStore {

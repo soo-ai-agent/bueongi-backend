@@ -9,5 +9,4 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
-/** access token 이 만료됨 → 401. */
 class ExpiredTokenException(cause: Throwable? = null) : RuntimeException("access token expired", cause)

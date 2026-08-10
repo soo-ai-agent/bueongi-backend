@@ -5,13 +5,8 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
-/**
- * /share/{token}/route 왕복(POST 저장 → GET 회수)과 마커·좌표·destination·거리 검증, type/provenance 메타(에코·422),
- * 그리고 경로 조회의 시청자 비집계를 고정한다.
- */
 class ShareControllerRouteTest : ShareControllerTestSupport() {
 
-    /** 유효한 경로 저장 본문(owner_secret 치환). */
     private fun routeBody(secret: String) = """
         {
           "owner_secret": "$secret",

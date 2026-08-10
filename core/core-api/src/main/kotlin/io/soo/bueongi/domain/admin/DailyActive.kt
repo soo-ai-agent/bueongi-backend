@@ -10,7 +10,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.roundToLong
 
-/** 일자별 활성 사용자 1건. [dateEpochMs] 는 해당 날 자정(Asia/Seoul, epoch ms). */
 data class DailyActive(
     val dateEpochMs: Long,
     val distinctClients: Int,

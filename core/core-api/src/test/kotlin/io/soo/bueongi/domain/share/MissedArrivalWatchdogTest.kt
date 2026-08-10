@@ -10,11 +10,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
-/**
- * 미도착 감시 판정(순수)과 스캔→알림 배선. 결정론적 now 로 경계를 고정한다:
- * ETA 없음 / 예정 초과 전 / 늦지만 이동 중 → 제외, 예정 초과 + 위치 정지·미보고 → 의심.
- * 알림은 토큰 마스킹·좌표 비노출을 지킨다(프라이버시).
- */
 class MissedArrivalWatchdogTest {
 
     private val now = Instant.parse("2026-07-28T12:00:00Z")

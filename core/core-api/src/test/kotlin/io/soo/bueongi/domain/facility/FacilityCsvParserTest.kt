@@ -7,10 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.charset.Charset
 
-/**
- * [FacilityCsvParser] 파싱 검증 — 종류별 좌표계(wgs84/epsg5179/epsg5174), 좌표없음·불량·비방범 skip,
- * 위도/경도 범용 폴백, 따옴표 필드, CP949 인코딩을 고정한다.
- */
 class FacilityCsvParserTest {
 
     private val parser: FacilityCsvParser = FacilityCsvParser()

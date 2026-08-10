@@ -5,20 +5,6 @@ import io.soo.bueongi.client.kakao.KakaoPlaceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * 내장 시드 카탈로그([SEED_PLACE_CATALOG]) 의 도메인 불변식 회귀 가드.
- *
- * 왜 필요한가: 시드 카탈로그는 외부 키 미주입(MVP 기본) 시 **런타임에서 실제로 활성화되는 검색 소스**다.
- * 그런데 [SeedPlaceProvider] 는 [KakaoPlaceClient.toPlaceItem] 과 달리 좌표 유효성 필터링 없이
- * 카탈로그 좌표를 그대로 신뢰한다. 즉 시드 좌표는 검색결과 → [PlaceItem] → 프론트 →
- * `RouteRequest.destination` → 경로/안심시설 계산으로 **무검증 직행**한다.
- *
- * 외부 Kakao 응답 경계([KakaoPlaceProviderTest])와 클라이언트 JSON 경계([RouteControllerTest])는
- * 비유한/범위 밖 좌표를 막도록 이미 봉인됐지만, 정작 가장 자주 쓰이는 시드 경로는 가드가 없었다.
- * 누군가 시드 추가/수정 시 위경도를 뒤바꾸거나(예: lat=127, lng=37) 좌표 오타를 내면 검색은 "정상"
- * 장소를 반환하지만 지리는 garbage → haversine 거리 가드를 우회해 잘못된 안전경로를 만든다(안심앱 위험).
- * 이 갭을 시드 데이터 원천에서 직접 봉인한다(소스 무변경, 순수 가산적 가드).
- */
 class PlaceCatalogTest {
 
     private val koreaLat = 33.0..39.0

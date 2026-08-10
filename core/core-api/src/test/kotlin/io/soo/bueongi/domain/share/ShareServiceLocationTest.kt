@@ -9,9 +9,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 위치 갱신(updateLocation)과 조회(getLocation)의 왕복·만료·격리, owner_secret 검증(404), remaining 왕복을 고정한다.
- */
 class ShareServiceLocationTest : ShareServiceTestSupport() {
 
     @Test

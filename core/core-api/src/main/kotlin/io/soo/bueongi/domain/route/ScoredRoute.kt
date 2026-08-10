@@ -20,8 +20,4 @@ import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/**
- * 채점·유형 배정이 끝난 후보(응답 변환 직전의 중간 표현).
- * [type] 은 [RouteType] — TYPE_NAME 키 집합(전 유형)과 일치한다(toRouteOptions 의 getValue 전제).
- */
 internal data class ScoredRoute(val candidate: RouteCandidate, val score: SafetyScore, val type: RouteType)

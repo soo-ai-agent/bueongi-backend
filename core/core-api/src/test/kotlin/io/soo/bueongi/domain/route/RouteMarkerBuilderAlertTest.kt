@@ -8,12 +8,6 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteMarkerBuilder] 의 시설 데이터 제공 실패 알림 테스트 — 핵심은 "장애 0 vs 정상 0" 구분이다:
- * 인덱스 총 적재량이 0(적재 실패/부재)일 때만 알리고, 적재량>0인데 특정 회랑만 0인 정직한 0에는 알리지 않는다.
- * 스로틀 억제(같은 key 로 폭주 방지)는 [io.soo.bueongi.support.monitoring.SlackAlertNotifierTest] 가 실제로 검증하므로,
- * 여기서는 반복 호출이 **같은 상수 key** 를 쓰는지(=스로틀 대상인지)만 단언한다.
- */
 class RouteMarkerBuilderAlertTest {
 
     private val origin: GeoPoint = GeoPoint(37.5, 127.000)

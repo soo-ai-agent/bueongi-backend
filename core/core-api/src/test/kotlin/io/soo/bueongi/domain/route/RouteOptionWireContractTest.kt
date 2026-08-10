@@ -6,14 +6,6 @@ import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * RouteOption 직렬화(wire) 계약 고정 — 프론트가 소비하는 JSON 필드명·문자열 값을 못 박는다.
- *
- * type/tags[].variant/markers[].type 는 이제 enum(RouteType/RouteTagVariant/FacilityPoiType)이지만,
- * @JsonValue 로 기존 소문자 문자열('safe'/'mint'/'cctv' …)을 그대로 낸다 — 이 테스트가 그 불변을 못 박는다.
- * path/steps 는 하위 모듈 소유 타입([GeoPoint]/[NavStep])을 그대로 직렬화하므로, 그 모듈에서 프로퍼티를
- * 리네임하면 컴파일은 통과해도 프론트 계약이 조용히 깨진다 — 그 변경도 이 테스트가 빌드 실패로 표면화한다.
- */
 class RouteOptionWireContractTest {
 
     private val mapper: ObjectMapper = ObjectMapper()

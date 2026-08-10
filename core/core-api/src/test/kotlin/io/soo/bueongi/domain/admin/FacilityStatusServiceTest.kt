@@ -10,10 +10,6 @@ import io.soo.bueongi.storage.db.core.facility.SafePath
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [FacilityStatusService] 집계 정확성 — 적재 건수(공간 인덱스 size)·마지막 갱신 결과(3상태)·CDN 신선도를
- * 종류별로 모은다. 저장소·홀더는 얇은 페이크로 주입한다.
- */
 class FacilityStatusServiceTest {
 
     private class FakeSource(

@@ -13,7 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import java.net.URI
 import java.time.Clock
 
-/** `bueongi.share.redis-url` 이 비었으면 매칭(인메모리 폴백 모드). [RedisConfigured] 의 정확한 여집합. */
+/** [RedisConfigured] 의 정확한 여집합이어야 한다(둘 중 정확히 한쪽만 매칭). */
 class RedisNotConfigured : Condition {
     override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
         context.environment.getProperty("bueongi.share.redis-url", "").isNullOrBlank()

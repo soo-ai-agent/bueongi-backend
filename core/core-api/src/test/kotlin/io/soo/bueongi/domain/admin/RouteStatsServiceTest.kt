@@ -6,10 +6,6 @@ import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteStatsService] 집계 정확성 — 저장된 추천 기록만으로 엔드포인트별 수·안심강도 선호 분포·상위 목적지·
- * 최근 24시간 트렌드를 계산한다. 저장소는 넘겨준 로그를 그대로 돌려주는 페이크(가장 얇은 대역)로 대체한다.
- */
 class RouteStatsServiceTest {
 
     private fun store(logs: List<RouteRecommendationLog>): RouteStatsStore = object : RouteStatsStore {

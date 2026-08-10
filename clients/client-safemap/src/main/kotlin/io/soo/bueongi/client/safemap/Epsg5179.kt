@@ -8,14 +8,7 @@ import kotlin.math.tan
 
 
 
-/**
- * EPSG:5179(UTM-K, GRS80) ↔ WGS84 변환 — 치안시설(IF_0036)의 x/y 좌표용.
- *
- * 파이프라인의 proj4 정의(`+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000
- * +y_0=2000000 +ellps=GRS80`)와 동일 파라미터를 Snyder 횡단 메르카토르 급수로 구현했다.
- * 급수 절단 오차는 한반도 범위에서 cm 미만 — 시설 마커·안전점수 용도에 충분하다.
- * 검증: 원점 앵커(38°/127.5° ↔ 1,000,000/2,000,000) + 왕복(forward→inverse) 테스트.
- */
+/** EPSG:5179(UTM-K) — proj4 `+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80` 과 동일 파라미터의 Snyder 급수 구현. */
 object Epsg5179 {
     private const val A: Double = 6378137.0 // GRS80 장반경(m)
     private const val F: Double = 1.0 / 298.257222101 // GRS80 편평률
@@ -30,11 +23,11 @@ object Epsg5179 {
     private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
     private val M0: Double = meridianArc(LAT0)
 
-    /** 대한민국 WGS84 유효 범위(파이프라인 KOREA_BOUNDS와 동일). 밖이면 변환 오류로 보고 폐기. */
+    /** 파이프라인 KOREA_BOUNDS 와 동일 값. */
     fun inKoreaBounds(lat: Double, lng: Double): Boolean =
         lat.isFinite() && lng.isFinite() && lat in 33.0..39.0 && lng in 124.0..132.0
 
-    /** EPSG:5179 (x=동, y=북) → WGS84. 결과가 한국 범위 밖이면 null(원천 좌표 불량). */
+    /** x=동(easting), y=북(northing). */
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
         if (!x.isFinite() || !y.isFinite()) {
             return null
@@ -76,7 +69,6 @@ object Epsg5179 {
         }
     }
 
-    /** WGS84 → EPSG:5179. 왕복 테스트(변환 자기일관성 검증)용. */
     fun fromWgs84(lat: Double, lng: Double): TmXy {
         val phi: Double = Math.toRadians(lat)
         val sinPhi: Double = sin(phi)
@@ -102,7 +94,6 @@ object Epsg5179 {
         return TmXy(x, y)
     }
 
-    /** 적도에서 위도 [phi]까지의 자오선 호 길이(m) — Snyder 급수. */
     private fun meridianArc(phi: Double): Double = A * (
         (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256) * phi -
             (3 * E2 / 8 + 3 * E2 * E2 / 32 + 45 * E2 * E2 * E2 / 1024) * sin(2 * phi) +

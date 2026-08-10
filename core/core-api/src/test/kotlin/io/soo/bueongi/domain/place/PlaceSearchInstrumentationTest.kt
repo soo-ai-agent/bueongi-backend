@@ -5,10 +5,6 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [PlaceSearchService] 의 외부 API 접속 내역 계측 검증 — 실연동 성공/실패가 각각 [ApiCallLogStore] 에 기록되고,
- * 기존 동작(성공 시 실결과 반환, 실패 시 시드 폴백)은 불변임을 고정한다.
- */
 class PlaceSearchInstrumentationTest {
 
     private class RecordingStore : ApiCallLogStore {

@@ -14,10 +14,6 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
 
-/**
- * [FacilityUploadService] 오케스트레이션 테스트 — 파싱 → 디스크 저장 → 라이브 교체 → 상태 기록의 순서와,
- * 유효 0건일 때 교체하지 않고 [EmptyFacilityUploadException] 을 던지는지(기존 데이터 보존)를 고정한다.
- */
 class FacilityUploadServiceTest {
 
     private val mapper: ObjectMapper = ObjectMapper()

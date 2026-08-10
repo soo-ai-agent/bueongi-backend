@@ -6,10 +6,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 공유 종료(end)의 계약을 고정한다: 올바른 secret 은 종료→이후 expired, 잘못된 secret 은 404 이고 공유 유지(임의 종료 차단),
- * 없는 token 은 멱등.
- */
 class ShareServiceEndTest : ShareServiceTestSupport() {
 
     @Test

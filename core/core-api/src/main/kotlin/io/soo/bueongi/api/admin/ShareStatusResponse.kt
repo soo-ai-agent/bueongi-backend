@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** share-status 응답 — 현재 활성 공유 세션 수. */
 data class ShareStatusResponse(
     val activeSessions: Int,
 )

@@ -5,10 +5,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
-/**
- * POST /share/{token}/watching(관리자 시청 상태·미리보기 위치)의 계약을 고정한다. 보호자 GET 전/후 watching 전이,
- * 현재 위치 동봉, owner_secret 검증(404).
- */
 class ShareControllerWatchingTest : ShareControllerTestSupport() {
 
     @Test

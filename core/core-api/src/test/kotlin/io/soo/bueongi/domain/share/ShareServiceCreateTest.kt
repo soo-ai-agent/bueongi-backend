@@ -6,9 +6,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 공유 생성(TTL·share_url·추측 불가 토큰)과 예정 도착 시각(eta) 기반 overdue 판정을 고정한다.
- */
 class ShareServiceCreateTest : ShareServiceTestSupport() {
 
     @Test

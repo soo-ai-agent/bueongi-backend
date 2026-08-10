@@ -8,10 +8,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 관리자 시청 상태 조회(getWatchingStatus)의 계약을 고정한다: 보호자 조회 유무에 따른 watching 전이, 12초 유효시간,
- * 관리자 본인 비집계, owner_secret 검증(404), 현재 위치·remaining 동봉, 만료 처리.
- */
 class ShareServiceWatchingTest : ShareServiceTestSupport() {
 
     @Test

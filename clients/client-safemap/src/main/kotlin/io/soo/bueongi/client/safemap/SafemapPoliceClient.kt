@@ -8,20 +8,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.net.URI
 
-/**
- * 생활안전지도(safemap.go.kr) 치안시설 정보조회(IF_0036) 클라이언트 — 경찰청 제공,
- * 전국 지역경찰관서(지구대·파출소·치안센터)의 주소·전화·좌표. 갱신주기 1년.
- *
- * `SAFEMAP_SERVICE_KEY`(client-safemap.yml: `bueongi.safemap.service-key`)가 설정되면 [isEnabled]=true.
- * 키는 생활안전지도 발급분(URL-인코딩)을 그대로 쓰며 재인코딩하지 않는다.
- *
- * 좌표 처리: 응답의 x/y 는 문자열이고 좌표계가 문서에 명시돼 있지 않다(생활안전지도 계열은 EPSG:5179 가
- * 통례). 값 범위로 자동 판별한다 — 경위도 범위(WGS84)면 그대로, UTM-K 미터 범위면 [Epsg5179] 역변환,
- * 어느 쪽도 아니면 tmp_x/tmp_y 로 재시도 후 그 행을 버린다(불량 행이 전체 갱신을 막지 않게).
- *
- * 실패 의미론은 data.go.kr 클라이언트와 동일: 페이지 순회 중 오류가 나면 전체 null(부분 교체 금지) —
- * 상위(FacilityRefreshService)가 기존 데이터를 유지한다.
- */
+/** safemap IF_0036: 인증키는 URL-인코딩분 그대로(재인코딩 금지), x/y 좌표계는 문서 미명시(EPSG:5179 통례)라 값 범위로 자동판별한다. */
 @Component
 class SafemapPoliceClient(
     @Value("\${bueongi.safemap.service-key:}") serviceKey: String,
@@ -30,18 +17,12 @@ class SafemapPoliceClient(
     private val log: Logger = LoggerFactory.getLogger(SafemapPoliceClient::class.java)
     private val serviceKey: String = serviceKey.trim()
 
-    /** 키가 설정돼 있으면 true. false 면 호출하지 말 것(상위가 라이브 갱신 자체를 건너뛴다). */
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    /**
-     * 전국 치안시설 전량. 실패 시 null(기존 데이터 유지 신호).
-     *
-     * 페이지 순회는 totalCount 를 1차 기준으로 한다 — 서버가 요청 numOfRows 보다 적게 돌려줘도
-     * (페이지 상한이 낮은 서비스 방어) totalCount 에 도달할 때까지 계속 넘긴다.
-     */
+    /** 서버가 numOfRows 보다 적게 돌려줘도 totalCount 도달까지 페이지를 넘긴다(페이지 상한이 낮은 서비스 방어). */
     fun fetchPoliceFacilities(): List<SafemapPoliceFacility>? {
         check(isEnabled) { "생활안전지도 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val facilities: ArrayList<SafemapPoliceFacility> = ArrayList<SafemapPoliceFacility>()
@@ -56,7 +37,7 @@ class SafemapPoliceClient(
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
-                // 시크릿(serviceKey) 비노출 — 예외 메시지에 URL(키 포함)이 섞일 수 있어 마스킹한다.
+                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 마스킹
                 log.warn("safemap 호출 실패(page={}): {} — 갱신 중단(기존 데이터 유지)", pageNo, sanitize(e.message))
                 return null
             }
@@ -92,10 +73,7 @@ class SafemapPoliceClient(
         return facilities
     }
 
-    /**
-     * 응답에서 시설 행 배열을 찾는다 — envelope 구조(중첩 위치·items/item 래핑)가 문서에 확정돼 있지 않아,
-     * "치안시설 필드(fclty_nm 또는 x·y)를 가진 객체들의 배열"을 재귀 탐색한다.
-     */
+    // 응답 envelope 구조가 문서에 미확정이라 치안시설 필드를 가진 객체 배열을 재귀 탐색한다
     private fun findFacilityRows(node: JsonNode): List<JsonNode> {
         if (node.isArray) {
             val objects: List<JsonNode> = node.filter { it.isObject }
@@ -121,7 +99,6 @@ class SafemapPoliceClient(
         return emptyList()
     }
 
-    /** 행 → 시설(WGS84 확정). 좌표를 판별 못 하면 null(건너뜀). */
     private fun JsonNode.toFacility(): SafemapPoliceFacility? {
         val point: Wgs84Point = resolveKoreanWgs84OrNull(text("x"), text("y"))
             ?: resolveKoreanWgs84OrNull(text("tmp_x"), text("tmp_y"))
@@ -145,10 +122,9 @@ class SafemapPoliceClient(
     companion object {
         const val ENDPOINT: String = "https://safemap.go.kr/openapi2/IF_0036"
 
-        /** 페이지당 요청 건수 — 서버가 상한을 낮게 잡아도 totalCount 순회로 전량을 받는다. */
         const val PAGE_SIZE: Int = 1000
 
-        /** 폭주 방지 상한 — 전국 지역경찰관서(수천 관서)에 충분한 여유. */
+        /** 전국 지역경찰관서 수천 관서에 충분한 상한. */
         const val MAX_PAGES: Int = 500
     }
 }

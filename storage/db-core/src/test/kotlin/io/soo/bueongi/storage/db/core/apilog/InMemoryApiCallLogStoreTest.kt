@@ -4,10 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * [InMemoryApiCallLogStore] 단위 테스트 — 저장소 계약([ApiCallLogStore])의 핵심 불변식을 고정한다:
- * 최근순(최신 먼저) 반환, 상한([API_CALL_LOG_CAP]) 초과 시 오래된 것 축출, provider 필터, limit 절삭.
- */
 class InMemoryApiCallLogStoreTest {
 
     private val store: InMemoryApiCallLogStore = InMemoryApiCallLogStore()

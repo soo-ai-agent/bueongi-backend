@@ -15,11 +15,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
-/**
- * [PlaceController] 슬라이스 테스트(@WebMvcTest). 실 서비스([PlaceSearchService]) + 시드 소스를 import 해
- * GET /api/places/search 의 HTTP 계약(상태코드 + PlaceItem JSON shape)을 고정한다.
- * 외부 키 없는 환경(remote disabled)을 가정 — 슬라이스에 네트워크 autoconfig 를 끌어오지 않는다.
- */
 @WebMvcTest(PlaceController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
@@ -80,7 +75,6 @@ class PlaceControllerTest(
             }
     }
 
-    /** 외부 키 미설정 상태(시드 폴백 경로)를 슬라이스에 제공. */
     @TestConfiguration
     class DisabledRemoteConfig {
         @Bean

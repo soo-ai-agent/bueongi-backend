@@ -6,5 +6,5 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-/** 투영 평면 좌표(TM): [x]=동쪽(easting, m), [y]=북쪽(northing, m). [Epsg5179]·[Epsg5174] 정투영 결과. */
+/** x=동(easting, m), y=북(northing, m). */
 data class TmXy(val x: Double, val y: Double)

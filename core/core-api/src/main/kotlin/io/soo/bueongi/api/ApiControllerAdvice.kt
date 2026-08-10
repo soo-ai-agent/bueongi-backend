@@ -30,15 +30,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.support.MissingServletRequestPartException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
-/**
- * 검증/요청 파싱 실패를 표준 에러 스키마(RFC 7807 [ProblemDetail] + `errors[]`)로 변환한다.
- *
- * 본문의 `errors`(field/message/rejectedValue)로 어떤 필드가 왜 거부됐는지 사용자에게 표시한다.
- * 응답 content-type 은 `application/problem+json`(Spring 표준).
- */
 @RestControllerAdvice
 class ApiControllerAdvice(
-    /** 운영 알림(없으면 null 무해) — @WebMvcTest 슬라이스엔 알림 빈이 없어 nullable 로 받는다. */
     private val alertNotifier: AlertNotifier? = null,
 ) {
 
@@ -54,7 +47,6 @@ class ApiControllerAdvice(
             setProperty("code", "UNAUTHORIZED")
         }
 
-    /** `@Valid` 본문 검증 실패 → 400 + 필드별 `errors`(중첩 필드는 `origin.lat` 형태). */
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
         val errors: List<ApiFieldError> = ex.bindingResult.fieldErrors.map { fe ->
@@ -74,7 +66,6 @@ class ApiControllerAdvice(
         }
     }
 
-    /** 본문 누락/JSON 파싱 실패(빈 body, 깨진 JSON, 타입 불일치) → 400. */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleUnreadable(@Suppress("UNUSED_PARAMETER") ex: HttpMessageNotReadableException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -85,10 +76,6 @@ class ApiControllerAdvice(
             setProperty("code", "MALFORMED_REQUEST")
         }
 
-    /**
-     * 출발지 미확보 → 422 + `code:"ORIGIN_REQUIRED"`. 잘못된 입력(400)이 아니라 "아직 출발지를 알 수 없는"
-     * 복구 가능 상태다. 프론트는 이 코드로 위치 권한 재요청 또는 출발지 직접 선택 흐름을 띄운다.
-     */
     @ExceptionHandler(OriginRequiredException::class)
     fun handleOriginRequired(@Suppress("UNUSED_PARAMETER") ex: OriginRequiredException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -99,11 +86,6 @@ class ApiControllerAdvice(
             setProperty("code", "ORIGIN_REQUIRED")
         }
 
-    /**
-     * 검색어 길이 초과 → 400 + `code:"INVALID_KEYWORD"` + `errors[{field:"keyword"}]`.
-     * 빈/공백 검색어는 여전히 빈 목록(에러 아님) 계약을 유지하고, 과도하게 긴 검색어만 외부 API 호출 전에 차단한다.
-     * rejectedValue 에는 (장문 입력 echo 회피를 위해) 입력 길이를 담는다.
-     */
     @ExceptionHandler(InvalidKeywordException::class)
     fun handleInvalidKeyword(ex: InvalidKeywordException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -124,10 +106,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 쿼리 파라미터 좌표 범위 오류 → 400 `code:"INVALID_COORDINATE"`. 본문 좌표 검증(400 VALIDATION_FAILED)과
-     * 같은 의미의 입력 오류를 GET 계열(최근접 파출소 등)에서도 동일 에러 계약으로 표면화한다.
-     */
     @ExceptionHandler(InvalidCoordinateException::class)
     fun handleInvalidCoordinate(ex: InvalidCoordinateException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -138,11 +116,6 @@ class ApiControllerAdvice(
             setProperty("code", "INVALID_COORDINATE")
         }
 
-    /**
-     * 출발지와 도착지가 사실상 같은 지점 → 422 + `code:"SAME_ORIGIN_DESTINATION"` + `errors[{field:"destination"}]`.
-     * 좌표 자체는 유효하지만(400 아님) 같은 지점으로의 "귀가 경로"는 의미가 없는 복구 가능 상태다 —
-     * 프론트는 이 코드로 도착지 재선택을 유도한다(원인이 destination 이므로 ORIGIN_REQUIRED 와 달리 errors 를 담는다).
-     */
     @ExceptionHandler(SameOriginDestinationException::class)
     fun handleSameOriginDestination(ex: SameOriginDestinationException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -163,12 +136,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 출발지-도착지 직선거리가 도보 귀가로 보기엔 비현실적으로 멀 때 → 422 + `code:"TRIP_TOO_FAR"`
-     * + `errors[{field:"destination"}]`. 좌표 자체는 유효(범위 내)하지만, 보통 도착지 오선택이나 위경도 뒤바뀜·
-     * 타 지역의 캐시된 GPS 같은 입력 실수다 — "850km, 12000분" 같은 무의미한 경로를 만들기보다 복구 가능 상태로
-     * 거부해 프론트가 가까운 도착지 재선택을 유도하게 한다(SAME_ORIGIN_DESTINATION 과 같은 결, 거리 상한 쪽).
-     */
     @ExceptionHandler(TripTooFarException::class)
     fun handleTripTooFar(ex: TripTooFarException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -189,11 +156,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 경로 저장 요청의 선택 메타(type/provenance) 규약 위반 → 422 + `code:"INVALID_ROUTE_META"` + `errors[{field}]`.
-     * 좌표/개수 같은 형식 오류(400 VALIDATION_FAILED)와 달리, 형식은 읽혔으나 값 규약(허용 enum·길이 상한)을 못 지킨
-     * 복구 가능 상태라 422 로 낸다(RouteRequest 의 ORIGIN_REQUIRED/TRIP_TOO_FAR 와 같은 경계-검증→422 결).
-     */
     @ExceptionHandler(InvalidRouteMetaException::class)
     fun handleInvalidRouteMeta(ex: InvalidRouteMetaException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -214,11 +176,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 관리자 Slack 설정 편집의 뮤트 카테고리 key 가 허용 5종 밖 → 422 + `code:"INVALID_SLACK_CATEGORY"` +
-     * `errors[{field:"mutedCategories"}]`. 형식(문자열 목록)은 읽혔으나 값 규약(허용 카테고리)을 못 지킨
-     * 복구 가능 상태라 422 로 낸다(INVALID_ROUTE_META 와 같은 경계-검증→422 결).
-     */
     @ExceptionHandler(InvalidSlackCategoryException::class)
     fun handleInvalidSlackCategory(ex: InvalidSlackCategoryException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -239,10 +196,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 관리자 시설 업로드의 path 변수 type 이 알려진 시설 종류(cdnType) 밖 → 400 + `code:"UNKNOWN_FACILITY_TYPE"` +
-     * `errors[{field:"type"}]`. 경로 자체는 매핑됐으나(404 아님) 종류 값이 규약 밖인 잘못된 입력이라 400 으로 낸다.
-     */
     @ExceptionHandler(UnknownFacilityTypeException::class)
     fun handleUnknownFacilityType(ex: UnknownFacilityTypeException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -263,10 +216,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 관리자 시설 업로드에서 유효한 시설 좌표가 0건(빈 파일·헤더뿐·좌표 없는 행만) → 400 + `code:"VALIDATION_FAILED"` +
-     * `errors[{field:"file"}]`. 본문 검증 실패(@Valid)와 같은 계약으로 표면화한다(기존 데이터는 교체하지 않음).
-     */
     @ExceptionHandler(EmptyFacilityUploadException::class)
     fun handleEmptyFacilityUpload(ex: EmptyFacilityUploadException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -287,10 +236,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 멀티파트 업로드에서 필수 파트(`file`)가 없을 때 → 400 + `code:"VALIDATION_FAILED"` + `errors[{field:"file"}]`.
-     * Spring 기본 처리는 `code` 없는 응답을 내므로, "모든 에러 응답에 code" 계약을 지키도록 표준 스키마로 변환한다.
-     */
     @ExceptionHandler(MissingServletRequestPartException::class)
     fun handleMissingPart(ex: MissingServletRequestPartException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -311,11 +256,6 @@ class ApiControllerAdvice(
             )
         }
 
-    /**
-     * 위치 공유 토큰이 없거나 만료된 상태에서 **위치 갱신(POST /share/{token}/location)** 을 시도 → 404 +
-     * `code:"SHARE_SESSION_NOT_FOUND"`. 미매칭 경로(NOT_FOUND)와 구분되는, "경로는 맞지만 그 공유 리소스가 없다"는
-     * 도메인 404다. (보호자 조회 GET /share/{token}/location 은 404 대신 항상 200 + `expired:true` 로 응답한다.) errors 는 없다.
-     */
     @ExceptionHandler(ShareSessionNotFoundException::class)
     fun handleShareSessionNotFound(@Suppress("UNUSED_PARAMETER") ex: ShareSessionNotFoundException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -326,11 +266,6 @@ class ApiControllerAdvice(
             setProperty("code", "SHARE_SESSION_NOT_FOUND")
         }
 
-    /**
-     * 지원하지 않는 HTTP 메서드(예: POST 전용 엔드포인트에 GET) → 405 + `code:"METHOD_NOT_ALLOWED"`.
-     * Spring 기본 처리는 `code` 없는(또는 빈) 응답을 내므로, "모든 에러 응답에 code" 계약을 지키도록
-     * 표준 스키마로 변환한다. HTTP 규약상 405 에 필요한 `Allow` 헤더(허용 메서드)는 보존한다.
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
     fun handleMethodNotAllowed(ex: HttpRequestMethodNotSupportedException): ResponseEntity<ProblemDetail> {
         val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
@@ -345,10 +280,6 @@ class ApiControllerAdvice(
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers).body(body)
     }
 
-    /**
-     * 지원하지 않는 Content-Type(예: JSON 본문 엔드포인트에 text/plain) → 415 + `code:"UNSUPPORTED_MEDIA_TYPE"`.
-     * 405 와 같은 이유로 "모든 에러 응답에 code" 계약을 지키도록 표준 스키마로 변환한다.
-     */
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
     fun handleUnsupportedMediaType(@Suppress("UNUSED_PARAMETER") ex: HttpMediaTypeNotSupportedException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -359,11 +290,6 @@ class ApiControllerAdvice(
             setProperty("code", "UNSUPPORTED_MEDIA_TYPE")
         }
 
-    /**
-     * 매핑된 핸들러/정적 리소스가 없는 경로(오타·폐기된 엔드포인트 호출) → 404 + `code:"NOT_FOUND"`.
-     * Spring Boot 3.2+ 는 미매칭 경로에서 [NoResourceFoundException] 을 던지는데, 기본 처리는 `code` 없는
-     * 응답을 내므로 "모든 에러 응답에 code" 계약을 지키도록 표준 스키마로 변환한다. errors 는 없다.
-     */
     @ExceptionHandler(NoResourceFoundException::class)
     fun handleNotFound(@Suppress("UNUSED_PARAMETER") ex: NoResourceFoundException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -374,13 +300,6 @@ class ApiControllerAdvice(
             setProperty("code", "NOT_FOUND")
         }
 
-    /**
-     * 위치 공유 저장소(Redis) 접근 불가 → 503 + `code:"SHARE_STORE_UNAVAILABLE"`. 런타임에 Redis 가 죽으면
-     * 위치 공유 읽기/쓰기가 [LocationStoreUnavailableException] 을 던지는데, 이는 잘못된 요청(500)이 아니라
-     * "일시적으로 의존 인프라에 닿을 수 없는" 복구 가능 상태다. 불명확한 500 대신 503 으로 구분해, 앱의 위치
-     * 전송 루프는 이를 일시 오류로 보고 재시도하고(만료 404 처럼 종료하지 않음), 보호자는 재시도 안내를 받는다.
-     * 저장소 장애는 사람 개입이 필요하므로 운영 알림(스로틀)을 함께 보낸다. 응답 본문에 내부 원인은 노출하지 않는다.
-     */
     @ExceptionHandler(LocationStoreUnavailableException::class)
     fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
         log.error("위치 공유 저장소 접근 실패 — 503 SHARE_STORE_UNAVAILABLE 로 응답합니다.", ex)
@@ -401,14 +320,6 @@ class ApiControllerAdvice(
             .body(body)
     }
 
-    /**
-     * 위에서 처리되지 않은 모든 예외(미처리 런타임 오류 등) → 500 + `code:"INTERNAL_ERROR"`.
-     * "모든 에러 응답에 code" 계약을 프레임워크 경계까지 마무리한다.
-     *
-     * 안심앱 보안상 응답 본문에는 내부 details(스택트레이스·예외 메시지)를 절대 싣지 않는다 — 대신
-     * 디버깅용 전체 스택트레이스는 **서버 로그**로만 남긴다(`log.error`). 즉 dev 가시성과 비노출을 양립시킨다.
-     * 더 구체적인 `@ExceptionHandler` 가 항상 우선하므로 기존 검증/프레임워크 에러 계약은 영향받지 않는다.
-     */
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
         log.error("처리되지 않은 예외 — 500 INTERNAL_ERROR 로 응답합니다.", ex)
@@ -427,7 +338,6 @@ class ApiControllerAdvice(
     }
 
     private companion object {
-        /** 503 응답의 Retry-After(초) — 저장소 장애는 대개 짧게 지나가므로 앱/프록시가 곧 재시도하게 유도. */
         const val RETRY_AFTER_SECONDS: Int = 5
     }
 }

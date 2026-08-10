@@ -9,21 +9,6 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
-/**
- * 부엉이가 RS256 으로 발급한 access token 을 RSA 공개키로 검증한다.
- *
- * Claim 규약:
- *  - `sub`   = userId (Long)
- *  - `roles` = 권한 목록(List<String>, 예: `["ROLE_ADMIN"]`)
- *  - `nickname` (선택)
- *  - `iat`, `exp`
- *
- * 검증 실패는 만료([ExpiredTokenException])와 그 외 무효([InvalidTokenException])로 구분해,
- * 필터가 사유에 맞는 401 응답으로 변환한다.
- *
- * [SecurityConfig] 의 @Bean 으로만 등록된다(servlet 웹 컨텍스트 한정). @Component 로 두면 컴포넌트 스캔이
- * 비웹/슬라이스 컨텍스트에서도 생성해 JwtProperties(공개키) 주입을 강제하므로 @Bean 으로 격리한다.
- */
 class JwtTokenVerifier(
     private val key: RSAPublicKey,
     private val issuer: String,
@@ -78,10 +63,6 @@ class JwtTokenVerifier(
     }
 
     companion object {
-        /**
-         * PEM 또는 base64-DER 형식의 RSA 공개키 문자열을 [RSAPublicKey] 로 변환한다.
-         * 헤더("-----BEGIN PUBLIC KEY-----" 등)와 공백은 자동 제거한다.
-         */
         fun parsePemPublicKey(pem: String): RSAPublicKey {
             val stripped: String = pem
                 .replace("-----BEGIN PUBLIC KEY-----", "")

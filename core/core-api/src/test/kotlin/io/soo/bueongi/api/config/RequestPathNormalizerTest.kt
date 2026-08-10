@@ -3,10 +3,6 @@ package io.soo.bueongi.api.config
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RequestPathNormalizer] 단위 테스트 — 집계 카디널리티를 좌우하는 유일 규칙을 고정한다:
- * `/share/<토큰>` 의 토큰 세그먼트만 `{token}` 으로 치환하고, `/share/create`·`/api` 하위·알 수 없는 경로는 그대로 둔다.
- */
 class RequestPathNormalizerTest {
 
     @Test

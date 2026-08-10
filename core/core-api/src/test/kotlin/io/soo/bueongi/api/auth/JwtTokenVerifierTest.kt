@@ -11,10 +11,6 @@ import java.security.interfaces.RSAPublicKey
 import java.util.Base64
 import java.util.Date
 
-/**
- * [JwtTokenVerifier] 단위 테스트. 자체 RSA 키쌍으로 RS256 토큰을 발급해, 공개키 검증이
- * userId·roles 를 정확히 추출하고 만료/무효 서명을 예외로 구분하는지 고정한다.
- */
 class JwtTokenVerifierTest {
 
     private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()

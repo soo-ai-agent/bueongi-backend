@@ -4,10 +4,6 @@ import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [FacilityRefreshStatusStore] — refreshAll 반환 Map 을 그대로 보관하고 종류별로 되돌려준다.
- * 미기록 종류는 null(=never), 교체 성공은 count 보존, 실패/0건 유지는 count=null 로 구분된다.
- */
 class FacilityRefreshStatusStoreTest {
 
     @Test

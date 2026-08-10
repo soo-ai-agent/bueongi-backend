@@ -12,11 +12,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-/**
- * [SafemapPoliceClient] 의 실 HTTP 계층 테스트 — 요청 파라미터(serviceKey 원형·returnType=JSON),
- * 좌표계 자동판별(EPSG:5179 변환/WGS84 그대로), envelope 편차 수용(재귀 탐색), totalCount 기반
- * 페이지 순회(서버가 numOfRows 보다 적게 줘도 전량 수집), 실패 의미론(null)을 고정한다.
- */
 class SafemapPoliceClientHttpTest {
 
     private val serviceKey: String = "safemap%2Fkey"

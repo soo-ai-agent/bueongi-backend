@@ -4,18 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 import io.soo.bueongi.core.enums.FacilityType
 
-/**
- * 시설 종류별 표준 CSV 매핑 규격 — 어느 헤더에서 어떤 필드를 읽고, 좌표가 어느 좌표계인지 정의한다.
- * 값은 pipeline `sources.yaml` 의 `keyColumns`(표준데이터 컬럼명)와 일치시킨다. [FacilityCsvParser] 가 이 규격으로
- * 각 행을 저장 모델로 옮긴다.
- *
- * 헤더는 후보 목록이다 — 원천마다 표기가 조금씩 다를 수 있어(예: lamp 주소=설치위치|소재지지번주소) 앞에서부터
- * 먼저 존재하는 헤더를 쓴다. 좌표는 종류의 기본 좌표계([coordSystem])를 쓰되, 어떤 종류든 `위도/경도` 헤더가
- * 있으면 그것을 우선한다(WGS84 폴백) — 표준데이터가 좌표를 직접 주는 경우를 견고하게 흡수한다.
- */
+/** 헤더 후보·좌표계 값은 pipeline sources.yaml 의 keyColumns 와 일치시킨다 — 위도/경도 헤더가 있으면 WGS84 우선. */
 data class FacilityCsvSpec(
     val type: FacilityType,
-    /** 투영 x/y 를 쓸 때의 좌표계. `위도/경도` 헤더가 있으면 이 값과 무관하게 WGS84 로 읽는다. */
     val coordSystem: FacilityCoordSystem,
     val latHeaders: List<String> = listOf("위도"),
     val lngHeaders: List<String> = listOf("경도"),
@@ -26,11 +17,9 @@ data class FacilityCsvSpec(
     val purposeHeaders: List<String> = emptyList(),
     val cameraCountHeaders: List<String> = emptyList(),
     val phoneHeaders: List<String> = emptyList(),
-    /** CCTV 방범 용도(설치목적구분) 필터 적용 여부 — 부팅 CSV 적재와 동일 기준. */
     val securityPurposeFilter: Boolean = false,
 ) {
     companion object {
-        /** 종류별 표준 CSV 규격. */
         fun forType(type: FacilityType): FacilityCsvSpec = when (type) {
             FacilityType.CCTV -> FacilityCsvSpec(
                 type = type,

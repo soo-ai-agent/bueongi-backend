@@ -14,7 +14,6 @@ import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
 
-/** 목적지 좌표 + 표시명. */
 data class NamedLatLng(
     @field:NotNull
     @field:DecimalMin("-90.0") @field:DecimalMax("90.0")

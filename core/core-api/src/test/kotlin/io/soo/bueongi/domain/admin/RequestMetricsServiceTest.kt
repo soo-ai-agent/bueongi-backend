@@ -5,11 +5,6 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [RequestMetricsService] 집계 정확성 — 저장된 수신 요청 기록만으로 엔드포인트별 호출수·성공률·평균 소요·
- * 고유 클라이언트, 예측 사용자 수(today/7d/30d + clientId 없는 호출), 시간대/일자 추이를 계산한다.
- * 저장소는 넘겨준 기록을 그대로 돌려주는 페이크(가장 얇은 대역)로 대체한다.
- */
 class RequestMetricsServiceTest {
 
     private fun store(metrics: List<RequestMetric>): RequestMetricStore = object : RequestMetricStore {

@@ -17,11 +17,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
-/**
- * [AdController] 슬라이스 테스트(@WebMvcTest). 실 서비스([AdStatsService]) + 기록을 캡처하는 페이크 저장소로
- * POST /api/ads/impression 의 HTTP 계약을 고정한다: 정상 204 + 저장소 기록 1건, placement 누락/오값 400 + 미기록.
- * 보안 필터는 끈다(공개 경로 — permitAll 보존은 AdminAuthGateTest 가 커버).
- */
 @WebMvcTest(AdController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdStatsService::class, ApiControllerAdvice::class, AdControllerTest.CapturingStoreConfig::class)
@@ -75,7 +70,6 @@ class AdControllerTest(
         assertThat(CapturingStoreConfig.recorded).isEmpty()
     }
 
-    /** 기록을 캡처하는 페이크 저장소 + 실 서비스 — 컨트롤러→서비스→저장소 부수효과까지 슬라이스에서 검증한다. */
     @TestConfiguration
     class CapturingStoreConfig {
         @Bean

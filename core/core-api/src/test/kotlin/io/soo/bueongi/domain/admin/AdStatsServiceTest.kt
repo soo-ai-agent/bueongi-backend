@@ -5,10 +5,6 @@ import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [AdStatsService] 집계 정확성 — 저장된 광고 노출 기록만으로 총계·오늘 노출 수·지면별 카운트(2종 고정 키)·
- * 최근 24시간 시간대 트렌드를 계산한다. 저장소는 넘겨준 기록을 그대로 돌려주는 페이크(가장 얇은 대역)로 대체한다.
- */
 class AdStatsServiceTest {
 
     private fun store(events: List<AdEvent>): AdEventStore = object : AdEventStore {

@@ -23,16 +23,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
-/**
- * [RouteController] 슬라이스 테스트(@WebMvcTest). 실 서비스([RouteService]/[RouteFacilityService]/[SafeRouteService]) 를
- * import 해 compare/facilities/safe-compare 의 HTTP 계약을 고정한다:
- *  - 정상 요청 → 200 + 프론트 계약 JSON shape
- *  - destination null → 400 / origin 누락 → 422 ORIGIN_REQUIRED(복구 가능 상태로 구분)
- *  - 위경도 범위 초과(lat>90 / lng>180) → 400
- *
- * safe-compare 는 Tmap 키 미설정(테스트 환경)이라 결정론적 폴백(compare)로 동작한다 — 키 의존 외부 호출 없이
- * 폴백 계약(safe/main/fast)을 고정한다. (실 Tmap/점수/우회는 [SafeRouteServiceTest] 등에서 목으로 검증.)
- */
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(

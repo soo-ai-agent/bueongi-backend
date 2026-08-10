@@ -3,10 +3,6 @@ package io.soo.bueongi.domain.admin
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [Percentiles.nearestRank] 순수 함수 검증 — 빈 목록·단일 원소 경계, nearest-rank 순위 계산(보간 없이 실제 표본값).
- * 입력은 반드시 오름차순이라는 계약을 전제로 정렬된 목록만 넘긴다.
- */
 class PercentilesTest {
 
     @Test

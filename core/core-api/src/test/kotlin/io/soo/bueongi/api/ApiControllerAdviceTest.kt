@@ -22,11 +22,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
-/**
- * [ApiControllerAdvice] 슬라이스 테스트. 검증 실패 400 응답이 표준 스키마(ProblemDetail + errors[])를
- * 따르는지 고정한다 — 프론트가 status 코드뿐 아니라 field/message/rejectedValue 를 파싱할 수 있어야 한다.
- * [RouteController] 를 통해 실제 `@Valid` 흐름을 태운다.
- */
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(

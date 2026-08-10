@@ -40,10 +40,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
-/**
- * [AdminController] api-logs 슬라이스 테스트(@WebMvcTest). 보안 필터는 끄고(실 게이트는 AdminAuthGateTest 가 커버)
- * GET /api/admin/api-logs 의 HTTP 계약(200 + 접속 내역 JSON shape, provider/limit 파라미터 위임)만 고정한다.
- */
 @WebMvcTest(AdminController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiLogsControllerTest.FakeStoreConfig::class)
@@ -334,7 +330,6 @@ class ApiLogsControllerTest(
             }
         }
 
-        /** 활성 공유 목록용 — 고정 시계로 ttlSeconds 를 결정론화한다(URL 조립·정렬은 도메인이 수행). */
         @Bean
         fun shareService(store: LocationStore): ShareService = ShareService(store, FIXED_CLOCK, SHARE_BASE_URL)
 
@@ -346,7 +341,6 @@ class ApiLogsControllerTest(
                 listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
         }
 
-        /** webhook 미설정 홀더 — slack-config 슬라이스 계약(미설정 상태 shape)만 고정한다. */
         @Bean
         fun slackAlertConfig(): SlackAlertConfig = SlackAlertConfig(webhookUrl = "", throttleMinutes = 10)
 
@@ -357,11 +351,9 @@ class ApiLogsControllerTest(
         companion object {
             var lastLimit: Int = -1
 
-            /** 결정론적 테스트 시각 — 위치 갱신·상한 만료·TTL 파생을 재현 가능하게 고정한다. */
             val FIXED_NOW: java.time.Instant = java.time.Instant.parse("2026-06-19T12:00:00Z")
             val FIXED_CLOCK: java.time.Clock = java.time.Clock.fixed(FIXED_NOW, java.time.ZoneOffset.UTC)
 
-            /** 공유 URL base — 어드민 목록 shareUrl 조립 검증에 쓴다. */
             const val SHARE_BASE_URL: String = "http://localhost:3619"
         }
     }

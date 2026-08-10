@@ -24,10 +24,6 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
-/**
- * 경로변 안심시설 마커 요청(검증 계층). 좌표 규약은 [LatLng] 와 동일(범위 + 비유한 거부)이고,
- * type 은 허용 집합만(@Pattern — start/end 는 프론트가 이미 걸러 보낸다). 나머지는 표시용 선택 필드.
- */
 data class RouteMarkerRequest(
     @field:NotBlank
     @field:Pattern(regexp = ROUTE_MARKER_TYPE_PATTERN)
@@ -38,7 +34,6 @@ data class RouteMarkerRequest(
     @field:NotNull
     @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
     val lng: Double?,
-    /** 화면 표시 힌트(%). 앱이 계산한 미니맵 좌표를 그대로 재현하기 위한 선택 값. */
     val x: Double? = null,
     val y: Double? = null,
     val name: String? = null,

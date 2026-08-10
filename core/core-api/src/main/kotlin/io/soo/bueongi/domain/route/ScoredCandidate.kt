@@ -20,5 +20,4 @@ import org.springframework.stereotype.Service
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/** 채점만 끝난 후보(유형 배정 전 중간 표현) — 안전점수·시간으로 safe/fast/main 을 고르는 입력. */
 internal data class ScoredCandidate(val candidate: RouteCandidate, val score: SafetyScore)

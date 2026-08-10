@@ -4,10 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * [TmapGeoJson] 파서 단위 테스트. Tmap 보행자 응답 GeoJSON 에서 LineString→경로, 첫 Point→거리/시간,
- * Point→steps 추출과 좌표/거리 폴백, 비유효 응답 방어를 고정한다.
- */
 class TmapGeoJsonTest {
 
     private val mapper: ObjectMapper = ObjectMapper()

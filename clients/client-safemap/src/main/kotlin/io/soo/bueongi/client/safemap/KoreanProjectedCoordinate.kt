@@ -1,18 +1,11 @@
 package io.soo.bueongi.client.safemap
 
-/**
- * 좌표계가 응답에 명시되지 않은 국가 안전데이터(생활안전지도·재난안전데이터 공통POI 등)의 x/y 문자열 쌍을
- * WGS84 로 판별·변환한다. 값 범위로 자동 판별한다 — 경위도(WGS84)면 그대로, 순서가 뒤바뀌었으면 교정,
- * UTM-K(EPSG:5179) 또는 Web Mercator(EPSG:3857) 미터 범위면 해당 좌표계로 역변환한다.
- *
- * 경위도(±180/±90)와 UTM-K 미터(수십만~백만대)는 자릿수가 달라 범위가 겹치지 않으므로 판별이 모호하지 않다.
- * safemap 치안시설과 safetydata 가로등이 같은 규칙을 쓰므로 여기 한 곳에 둔다(중복 방지).
- */
+/** 좌표계 미명시 x/y 를 값 범위로 자동판별 — 경위도면 그대로(뒤바뀜 교정), UTM-K·Web Mercator 미터 범위면 역변환. 자릿수가 달라 범위가 겹치지 않는다. */
 internal fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
     val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     return when {
-        Epsg5179.inKoreaBounds(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x) // x=경도, y=위도
+        Epsg5179.inKoreaBounds(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x)
         Epsg5179.inKoreaBounds(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어
         x in UTMK_EASTING_RANGE && y in UTMK_NORTHING_RANGE -> Epsg5179.toWgs84(x, y)
         x in WEB_MERCATOR_KOREA_X_RANGE && y in WEB_MERCATOR_KOREA_Y_RANGE -> Epsg3857.toWgs84(x, y)
@@ -20,10 +13,7 @@ internal fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Poin
     }
 }
 
-/**
- * EPSG:5179 로 판별하는 동경(easting)/북위(northing) 미터 범위 — false easting/northing
- * (1,000,000/2,000,000m) 기준 한반도 유효 범위. 경위도와 자릿수가 달라 겹치지 않는다.
- */
+/** EPSG:5179 false easting/northing(1,000,000/2,000,000m) 기준 한반도 유효 미터 범위. */
 private val UTMK_EASTING_RANGE: ClosedFloatingPointRange<Double> = 400_000.0..1_600_000.0
 private val UTMK_NORTHING_RANGE: ClosedFloatingPointRange<Double> = 1_100_000.0..2_900_000.0
 private val WEB_MERCATOR_KOREA_X_RANGE: ClosedFloatingPointRange<Double> = 13_800_000.0..14_700_000.0

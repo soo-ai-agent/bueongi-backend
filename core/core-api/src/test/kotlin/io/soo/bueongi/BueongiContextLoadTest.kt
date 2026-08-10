@@ -10,11 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
-/**
- * 전체 ApplicationContext 가 실제 프로덕션 구성으로 기동되는지 고정한다.
- * 특히 [PlaceSearchService] 의 새 의존 그래프(시드 + 외부 provider)가 자동구성 `RestClient.Builder` 와 함께 와이어되는지 검증한다.
- * 외부 키 미설정(application.yml 기본 빈 값) → [RemotePlaceProvider.isEnabled]=false 로 시드 폴백 경로가 활성임을 확인.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
 class BueongiContextLoadTest(

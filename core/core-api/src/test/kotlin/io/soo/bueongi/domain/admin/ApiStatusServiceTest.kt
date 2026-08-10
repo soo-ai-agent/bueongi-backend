@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Test
 import java.time.ZoneId
 import kotlin.math.roundToInt
 
-/**
- * [ApiStatusService] 집계 정확성 — 저장된 로그만으로 성공률·평균 소요·최근 성공/실패·오늘 쿼터를 계산한다.
- * 저장소는 넘겨준 로그를 그대로 돌려주는 페이크(가장 얇은 대역)로 대체한다.
- */
 class ApiStatusServiceTest {
 
     private fun store(logs: List<ApiCallLog>): ApiCallLogStore = object : ApiCallLogStore {

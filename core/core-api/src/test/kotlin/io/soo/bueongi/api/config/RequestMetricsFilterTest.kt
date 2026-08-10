@@ -9,10 +9,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 
-/**
- * [RequestMetricsFilter] 단위 테스트 — 체인 실행 후 계측이 기록되는지, 관리자·운영 경로가 제외되는지,
- * `X-Client-Id` 가 캡처되고(없으면 null) 경로가 정규화되는지 고정한다. 저장소는 기록을 모으는 페이크로 대체한다.
- */
 class RequestMetricsFilterTest {
 
     private class CapturingStore : RequestMetricStore {
@@ -23,7 +19,6 @@ class RequestMetricsFilterTest {
         override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
     }
 
-    /** 다운스트림이 status 를 세팅하는 것을 흉내낸 체인. */
     private fun chainSetting(status: Int) = FilterChain { _, response ->
         (response as HttpServletResponse).status = status
     }

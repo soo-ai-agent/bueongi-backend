@@ -6,10 +6,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * 관리자 위치 조회(getLocationForAdmin)가 공개 조회와 동일한 뷰를 주면서도 시청자로 집계되지 않는 불변식을 고정한다.
- * (대조로 공개 getLocation 의 markViewed 회귀 없음을 함께 확인한다.)
- */
 class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
 
     @Test

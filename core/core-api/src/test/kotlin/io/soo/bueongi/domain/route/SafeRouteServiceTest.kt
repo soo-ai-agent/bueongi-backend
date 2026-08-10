@@ -20,12 +20,6 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-/**
- * [SafeRouteService] 단위 테스트. Tmap 은 목으로 격리하고 실 점수/우회/마커 파이프라인을 검증한다:
- *  - 키 미설정/Tmap 전부 실패 → compare 폴백(점수·마커 없음)
- *  - 키 설정 → 후보 채점·유형배정(safe=최고점/fast=최소시간)·점수 내림차순·경로변 마커 포함
- *  - 안심 우회 후보는 기본 최단거리 ×(1+budget) 이내만 채택
- */
 class SafeRouteServiceTest {
 
     private val origin: GeoPoint = GeoPoint(37.5, 127.0)
@@ -253,7 +247,6 @@ class SafeRouteServiceTest {
     }
 }
 
-/** 추천 집계 기록을 그대로 모아두는 테스트 대역 — 이중 카운트/엔드포인트 라벨을 검증한다(같은 패키지 테스트 공용). */
 class RecordingRouteStatsStore : RouteStatsStore {
     val records: MutableList<RouteRecommendationLog> = mutableListOf<RouteRecommendationLog>()
 

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 import java.io.File
 import java.nio.charset.Charset
 
-/** CDN 컬렉션 파일 래퍼. 미사용 메타(schemaVersion/sources 등)는 무시. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class FacilityCollectionDto(
     val type: String? = null,

@@ -8,12 +8,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
-/**
- * [RouteRequest.toValidatedQuery] 단위 테스트 — compare/facilities 공용 입력 가드의 **단일 진실 원천**을 직접 고정한다.
- *
- * 세 엔드포인트(compare/safe-compare/facilities)가 이 변환만 거치므로, 가드의 종류·**순서**가
- * 여기서 고정되면 두 엔드포인트는 항상 동일한 검증을 거친다(한쪽에만 가드가 빠지는 드리프트 방지 회귀 가드).
- */
 class RouteRequestGuardTest {
 
     @Test

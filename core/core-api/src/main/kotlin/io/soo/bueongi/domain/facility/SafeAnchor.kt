@@ -10,7 +10,6 @@ import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import org.springframework.stereotype.Component
 import kotlin.math.floor
 
-/** 안심 앵커: 클러스터 중심 좌표 + 구성 시설수(weight). */
 data class SafeAnchor(
     val center: GeoPoint,
     val weight: Int,
