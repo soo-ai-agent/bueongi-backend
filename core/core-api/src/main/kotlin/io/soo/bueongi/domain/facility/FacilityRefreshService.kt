@@ -18,6 +18,7 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class FacilityRefreshService(
@@ -30,6 +31,12 @@ class FacilityRefreshService(
     private val refreshStatusStore: FacilityRefreshStatusStore? = null,
 ) : LiveFacilitySources {
     private val log: Logger = LoggerFactory.getLogger(FacilityRefreshService::class.java)
+
+    /** 기동 갱신(taskExecutor)과 주기 갱신(스케줄러)이 다른 스레드라 겹칠 수 있어 진입을 하나로 막는다. */
+    private val refreshInProgress: AtomicBoolean = AtomicBoolean(false)
+
+    @Volatile
+    private var lastRefreshStartedAtMs: Long = 0L
 
     val isEnabled: Boolean
         get() = dataGoKrClient.isEnabled || safemapClient.isEnabled || streetlightClient.isEnabled
@@ -63,7 +70,38 @@ class FacilityRefreshService(
         return types
     }
 
+    /**
+     * 라이브 갱신을 1회 수행한다. 갱신 1회가 수백~수천 회 외부 호출이라 반복 진입을 두 겹으로 막는다:
+     * 진행 중이면 즉시 건너뛰고(동시 실행 방지), 직전 시작으로부터 최소 간격이 지나지 않았어도 건너뛴다.
+     * 건너뛴 경우 빈 결과를 돌려주고 기존 데이터를 그대로 유지한다.
+     */
     fun refreshAll(): Map<FacilityType, Int?> {
+        if (!refreshInProgress.compareAndSet(false, true)) {
+            log.info("안심시설 라이브 갱신이 이미 진행 중 — 이번 요청은 건너뛴다(중복 호출 방지)")
+            return emptyMap()
+        }
+        try {
+            return refreshWhenDue()
+        } finally {
+            refreshInProgress.set(false)
+        }
+    }
+
+    private fun refreshWhenDue(): Map<FacilityType, Int?> {
+        val now: Long = System.currentTimeMillis()
+        val sinceLastMs: Long = now - lastRefreshStartedAtMs
+        if (lastRefreshStartedAtMs > 0L && sinceLastMs < FacilityRefreshPolicy.MIN_INTERVAL_MS) {
+            log.info(
+                "안심시설 라이브 갱신 최소 간격 미도달({}분 전 실행) — 이번 요청은 건너뛴다(반복 호출 방지)",
+                sinceLastMs / 60_000L,
+            )
+            return emptyMap()
+        }
+        lastRefreshStartedAtMs = now
+        return collectAll()
+    }
+
+    private fun collectAll(): Map<FacilityType, Int?> {
         val liveTypes: Set<FacilityType> = liveRefreshableTypes()
         val result: LinkedHashMap<FacilityType, Int?> = LinkedHashMap<FacilityType, Int?>()
         if (FacilityType.BELL in liveTypes) {

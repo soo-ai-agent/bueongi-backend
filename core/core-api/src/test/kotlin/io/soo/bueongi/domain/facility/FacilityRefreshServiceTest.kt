@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -211,6 +212,22 @@ class FacilityRefreshServiceTest {
         assertThat(result).doesNotContainKey(FacilityType.LAMP)
         assertThat(store.replaced).isEmpty()
         assertThat(notifier.keys).hasSize(2)
+    }
+
+    @Test
+    fun `반복 호출 방지 - 최소 간격 안에 다시 부르면 외부 API 를 호출하지 않는다`() {
+        enableDataGoKr()
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(
+            listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)),
+        )
+        whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+
+        val first = service.refreshAll()
+        val second = service.refreshAll()
+
+        assertThat(first[FacilityType.BELL]).isEqualTo(1)
+        assertThat(second).isEmpty()
+        verify(dataGoKr, times(1)).fetchEmergencyBells()
     }
 
     @Test
