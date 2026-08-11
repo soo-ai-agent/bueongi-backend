@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
 import java.nio.charset.Charset
+import java.util.concurrent.atomic.AtomicReference
 
 @Component
 class FacilityRepository(
@@ -21,8 +22,12 @@ class FacilityRepository(
 ) : FacilitySpatialSource, FacilityLiveStore {
     private val log: Logger = LoggerFactory.getLogger(FacilityRepository::class.java)
 
-    @Volatile
-    private var indexByType: Map<FacilityType, GridSpatialIndex> = emptyMap()
+    /**
+     * 종류별 공간색인. 기록자가 둘이라(라이브 갱신 스케줄러 · 관리자 업로드 요청) 원자적으로 바꾼다.
+     * @Volatile 변수에 `map + (k to v)` 를 쓰면 읽기-수정-쓰기가 겹칠 때 한쪽 교체가 유실된다.
+     */
+    private val indexByType: AtomicReference<Map<FacilityType, GridSpatialIndex>> =
+        AtomicReference<Map<FacilityType, GridSpatialIndex>>(emptyMap())
 
     @Volatile
     private var _safePaths: List<SafePath> = emptyList()
@@ -35,10 +40,11 @@ class FacilityRepository(
     override val freshness: FacilityFreshness? get() = _freshness
 
     override fun index(type: FacilityType): GridSpatialIndex =
-        indexByType[type] ?: EMPTY_INDEX
+        indexByType.get()[type] ?: EMPTY_INDEX
 
     override fun replace(type: FacilityType, points: List<FacilityPoint>): Int {
-        indexByType = indexByType + (type to GridSpatialIndex(points))
+        val replaced: GridSpatialIndex = GridSpatialIndex(points)
+        indexByType.updateAndGet { current -> current + (type to replaced) }
         log.info("안심시설 라이브 교체: type={}, count={}", type, points.size)
         return points.size
     }
@@ -103,7 +109,7 @@ class FacilityRepository(
             uploadedTypes++
         }
 
-        indexByType = byType.mapValues { (_, pts) -> GridSpatialIndex(pts) }
+        indexByType.set(byType.mapValues { (_, pts) -> GridSpatialIndex(pts) })
         _safePaths = paths
         log.info(
             "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}, bell={}, " +
@@ -111,13 +117,13 @@ class FacilityRepository(
             dir?.path ?: "(없음)",
             fileCount,
             uploadedTypes,
-            indexByType[FacilityType.CCTV]?.size ?: 0,
+            indexByType.get()[FacilityType.CCTV]?.size ?: 0,
             csvCctv.size,
-            indexByType[FacilityType.LAMP]?.size ?: 0,
-            indexByType[FacilityType.BELL]?.size ?: 0,
-            indexByType[FacilityType.SAFEHOUSE]?.size ?: 0,
-            indexByType[FacilityType.POLICE]?.size ?: 0,
-            indexByType[FacilityType.PEDESTRIAN_SIGNAL]?.size ?: 0,
+            indexByType.get()[FacilityType.LAMP]?.size ?: 0,
+            indexByType.get()[FacilityType.BELL]?.size ?: 0,
+            indexByType.get()[FacilityType.SAFEHOUSE]?.size ?: 0,
+            indexByType.get()[FacilityType.POLICE]?.size ?: 0,
+            indexByType.get()[FacilityType.PEDESTRIAN_SIGNAL]?.size ?: 0,
             paths.size,
         )
     }

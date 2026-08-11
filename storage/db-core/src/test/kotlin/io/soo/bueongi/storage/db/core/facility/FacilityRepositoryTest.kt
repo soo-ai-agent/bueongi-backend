@@ -9,6 +9,10 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class FacilityRepositoryTest {
 
@@ -192,5 +196,43 @@ class FacilityRepositoryTest {
 
         assertThat(repo.index(FacilityType.BELL).size).isEqualTo(1)
         assertThat(repo.index(FacilityType.CCTV).size).isZero()
+    }
+
+    @Test
+    fun `서로 다른 종류를 동시에 교체해도 어느 쪽도 유실되지 않는다`(@TempDir tmp: Path) {
+        val types: List<FacilityType> = FacilityType.entries
+        val pool: ExecutorService = Executors.newFixedThreadPool(types.size)
+
+        // 한 번의 최종 상태만 보면 유실이 드러나지 않는다 — 매 시행마다 새 저장소에 전 종류를 동시에 1회씩 쓴다.
+        repeat(TRIALS) {
+            val repo = FacilityRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
+            repo.load()
+            val start: CountDownLatch = CountDownLatch(1)
+            val done: CountDownLatch = CountDownLatch(types.size)
+
+            types.forEachIndexed { index, type ->
+                pool.execute {
+                    start.await()
+                    repo.replace(type, List(index + 1) { point(type) })
+                    done.countDown()
+                }
+            }
+            start.countDown()
+            done.await(10, TimeUnit.SECONDS)
+
+            types.forEachIndexed { index, type ->
+                assertThat(repo.index(type).size)
+                    .describedAs("동시 교체 후 %s 유실", type)
+                    .isEqualTo(index + 1)
+            }
+        }
+        pool.shutdown()
+    }
+
+    private fun point(type: FacilityType): FacilityPoint =
+        FacilityPoint(type = type, lat = 37.5, lng = 127.0)
+
+    private companion object {
+        const val TRIALS: Int = 300
     }
 }
