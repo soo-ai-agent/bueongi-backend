@@ -13,11 +13,11 @@ import java.net.URI
 class SafetydataStreetlightClient(
     @Value("\${bueongi.safetydata.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
-    @Value("\${bueongi.safetydata.base-url:$DEFAULT_BASE_URL}") baseUrl: String = DEFAULT_BASE_URL,
+    @Value("\${bueongi.safetydata.base-url:${SafetydataApiSpec.DEFAULT_BASE_URL}}") baseUrl: String = SafetydataApiSpec.DEFAULT_BASE_URL,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetydataStreetlightClient::class.java)
     private val serviceKey: String = serviceKey.trim()
-    private val endpoint: String = "${baseUrl.trimEnd('/')}$PATH"
+    private val endpoint: String = "${baseUrl.trimEnd('/')}${SafetydataApiSpec.PATH}"
 
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
@@ -32,10 +32,10 @@ class SafetydataStreetlightClient(
         var received: Long = 0L
         var totalCount: Long? = null
 
-        while (pageNo <= MAX_PAGES) {
+        while (pageNo <= SafetydataApiSpec.MAX_PAGES) {
             val body: JsonNode? = try {
                 restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=json"))
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${SafetydataApiSpec.PAGE_SIZE}&returnType=json"))
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
@@ -68,13 +68,13 @@ class SafetydataStreetlightClient(
             when {
                 rows.isEmpty() -> break
                 total != null && received >= total -> break
-                total == null && rows.size < PAGE_SIZE -> break
+                total == null && rows.size < SafetydataApiSpec.PAGE_SIZE -> break
             }
             pageNo += 1
         }
         val finalTotal: Long? = totalCount
         if (finalTotal != null && received < finalTotal) {
-            log.warn("safetydata 가로등 페이지 상한(MAX_PAGES={}) 도달 — {}/{}건만 수집", MAX_PAGES, received, finalTotal)
+            log.warn("safetydata 가로등 페이지 상한(SafetydataApiSpec.MAX_PAGES={}) 도달 — {}/{}건만 수집", SafetydataApiSpec.MAX_PAGES, received, finalTotal)
         }
         return streetlights
     }
@@ -121,14 +121,4 @@ class SafetydataStreetlightClient(
     private fun sanitize(message: String?): String =
         (message ?: "원인 미상").replace(serviceKey, "***")
 
-    companion object {
-        const val DEFAULT_BASE_URL: String = "https://www.safetydata.go.kr"
-        const val PATH: String = "/V2/api/DSSP-IF-00084"
-
-        const val ENDPOINT: String = "$DEFAULT_BASE_URL$PATH"
-
-        const val PAGE_SIZE: Int = 1000
-
-        const val MAX_PAGES: Int = 1000
-    }
 }

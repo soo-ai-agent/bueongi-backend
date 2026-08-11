@@ -32,7 +32,7 @@ class SafetydataStreetlightClientHttpTest {
                       "ROAD_NM_ADDR":"서울 강남구 테헤란로 1","STDG_SGG_CD":"11680",
                       "XMAP_CRTS":"$x","YMAP_CRTS":"$y"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString("${SafetydataStreetlightClient.ENDPOINT}?serviceKey=$serviceKey")))
+        server.expect(requestTo(containsString("${SafetydataApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val streetlights: List<SafetydataStreetlight>? = client.fetchStreetlights()
@@ -54,7 +54,7 @@ class SafetydataStreetlightClientHttpTest {
              "body":[{"SN":"1","XMAP_CRTS":"127.03","YMAP_CRTS":"37.50","ADDR":"지번주소만"},
                      {"SN":"2","XMAP_CRTS":"","YMAP_CRTS":"abc","ADDR":"좌표불량"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString(SafetydataStreetlightClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val streetlights: List<SafetydataStreetlight>? = client.fetchStreetlights()
@@ -67,7 +67,7 @@ class SafetydataStreetlightClientHttpTest {
     @Test
     fun `실패 - HTTP 오류면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(SafetydataStreetlightClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
             .andRespond(withServerError())
 
         assertThat(client.fetchStreetlights()).isNull()
@@ -77,7 +77,7 @@ class SafetydataStreetlightClientHttpTest {
     fun `실패 - resultCode 비정상이면 null`() {
         val (client, server) = bind()
         val body: String = """{"resultCode":"03","resultMsg":"NODATA_ERROR","body":[]}"""
-        server.expect(requestTo(containsString(SafetydataStreetlightClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         assertThat(client.fetchStreetlights()).isNull()

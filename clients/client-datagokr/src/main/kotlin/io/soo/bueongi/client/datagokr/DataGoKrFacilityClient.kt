@@ -24,13 +24,13 @@ class DataGoKrFacilityClient(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    fun fetchCctv(): List<DataGoKrPoint>? = fetchAll(CCTV_ENDPOINT, CCTV_FIELDS)
+    fun fetchCctv(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.CCTV_ENDPOINT, CCTV_FIELDS)
 
-    fun fetchEmergencyBells(): List<DataGoKrPoint>? = fetchAll(BELL_ENDPOINT, BELL_FIELDS)
+    fun fetchEmergencyBells(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.BELL_ENDPOINT, BELL_FIELDS)
 
-    fun fetchSafehouses(): List<DataGoKrPoint>? = fetchAll(SAFEHOUSE_ENDPOINT, SAFEHOUSE_FIELDS)
+    fun fetchSafehouses(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.SAFEHOUSE_ENDPOINT, SAFEHOUSE_FIELDS)
 
-    fun fetchSecurityLamps(): List<DataGoKrPoint>? = fetchAll(SECURITY_LAMP_ENDPOINT, SECURITY_LAMP_FIELDS)
+    fun fetchSecurityLamps(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.SECURITY_LAMP_ENDPOINT, SECURITY_LAMP_FIELDS)
 
     private fun fetchAll(endpoint: String, fields: FieldNames): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
@@ -39,12 +39,12 @@ class DataGoKrFacilityClient(
         var received: Long = 0L
         var totalCount: Long = Long.MAX_VALUE
 
-        while (pageNo <= MAX_PAGES && received < totalCount) {
+        while (pageNo <= DataGoKrApiSpec.MAX_PAGES && received < totalCount) {
             val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo) ?: return null
             val response: DataGoKrResponse = envelope.payload()
             val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
-            if (!code.isNullOrBlank() && code !in SUCCESS_CODES) {
+            if (!code.isNullOrBlank() && code !in DataGoKrApiSpec.SUCCESS_CODES) {
                 log.warn(
                     "data.go.kr resultCode={}({}) (endpoint={}) — 갱신 중단(기존 데이터 유지)",
                     code, header.resultMsg ?: "", endpoint,
@@ -57,7 +57,7 @@ class DataGoKrFacilityClient(
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
-            if (rows.isEmpty() || rows.size < PAGE_SIZE) {
+            if (rows.isEmpty() || rows.size < DataGoKrApiSpec.PAGE_SIZE) {
                 if (totalCount == Long.MAX_VALUE) {
                     totalCount = received
                 }
@@ -86,7 +86,7 @@ class DataGoKrFacilityClient(
         while (true) {
             try {
                 return restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&type=json"))
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${DataGoKrApiSpec.PAGE_SIZE}&type=json"))
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
@@ -97,14 +97,14 @@ class DataGoKrFacilityClient(
                 )
                 return null
             } catch (e: Exception) {
-                if (attempt >= MAX_ATTEMPTS_PER_PAGE) {
+                if (attempt >= DataGoKrApiSpec.MAX_ATTEMPTS_PER_PAGE) {
                     log.warn(
                         "data.go.kr 호출 실패(endpoint={}, page={}, 시도={}회): {} — 갱신 중단(기존 데이터 유지)",
                         endpoint, pageNo, attempt, sanitize(e.message),
                     )
                     return null
                 }
-                val backoffMs: Long = RETRY_BASE_DELAY_MS * attempt
+                val backoffMs: Long = DataGoKrApiSpec.RETRY_BASE_DELAY_MS * attempt
                 log.warn(
                     "data.go.kr 일시 실패(endpoint={}, page={}, 시도={}회): {} — {}ms 후 재시도",
                     endpoint, pageNo, attempt, sanitize(e.message), backoffMs,
@@ -133,24 +133,6 @@ class DataGoKrFacilityClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     companion object {
-        const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info/info"
-        const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info/info"
-        const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
-        const val SECURITY_LAMP_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"
-
-        /** 표준 조회서비스 페이지당 최대 건수. */
-        const val PAGE_SIZE: Int = 100
-
-        /** 전국 CCTV 약 38만 행 전량 수집을 감당하는 상한. */
-        const val MAX_PAGES: Int = 5000
-
-        /** 한 페이지당 시도 횟수(최초 1 + 재시도 2). data.go.kr 은 대량 수집 중 간헐 503(SERVICETIMEOUT)을 낸다. */
-        const val MAX_ATTEMPTS_PER_PAGE: Int = 3
-
-        /** 재시도 백오프 기본 간격 — 시도 횟수에 비례해 늘린다(1초, 2초). */
-        const val RETRY_BASE_DELAY_MS: Long = 1000L
-        private val SUCCESS_CODES: Set<String> = setOf("0", "00")
-
         private val CCTV_FIELDS: FieldNames = FieldNames(
             lat = listOf("WGS84_LAT", "latitude"),
             lng = listOf("WGS84_LOT", "longitude"),

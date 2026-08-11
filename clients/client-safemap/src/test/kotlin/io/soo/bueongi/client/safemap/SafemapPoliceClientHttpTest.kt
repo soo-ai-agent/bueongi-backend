@@ -32,7 +32,7 @@ class SafemapPoliceClientHttpTest {
                        "adres":"서울 강남구 역삼동 1","rn_adres":"서울 강남구 테헤란로 1","telno":"02-123-4567",
                        "sgg_cd":"11680","x":"$x","y":"$y"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString("${SafemapPoliceClient.ENDPOINT}?serviceKey=$serviceKey")))
+        server.expect(requestTo(containsString("${SafemapApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
             .andExpect(requestTo(containsString("returnType=JSON")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
@@ -59,7 +59,7 @@ class SafemapPoliceClientHttpTest {
               {"fclty_nm":"좌표불량","x":"999","y":"999"}
             ]}}}}
         """.trimIndent()
-        server.expect(requestTo(containsString(SafemapPoliceClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafemapApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val facilities: List<SafemapPoliceFacility>? = client.fetchPoliceFacilities()
@@ -91,7 +91,7 @@ class SafemapPoliceClientHttpTest {
     @Test
     fun `에러 - resultCode 가 0-00 이 아니면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(SafemapPoliceClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafemapApiSpec.ENDPOINT)))
             .andRespond(withSuccess("""{"resultCode":"30","resultMsg":"INVALID KEY"}""", MediaType.APPLICATION_JSON))
 
         assertThat(client.fetchPoliceFacilities()).isNull()
@@ -100,7 +100,7 @@ class SafemapPoliceClientHttpTest {
     @Test
     fun `에러 - HTTP 5xx 면 null(부분수집으로 교체하지 않음)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(SafemapPoliceClient.ENDPOINT)))
+        server.expect(requestTo(containsString(SafemapApiSpec.ENDPOINT)))
             .andRespond(withServerError())
 
         assertThat(client.fetchPoliceFacilities()).isNull()

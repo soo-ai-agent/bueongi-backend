@@ -30,10 +30,10 @@ class SafemapPoliceClient(
         var received: Long = 0L
         var totalCount: Long? = null
 
-        while (pageNo <= MAX_PAGES) {
+        while (pageNo <= SafemapApiSpec.MAX_PAGES) {
             val body: JsonNode? = try {
                 restClient.get()
-                    .uri(URI.create("$ENDPOINT?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=JSON"))
+                    .uri(URI.create("${SafemapApiSpec.ENDPOINT}?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${SafemapApiSpec.PAGE_SIZE}&returnType=JSON"))
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
@@ -66,7 +66,7 @@ class SafemapPoliceClient(
             when {
                 rows.isEmpty() -> break
                 total != null && received >= total -> break
-                total == null && rows.size < PAGE_SIZE -> break
+                total == null && rows.size < SafemapApiSpec.PAGE_SIZE -> break
             }
             pageNo += 1
         }
@@ -119,12 +119,4 @@ class SafemapPoliceClient(
     private fun sanitize(message: String?): String =
         (message ?: "원인 미상").replace(serviceKey, "***")
 
-    companion object {
-        const val ENDPOINT: String = "https://safemap.go.kr/openapi2/IF_0036"
-
-        const val PAGE_SIZE: Int = 1000
-
-        /** 전국 지역경찰관서 수천 관서에 충분한 상한. */
-        const val MAX_PAGES: Int = 500
-    }
 }

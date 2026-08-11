@@ -33,7 +33,7 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑(CCTV)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString("${DataGoKrFacilityClient.CCTV_ENDPOINT}?serviceKey=$serviceKey")))
+        server.expect(requestTo(containsString("${DataGoKrApiSpec.CCTV_ENDPOINT}?serviceKey=$serviceKey")))
             .andExpect(requestTo(containsString("pageNo=1&numOfRows=100&type=json")))
             .andRespond(withSuccess(envelope(cctvItem(), 1), MediaType.APPLICATION_JSON))
 
@@ -60,8 +60,8 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `정상 - 가득 찬 페이지는 다음 페이지로 순회하고 마지막 페이지에서 멈춘다`() {
         val (client, server) = bind()
-        val fullPage: String = (1..DataGoKrFacilityClient.PAGE_SIZE).joinToString(",") { cctvItem(name = "기관$it") }
-        val totalCount: Int = DataGoKrFacilityClient.PAGE_SIZE + 2
+        val fullPage: String = (1..DataGoKrApiSpec.PAGE_SIZE).joinToString(",") { cctvItem(name = "기관$it") }
+        val totalCount: Int = DataGoKrApiSpec.PAGE_SIZE + 2
         server.expect(requestTo(containsString("pageNo=1")))
             .andRespond(withSuccess(envelope(fullPage, totalCount), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=2")))
@@ -74,7 +74,7 @@ class DataGoKrFacilityClientHttpTest {
 
         val points: List<DataGoKrPoint>? = client.fetchCctv()
 
-        assertThat(points).hasSize(DataGoKrFacilityClient.PAGE_SIZE + 2)
+        assertThat(points).hasSize(DataGoKrApiSpec.PAGE_SIZE + 2)
         server.verify()
     }
 
@@ -88,7 +88,7 @@ class DataGoKrFacilityClientHttpTest {
               {"WGS84_LAT":"not-a-number","WGS84_LOT":"127.02","INSTL_PSTN":"좌표불량"}
             ]},"totalCount":3}}}
         """.trimIndent()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.BELL_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.BELL_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchEmergencyBells()
@@ -106,7 +106,7 @@ class DataGoKrFacilityClientHttpTest {
               {"storNm":"GS25 강남점","latitude":"37.498","longitude":"127.027","rdnmadr":"강남대로 396"}
             ]},"totalCount":1}}
         """.trimIndent()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.SAFEHOUSE_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.SAFEHOUSE_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchSafehouses()
@@ -124,7 +124,7 @@ class DataGoKrFacilityClientHttpTest {
             """{"업소명":"세븐일레븐 서초점","위도":"37.49","경도":"127.01","소재지도로명주소":"서초대로 11"}""",
             1,
         )
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.SAFEHOUSE_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.SAFEHOUSE_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchSafehouses()
@@ -143,7 +143,7 @@ class DataGoKrFacilityClientHttpTest {
               {"scrtyLmpLctnNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359","rdnmadr":"테헤란로 1","sggCd":"11680"}
             ]},"totalCount":1}}
         """.trimIndent()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.SECURITY_LAMP_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchSecurityLamps()
@@ -162,7 +162,7 @@ class DataGoKrFacilityClientHttpTest {
             """{"보안등위치명":"대청동 보안등","위도":"35.1018","경도":"129.032","소재지지번주소":"부산 중구 대청동","시군구코드":"26110"}""",
             1,
         )
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.SECURITY_LAMP_ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchSecurityLamps()
@@ -176,7 +176,7 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `에러 - 보안등 resultCode가 00이 아니면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.SECURITY_LAMP_ENDPOINT)))
             .andRespond(
                 withSuccess(
                     """{"response":{"header":{"resultCode":"30","resultMsg":"SERVICE_KEY_IS_NOT_REGISTERED_ERROR"},"body":{}}}""",
@@ -190,7 +190,7 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `에러 - resultCode가 00이 아니면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+        server.expect(requestTo(containsString(DataGoKrApiSpec.CCTV_ENDPOINT)))
             .andRespond(
                 withSuccess(
                     """{"response":{"header":{"resultCode":"30","resultMsg":"SERVICE_KEY_IS_NOT_REGISTERED_ERROR"},"body":{}}}""",
@@ -205,8 +205,8 @@ class DataGoKrFacilityClientHttpTest {
     fun `에러 - HTTP 5xx가 재시도까지 계속되면 null(부분수집으로 교체하지 않음)`() {
         val (client, server) = bind()
         server.expect(
-            ExpectedCount.times(DataGoKrFacilityClient.MAX_ATTEMPTS_PER_PAGE),
-            requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)),
+            ExpectedCount.times(DataGoKrApiSpec.MAX_ATTEMPTS_PER_PAGE),
+            requestTo(containsString(DataGoKrApiSpec.CCTV_ENDPOINT)),
         ).andRespond(withServerError())
 
         assertThat(client.fetchCctv()).isNull()
@@ -216,9 +216,9 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `재시도 - 일시적 503 뒤 성공하면 그 페이지를 살려 수집을 이어간다`() {
         val (client, server) = bind()
-        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrApiSpec.CCTV_ENDPOINT)))
             .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE))
-        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrApiSpec.CCTV_ENDPOINT)))
             .andRespond(withSuccess(envelope(cctvItem(), 1), MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = client.fetchCctv()
@@ -230,7 +230,7 @@ class DataGoKrFacilityClientHttpTest {
     @Test
     fun `재시도 - 4xx는 영구 실패라 재시도하지 않고 즉시 중단한다`() {
         val (client, server) = bind()
-        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrApiSpec.CCTV_ENDPOINT)))
             .andRespond(withStatus(HttpStatus.UNAUTHORIZED))
 
         assertThat(client.fetchCctv()).isNull()
