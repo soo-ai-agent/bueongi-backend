@@ -1,23 +1,25 @@
 package io.soo.bueongi.domain.admin
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.domain.facility.LiveFacilitySources
 import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshRecord
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import org.springframework.stereotype.Service
 
+/**
+ * 안심시설 데이터 현황. 시설 데이터는 파이프라인이 만든 CDN 파일이 원천이고,
+ * 백엔드는 그 파일과 관리자 CSV 업로드분만 적재한다(외부 API 를 직접 부르지 않는다).
+ * 그래서 갱신 기록이 있는 종류는 업로드분이고, 없으면 CDN 파일 그대로다.
+ */
 @Service
 class FacilityStatusService(
     private val facilitySource: FacilitySpatialSource,
     private val refreshStatusStore: FacilityRefreshStatusStore,
-    private val liveSources: LiveFacilitySources,
 ) {
 
     fun summarize(): FacilityStatusSummary {
         val freshness: FacilityFreshness? = facilitySource.freshness
-        val liveTypes: Set<FacilityType> = liveSources.liveRefreshableTypes()
         val facilities: List<FacilityStatus> = FacilityType.entries.map { type ->
             val record: FacilityRefreshRecord? = refreshStatusStore.findByType(type)
             FacilityStatus(
@@ -25,7 +27,7 @@ class FacilityStatusService(
                 loadedCount = facilitySource.index(type).size,
                 lastRefreshAtMs = record?.atEpochMs,
                 lastRefreshCount = record?.replacedCount,
-                lastRefreshStatus = statusOf(record, liveCapable = type in liveTypes),
+                lastRefreshStatus = statusOf(record),
                 cdnGeneratedAt = freshness?.generatedAt,
                 cdnVersion = freshness?.version,
             )
@@ -33,11 +35,8 @@ class FacilityStatusService(
         return FacilityStatusSummary(facilities = facilities)
     }
 
-    private fun statusOf(record: FacilityRefreshRecord?, liveCapable: Boolean): FacilityRefreshStatus {
+    private fun statusOf(record: FacilityRefreshRecord?): FacilityRefreshStatus {
         if (record == null) {
-            if (liveCapable) {
-                return FacilityRefreshStatus.NEVER
-            }
             return FacilityRefreshStatus.SKIPPED
         }
         if (record.replacedCount != null) {

@@ -1,7 +1,6 @@
 package io.soo.bueongi.domain.admin
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.domain.facility.LiveFacilitySources
 import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
@@ -24,12 +23,6 @@ class FacilityStatusServiceTest {
         override val safePaths: List<SafePath> = emptyList()
     }
 
-    private class FakeLiveSources(private val types: Set<FacilityType>) : LiveFacilitySources {
-        override fun liveRefreshableTypes(): Set<FacilityType> = types
-    }
-
-    private val allLive = FakeLiveSources(FacilityType.entries.toSet())
-
     @Test
     fun `종류별 적재건수 갱신3상태 CDN신선도를 집계한다`() {
         val source = FakeSource(
@@ -46,7 +39,7 @@ class FacilityStatusServiceTest {
             )
         }
 
-        val summary = FacilityStatusService(source, holder, allLive).summarize()
+        val summary = FacilityStatusService(source, holder).summarize()
 
         assertThat(summary.facilities.map { it.type })
             .containsExactly(
@@ -70,19 +63,19 @@ class FacilityStatusServiceTest {
 
         val lamp = summary.facilities.first { it.type == FacilityType.LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
-        assertThat(lamp.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.NEVER)
+        assertThat(lamp.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.SKIPPED)
         assertThat(lamp.lastRefreshAtMs).isNull()
         assertThat(lamp.lastRefreshCount).isNull()
     }
 
     @Test
-    fun `갱신 이력이 전혀 없으면 모두 never 이고 CDN 신선도 미상이면 null`() {
+    fun `갱신 이력이 전혀 없으면 모두 skipped 이고 CDN 신선도 미상이면 null`() {
         val source = FakeSource(counts = mapOf(FacilityType.CCTV to 5), freshness = null)
 
-        val summary = FacilityStatusService(source, FacilityRefreshStatusStore(), allLive).summarize()
+        val summary = FacilityStatusService(source, FacilityRefreshStatusStore()).summarize()
 
         assertThat(summary.facilities).allSatisfy { f ->
-            assertThat(f.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.NEVER)
+            assertThat(f.lastRefreshStatus).isEqualTo(FacilityRefreshStatus.SKIPPED)
             assertThat(f.lastRefreshAtMs).isNull()
             assertThat(f.cdnGeneratedAt).isNull()
             assertThat(f.cdnVersion).isNull()
@@ -91,14 +84,16 @@ class FacilityStatusServiceTest {
     }
 
     @Test
-    fun `라이브 원천이 없는 종류는 never 가 아니라 skipped 로 구분한다`() {
+    fun `업로드한 종류만 교체로 표시되고 나머지는 CDN 파일 그대로라 skipped 다`() {
         val source = FakeSource(counts = mapOf(FacilityType.PEDESTRIAN_SIGNAL to 2), freshness = null)
-        val onlyCctvLive = FakeLiveSources(setOf(FacilityType.CCTV))
+        val holder = FacilityRefreshStatusStore().apply {
+            recordUpload(FacilityType.CCTV, replacedCount = 315_459, atEpochMs = 1L)
+        }
 
-        val summary = FacilityStatusService(source, FacilityRefreshStatusStore(), onlyCctvLive).summarize()
+        val summary = FacilityStatusService(source, holder).summarize()
 
         assertThat(summary.facilities.first { it.type == FacilityType.CCTV }.lastRefreshStatus)
-            .isEqualTo(FacilityRefreshStatus.NEVER)
+            .isEqualTo(FacilityRefreshStatus.REPLACED)
         assertThat(summary.facilities.first { it.type == FacilityType.PEDESTRIAN_SIGNAL }.lastRefreshStatus)
             .isEqualTo(FacilityRefreshStatus.SKIPPED)
         assertThat(summary.facilities.first { it.type == FacilityType.POLICE }.lastRefreshStatus)
