@@ -4,10 +4,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.test.web.client.ExpectedCount
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
@@ -199,12 +202,39 @@ class DataGoKrFacilityClientHttpTest {
     }
 
     @Test
-    fun `에러 - HTTP 5xx면 null(부분수집으로 교체하지 않음)`() {
+    fun `에러 - HTTP 5xx가 재시도까지 계속되면 null(부분수집으로 교체하지 않음)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
-            .andRespond(withServerError())
+        server.expect(
+            ExpectedCount.times(DataGoKrFacilityClient.MAX_ATTEMPTS_PER_PAGE),
+            requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)),
+        ).andRespond(withServerError())
 
         assertThat(client.fetchCctv()).isNull()
+        server.verify()
+    }
+
+    @Test
+    fun `재시도 - 일시적 503 뒤 성공하면 그 페이지를 살려 수집을 이어간다`() {
+        val (client, server) = bind()
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+            .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE))
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+            .andRespond(withSuccess(envelope(cctvItem(), 1), MediaType.APPLICATION_JSON))
+
+        val points: List<DataGoKrPoint>? = client.fetchCctv()
+
+        assertThat(points).hasSize(1)
+        server.verify()
+    }
+
+    @Test
+    fun `재시도 - 4xx는 영구 실패라 재시도하지 않고 즉시 중단한다`() {
+        val (client, server) = bind()
+        server.expect(ExpectedCount.once(), requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))
+            .andRespond(withStatus(HttpStatus.UNAUTHORIZED))
+
+        assertThat(client.fetchCctv()).isNull()
+        server.verify()
     }
 
     @Test

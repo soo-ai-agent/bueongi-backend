@@ -6,6 +6,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import java.net.URI
 
@@ -39,23 +40,7 @@ class DataGoKrFacilityClient(
         var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= MAX_PAGES && received < totalCount) {
-            val envelope: DataGoKrEnvelope? = try {
-                restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&type=json"))
-                    .retrieve()
-                    .body(DataGoKrEnvelope::class.java)
-            } catch (e: Exception) {
-                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 마스킹
-                log.warn(
-                    "data.go.kr 호출 실패(endpoint={}, page={}): {} — 갱신 중단(기존 데이터 유지)",
-                    endpoint, pageNo, sanitize(e.message),
-                )
-                return null
-            }
-            if (envelope == null) {
-                log.warn("data.go.kr 빈 응답(endpoint={}, page={}) — 갱신 중단(기존 데이터 유지)", endpoint, pageNo)
-                return null
-            }
+            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo) ?: return null
             val response: DataGoKrResponse = envelope.payload()
             val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
@@ -90,6 +75,46 @@ class DataGoKrFacilityClient(
         return points
     }
 
+    /**
+     * 페이지 1건을 받는다. 일시 장애(5xx·타임아웃·연결 실패)는 백오프 후 재시도하고,
+     * 인증 오류 같은 영구 실패(4xx)는 즉시 포기한다. 재시도까지 실패하면 null(=갱신 중단).
+     *
+     * 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 사실상 성공하지 못한다.
+     */
+    private fun fetchPage(endpoint: String, pageNo: Int): DataGoKrEnvelope? {
+        var attempt: Int = 1
+        while (true) {
+            try {
+                return restClient.get()
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$PAGE_SIZE&type=json"))
+                    .retrieve()
+                    .body(DataGoKrEnvelope::class.java)
+            } catch (e: HttpClientErrorException) {
+                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 마스킹
+                log.warn(
+                    "data.go.kr 영구 실패(endpoint={}, page={}): {} — 갱신 중단(기존 데이터 유지)",
+                    endpoint, pageNo, sanitize(e.message),
+                )
+                return null
+            } catch (e: Exception) {
+                if (attempt >= MAX_ATTEMPTS_PER_PAGE) {
+                    log.warn(
+                        "data.go.kr 호출 실패(endpoint={}, page={}, 시도={}회): {} — 갱신 중단(기존 데이터 유지)",
+                        endpoint, pageNo, attempt, sanitize(e.message),
+                    )
+                    return null
+                }
+                val backoffMs: Long = RETRY_BASE_DELAY_MS * attempt
+                log.warn(
+                    "data.go.kr 일시 실패(endpoint={}, page={}, 시도={}회): {} — {}ms 후 재시도",
+                    endpoint, pageNo, attempt, sanitize(e.message), backoffMs,
+                )
+                Thread.sleep(backoffMs)
+                attempt += 1
+            }
+        }
+    }
+
     private fun extractItems(items: JsonNode?): List<JsonNode> = when {
         items == null -> emptyList()
         items.isArray -> items.toList()
@@ -118,6 +143,12 @@ class DataGoKrFacilityClient(
 
         /** 전국 CCTV 약 38만 행 전량 수집을 감당하는 상한. */
         const val MAX_PAGES: Int = 5000
+
+        /** 한 페이지당 시도 횟수(최초 1 + 재시도 2). data.go.kr 은 대량 수집 중 간헐 503(SERVICETIMEOUT)을 낸다. */
+        const val MAX_ATTEMPTS_PER_PAGE: Int = 3
+
+        /** 재시도 백오프 기본 간격 — 시도 횟수에 비례해 늘린다(1초, 2초). */
+        const val RETRY_BASE_DELAY_MS: Long = 1000L
         private val SUCCESS_CODES: Set<String> = setOf("0", "00")
 
         private val CCTV_FIELDS: FieldNames = FieldNames(

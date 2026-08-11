@@ -3,6 +3,7 @@ package io.soo.bueongi.api.admin
 import io.soo.bueongi.domain.admin.AdStatsService
 import io.soo.bueongi.domain.admin.ApiStatusService
 import io.soo.bueongi.domain.admin.FacilityStatusService
+import io.soo.bueongi.domain.facility.LiveFacilitySources
 import io.soo.bueongi.domain.admin.RequestMetricsService
 import io.soo.bueongi.domain.admin.RouteStatsService
 import io.soo.bueongi.domain.admin.SlackConfigService
@@ -68,12 +69,12 @@ class ApiLogsControllerTest(
     }
 
     @Test
-    fun `api-status 는 원천 4종과 windowSize 를 반환한다`() {
+    fun `api-status 는 원천 전체와 windowSize 를 반환한다`() {
         mockMvc.get("/api/admin/api-status")
             .andExpect {
                 status { isOk() }
                 jsonPath("$.windowSize") { value(1) }
-                jsonPath("$.providers.length()") { value(4) }
+                jsonPath("$.providers.length()") { value(5) }
                 jsonPath("$.providers[0].provider") { value("KAKAO") }
                 jsonPath("$.providers[0].total") { value(1) }
                 jsonPath("$.providers[0].successRate") { value(1.0) }
@@ -308,7 +309,10 @@ class ApiLogsControllerTest(
             val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore().apply {
                 record(mapOf(FacilityType.CCTV to 2), atEpochMs = 1L)
             }
-            return FacilityStatusService(source, holder)
+            val allLive: LiveFacilitySources = object : LiveFacilitySources {
+                override fun liveRefreshableTypes(): Set<FacilityType> = FacilityType.entries.toSet()
+            }
+            return FacilityStatusService(source, holder, allLive)
         }
 
         @Bean

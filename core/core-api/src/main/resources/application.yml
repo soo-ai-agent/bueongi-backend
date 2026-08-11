@@ -46,6 +46,10 @@ bueongi:
   facility:
     # 안심시설 라이브 갱신 주기(cron, Asia/Seoul). 기본 매월 1일 04:00 — DATA_GO_KR_SERVICE_KEY 가 있을 때만 동작.
     refresh-cron: ${BUEONGI_FACILITY_REFRESH_CRON:0 0 4 1 * *}
+    # 기동 직후 1회 갱신 여부. 기본 끔 — 전량 수집이 data.go.kr 일일 쿼터(1000)의 4.7배(약 4,700회)를 쓰고
+    # 약 90분이 걸려, 재기동할 때마다 돌면 쿼터를 소진하고 503(SERVICETIMEOUT)을 유발한다.
+    # 평소에는 CSV/CDN 적재분으로 동작하고 위 cron 으로만 갱신한다(CLAUDE.md 설계).
+    refresh-on-startup: ${BUEONGI_FACILITY_REFRESH_ON_STARTUP:false}
   share:
     # 보호자 공유 URL 의 base. 앱이 받는 share_url = {base-url}/share/{token}. 운영은 공개 도메인으로 덮어쓴다.
     base-url: ${BUEONGI_SHARE_BASE_URL:http://localhost:8119}

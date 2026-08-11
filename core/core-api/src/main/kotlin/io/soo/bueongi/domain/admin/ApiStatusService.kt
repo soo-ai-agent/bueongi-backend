@@ -40,8 +40,9 @@ class ApiStatusService(
     private fun aggregate(provider: ApiProvider, logs: List<ApiCallLog>, nowMs: Long, todayStartMs: Long): ProviderStatus {
         val total: Int = logs.size
         val successCount: Int = logs.count { it.success }
-        val successRate: Double = if (total == 0) {
-            0.0
+        // 호출이 없으면 성공률은 정의되지 않는다 — 0.0 으로 내리면 "정상인데 성공률 0%"로 오독된다.
+        val successRate: Double? = if (total == 0) {
+            null
         } else {
             successCount.toDouble() / total
         }
@@ -97,12 +98,8 @@ class ApiStatusService(
     }
 
     companion object {
-        val TRACKED_PROVIDERS: List<ApiProvider> = listOf(
-            ApiProvider.KAKAO,
-            ApiProvider.TMAP,
-            ApiProvider.DATAGOKR,
-            ApiProvider.SAFEMAP,
-        )
+        /** [ApiProvider] 전체를 추적한다 — 원천이 늘어도 화면에서 빠지지 않게 enum 을 진실로 삼는다. */
+        val TRACKED_PROVIDERS: List<ApiProvider> = ApiProvider.entries
 
         val QUOTA_LIMITS: Map<ApiProvider, Int> = mapOf(ApiProvider.DATAGOKR to 1000)
 

@@ -1,8 +1,7 @@
 package io.soo.bueongi.domain.admin
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonValue
 import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.domain.facility.LiveFacilitySources
 import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshRecord
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
@@ -13,10 +12,12 @@ import org.springframework.stereotype.Service
 class FacilityStatusService(
     private val facilitySource: FacilitySpatialSource,
     private val refreshStatusStore: FacilityRefreshStatusStore,
+    private val liveSources: LiveFacilitySources,
 ) {
 
     fun summarize(): FacilityStatusSummary {
         val freshness: FacilityFreshness? = facilitySource.freshness
+        val liveTypes: Set<FacilityType> = liveSources.liveRefreshableTypes()
         val facilities: List<FacilityStatus> = FacilityType.entries.map { type ->
             val record: FacilityRefreshRecord? = refreshStatusStore.findByType(type)
             FacilityStatus(
@@ -24,7 +25,7 @@ class FacilityStatusService(
                 loadedCount = facilitySource.index(type).size,
                 lastRefreshAtMs = record?.atEpochMs,
                 lastRefreshCount = record?.replacedCount,
-                lastRefreshStatus = statusOf(record?.replacedCount, attempted = record != null),
+                lastRefreshStatus = statusOf(record, liveCapable = type in liveTypes),
                 cdnGeneratedAt = freshness?.generatedAt,
                 cdnVersion = freshness?.version,
             )
@@ -32,11 +33,14 @@ class FacilityStatusService(
         return FacilityStatusSummary(facilities = facilities)
     }
 
-    private fun statusOf(replacedCount: Int?, attempted: Boolean): FacilityRefreshStatus {
-        if (!attempted) {
-            return FacilityRefreshStatus.NEVER
+    private fun statusOf(record: FacilityRefreshRecord?, liveCapable: Boolean): FacilityRefreshStatus {
+        if (record == null) {
+            if (liveCapable) {
+                return FacilityRefreshStatus.NEVER
+            }
+            return FacilityRefreshStatus.SKIPPED
         }
-        if (replacedCount != null) {
+        if (record.replacedCount != null) {
             return FacilityRefreshStatus.REPLACED
         }
         return FacilityRefreshStatus.KEPT

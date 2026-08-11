@@ -28,19 +28,45 @@ class FacilityRefreshService(
     private val alertNotifier: AlertNotifier? = null,
     private val apiCallLogStore: ApiCallLogStore? = null,
     private val refreshStatusStore: FacilityRefreshStatusStore? = null,
-) {
+) : LiveFacilitySources {
     private val log: Logger = LoggerFactory.getLogger(FacilityRefreshService::class.java)
 
     val isEnabled: Boolean
         get() = dataGoKrClient.isEnabled || safemapClient.isEnabled || streetlightClient.isEnabled
 
-    fun refreshAll(): Map<FacilityType, Int?> {
-        val result: LinkedHashMap<FacilityType, Int?> = LinkedHashMap<FacilityType, Int?>()
+    /**
+     * 라이브 갱신 대상 시설 종류 — 원천 클라이언트가 켜진 것만.
+     * 여기 없는 종류는 파일 적재분만 쓰므로 "갱신 이력 없음"이 정상이다(관리자 화면이 skipped 로 구분한다).
+     *
+     * **data.go.kr 전량 덤프 2종(CCTV·보안등)은 라이브 갱신에서 제외한다.**
+     * 두 엔드포인트 모두 지역·좌표 필터를 지원하지 않고(어떤 파라미터를 줘도 totalCount 불변),
+     * 페이지당 100건 상한이라 1회 갱신 호출 수가 일일 쿼터(1,000)를 크게 넘는다:
+     * CCTV 37.7만건=3,773회, 보안등 184만건=18,395회. 매번 쿼터를 소진하고 503(SERVICETIMEOUT)을 부른다.
+     * 남기는 2종만으로 BELL 887 + SAFEHOUSE 29 = 916회라 쿼터 안에 들어온다.
+     *
+     * 두 종류는 파이프라인 CSV/CDN 적재분을 쓰고, 앱의 위치 조회는 어차피 로컬 공간색인(GridSpatialIndex)이 한다.
+     * 가로등은 safetydata 원천(페이지당 1,000건·별도 쿼터)이 계속 담당한다.
+     * 쿼터가 상향되면 클라이언트 메서드(fetchCctv·fetchSecurityLamps)가 그대로 있으니 다시 연결하면 된다.
+     */
+    override fun liveRefreshableTypes(): Set<FacilityType> {
+        val types: LinkedHashSet<FacilityType> = LinkedHashSet<FacilityType>()
         if (dataGoKrClient.isEnabled) {
-            result[FacilityType.CCTV] = refresh(FacilityType.CCTV) {
-                measureFetch(ApiProvider.DATAGOKR, "cctv") { dataGoKrClient.fetchCctv() }
-                    ?.mapNotNull { it.toFacilityPoint(FacilityType.CCTV) }
-            }
+            types.add(FacilityType.BELL)
+            types.add(FacilityType.SAFEHOUSE)
+        }
+        if (safemapClient.isEnabled) {
+            types.add(FacilityType.POLICE)
+        }
+        if (streetlightClient.isEnabled) {
+            types.add(FacilityType.LAMP)
+        }
+        return types
+    }
+
+    fun refreshAll(): Map<FacilityType, Int?> {
+        val liveTypes: Set<FacilityType> = liveRefreshableTypes()
+        val result: LinkedHashMap<FacilityType, Int?> = LinkedHashMap<FacilityType, Int?>()
+        if (FacilityType.BELL in liveTypes) {
             result[FacilityType.BELL] = refresh(FacilityType.BELL) {
                 measureFetch(ApiProvider.DATAGOKR, "bell") { dataGoKrClient.fetchEmergencyBells() }
                     ?.mapNotNull { it.toFacilityPoint(FacilityType.BELL) }
@@ -52,7 +78,7 @@ class FacilityRefreshService(
         } else {
             log.info("data.go.kr 키 미설정 — CCTV·비상벨·안심지킴이집 라이브 갱신 건너뜀(파일 적재분 유지)")
         }
-        if (safemapClient.isEnabled) {
+        if (FacilityType.POLICE in liveTypes) {
             result[FacilityType.POLICE] = refresh(FacilityType.POLICE) {
                 measureFetch(ApiProvider.SAFEMAP, "police") { safemapClient.fetchPoliceFacilities() }
                     ?.map { it.toFacilityPoint() }
@@ -60,7 +86,7 @@ class FacilityRefreshService(
         } else {
             log.info("safemap 키 미설정 — 치안시설(파출소) 라이브 갱신 건너뜀(파일 적재분 유지)")
         }
-        if (streetlightClient.isEnabled || dataGoKrClient.isEnabled) {
+        if (FacilityType.LAMP in liveTypes) {
             result[FacilityType.LAMP] = refresh(FacilityType.LAMP) { collectLampPoints() }
         } else {
             log.info("safetydata·data.go.kr 키 미설정 — 가로등 라이브 갱신 건너뜀(파일 적재분 유지)")
@@ -91,24 +117,14 @@ class FacilityRefreshService(
         )
 
     /**
-     * 가로등 원천은 둘 — safetydata 가로등(DSSP-IF-00084)과 data.go.kr 전국보안등 표준데이터.
-     * 활성 원천 중 하나라도 수집에 실패하면 전체를 포기한다. 성공분만으로 교체하면 커버리지가 되레 줄기 때문이다.
+     * 가로등 라이브 원천은 safetydata 가로등(DSSP-IF-00084) 하나다.
+     * data.go.kr 전국보안등(184만건=18,395회)은 쿼터를 감당하지 못해 파이프라인 CSV/CDN 으로 넘겼다(위 주석).
      */
     private fun collectLampPoints(): List<FacilityPoint>? {
-        val collected: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
-        if (streetlightClient.isEnabled) {
-            val streetlights: List<SafetydataStreetlight> =
-                measureFetch(ApiProvider.SAFETYDATA, "streetlight") { streetlightClient.fetchStreetlights() }
-                    ?: return null
-            streetlights.mapTo(collected) { it.toFacilityPoint() }
-        }
-        if (dataGoKrClient.isEnabled) {
-            val securityLamps: List<DataGoKrPoint> =
-                measureFetch(ApiProvider.DATAGOKR, "security-lamp") { dataGoKrClient.fetchSecurityLamps() }
-                    ?: return null
-            securityLamps.mapNotNullTo(collected) { it.toFacilityPoint(FacilityType.LAMP) }
-        }
-        return collected.distinctBy { it.lampDedupKey() }
+        val streetlights: List<SafetydataStreetlight> =
+            measureFetch(ApiProvider.SAFETYDATA, "streetlight") { streetlightClient.fetchStreetlights() }
+                ?: return null
+        return streetlights.map { it.toFacilityPoint() }.distinctBy { it.lampDedupKey() }
     }
 
     private fun refresh(type: FacilityType, fetch: () -> List<FacilityPoint>?): Int? {

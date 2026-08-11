@@ -116,15 +116,15 @@ class ApiStatusServiceTest {
     }
 
     @Test
-    fun `빈 로그면 4종 모두 total 0 시각 null 쿼터 경고 없음`() {
+    fun `빈 로그면 원천 전체가 total 0 시각 null 쿼터 경고 없음`() {
         val summary: ApiStatusSummary = ApiStatusService(store(emptyList())).summarize()
 
         assertThat(summary.windowSize).isEqualTo(0)
         assertThat(summary.providers.map { it.provider })
-            .containsExactly("KAKAO", "TMAP", "DATAGOKR", "SAFEMAP")
+            .containsExactly("KAKAO", "TMAP", "DATAGOKR", "SAFEMAP", "SAFETYDATA")
         summary.providers.forEach { p ->
             assertThat(p.total).isEqualTo(0)
-            assertThat(p.successRate).isEqualTo(0.0)
+            assertThat(p.successRate).isNull()
             assertThat(p.avgDurationMs).isEqualTo(0L)
             assertThat(p.lastSuccessAtMs).isNull()
             assertThat(p.lastFailureAtMs).isNull()
