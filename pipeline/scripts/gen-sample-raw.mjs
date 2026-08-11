@@ -92,6 +92,12 @@ write("C-2", [
   { source: "C-2", type: "lamp", coordSystem: "wgs84", sigunguCode: "26110", name: "부산중구 보안등 001", address: "부산광역시 중구 대청동", lat: 35.1018, lng: 129.0320 },
 ]);
 
+// ---- C-3 서울 보행등=보행자 신호등 (WGS84) ----
+write("C-3", [
+  { source: "C-3", type: "pedestrian_signal", coordSystem: "wgs84", name: "보행등", address: "서울특별시 강남구 역삼동 테헤란로", lat: 37.5013, lng: 127.0368 },
+  { source: "C-3", type: "pedestrian_signal", coordSystem: "wgs84", name: "보행등", address: "서울특별시 종로구 청운동", lat: 37.5871, lng: 126.9702 },
+]);
+
 // ---- D-1 전국 비상벨 (EPSG:5174, 시군구 분할) ----
 const bellGangnam = { lat: 37.5015, lng: 127.0366 };
 const bellBundang = { lat: 37.3825, lng: 127.1190 };

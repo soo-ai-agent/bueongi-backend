@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "2026-08-01",
-  "generatedAt": "2026-08-01T19:08:30.956Z",
-  "baseUrl": "",
+  "version": "2026-08-11",
+  "generatedAt": "2026-08-11T06:39:07.988Z",
+  "baseUrl": "https://cdn.example.com/bueongi",
   "files": [
     {
       "path": "cctv/11680.json",
@@ -11,7 +11,7 @@
       "sigunguCode": "11680",
       "count": 2,
       "bytes": 642,
-      "sha256": "ddfd0c0144d594c082453ef710cc4e5c193777244b07a36a97b51dd3c2e22856"
+      "sha256": "e1e21098be0b5cac5f69beca30b5c05a4aa0cb15fdc20f7f5b1c4bfef011ddcb"
     },
     {
       "path": "cctv/11110.json",
@@ -20,7 +20,7 @@
       "sigunguCode": "11110",
       "count": 1,
       "bytes": 382,
-      "sha256": "8982658cc969aa9c2f768cb6b1ee549aea88443add02b794bcc2c7a24b05b4e5"
+      "sha256": "67244a58cdb51d1944cca6aa18f92e146401cef691d3d95f0f239e83a3e45ac0"
     },
     {
       "path": "safehouse/all.json",
@@ -28,7 +28,7 @@
       "scope": "all",
       "count": 2,
       "bytes": 668,
-      "sha256": "c760f9812b3d6059c797555677e64bd35c501fae00461bbca03567d9baf849f8"
+      "sha256": "a7f116de6059b1e6cc1b77019596a4d7e18e2b7c32ea0bedf8104dfad9a75522"
     },
     {
       "path": "police/all.json",
@@ -36,7 +36,7 @@
       "scope": "all",
       "count": 3,
       "bytes": 1069,
-      "sha256": "bdfdb3bc6007d6510e66ed90697f6dc4c8a6c2840a1231f1ffaf31b83398ccef"
+      "sha256": "f3323409636dc4b3d8c5a24a4b426b226ac7eb6885fb760c93dd359d52edf0b9"
     },
     {
       "path": "lamp/seoul.json",
@@ -44,7 +44,7 @@
       "scope": "seoul",
       "count": 2,
       "bytes": 598,
-      "sha256": "031e3c9ac60cd82d230794abf1657492a23a3c756cc398a6e1f52963f59a9e53"
+      "sha256": "9112ce60f6005f52b73ddde93c567dffe081c68dfdd3ae2158010d08cfa956c5"
     },
     {
       "path": "lamp/11680.json",
@@ -53,7 +53,7 @@
       "sigunguCode": "11680",
       "count": 1,
       "bytes": 382,
-      "sha256": "1d4e2230ef203a4579e9ef9f6e3e75c8f2e0de7b2656ae52d7c175838e4304d8"
+      "sha256": "d0dcb69114e8a1e0a4a586f0776306ec72760451784d6646fa3c60ba6057a70d"
     },
     {
       "path": "lamp/26110.json",
@@ -62,7 +62,15 @@
       "sigunguCode": "26110",
       "count": 1,
       "bytes": 385,
-      "sha256": "4bdec74d5a45397baa696b8349602a1e8c52ce479df7b9f61a451af0ba68d955"
+      "sha256": "9e2dcd36d0ccc53316fccbb4f41e66ff799b8ee457debe54cd6fe05f032fb93f"
+    },
+    {
+      "path": "pedestrian_signal/seoul.json",
+      "type": "pedestrian_signal",
+      "scope": "seoul",
+      "count": 2,
+      "bytes": 618,
+      "sha256": "8c7f75a88f241dcf9ba184758ecd451a62468c2a760aa95784526575349c5f3f"
     },
     {
       "path": "emergency_bell/11680.json",
@@ -71,7 +79,7 @@
       "sigunguCode": "11680",
       "count": 1,
       "bytes": 464,
-      "sha256": "5889c99d7e6ec298938475c1fe38407e2363721388b33836bc14f08399cd1c1f"
+      "sha256": "e597296027b4341147798d826b1524bcb7ec375acbe099f077d26759878f6103"
     },
     {
       "path": "emergency_bell/41135.json",
@@ -80,7 +88,7 @@
       "sigunguCode": "41135",
       "count": 1,
       "bytes": 465,
-      "sha256": "65c25041625e810ddd1761b150b255f2bf8c36579416497fdae4009d2f4adaa3"
+      "sha256": "5b2ef3a1ef78742c9878b89f4b2624f746a55650d15ffb109d1d0a5f0fb6fe91"
     },
     {
       "path": "emergency_bell/26110.json",
@@ -89,7 +97,7 @@
       "sigunguCode": "26110",
       "count": 1,
       "bytes": 443,
-      "sha256": "71718eeded3b9e6a2505259594ea5d71b25b1793780dc367d5f70c2d25db8aaa"
+      "sha256": "77585c083a5a1bbf2c07890af97bb2fe83a5a2b18c62356c2b811de32131d7aa"
     },
     {
       "path": "safepath/all.json",
@@ -97,7 +105,7 @@
       "scope": "all",
       "count": 2,
       "bytes": 708,
-      "sha256": "4fb51325f6a3775d59276719882150e731fac3b3df3fcb5875eed9fd318aec4e"
+      "sha256": "489a1809d180c38af7f30260681368c86410c47e73171b4e97760c78058c70d3"
     }
   ],
   "stats": {
@@ -143,6 +151,14 @@
         "quarantined": 0
       },
       "C-2": {
+        "input": 2,
+        "output": 2,
+        "coordFailed": 0,
+        "outOfRange": 0,
+        "deduped": 0,
+        "quarantined": 0
+      },
+      "C-3": {
         "input": 2,
         "output": 2,
         "coordFailed": 0,
