@@ -133,6 +133,58 @@ class DataGoKrFacilityClientHttpTest {
     }
 
     @Test
+    fun `정상 - 전국보안등 표준 필드(scrtyLmpLctnNm·latitude·sggCd) 매핑`() {
+        val (client, server) = bind()
+        val body: String = """
+            {"header":{"resultCode":"00","resultMsg":"NORMAL SERVICE."},"body":{"items":{"item":[
+              {"scrtyLmpLctnNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359","rdnmadr":"테헤란로 1","sggCd":"11680"}
+            ]},"totalCount":1}}
+        """.trimIndent()
+        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
+
+        val points: List<DataGoKrPoint>? = client.fetchSecurityLamps()
+
+        assertThat(points).hasSize(1)
+        assertThat(points!![0].name).isEqualTo("역삼동 골목 보안등")
+        assertThat(points[0].lat).isEqualTo(37.5008)
+        assertThat(points[0].address).isEqualTo("테헤란로 1")
+        assertThat(points[0].sigungu).isEqualTo("11680")
+    }
+
+    @Test
+    fun `정상 - 전국보안등 한글 컬럼 응답도 후보 폴백으로 매핑`() {
+        val (client, server) = bind()
+        val body: String = envelope(
+            """{"보안등위치명":"대청동 보안등","위도":"35.1018","경도":"129.032","소재지지번주소":"부산 중구 대청동","시군구코드":"26110"}""",
+            1,
+        )
+        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
+
+        val points: List<DataGoKrPoint>? = client.fetchSecurityLamps()
+
+        assertThat(points).hasSize(1)
+        assertThat(points!![0].name).isEqualTo("대청동 보안등")
+        assertThat(points[0].lng).isEqualTo(129.032)
+        assertThat(points[0].sigungu).isEqualTo("26110")
+    }
+
+    @Test
+    fun `에러 - 보안등 resultCode가 00이 아니면 null(기존 데이터 유지 신호)`() {
+        val (client, server) = bind()
+        server.expect(requestTo(containsString(DataGoKrFacilityClient.SECURITY_LAMP_ENDPOINT)))
+            .andRespond(
+                withSuccess(
+                    """{"response":{"header":{"resultCode":"30","resultMsg":"SERVICE_KEY_IS_NOT_REGISTERED_ERROR"},"body":{}}}""",
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        assertThat(client.fetchSecurityLamps()).isNull()
+    }
+
+    @Test
     fun `에러 - resultCode가 00이 아니면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
         server.expect(requestTo(containsString(DataGoKrFacilityClient.CCTV_ENDPOINT)))

@@ -230,14 +230,21 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" },
   },
-  // C-2: 전국 보안등 (WGS84) — catalogId 15017320
+  // C-2: 전국 보안등 (WGS84) — 표준데이터 조회서비스(catalogId 15017320).
+  //  백엔드 라이브 갱신(client-datagokr fetchSecurityLamps)과 동일 원천.
+  //  B-2 와 같은 tn_pubr 계열이라 uddi 조회 없이 엔드포인트를 직접 부른다.
   "C-2": {
-    kind: "odcloud",
-    catalogId: "15017320",
-    uddi: "", // TODO(키 등록 후): 보안등 표준데이터 uddi
+    kind: "datagokr",
+    endpoint: "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api",
     type: "lamp",
     coordSystem: "wgs84",
-    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
+    keyColumns: {
+      lat: "latitude",
+      lng: "longitude",
+      name: "scrtyLmpLctnNm",
+      address: "rdnmadr",
+      sigungu: "sggCd",
+    },
   },
   // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스.
   "D-1": {

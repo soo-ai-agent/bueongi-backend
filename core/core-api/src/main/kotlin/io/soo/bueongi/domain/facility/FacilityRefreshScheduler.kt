@@ -18,7 +18,10 @@ class FacilityRefreshScheduler(
     @EventListener(ApplicationReadyEvent::class)
     fun onApplicationReady() {
         if (!refreshService.isEnabled) {
-            log.info("안심시설 라이브 갱신 비활성(DATA_GO_KR_SERVICE_KEY·SAFEMAP_SERVICE_KEY 미설정) — 파일 적재분으로 동작")
+            log.info(
+                "안심시설 라이브 갱신 비활성(DATA_GO_KR_SERVICE_KEY·SAFEMAP_SERVICE_KEY·SAFETYDATA_SERVICE_KEY 미설정)" +
+                    " — 파일 적재분으로 동작",
+            )
             return
         }
         taskExecutor.execute {

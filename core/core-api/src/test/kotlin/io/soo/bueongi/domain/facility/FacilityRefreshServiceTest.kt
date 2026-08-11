@@ -62,6 +62,9 @@ class FacilityRefreshServiceTest {
         whenever(dataGoKr.fetchSafehouses()).thenReturn(
             listOf(DataGoKrPoint(lat = 37.498, lng = 127.027, name = "GS25 강남점", address = "강남대로 396")),
         )
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(
+            listOf(DataGoKrPoint(lat = 37.53, lng = 127.04, name = "역삼 보안등", sigungu = "11680")),
+        )
         whenever(safemap.fetchPoliceFacilities()).thenReturn(
             listOf(
                 SafemapPoliceFacility(
@@ -76,7 +79,9 @@ class FacilityRefreshServiceTest {
         assertThat(result[FacilityType.CCTV]).isEqualTo(1)
         assertThat(result[FacilityType.BELL]).isEqualTo(2)
         assertThat(result[FacilityType.SAFEHOUSE]).isEqualTo(1)
+        assertThat(result[FacilityType.LAMP]).isEqualTo(1)
         assertThat(result[FacilityType.POLICE]).isEqualTo(1)
+        assertThat(store.replaced[FacilityType.LAMP]!![0].name).isEqualTo("역삼 보안등")
         assertThat(store.replaced[FacilityType.CCTV]!![0].type).isEqualTo(FacilityType.CCTV)
         assertThat(store.replaced[FacilityType.BELL]!![0].sigungu).isEqualTo("11680")
         assertThat(store.replaced[FacilityType.SAFEHOUSE]!![0].name).isEqualTo("GS25 강남점")
@@ -122,6 +127,69 @@ class FacilityRefreshServiceTest {
     }
 
     @Test
+    fun `가로등 - safetydata 가로등과 보안등 표준데이터를 합쳐 LAMP 인덱스를 만든다`() {
+        enableStreetlight()
+        enableDataGoKr()
+        whenever(streetlight.fetchStreetlights()).thenReturn(
+            listOf(SafetydataStreetlight(lat = 37.5, lng = 127.0, address = "테헤란로 5", sigungu = "11680")),
+        )
+        whenever(dataGoKr.fetchCctv()).thenReturn(null)
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
+        whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(
+            listOf(
+                DataGoKrPoint(lat = 35.1018, lng = 129.032, name = "대청동 보안등", sigungu = "26110"),
+                DataGoKrPoint(lat = 37.51, lng = 127.02, name = "역삼 보안등"),
+            ),
+        )
+
+        val result = service.refreshAll()
+
+        assertThat(result[FacilityType.LAMP]).isEqualTo(3)
+        val lamps: List<FacilityPoint> = store.replaced[FacilityType.LAMP]!!
+        assertThat(lamps.map { it.type }).containsOnly(FacilityType.LAMP)
+        assertThat(lamps.map { it.sigungu }).containsExactly("11680", "26110", null)
+    }
+
+    @Test
+    fun `가로등 - 두 원천이 같은 좌표를 실으면 하나로 합친다(밀도 점수 부풀림 방지)`() {
+        enableStreetlight()
+        enableDataGoKr()
+        whenever(streetlight.fetchStreetlights()).thenReturn(
+            listOf(SafetydataStreetlight(lat = 37.500001, lng = 127.000001)),
+        )
+        whenever(dataGoKr.fetchCctv()).thenReturn(null)
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
+        whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(
+            listOf(DataGoKrPoint(lat = 37.5, lng = 127.0, name = "같은 자리 보안등")),
+        )
+
+        val result = service.refreshAll()
+
+        assertThat(result[FacilityType.LAMP]).isEqualTo(1)
+    }
+
+    @Test
+    fun `가로등 - 한 원천만 실패해도 교체하지 않는다(부분 교체로 커버리지가 줄지 않게)`() {
+        enableStreetlight()
+        enableDataGoKr()
+        whenever(streetlight.fetchStreetlights()).thenReturn(
+            listOf(SafetydataStreetlight(lat = 37.5, lng = 127.0)),
+        )
+        whenever(dataGoKr.fetchCctv()).thenReturn(null)
+        whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
+        whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(null)
+
+        val result = service.refreshAll()
+
+        assertThat(result[FacilityType.LAMP]).isNull()
+        assertThat(store.replaced).doesNotContainKey(FacilityType.LAMP)
+        assertThat(notifier.keys).contains("facility-refresh:lamp")
+    }
+
+    @Test
     fun `실패 - 한 종류의 수집 실패(null)는 그 종류만 유지하고 다른 종류 갱신을 막지 않는다`() {
         enableDataGoKr()
         enableSafemap()
@@ -130,6 +198,7 @@ class FacilityRefreshServiceTest {
             listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)),
         )
         whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(null)
         whenever(safemap.fetchPoliceFacilities()).thenReturn(null)
 
         val result = service.refreshAll()
@@ -139,7 +208,7 @@ class FacilityRefreshServiceTest {
         assertThat(store.replaced.keys).containsExactly(FacilityType.BELL)
         assertThat(result[FacilityType.BELL]).isEqualTo(1)
         assertThat(notifier.keys).containsExactlyInAnyOrder(
-            "facility-refresh:cctv", "facility-refresh:safehouse", "facility-refresh:police",
+            "facility-refresh:cctv", "facility-refresh:safehouse", "facility-refresh:police", "facility-refresh:lamp",
         )
     }
 
@@ -151,14 +220,16 @@ class FacilityRefreshServiceTest {
             listOf(DataGoKrPoint(lat = 95.0, lng = 127.0), DataGoKrPoint(lat = 37.5, lng = 200.0)),
         )
         whenever(dataGoKr.fetchSafehouses()).thenReturn(emptyList())
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(emptyList())
 
         val result = service.refreshAll()
 
         assertThat(result[FacilityType.CCTV]).isNull()
         assertThat(result[FacilityType.BELL]).isNull()
         assertThat(result[FacilityType.SAFEHOUSE]).isNull()
+        assertThat(result[FacilityType.LAMP]).isNull()
         assertThat(store.replaced).isEmpty()
-        assertThat(notifier.keys).hasSize(3)
+        assertThat(notifier.keys).hasSize(4)
     }
 
     @Test
@@ -172,6 +243,7 @@ class FacilityRefreshServiceTest {
         )
         whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
         whenever(dataGoKr.fetchSafehouses()).thenReturn(null)
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(null)
 
         val result = service.refreshAll()
 
@@ -185,6 +257,7 @@ class FacilityRefreshServiceTest {
         whenever(dataGoKr.fetchCctv()).thenReturn(listOf(DataGoKrPoint(lat = 37.5, lng = 127.0)))
         whenever(dataGoKr.fetchEmergencyBells()).thenReturn(null)
         whenever(dataGoKr.fetchSafehouses()).thenReturn(listOf(DataGoKrPoint(lat = 37.6, lng = 127.1)))
+        whenever(dataGoKr.fetchSecurityLamps()).thenReturn(null)
         val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore()
         val serviceWithHolder = FacilityRefreshService(
             dataGoKr, safemap, streetlight, store, notifier, refreshStatusStore = holder,

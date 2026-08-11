@@ -29,6 +29,8 @@ class DataGoKrFacilityClient(
 
     fun fetchSafehouses(): List<DataGoKrPoint>? = fetchAll(SAFEHOUSE_ENDPOINT, SAFEHOUSE_FIELDS)
 
+    fun fetchSecurityLamps(): List<DataGoKrPoint>? = fetchAll(SECURITY_LAMP_ENDPOINT, SECURITY_LAMP_FIELDS)
+
     private fun fetchAll(endpoint: String, fields: FieldNames): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
@@ -109,6 +111,7 @@ class DataGoKrFacilityClient(
         const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info/info"
         const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info/info"
         const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
+        const val SECURITY_LAMP_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"
 
         /** 표준 조회서비스 페이지당 최대 건수. */
         const val PAGE_SIZE: Int = 100
@@ -137,6 +140,14 @@ class DataGoKrFacilityClient(
             lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
             name = listOf("storNm", "institutionNm", "업소명", "점포명"),
             address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"), sigungu = emptyList(),
+        )
+
+        /** 보안등도 같은 표준데이터 규격 — 영문 1순위 + 한글 폴백(안심지킴이집과 동일 전략). */
+        private val SECURITY_LAMP_FIELDS: FieldNames = FieldNames(
+            lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
+            name = listOf("scrtyLmpLctnNm", "institutionNm", "보안등위치명", "관리번호"),
+            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
+            sigungu = listOf("sggCd", "시군구코드"),
         )
     }
 }
