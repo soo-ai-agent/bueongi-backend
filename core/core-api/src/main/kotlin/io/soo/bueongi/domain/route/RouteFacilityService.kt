@@ -21,6 +21,7 @@ class RouteFacilityService(
             police = pois.count { it.type == FacilityPoiType.POLICE },
             safehouse = pois.count { it.type == FacilityPoiType.SAFEHOUSE },
             lamp = pois.count { it.type == FacilityPoiType.LAMP },
+            pedestrianSignal = pois.count { it.type == FacilityPoiType.PEDESTRIAN_SIGNAL },
             total = pois.count { it.type in SAFETY_TYPES },
         )
         return FacilitiesResponse(pois = pois, summary = summary)
@@ -34,6 +35,7 @@ class RouteFacilityService(
             FacilityPoiType.POLICE,
             FacilityPoiType.SAFEHOUSE,
             FacilityPoiType.LAMP,
+            FacilityPoiType.PEDESTRIAN_SIGNAL,
         )
     }
 }

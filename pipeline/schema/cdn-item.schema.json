@@ -10,12 +10,12 @@
     "id": { "type": "string", "description": "원천+키 기반 결정적 ID" },
     "source": {
       "type": "string",
-      "enum": ["A-4", "B-1", "B-2", "B-3", "B-4", "C-1", "C-2", "D-1", "D-2"],
+      "enum": ["A-4", "B-1", "B-2", "B-3", "B-4", "C-1", "C-2", "C-3", "D-1", "D-2"],
       "description": "대표 원천. 병합 아이템은 우선 채택된 원천."
     },
     "type": {
       "type": "string",
-      "enum": ["cctv", "safehouse", "police", "lamp", "emergency_bell", "safepath"]
+      "enum": ["cctv", "safehouse", "police", "lamp", "emergency_bell", "pedestrian_signal", "safepath"]
     },
     "name": { "type": "string" },
     "address": { "type": "string" },

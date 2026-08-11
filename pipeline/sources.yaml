@@ -99,6 +99,16 @@ sources:
     output: "lamp/{sigungu}.json"
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" }
 
+  - id: C-3
+    name: "서울특별시 보행등(보행자 신호등) 위도 경도 현황"
+    catalogId: "OA-22354"
+    type: pedestrian_signal
+    coordSystem: wgs84
+    cadence: monthly
+    output: "pedestrian_signal/seoul.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "신호등 종류", address: "주소" }
+    notes: "이름은 보행'등'이지만 조명이 아니라 보행자 신호등이다(항목: 자치구·신호등 종류·위도·경도·주소). 조명 밀도 점수에 섞이면 안 되므로 lamp 와 분리한다. 열린데이터광장은 파일 전용 — 운영 입력은 data/csv/C-3.csv, 라이브는 포털 미러 15124273 의 odcloud 자동변환(uddi 확정 필요)."
+
   # ---- D 그룹 (비상벨) ----
   - id: D-1
     name: "전국 안전비상벨 표준데이터"

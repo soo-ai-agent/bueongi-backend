@@ -6,6 +6,7 @@ export type AssetType =
   | "police"
   | "lamp"
   | "emergency_bell"
+  | "pedestrian_signal"
   | "safepath";
 
 export type SourceId =
@@ -16,6 +17,7 @@ export type SourceId =
   | "B-4"
   | "C-1"
   | "C-2"
+  | "C-3"
   | "D-1"
   | "D-2";
 

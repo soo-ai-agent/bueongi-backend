@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://bueongi.cdn/schema/collection.schema.json",
   "title": "CDN 컬렉션 파일",
-  "description": "cctv/safehouse/police/lamp/emergency_bell/safepath 의 *.json 공통 형태. 표준 아이템 배열을 메타로 감싼다.",
+  "description": "cctv/safehouse/police/lamp/emergency_bell/pedestrian_signal/safepath 의 *.json 공통 형태. 표준 아이템 배열을 메타로 감싼다.",
   "type": "object",
   "required": ["schemaVersion", "type", "generatedAt", "count", "items"],
   "additionalProperties": false,
@@ -10,7 +10,7 @@
     "schemaVersion": { "type": "integer", "const": 1 },
     "type": {
       "type": "string",
-      "enum": ["cctv", "safehouse", "police", "lamp", "emergency_bell", "safepath"]
+      "enum": ["cctv", "safehouse", "police", "lamp", "emergency_bell", "pedestrian_signal", "safepath"]
     },
     "scope": {
       "type": "string",

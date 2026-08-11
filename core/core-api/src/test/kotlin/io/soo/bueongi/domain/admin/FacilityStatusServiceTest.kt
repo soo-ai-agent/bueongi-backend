@@ -42,7 +42,10 @@ class FacilityStatusServiceTest {
         val summary = FacilityStatusService(source, holder).summarize()
 
         assertThat(summary.facilities.map { it.type })
-            .containsExactly(FacilityType.CCTV, FacilityType.LAMP, FacilityType.BELL, FacilityType.SAFEHOUSE, FacilityType.POLICE)
+            .containsExactly(
+                FacilityType.CCTV, FacilityType.LAMP, FacilityType.BELL,
+                FacilityType.SAFEHOUSE, FacilityType.POLICE, FacilityType.PEDESTRIAN_SIGNAL,
+            )
 
         val cctv = summary.facilities.first { it.type == FacilityType.CCTV }
         assertThat(cctv.loadedCount).isEqualTo(372)

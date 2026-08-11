@@ -85,7 +85,7 @@ class ApiLogsControllerTest(
         mockMvc.get("/api/admin/facility-status")
             .andExpect {
                 status { isOk() }
-                jsonPath("$.facilities.length()") { value(5) }
+                jsonPath("$.facilities.length()") { value(6) }
                 jsonPath("$.facilities[0].type") { value("cctv") }
                 jsonPath("$.facilities[0].loadedCount") { value(2) }
                 jsonPath("$.facilities[0].lastRefreshStatus") { value("replaced") }

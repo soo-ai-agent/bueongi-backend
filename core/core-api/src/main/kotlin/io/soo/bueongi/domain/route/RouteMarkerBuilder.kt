@@ -91,6 +91,7 @@ class RouteMarkerBuilder(
             FacilityPoiType.BELL to FacilityType.BELL,
             FacilityPoiType.POLICE to FacilityType.POLICE,
             FacilityPoiType.LAMP to FacilityType.LAMP,
+            FacilityPoiType.PEDESTRIAN_SIGNAL to FacilityType.PEDESTRIAN_SIGNAL,
         )
 
         const val MARKER_PADDING: Double = 12.0

@@ -120,6 +120,14 @@ async function main(): Promise<void> {
     }
   }
 
+  // ---- C-3 서울 보행등(보행자 신호등): WGS84, pedestrian_signal/seoul.json ----
+  {
+    const raw = await F.fetchC3(ctx);
+    const { items, stat } = convertWgs84(raw, "C-3");
+    bySource["C-3"] = stat;
+    files.push(buildCollection("pedestrian_signal", "seoul", items, ["C-3"], NOW));
+  }
+
   // ---- D-1 + D-2 비상벨 병합: emergency_bell/{시군구코드}.json ----
   {
     const d1raw = await F.fetchD1(ctx);

@@ -13,6 +13,7 @@ enum class FacilityPoiType(@get:JsonValue val wire: String) {
     POLICE("police"),
     SAFEHOUSE("safehouse"),
     LAMP("lamp"),
+    PEDESTRIAN_SIGNAL("pedestrian_signal"),
     ;
 
     companion object {

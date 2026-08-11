@@ -40,6 +40,9 @@ class RouteFacilityServiceTest {
             FacilityType.LAMP to listOf(
                 FacilityPoint(FacilityType.LAMP, 37.5, 127.014, name = "가로등-1"),
             ),
+            FacilityType.PEDESTRIAN_SIGNAL to listOf(
+                FacilityPoint(FacilityType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
+            ),
         ),
     )
 
@@ -62,6 +65,8 @@ class RouteFacilityServiceTest {
         assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == FacilityPoiType.POLICE })
         assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == FacilityPoiType.SAFEHOUSE })
         assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == FacilityPoiType.LAMP })
+        assertThat(res.summary.pedestrianSignal)
+            .isEqualTo(res.pois.count { it.type == FacilityPoiType.PEDESTRIAN_SIGNAL })
     }
 
     @Test
@@ -73,6 +78,7 @@ class RouteFacilityServiceTest {
         assertThat(res.store).isEqualTo(0)
         assertThat(res.police).isEqualTo(0)
         assertThat(res.lamp).isEqualTo(1)
+        assertThat(res.pedestrianSignal).isEqualTo(1)
     }
 
     @Test
@@ -87,7 +93,7 @@ class RouteFacilityServiceTest {
         val res = request("safe", FakeFacilitySource())
         val s = res.summary
         assertThat(s.total).isEqualTo(0)
-        assertThat(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp).isEqualTo(0)
+        assertThat(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp + s.pedestrianSignal).isEqualTo(0)
         assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
     }
 
@@ -95,7 +101,8 @@ class RouteFacilityServiceTest {
     fun `total 은 안심시설 합계이며 start end 를 제외한다`() {
         val res = request("safe", mixedSource())
         val s = res.summary
-        assertThat(s.total).isEqualTo(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp)
+        assertThat(s.total)
+            .isEqualTo(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp + s.pedestrianSignal)
         assertThat(s.total).isEqualTo(res.pois.size - 2)
     }
 

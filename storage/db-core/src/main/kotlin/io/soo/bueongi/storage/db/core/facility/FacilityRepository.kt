@@ -106,7 +106,8 @@ class FacilityRepository(
         indexByType = byType.mapValues { (_, pts) -> GridSpatialIndex(pts) }
         _safePaths = paths
         log.info(
-            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}, bell={}, safehouse={}, police={}, safepaths={}",
+            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}, bell={}, " +
+                "safehouse={}, police={}, pedestrianSignal={}, safepaths={}",
             dir?.path ?: "(없음)",
             fileCount,
             uploadedTypes,
@@ -116,6 +117,7 @@ class FacilityRepository(
             indexByType[FacilityType.BELL]?.size ?: 0,
             indexByType[FacilityType.SAFEHOUSE]?.size ?: 0,
             indexByType[FacilityType.POLICE]?.size ?: 0,
+            indexByType[FacilityType.PEDESTRIAN_SIGNAL]?.size ?: 0,
             paths.size,
         )
     }

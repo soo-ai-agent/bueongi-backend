@@ -10,5 +10,6 @@ data class FacilitySummary(
     val police: Int,
     val safehouse: Int,
     val lamp: Int,
+    val pedestrianSignal: Int,
     val total: Int,
 )

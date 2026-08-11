@@ -55,6 +55,12 @@ data class FacilityCsvSpec(
                 nameHeaders = listOf("설치장소"),
                 addressHeaders = listOf("소재지지번주소"),
             )
+            FacilityType.PEDESTRIAN_SIGNAL -> FacilityCsvSpec(
+                type = type,
+                coordSystem = FacilityCoordSystem.WGS84,
+                nameHeaders = listOf("신호등 종류", "신호등종류"),
+                addressHeaders = listOf("주소", "소재지지번주소"),
+            )
         }
     }
 }
