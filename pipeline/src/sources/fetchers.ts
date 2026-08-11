@@ -222,10 +222,15 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     coordSystem: "epsg5179",
     keyColumns: { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" },
   },
-  // C-1: 서울 가로등 (WGS84) — 서울 열린데이터광장 (catalogId OA-22205)
+  // C-1: 서울 가로등 (WGS84) — 서울 열린데이터광장 OA-22205.
+  //  OA-22205 는 열린데이터광장에서 **파일로만** 열려 있어 openapi.seoul.go.kr service 명이 존재하지 않는다.
+  //  라이브 경로는 공공데이터포털 미러(서울특별시_가로등 위치 정보, catalogId 15107934)의 파일데이터
+  //  오픈API 자동변환(odcloud)을 쓴다. 자동변환분은 원본 파일의 한글 헤더를 그대로 돌려주므로
+  //  keyColumns 도 CSV 입력(data/csv/C-1.csv)과 같다.
   "C-1": {
-    kind: "seoul",
-    service: "", // TODO(키 등록 후): 서울 가로등 service명 (예: SearchStreetLampService 류)
+    kind: "odcloud",
+    catalogId: "15107934",
+    uddi: "", // TODO(포털 확인 후): 15107934 파일데이터 uddi. 그전까지는 data/csv/C-1.csv 가 운영 경로.
     type: "lamp",
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" },
