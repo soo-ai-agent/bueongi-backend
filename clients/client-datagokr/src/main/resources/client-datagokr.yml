@@ -1,5 +1,0 @@
-# clients:client-datagokr 소유 설정 — 공공데이터포털(행안부 조회서비스) 인증키.
-bueongi:
-  datagokr:
-    # 미설정(빈 값)이면 라이브 갱신 비활성(파일 적재분 유지). Encoding(URL-인코딩된) 키를 그대로 넣는다.
-    service-key: ${DATA_GO_KR_SERVICE_KEY:}

@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safemap
+package io.soo.bueongi.domain.facility.coord
 
 import kotlin.math.atan2
 import kotlin.math.cos

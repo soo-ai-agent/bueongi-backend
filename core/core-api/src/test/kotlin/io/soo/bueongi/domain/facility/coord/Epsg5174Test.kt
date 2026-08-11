@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safemap
+package io.soo.bueongi.domain.facility.coord
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within

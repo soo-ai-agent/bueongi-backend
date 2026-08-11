@@ -1,7 +1,7 @@
 package io.soo.bueongi.domain.facility
 
-import io.soo.bueongi.client.safemap.Epsg5174
-import io.soo.bueongi.client.safemap.Epsg5179
+import io.soo.bueongi.domain.facility.coord.Epsg5174
+import io.soo.bueongi.domain.facility.coord.Epsg5179
 import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

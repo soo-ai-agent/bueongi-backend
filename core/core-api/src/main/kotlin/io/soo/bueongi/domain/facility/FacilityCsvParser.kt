@@ -1,8 +1,8 @@
 package io.soo.bueongi.domain.facility
 
-import io.soo.bueongi.client.safemap.Epsg5174
-import io.soo.bueongi.client.safemap.Epsg5179
-import io.soo.bueongi.client.safemap.Wgs84Point
+import io.soo.bueongi.domain.facility.coord.Epsg5174
+import io.soo.bueongi.domain.facility.coord.Epsg5179
+import io.soo.bueongi.domain.facility.coord.Wgs84Point
 import io.soo.bueongi.storage.db.core.facility.CCTV_SECURITY_PURPOSES
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
