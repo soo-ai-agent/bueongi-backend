@@ -53,7 +53,8 @@ class FacilityRefreshService(
      *
      * 두 종류는 파이프라인 CSV/CDN 적재분을 쓰고, 앱의 위치 조회는 어차피 로컬 공간색인(GridSpatialIndex)이 한다.
      * 가로등은 safetydata 원천(페이지당 1,000건·별도 쿼터)이 계속 담당한다.
-     * 쿼터가 상향되면 클라이언트 메서드(fetchCctv·fetchSecurityLamps)가 그대로 있으니 다시 연결하면 된다.
+     * 쿼터가 상향되거나 지역 단위 조회로 전환하면 클라이언트 메서드(fetchCctv·fetchSecurityLamps)가
+     * 그대로 있으니 다시 연결하면 된다. 전환 계획은 docs/issue-facility-api-location-query.md 참고.
      */
     override fun liveRefreshableTypes(): Set<FacilityType> {
         val types: LinkedHashSet<FacilityType> = LinkedHashSet<FacilityType>()
