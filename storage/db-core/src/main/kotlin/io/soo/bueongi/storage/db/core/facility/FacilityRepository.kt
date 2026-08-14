@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
+import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicReference
 
@@ -62,69 +63,106 @@ class FacilityRepository(
                 configuredDir,
             )
         } else {
-            for (type in FacilityType.entries) {
-                val typeDir: File = File(dir, type.cdnType)
-                if (!typeDir.isDirectory) {
-                    continue
-                }
-                for (file in typeDir.listJsonFiles()) {
-                    val collection: FacilityCollectionDto = parseCollection(file) ?: continue
-                    fileCount++
-                    val bucket: MutableList<FacilityPoint> = byType.getOrPut(type) { ArrayList() }
-                    for (item in collection.items) {
-                        val point: FacilityPoint = item.toFacilityPoint(type) ?: continue
-                        bucket.add(point)
-                    }
-                }
-            }
-            File(dir, "safepath").takeIf { it.isDirectory }?.listJsonFiles()?.forEach { file ->
-                val collection: FacilityCollectionDto = parseCollection(file) ?: return@forEach
-                fileCount++
-                collection.items.forEach { item -> item.toSafePath()?.let { paths.add(it) } }
-            }
-
-            _freshness = File(dir, "manifest.json").takeIf { it.isFile }?.let { file ->
-                try {
-                    val manifestJson: JsonNode = objectMapper.readTree(file)
-                    FacilityFreshness(
-                        generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
-                        version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
-                    )
-                } catch (e: Exception) {
-                    log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
-                    null
-                }
-            }
+            fileCount += readFacilityFiles(dir, byType)
+            fileCount += readSafePathFiles(dir, paths)
+            _freshness = readFreshness(dir)
         }
 
         val csvCctv: List<FacilityPoint> = loadCctvCsv()
         if (csvCctv.isNotEmpty()) {
             byType.getOrPut(FacilityType.CCTV) { ArrayList() }.addAll(csvCctv)
         }
+        val uploadedTypes: Int = overwriteWithUploads(byType)
 
+        indexByType.set(byType.mapValues { (_, pts) -> GridSpatialIndex(pts) })
+        _safePaths = paths
+        logLoaded(dir, fileCount, uploadedTypes, csvCctv.size, paths.size)
+    }
+
+    /** 종류별 CDN 컬렉션 파일을 읽어 [byType] 에 누적한다. 반환 = 읽은 파일 수. */
+    private fun readFacilityFiles(dir: File, byType: MutableMap<FacilityType, MutableList<FacilityPoint>>): Int {
+        var fileCount: Int = 0
+        for (type in FacilityType.entries) {
+            val typeDir: File = File(dir, type.cdnType)
+            if (!typeDir.isDirectory) {
+                continue
+            }
+            for (file in typeDir.listJsonFiles()) {
+                val collection: FacilityCollectionDto = parseCollection(file) ?: continue
+                fileCount++
+                val bucket: MutableList<FacilityPoint> = byType.getOrPut(type) { ArrayList() }
+                for (item in collection.items) {
+                    val point: FacilityPoint = item.toFacilityPoint(type) ?: continue
+                    bucket.add(point)
+                }
+            }
+        }
+        return fileCount
+    }
+
+    /** 안심귀갓길(safepath) 파일을 읽어 [paths] 에 누적한다. 반환 = 읽은 파일 수. */
+    private fun readSafePathFiles(dir: File, paths: MutableList<SafePath>): Int {
+        val safePathDir: File = File(dir, "safepath")
+        if (!safePathDir.isDirectory) {
+            return 0
+        }
+        var fileCount: Int = 0
+        for (file in safePathDir.listJsonFiles()) {
+            val collection: FacilityCollectionDto = parseCollection(file) ?: continue
+            fileCount++
+            for (item in collection.items) {
+                val path: SafePath = item.toSafePath() ?: continue
+                paths.add(path)
+            }
+        }
+        return fileCount
+    }
+
+    /** manifest.json 의 생성 시각·버전. 없거나 깨졌으면 신선도 표기를 생략한다. */
+    private fun readFreshness(dir: File): FacilityFreshness? {
+        val manifest: File = File(dir, "manifest.json")
+        if (!manifest.isFile) {
+            return null
+        }
+        val manifestJson: JsonNode = try {
+            objectMapper.readTree(manifest)
+        } catch (e: IOException) {
+            log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
+            return null
+        }
+        return FacilityFreshness(
+            generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
+            version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
+        )
+    }
+
+    /** 관리자 업로드분은 CDN 적재분을 대체한다(같은 종류면 업로드가 이긴다). 반환 = 대체된 종류 수. */
+    private fun overwriteWithUploads(byType: MutableMap<FacilityType, MutableList<FacilityPoint>>): Int {
         var uploadedTypes: Int = 0
         for (type in FacilityType.entries) {
             val uploaded: List<FacilityPoint> = uploadStore.findByType(type) ?: continue
             byType[type] = uploaded.toMutableList()
             uploadedTypes++
         }
+        return uploadedTypes
+    }
 
-        indexByType.set(byType.mapValues { (_, pts) -> GridSpatialIndex(pts) })
-        _safePaths = paths
+    private fun logLoaded(dir: File?, fileCount: Int, uploadedTypes: Int, csvCctvCount: Int, safePathCount: Int) {
+        val loaded: Map<FacilityType, GridSpatialIndex> = indexByType.get()
         log.info(
             "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}, bell={}, " +
                 "safehouse={}, police={}, pedestrianSignal={}, safepaths={}",
             dir?.path ?: "(없음)",
             fileCount,
             uploadedTypes,
-            indexByType.get()[FacilityType.CCTV]?.size ?: 0,
-            csvCctv.size,
-            indexByType.get()[FacilityType.LAMP]?.size ?: 0,
-            indexByType.get()[FacilityType.BELL]?.size ?: 0,
-            indexByType.get()[FacilityType.SAFEHOUSE]?.size ?: 0,
-            indexByType.get()[FacilityType.POLICE]?.size ?: 0,
-            indexByType.get()[FacilityType.PEDESTRIAN_SIGNAL]?.size ?: 0,
-            paths.size,
+            loaded[FacilityType.CCTV]?.size ?: 0,
+            csvCctvCount,
+            loaded[FacilityType.LAMP]?.size ?: 0,
+            loaded[FacilityType.BELL]?.size ?: 0,
+            loaded[FacilityType.SAFEHOUSE]?.size ?: 0,
+            loaded[FacilityType.POLICE]?.size ?: 0,
+            loaded[FacilityType.PEDESTRIAN_SIGNAL]?.size ?: 0,
+            safePathCount,
         )
     }
 
@@ -177,7 +215,7 @@ class FacilityRepository(
 
     private fun parseCollection(file: File): FacilityCollectionDto? = try {
         objectMapper.readValue(file, FacilityCollectionDto::class.java)
-    } catch (e: Exception) {
+    } catch (e: IOException) {
         log.warn("안심시설 파일 파싱 실패(건너뜀): {} ({})", file.path, e.message)
         null
     }

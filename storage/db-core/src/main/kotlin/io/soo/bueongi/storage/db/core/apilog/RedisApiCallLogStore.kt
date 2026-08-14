@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.apilog
 
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -40,7 +41,7 @@ class RedisApiCallLogStore(
     private fun parseOrNull(json: String): ApiCallLog? =
         try {
             objectMapper.readValue<ApiCallLog>(json)
-        } catch (e: Exception) {
+        } catch (e: JacksonException) {
             logger.warn("API 호출 로그 역직렬화 실패(건너뜀): {}", e.message)
             null
         }

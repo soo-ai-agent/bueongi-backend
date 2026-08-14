@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.requestmetric
 
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -39,7 +40,7 @@ class RedisRequestMetricStore(
     private fun parseOrNull(json: String): RequestMetric? =
         try {
             objectMapper.readValue<RequestMetric>(json)
-        } catch (e: Exception) {
+        } catch (e: JacksonException) {
             logger.warn("수신 요청 메트릭 역직렬화 실패(건너뜀): {}", e.message)
             null
         }
