@@ -2,8 +2,14 @@ rootProject.name = "bueongi-backend"
 
 include(
     "core:core-enum",
+    "core:core-common",
     "core:core-api",
     "storage:db-core",
+    "domain:place",
+    "domain:facility",
+    "domain:route",
+    "domain:share",
+    "domain:admin",
     "clients:client-tmap",
     "clients:client-kakao",
     "support:logging",
