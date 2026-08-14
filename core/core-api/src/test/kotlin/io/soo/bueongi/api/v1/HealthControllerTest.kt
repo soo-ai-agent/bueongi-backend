@@ -1,8 +1,8 @@
 package io.soo.bueongi.api.v1
 
-import io.soo.bueongi.domain.place.PlaceItem
-import io.soo.bueongi.domain.place.RemotePlaceProvider
-import io.soo.bueongi.domain.share.ShareService
+import io.soo.bueongi.place.PlaceItem
+import io.soo.bueongi.place.RemotePlaceProvider
+import io.soo.bueongi.share.ShareService
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
 import java.time.Clock

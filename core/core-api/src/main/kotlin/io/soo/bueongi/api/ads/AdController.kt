@@ -2,7 +2,7 @@ package io.soo.bueongi.api.ads
 
 import io.soo.bueongi.api.ads.request.AdImpressionRequest
 import io.soo.bueongi.api.ads.request.placementValue
-import io.soo.bueongi.domain.admin.AdStatsService
+import io.soo.bueongi.admin.AdStatsService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

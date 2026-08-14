@@ -1,7 +1,7 @@
 package io.soo.bueongi.api.v1
 
-import io.soo.bueongi.domain.place.RemotePlaceProvider
-import io.soo.bueongi.domain.share.ShareService
+import io.soo.bueongi.place.RemotePlaceProvider
+import io.soo.bueongi.share.ShareService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController

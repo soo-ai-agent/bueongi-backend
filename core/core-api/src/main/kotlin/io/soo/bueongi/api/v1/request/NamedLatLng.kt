@@ -1,8 +1,8 @@
 package io.soo.bueongi.api.v1.request
 
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.domain.route.RouteQuery
-import io.soo.bueongi.domain.route.RouteType
+import io.soo.bueongi.route.RouteQuery
+import io.soo.bueongi.route.RouteType
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import io.soo.bueongi.support.error.OriginRequiredException

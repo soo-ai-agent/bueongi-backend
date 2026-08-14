@@ -138,28 +138,39 @@ set +a
 ./gradlew bootRun --no-daemon
 ```
 
-## 프로젝트 구조 (멀티모듈 — soo-spring-kotlin-starter 규약)
+## 프로젝트 구조 (멀티모듈 — 모듈은 starter 규약, 패키지는 도메인 우선)
 
 ```
 backend/
 ├── core/
-│   ├── core-api/                # 부팅 모듈(유일한 bootJar/bootRun) — 컨트롤러·도메인
+│   ├── core-api/                # 부팅 모듈(유일한 bootJar/bootRun)
 │   │   └── src/main/kotlin/io/soo/bueongi/
-│   │       ├── api/              #   컨트롤러(v1)·요청 DTO(request)·에러 어드바이스·config
-│   │       ├── domain/           #   route·place·share·facility — 유스케이스 오케스트레이션
+│   │       ├── route/            #   경로 탐색·안전점수 — 컨트롤러·요청DTO·유스케이스가 한자리
+│   │       ├── share/            #   위치공유 — 〃
+│   │       ├── facility/         #   안심시설(+coord: EPSG 좌표 변환) — 〃
+│   │       ├── place/            #   장소검색 — 〃
+│   │       ├── admin/            #   운영 관리자(+request) — 〃
+│   │       ├── api/              #   도메인 무관 공통: 에러 어드바이스·config·auth·ads·health·공용 DTO
 │   │       └── support/error/    #   도메인 예외(에러 계약)
 │   └── core-enum/               # 전 계층 공용 어휘(FacilityType·SafetyPreference)
 ├── storage/
 │   └── db-core/                 # 저장 격리 — 위치공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 ├── clients/                      # 외부 API 어댑터(자립 모듈 — 프로젝트 모듈 미의존)
 │   ├── client-tmap/              #   Tmap 보행자 경로(+10분 캐시)
-│   ├── client-kakao/             #   Kakao Local 장소검색
-│   ├── client-datagokr/          #   공공데이터포털 조회서비스(CCTV·비상벨·안심지킴이집)
-│   └── client-safemap/           #   생활안전지도 치안시설(+EPSG:5179 좌표 변환)
+│   └── client-kakao/             #   Kakao Local 장소검색
 └── support/
     ├── logging/                  # 로깅 설정 소유
     └── monitoring/               # actuator + 운영 알림(Slack AlertNotifier)
 ```
+
+**패키지는 레이어가 아니라 도메인으로 먼저 나눈다.** 한 도메인을 이해할 때
+`api/` 와 `domain/` 을 오갈 필요가 없도록, 컨트롤러·요청 DTO·유스케이스를 같은 패키지에 둔다.
+레이어는 파일 이름이 드러낸다(`ShareController`·`ShareService`·`CreateShareRequest`).
+
+- 도메인 간 참조는 `route → facility` 하나뿐이다. 새 도메인 간 의존을 만들기 전에 정말 필요한지 따진다.
+- `api/` 에는 **도메인이 없는 것만** 둔다(에러 어드바이스·시큐리티·config·헬스·여러 도메인이 쓰는 `LatLng` 등).
+  도메인 이름이 붙은 파일이 `api/` 에 생기면 해당 도메인 패키지로 옮긴다.
+- 외부 API 클라이언트는 여전히 `clients/` 의 자립 모듈이다(`external-api-catalog.md` 참고).
 
 - 부팅 모듈이 core-api 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
 - 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
