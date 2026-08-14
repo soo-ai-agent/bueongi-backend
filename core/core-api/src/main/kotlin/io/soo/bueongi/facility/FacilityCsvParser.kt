@@ -14,58 +14,111 @@ import java.nio.charset.CodingErrorAction
 class FacilityCsvParser {
 
     fun parse(bytes: ByteArray, spec: FacilityCsvSpec): FacilityCsvParseResult {
-        val text: String = decode(bytes)
-        val records: List<List<String>> = tokenizeCsv(text)
-        val headerPos: Int = records.indexOfFirst { row -> row.any { it.isNotBlank() } }
+        val records: List<List<String>> = tokenizeCsv(decode(bytes))
+        val headerPos: Int = findHeaderRow(records)
         if (headerPos < 0) {
             return FacilityCsvParseResult(spec.coordSystem, received = 0, points = emptyList())
         }
 
-        val headerIndex: Map<String, Int> = buildHeaderIndex(records[headerPos])
-        val dataRows: List<List<String>> = records.drop(headerPos + 1)
-            .filter { row -> row.any { it.isNotBlank() } }
+        val columns: CsvColumns = locateColumns(buildHeaderIndex(records[headerPos]), spec)
+        val dataRows: List<List<String>> = collectDataRows(records, headerPos)
 
+        val points: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
+        for (row in dataRows) {
+            val point: FacilityPoint = toFacilityPoint(row, columns, spec) ?: continue
+            points.add(point)
+        }
+        return FacilityCsvParseResult(columns.coordSystem, received = dataRows.size, points = points)
+    }
+
+    /** 첫 비어 있지 않은 행이 헤더다. 없으면 -1. */
+    private fun findHeaderRow(records: List<List<String>>): Int {
+        for (index in records.indices) {
+            if (hasContent(records[index])) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    private fun collectDataRows(records: List<List<String>>, headerPos: Int): List<List<String>> {
+        val rows: ArrayList<List<String>> = ArrayList<List<String>>()
+        for (index in headerPos + 1 until records.size) {
+            if (hasContent(records[index])) {
+                rows.add(records[index])
+            }
+        }
+        return rows
+    }
+
+    private fun hasContent(row: List<String>): Boolean {
+        for (cell in row) {
+            if (cell.isNotBlank()) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * 헤더 이름으로 컬럼 위치를 한 번만 찾아 둔다.
+     * 위경도 컬럼이 있으면 원천 좌표계와 무관하게 WGS84 로 읽는다(변환 불필요).
+     */
+    private fun locateColumns(headerIndex: Map<String, Int>, spec: FacilityCsvSpec): CsvColumns {
         val latIdx: Int? = firstIndexOf(headerIndex, spec.latHeaders)
         val lngIdx: Int? = firstIndexOf(headerIndex, spec.lngHeaders)
         val useWgs84: Boolean = latIdx != null && lngIdx != null
-        val effectiveCoordSystem: FacilityCoordSystem = if (useWgs84) {
+        val coordSystem: FacilityCoordSystem = if (useWgs84) {
             FacilityCoordSystem.WGS84
         } else {
             spec.coordSystem
         }
+        return CsvColumns(
+            useWgs84 = useWgs84,
+            coordSystem = coordSystem,
+            lat = latIdx,
+            lng = lngIdx,
+            x = firstIndexOf(headerIndex, spec.xHeaders),
+            y = firstIndexOf(headerIndex, spec.yHeaders),
+            name = firstIndexOf(headerIndex, spec.nameHeaders),
+            address = firstIndexOf(headerIndex, spec.addressHeaders),
+            purpose = firstIndexOf(headerIndex, spec.purposeHeaders),
+            cameraCount = firstIndexOf(headerIndex, spec.cameraCountHeaders),
+            phone = firstIndexOf(headerIndex, spec.phoneHeaders),
+        )
+    }
 
-        val xIdx: Int? = firstIndexOf(headerIndex, spec.xHeaders)
-        val yIdx: Int? = firstIndexOf(headerIndex, spec.yHeaders)
-        val nameIdx: Int? = firstIndexOf(headerIndex, spec.nameHeaders)
-        val addressIdx: Int? = firstIndexOf(headerIndex, spec.addressHeaders)
-        val purposeIdx: Int? = firstIndexOf(headerIndex, spec.purposeHeaders)
-        val cameraIdx: Int? = firstIndexOf(headerIndex, spec.cameraCountHeaders)
-        val phoneIdx: Int? = firstIndexOf(headerIndex, spec.phoneHeaders)
+    /** 좌표가 없거나 방범 목적이 아닌 행은 버린다(null). */
+    private fun toFacilityPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): FacilityPoint? {
+        val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
+        val purpose: String? = row.field(columns.purpose)
+        if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
+            return null
+        }
+        return FacilityPoint(
+            type = spec.type,
+            lat = geo.lat,
+            lng = geo.lng,
+            name = row.field(columns.name),
+            purpose = purpose,
+            cameraCount = row.field(columns.cameraCount)?.toIntOrNull()?.takeIf { it > 0 },
+            address = row.field(columns.address),
+            phone = row.field(columns.phone),
+        )
+    }
 
-        val points: List<FacilityPoint> = dataRows.mapNotNull { row ->
-            val geo: GeoPoint = if (useWgs84) {
-                GeoPoint.orNull(row.field(latIdx)?.toDoubleOrNull(), row.field(lngIdx)?.toDoubleOrNull())
-            } else {
-                projectXy(row.field(xIdx)?.toDoubleOrNull(), row.field(yIdx)?.toDoubleOrNull(), spec.coordSystem)
-            } ?: return@mapNotNull null
-
-            val purpose: String? = row.field(purposeIdx)
-            if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
-                return@mapNotNull null
-            }
-
-            FacilityPoint(
-                type = spec.type,
-                lat = geo.lat,
-                lng = geo.lng,
-                name = row.field(nameIdx),
-                purpose = purpose,
-                cameraCount = row.field(cameraIdx)?.toIntOrNull()?.takeIf { it > 0 },
-                address = row.field(addressIdx),
-                phone = row.field(phoneIdx),
+    private fun readGeoPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): GeoPoint? {
+        if (columns.useWgs84) {
+            return GeoPoint.orNull(
+                row.field(columns.lat)?.toDoubleOrNull(),
+                row.field(columns.lng)?.toDoubleOrNull(),
             )
         }
-        return FacilityCsvParseResult(effectiveCoordSystem, received = dataRows.size, points = points)
+        return projectXy(
+            row.field(columns.x)?.toDoubleOrNull(),
+            row.field(columns.y)?.toDoubleOrNull(),
+            spec.coordSystem,
+        )
     }
 
     private fun projectXy(x: Double?, y: Double?, coordSystem: FacilityCoordSystem): GeoPoint? {
