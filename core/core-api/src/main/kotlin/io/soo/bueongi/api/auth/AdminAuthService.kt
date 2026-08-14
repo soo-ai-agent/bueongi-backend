@@ -26,4 +26,3 @@ class AdminAuthService(
     fun refresh(request: AdminRefreshRequest): AdminRefreshResponse =
         AdminRefreshResponse(tokenService.refresh(request.refreshToken))
 }
-    

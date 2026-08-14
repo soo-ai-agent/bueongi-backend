@@ -43,10 +43,29 @@ class SafeRouteService(
 
         val origin: GeoPoint = query.origin
         val destination: GeoPoint = query.destination
-        val budget: Double = query.safetyPreference.detourBudget
 
+        val base: List<TmapRoute> = fetchBaseRoutes(query)
+        if (base.isEmpty()) {
+            alertNotifier?.notify(
+                key = "tmap-route-fallback",
+                title = "Tmap 경로 API 실패",
+                detail = "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)",
+            )
+            return routeService.buildRoutes(query)
+        }
+
+        val detours: List<TmapRoute> = fetchSafeDetours(query, base)
+        val candidates: List<RouteCandidate> = candidateMerger.mergeNearDuplicates(
+            dedupeByIdentity(base + detours).map { it.toCandidate() },
+        )
+        val scored: List<ScoredRoute> = scoreTypeAndLimit(candidates)
+        return toRouteOptions(scored, origin, destination)
+    }
+
+    /** 기본 경로 후보(추천·대로우선·최단). 전멸하면 빈 목록 — 호출부가 폴백을 결정한다. */
+    private fun fetchBaseRoutes(query: RouteQuery): List<TmapRoute> =
         // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
-        val base: List<TmapRoute> = apiCallLogStore.measure(
+        apiCallLogStore.measure(
             provider = ApiProvider.TMAP,
             endpoint = "route",
             success = { it.isNotEmpty() },
@@ -58,37 +77,37 @@ class SafeRouteService(
                 }
             },
         ) {
-            tmapClient.fetchRoutes(origin.toTmapCoord(), destination.toTmapCoord(), query.destinationName)
-        }
-        if (base.isEmpty()) {
-            alertNotifier?.notify(
-                key = "tmap-route-fallback",
-                title = "Tmap 경로 API 실패",
-                detail = "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)",
+            tmapClient.fetchRoutes(
+                query.origin.toTmapCoord(),
+                query.destination.toTmapCoord(),
+                query.destinationName,
             )
-            return routeService.buildRoutes(query)
         }
 
-        val baseShortestM: Double = base.minOf { it.distanceM }
-
+    /**
+     * 안심 거점을 경유하는 우회 후보. 최단 경로 대비 우회 예산(안심 강도)을 넘는 후보는 버린다.
+     * 너무 멀리 도는 길은 안전해도 사용자가 쓰지 않기 때문이다.
+     */
+    private fun fetchSafeDetours(query: RouteQuery, base: List<TmapRoute>): List<TmapRoute> {
         val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
         val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
-        val waypointCombos: List<List<GeoPoint>> = detourPlanner.pickDetourWaypoints(origin, destination, anchors)
-        val detours: List<TmapRoute> = waypointCombos.mapNotNull { waypoints ->
-            tmapClient.fetchRouteVia(
-                origin.toTmapCoord(),
-                destination.toTmapCoord(),
+        val waypointCombos: List<List<GeoPoint>> =
+            detourPlanner.pickDetourWaypoints(query.origin, query.destination, anchors)
+
+        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + query.safetyPreference.detourBudget)
+        val detours: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
+        for (waypoints in waypointCombos) {
+            val route: TmapRoute = tmapClient.fetchRouteVia(
+                query.origin.toTmapCoord(),
+                query.destination.toTmapCoord(),
                 waypoints.map { it.toTmapCoord() },
                 destName = query.destinationName,
-            )
+            ) ?: continue
+            if (route.distanceM <= maxDistanceM) {
+                detours.add(route)
+            }
         }
-            .filter { it.distanceM <= baseShortestM * (1 + budget) }
-
-        val candidates: List<RouteCandidate> = candidateMerger.mergeNearDuplicates(
-            dedupeByIdentity(base + detours).map { it.toCandidate() },
-        )
-        val scored: List<ScoredRoute> = scoreTypeAndLimit(candidates)
-        return toRouteOptions(scored, origin, destination)
+        return detours
     }
 
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {

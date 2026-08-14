@@ -15,58 +15,67 @@ class SafetyScorer(
 ) {
 
     fun score(path: List<GeoPoint>): SafetyScore {
-        val corridorMeters: Double = DEFAULT_CORRIDOR_METERS
         val lengthM: Double = SpatialMath.pathLengthMeters(path)
         val routeKm: Double = lengthM / 1000.0
+        // 0 나눗셈을 피하려고 아주 짧은 경로에 최소 길이를 준다(밀도 = 건수 / km).
         val km: Double = if (routeKm > 0) {
             routeKm
         } else {
             0.001
         }
 
-        val cctvCount: Int = repository.index(FacilityType.CCTV).withinCorridor(path, corridorMeters).size
-        val lampCount: Int = repository.index(FacilityType.LAMP).withinCorridor(path, corridorMeters).size
-        val bellCount: Int = repository.index(FacilityType.BELL).withinCorridor(path, corridorMeters).size
-        val safehouseCount: Int = repository.index(FacilityType.SAFEHOUSE).withinCorridor(path, corridorMeters).size
-        val policeCount: Int = repository.index(FacilityType.POLICE).withinCorridor(path, corridorMeters).size
-
-        val cctvDensity: Double = cctvCount / km
-        val lampDensity: Double = lampCount / km
-        val bellDensity: Double = bellCount / km
-
-        var safePathOverlap: Double = 0.0
-        if (lengthM > 0 && repository.safePaths.isNotEmpty()) {
-            for (safePath in repository.safePaths) {
-                if (safePath.coords.size < 2) {
-                    continue
-                }
-                val overlap: Double = SpatialMath.overlapLengthMeters(path, safePath.coords, corridorMeters)
-                safePathOverlap = maxOf(safePathOverlap, overlap / lengthM)
-            }
-            safePathOverlap = min(1.0, safePathOverlap)
-        }
-
-        val normalized: Double =
-            WEIGHT_CCTV * saturate(cctvDensity, SAT_CCTV_PER_KM) +
-                WEIGHT_LAMP * saturate(lampDensity, SAT_LAMP_PER_KM) +
-                WEIGHT_BELL * saturate(bellDensity, SAT_BELL_PER_KM) +
-                WEIGHT_SAFEHOUSE * saturate(safehouseCount.toDouble(), SAT_SAFEHOUSE_COUNT) +
-                WEIGHT_POLICE * saturate(policeCount.toDouble(), SAT_POLICE_COUNT) +
-                WEIGHT_SAFE_PATH * safePathOverlap
+        val counts: FacilityCounts = countNearby(path)
+        val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
+        val normalized: Double = normalizedScore(counts, km, safePathOverlap)
 
         return SafetyScore(
             score = (normalized * 100).roundToInt(),
             breakdown = SafetyBreakdown(
                 routeKm = round3(routeKm),
-                cctvDensity = round2(cctvDensity),
-                lampDensity = round2(lampDensity),
-                bellDensity = round2(bellDensity),
-                safehouseCount = safehouseCount,
-                policeCount = policeCount,
+                cctvDensity = round2(counts.cctv / km),
+                lampDensity = round2(counts.lamp / km),
+                bellDensity = round2(counts.bell / km),
+                safehouseCount = counts.safehouse,
+                policeCount = counts.police,
                 safePathOverlap = round3(safePathOverlap),
             ),
         )
     }
+
+    private fun countNearby(path: List<GeoPoint>): FacilityCounts = FacilityCounts(
+        cctv = countWithinCorridor(FacilityType.CCTV, path),
+        lamp = countWithinCorridor(FacilityType.LAMP, path),
+        bell = countWithinCorridor(FacilityType.BELL, path),
+        safehouse = countWithinCorridor(FacilityType.SAFEHOUSE, path),
+        police = countWithinCorridor(FacilityType.POLICE, path),
+    )
+
+    private fun countWithinCorridor(type: FacilityType, path: List<GeoPoint>): Int =
+        repository.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+
+    /** 안심귀갓길과 겹치는 비율(0~1). 가장 많이 겹치는 한 노선을 기준으로 한다. */
+    private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
+        if (lengthM <= 0 || repository.safePaths.isEmpty()) {
+            return 0.0
+        }
+        var best: Double = 0.0
+        for (safePath in repository.safePaths) {
+            if (safePath.coords.size < 2) {
+                continue
+            }
+            val overlap: Double = SpatialMath.overlapLengthMeters(path, safePath.coords, DEFAULT_CORRIDOR_METERS)
+            best = maxOf(best, overlap / lengthM)
+        }
+        return min(1.0, best)
+    }
+
+    private fun normalizedScore(counts: FacilityCounts, km: Double, safePathOverlap: Double): Double =
+        WEIGHT_CCTV * saturate(counts.cctv / km, SAT_CCTV_PER_KM) +
+            WEIGHT_LAMP * saturate(counts.lamp / km, SAT_LAMP_PER_KM) +
+            WEIGHT_BELL * saturate(counts.bell / km, SAT_BELL_PER_KM) +
+            WEIGHT_SAFEHOUSE * saturate(counts.safehouse.toDouble(), SAT_SAFEHOUSE_COUNT) +
+            WEIGHT_POLICE * saturate(counts.police.toDouble(), SAT_POLICE_COUNT) +
+            WEIGHT_SAFE_PATH * safePathOverlap
 
     private fun saturate(value: Double, saturationCeiling: Double): Double {
         if (saturationCeiling <= 0) {
