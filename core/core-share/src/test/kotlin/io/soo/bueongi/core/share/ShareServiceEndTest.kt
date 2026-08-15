@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share
 
-import io.soo.bueongi.core.common.error.ShareSessionNotFoundException
+import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue

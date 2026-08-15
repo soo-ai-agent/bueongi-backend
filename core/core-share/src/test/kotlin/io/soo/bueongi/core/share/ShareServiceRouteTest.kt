@@ -4,7 +4,7 @@ import io.soo.bueongi.storage.db.core.share.model.StoredCoord
 import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
-import io.soo.bueongi.core.common.error.ShareSessionNotFoundException
+import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull

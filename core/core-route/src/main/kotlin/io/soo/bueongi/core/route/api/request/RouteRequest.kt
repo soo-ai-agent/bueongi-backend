@@ -6,9 +6,9 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
-import io.soo.bueongi.core.common.error.OriginRequiredException
-import io.soo.bueongi.core.common.error.SameOriginDestinationException
-import io.soo.bueongi.core.common.error.TripTooFarException
+import io.soo.bueongi.core.route.domain.error.OriginRequiredException
+import io.soo.bueongi.core.route.domain.error.SameOriginDestinationException
+import io.soo.bueongi.core.route.domain.error.TripTooFarException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt

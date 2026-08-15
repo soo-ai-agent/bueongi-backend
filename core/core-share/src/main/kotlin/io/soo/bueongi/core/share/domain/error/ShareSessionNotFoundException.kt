@@ -1,5 +1,6 @@
-package io.soo.bueongi.core.common.error
+package io.soo.bueongi.core.share.domain.error
 
+import io.soo.bueongi.core.common.error.ApiException
 import org.springframework.http.HttpStatus
 
 class ShareSessionNotFoundException : ApiException(

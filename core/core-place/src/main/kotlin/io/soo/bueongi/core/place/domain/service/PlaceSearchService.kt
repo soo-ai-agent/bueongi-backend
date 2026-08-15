@@ -2,7 +2,7 @@ package io.soo.bueongi.core.place.domain.service
 
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 
-import io.soo.bueongi.core.common.error.InvalidKeywordException
+import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

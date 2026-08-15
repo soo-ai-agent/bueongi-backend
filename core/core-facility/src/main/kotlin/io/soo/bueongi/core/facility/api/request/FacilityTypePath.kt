@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.facility.api.request
 
-import io.soo.bueongi.core.common.error.UnknownFacilityTypeException
+import io.soo.bueongi.core.facility.domain.error.UnknownFacilityTypeException
 import io.soo.bueongi.core.enums.FacilityType
 
 /** 경로 변수의 "cctv" 같은 문자열을 시설 종류로 바꾼다. 모르는 값이면 400 으로 돌린다. */

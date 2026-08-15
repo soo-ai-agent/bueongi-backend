@@ -164,7 +164,7 @@ backend/
 │   ├── core-ads/                # 광고 노출 집계(/api/ads/impression · /api/admin/ad-stats)
 │   ├── core-ops/                # 운영 관측 — 외부API 상태·수신 요청 지표·알림/Slack 설정
 │   ├── core-auth/               # 인증 일체 — 로그인·토큰·JWT·SecurityConfig·/me
-│   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외·공용 요청 DTO
+│   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 │   ├── facility/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
@@ -180,7 +180,7 @@ backend/
 - **한 도메인 = 한 모듈.** 그 안에서 `api/` → `domain/` 으로 나누고,
   `api/` 안은 **`controller/` · `request/` · `response/`** 로,
   `domain/` 안은 다시 **역할별**로 나눈다: `service/`(일하는 것) · `model/`(값) ·
-  필요하면 `config/`(설정·필터) · `error/`(도메인 예외). 관심사 하위폴더가 먼저 있으면
+  필요하면 `config/`(설정·필터) · `error/`(도메인 예외 — 한 도메인만 던지면 공용이 아니라 여기다). 관심사 하위폴더가 먼저 있으면
   그 **안에서** 나눈다(예: `domain/csv/service`, `domain/slack/model`).
 - **역할 분리는 파일이 10개를 넘을 때부터** 한다. 4~5파일을 3폴더로 쪼개면 폴더당 1~2개라
   탐색이 오히려 늘어난다(clients·support·core-enum·apilog 계열은 그대로 둔 이유).

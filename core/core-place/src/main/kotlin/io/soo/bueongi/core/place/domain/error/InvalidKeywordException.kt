@@ -1,5 +1,7 @@
-package io.soo.bueongi.core.common.error
+package io.soo.bueongi.core.place.domain.error
 
+import io.soo.bueongi.core.common.error.ApiException
+import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
 class InvalidKeywordException(

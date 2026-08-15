@@ -11,7 +11,7 @@ import io.soo.bueongi.storage.db.core.facility.store.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
-import io.soo.bueongi.core.common.error.EmptyFacilityUploadException
+import io.soo.bueongi.core.facility.domain.error.EmptyFacilityUploadException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

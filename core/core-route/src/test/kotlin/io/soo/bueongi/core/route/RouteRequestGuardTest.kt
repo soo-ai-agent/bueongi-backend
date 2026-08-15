@@ -8,9 +8,9 @@ import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
-import io.soo.bueongi.core.common.error.OriginRequiredException
-import io.soo.bueongi.core.common.error.SameOriginDestinationException
-import io.soo.bueongi.core.common.error.TripTooFarException
+import io.soo.bueongi.core.route.domain.error.OriginRequiredException
+import io.soo.bueongi.core.route.domain.error.SameOriginDestinationException
+import io.soo.bueongi.core.route.domain.error.TripTooFarException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

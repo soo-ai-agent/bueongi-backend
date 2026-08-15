@@ -7,7 +7,7 @@ import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.store.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
-import io.soo.bueongi.core.common.error.EmptyFacilityUploadException
+import io.soo.bueongi.core.facility.domain.error.EmptyFacilityUploadException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

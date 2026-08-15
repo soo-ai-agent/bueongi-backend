@@ -7,7 +7,7 @@ import io.soo.bueongi.core.ops.domain.slack.model.SlackTestResult
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.SlackAlertConfig
 
-import io.soo.bueongi.core.common.error.InvalidSlackCategoryException
+import io.soo.bueongi.core.ops.domain.error.InvalidSlackCategoryException
 import org.springframework.stereotype.Service
 
 @Service

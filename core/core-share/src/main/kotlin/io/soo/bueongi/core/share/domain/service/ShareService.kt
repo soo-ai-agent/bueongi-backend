@@ -15,7 +15,7 @@ import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import io.soo.bueongi.storage.db.core.share.model.StoredLocation
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
-import io.soo.bueongi.core.common.error.ShareSessionNotFoundException
+import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.security.MessageDigest

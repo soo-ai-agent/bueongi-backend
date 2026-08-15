@@ -8,7 +8,7 @@ import io.soo.bueongi.core.share.domain.model.ROUTE_TYPE_VALUES
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.common.error.InvalidRouteMetaException
+import io.soo.bueongi.core.share.domain.error.InvalidRouteMetaException
 import io.soo.bueongi.storage.db.core.share.model.StoredCoord
 import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute

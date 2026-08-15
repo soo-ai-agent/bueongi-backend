@@ -6,7 +6,7 @@ import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.SlackAlertConfig
 
-import io.soo.bueongi.core.common.error.InvalidSlackCategoryException
+import io.soo.bueongi.core.ops.domain.error.InvalidSlackCategoryException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
