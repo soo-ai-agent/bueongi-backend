@@ -8,6 +8,5 @@ import io.soo.bueongi.core.place.domain.model.PlaceItem
  */
 interface RemotePlaceProvider {
     val isEnabled: Boolean
-
     fun search(keyword: String): List<PlaceItem>
 }

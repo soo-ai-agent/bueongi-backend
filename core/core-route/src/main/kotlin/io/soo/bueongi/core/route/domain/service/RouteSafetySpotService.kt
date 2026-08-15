@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.core.route.domain.model.SafetySpotSummary
-import io.soo.bueongi.core.route.domain.model.RouteFacilities
+import io.soo.bueongi.core.route.domain.model.RouteSafetySpots
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
@@ -19,7 +19,7 @@ class RouteSafetySpotService(
     private val markerBuilder: RouteMarkerBuilder,
 ) {
 
-    fun alongRoute(query: RouteQuery): RouteFacilities {
+    fun alongRoute(query: RouteQuery): RouteSafetySpots {
         val origin: GeoPoint = query.origin
         val destination: GeoPoint = query.destination
 
@@ -37,7 +37,7 @@ class RouteSafetySpotService(
             pedestrianSignal = pois.count { it.type == SafetySpotPoiType.PEDESTRIAN_SIGNAL },
             total = pois.count { it.type in SAFETY_TYPES },
         )
-        return RouteFacilities(pois = pois, summary = summary)
+        return RouteSafetySpots(pois = pois, summary = summary)
     }
 
     private companion object {

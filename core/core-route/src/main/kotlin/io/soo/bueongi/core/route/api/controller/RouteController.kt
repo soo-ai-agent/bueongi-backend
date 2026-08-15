@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import io.soo.bueongi.core.route.domain.model.RouteFacilities
+import io.soo.bueongi.core.route.domain.model.RouteSafetySpots
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 
 @RestController
@@ -38,7 +38,7 @@ class RouteController(
     @PostMapping("/safety-spots")
     fun safetySpots(@Valid @RequestBody request: RouteRequest): SafetySpotsResponse {
         val query: RouteQuery = request.toValidatedQuery(routeTypeCatalog)
-        val safetySpots: RouteFacilities = routeSafetySpotService.alongRoute(query)
+        val safetySpots: RouteSafetySpots = routeSafetySpotService.alongRoute(query)
         return SafetySpotsResponse.from(safetySpots)
     }
 }

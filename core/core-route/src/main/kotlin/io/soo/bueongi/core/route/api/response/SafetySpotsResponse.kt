@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.api.response
 
 import io.soo.bueongi.core.route.marker.model.SafetySpotPoi
-import io.soo.bueongi.core.route.domain.model.RouteFacilities
+import io.soo.bueongi.core.route.domain.model.RouteSafetySpots
 import io.soo.bueongi.core.route.domain.model.SafetySpotSummary
 
 data class SafetySpotsResponse(
@@ -10,7 +10,7 @@ data class SafetySpotsResponse(
 ) {
     companion object {
 
-        fun from(safetySpots: RouteFacilities): SafetySpotsResponse =
+        fun from(safetySpots: RouteSafetySpots): SafetySpotsResponse =
             SafetySpotsResponse(pois = safetySpots.pois, summary = safetySpots.summary)
     }
 }

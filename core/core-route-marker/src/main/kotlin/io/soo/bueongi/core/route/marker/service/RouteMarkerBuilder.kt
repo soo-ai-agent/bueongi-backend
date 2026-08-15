@@ -114,7 +114,6 @@ class RouteMarkerBuilder(
         )
 
         const val MINI_MAP_MAX: Double = 100.0
-
         const val MINI_MAP_CENTER: Int = 50
 
         /** 미니맵 가장자리 여백(%) — 테두리에 붙은 마커가 잘려 보이지 않게 한다. */

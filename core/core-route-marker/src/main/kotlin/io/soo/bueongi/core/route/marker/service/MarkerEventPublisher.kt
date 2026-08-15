@@ -19,7 +19,6 @@ class MarkerEventPublisher(
     }
 
     companion object {
-
         private const val INDEX_EMPTY_KEY: String = "safetySpot-index-empty"
         private const val INDEX_EMPTY_TITLE: String = "안심시설 데이터 제공 실패"
     }
