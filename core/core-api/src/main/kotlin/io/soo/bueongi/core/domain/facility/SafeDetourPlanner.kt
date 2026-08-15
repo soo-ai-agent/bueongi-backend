@@ -5,7 +5,6 @@ import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
 import io.soo.bueongi.storage.db.core.facility.SegmentProjection
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 
 import org.springframework.stereotype.Component
 import kotlin.math.floor
@@ -57,11 +56,11 @@ class SafeDetourPlanner(
         if (anchors.isEmpty()) {
             return emptyList()
         }
-        val maxLateralMeters: Double = SpatialMath.haversineMeters(origin, dest) * DEFAULT_LATERAL_RATIO
+        val maxLateralMeters: Double = origin.distanceMetersTo(dest) * DEFAULT_LATERAL_RATIO
 
         data class Placed(val anchor: SafeAnchor, val progress: Double)
         val placed: List<Placed> = anchors.mapNotNull { anchor ->
-            val projection: SegmentProjection = SpatialMath.projectOntoSegment(anchor.center, origin, dest)
+            val projection: SegmentProjection = anchor.center.projectOnto(origin, dest)
             val progressRaw: Double = projection.t
             val lateral: Double = projection.distanceMeters
             if (progressRaw <= MIDDLE_MIN_T || progressRaw >= MIDDLE_MAX_T) {

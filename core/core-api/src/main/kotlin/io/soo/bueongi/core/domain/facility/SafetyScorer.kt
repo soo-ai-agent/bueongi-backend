@@ -1,8 +1,9 @@
 package io.soo.bueongi.core.domain.facility
+import io.soo.bueongi.storage.db.core.facility.overlapMetersWith
+import io.soo.bueongi.storage.db.core.facility.pathLengthMeters
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 
 import org.springframework.stereotype.Component
 import kotlin.math.max
@@ -15,7 +16,7 @@ class SafetyScorer(
 ) {
 
     fun score(path: List<GeoPoint>): SafetyScore {
-        val lengthM: Double = SpatialMath.pathLengthMeters(path)
+        val lengthM: Double = path.pathLengthMeters()
         val routeKm: Double = lengthM / 1000.0
         // 0 나눗셈을 피하려고 아주 짧은 경로에 최소 길이를 준다(밀도 = 건수 / km).
         val km: Double = if (routeKm > 0) {
@@ -63,7 +64,7 @@ class SafetyScorer(
             if (safePath.coords.size < 2) {
                 continue
             }
-            val overlap: Double = SpatialMath.overlapLengthMeters(path, safePath.coords, DEFAULT_CORRIDOR_METERS)
+            val overlap: Double = path.overlapMetersWith(safePath.coords, DEFAULT_CORRIDOR_METERS)
             best = maxOf(best, overlap / lengthM)
         }
         return min(1.0, best)

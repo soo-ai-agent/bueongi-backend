@@ -3,7 +3,6 @@ package io.soo.bueongi.core.domain.route
 import io.soo.bueongi.support.util.DistanceFormat
 import io.soo.bueongi.core.enums.RouteType
 
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
@@ -19,7 +18,7 @@ class RouteService(
     }
 
     fun buildRoutes(query: RouteQuery): List<RouteOption> {
-        val straightMeters: Double = SpatialMath.haversineMeters(query.origin, query.destination)
+        val straightMeters: Double = query.origin.distanceMetersTo(query.destination)
         return RouteType.entries.map { type ->
             val meters: Double = straightMeters * type.distanceFactor
             RouteOption(

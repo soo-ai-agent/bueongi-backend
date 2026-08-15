@@ -15,7 +15,7 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
             return emptyList()
         }
         val candidates: List<FacilityPoint> = candidateCells(listOf(center), radiusM)
-        return candidates.filter { SpatialMath.haversineMeters(center, it.toGeoPoint()) <= radiusM }
+        return candidates.filter { center.distanceMetersTo(it.toGeoPoint()) <= radiusM }
     }
 
     fun withinCorridor(path: List<GeoPoint>, corridorM: Double): List<FacilityPoint> {
@@ -24,7 +24,7 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         }
         val samples: List<GeoPoint> = densify(path)
         val candidates: List<FacilityPoint> = candidateCells(samples, corridorM)
-        return candidates.filter { SpatialMath.minDistanceToPathMeters(it.toGeoPoint(), path) <= corridorM }
+        return candidates.filter { it.toGeoPoint().distanceMetersToPath(path) <= corridorM }
     }
 
     private fun densify(path: List<GeoPoint>): List<GeoPoint> {

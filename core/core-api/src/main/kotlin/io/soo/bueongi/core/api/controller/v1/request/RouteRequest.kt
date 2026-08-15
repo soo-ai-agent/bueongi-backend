@@ -7,7 +7,6 @@ import io.soo.bueongi.core.api.controller.v1.request.LatLng
 import io.soo.bueongi.core.api.controller.v1.request.NamedLatLng
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import io.soo.bueongi.core.support.error.OriginRequiredException
 import io.soo.bueongi.core.support.error.SameOriginDestinationException
 import io.soo.bueongi.core.support.error.TripTooFarException
@@ -52,7 +51,7 @@ private fun NamedLatLng.toGeoPoint(): GeoPoint =
     GeoPoint(requireNotNull(lat) { "lat 은 @NotNull 검증을 통과했어야 한다" }, requireNotNull(lng) { "lng 도 동일" })
 
 fun requireDistinctEndpoints(origin: GeoPoint, destination: GeoPoint) {
-    val meters: Double = SpatialMath.haversineMeters(origin, destination)
+    val meters: Double = origin.distanceMetersTo(destination)
     if (meters < MIN_TRIP_DISTANCE_METERS) {
         throw SameOriginDestinationException(distanceMeters = meters.roundToInt())
     }
@@ -61,7 +60,7 @@ fun requireDistinctEndpoints(origin: GeoPoint, destination: GeoPoint) {
 const val MIN_TRIP_DISTANCE_METERS: Double = 1.0
 
 fun requireWithinReach(origin: GeoPoint, destination: GeoPoint) {
-    val meters: Double = SpatialMath.haversineMeters(origin, destination)
+    val meters: Double = origin.distanceMetersTo(destination)
     if (meters > MAX_TRIP_DISTANCE_METERS) {
         throw TripTooFarException(
             distanceMeters = meters.roundToInt(),

@@ -127,11 +127,7 @@ class FacilityCsvParser {
         if (x == null || y == null) {
             return null
         }
-        val wgs: Wgs84Point? = when (coordSystem) {
-            FacilityCoordSystem.EPSG5179 -> Epsg5179.toWgs84(x, y)
-            FacilityCoordSystem.EPSG5174 -> Epsg5174.toWgs84(x, y)
-            FacilityCoordSystem.WGS84 -> null
-        }
+        val wgs: Wgs84Point? = coordSystem.toWgs84(x, y)
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
     }
 

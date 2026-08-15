@@ -3,7 +3,6 @@ package io.soo.bueongi.core.domain.facility
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.SpatialMath
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
@@ -17,7 +16,7 @@ class NearestPoliceFinder(
         val maxResults: Int = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)
         return repository.index(FacilityType.POLICE)
             .withinRadius(center, radius)
-            .map { point -> FacilityWithDistance(point, SpatialMath.haversineMeters(center, point.toGeoPoint())) }
+            .map { point -> FacilityWithDistance(point, center.distanceMetersTo(point.toGeoPoint())) }
             .sortedBy { it.distanceMeters }
             .take(maxResults)
             .map { found ->
