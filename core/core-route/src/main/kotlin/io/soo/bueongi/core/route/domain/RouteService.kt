@@ -1,0 +1,49 @@
+package io.soo.bueongi.core.route.domain
+
+import io.soo.bueongi.support.util.DistanceFormat
+import io.soo.bueongi.core.enums.RouteType
+
+import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
+import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
+import org.springframework.stereotype.Service
+
+@Service
+class RouteService(
+    private val routeStatsStore: RouteStatsStore? = null,
+) {
+
+    fun compare(query: RouteQuery): List<RouteOption> {
+        routeStatsStore.recordRecommendation("compare", query)
+        return buildRoutes(query)
+    }
+
+    fun buildRoutes(query: RouteQuery): List<RouteOption> {
+        val straightMeters: Double = query.origin.distanceMetersTo(query.destination)
+        return RouteType.entries.map { type ->
+            val meters: Double = straightMeters * type.distanceFactor
+            RouteOption(
+                id = type.id,
+                name = type.displayName,
+                time = "${DistanceFormat.walkMinutes(meters)}분",
+                dist = DistanceFormat.formatDistance(meters),
+                desc = type.desc,
+                tags = type.tags,
+                type = type,
+            )
+        }
+    }
+}
+
+internal fun RouteStatsStore?.recordRecommendation(endpoint: String, query: RouteQuery) {
+    if (this == null) {
+        return
+    }
+    record(
+        RouteRecommendationLog(
+            atEpochMs = System.currentTimeMillis(),
+            endpoint = endpoint,
+            destinationName = query.destinationName,
+            preference = query.safetyPreference,
+        ),
+    )
+}
