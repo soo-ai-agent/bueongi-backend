@@ -19,6 +19,29 @@ data class FacilityCsvSpec(
     val phoneHeaders: List<String> = emptyList(),
     val securityPurposeFilter: Boolean = false,
 ) {
+    /** 헤더 이름표에서 이 규격의 열 위치를 찾는다. 위도/경도 헤더가 있으면 좌표계를 WGS84 로 본다. */
+    fun locateColumns(headerIndex: Map<String, Int>): CsvColumns {
+        val latIdx: Int? = headerIndex.firstIndexOf(latHeaders)
+        val lngIdx: Int? = headerIndex.firstIndexOf(lngHeaders)
+        val useWgs84: Boolean = latIdx != null && lngIdx != null
+        return CsvColumns(
+            useWgs84 = useWgs84,
+            coordSystem = if (useWgs84) FacilityCoordSystem.WGS84 else coordSystem,
+            latIndex = latIdx,
+            lngIndex = lngIdx,
+            xIndex = headerIndex.firstIndexOf(xHeaders),
+            yIndex = headerIndex.firstIndexOf(yHeaders),
+            nameIndex = headerIndex.firstIndexOf(nameHeaders),
+            addressIndex = headerIndex.firstIndexOf(addressHeaders),
+            purposeIndex = headerIndex.firstIndexOf(purposeHeaders),
+            cameraCountIndex = headerIndex.firstIndexOf(cameraCountHeaders),
+            phoneIndex = headerIndex.firstIndexOf(phoneHeaders),
+        )
+    }
+
+    private fun Map<String, Int>.firstIndexOf(candidates: List<String>): Int? =
+        candidates.firstNotNullOfOrNull { this[it] }
+
     companion object {
         fun forType(type: FacilityType): FacilityCsvSpec = when (type) {
             FacilityType.CCTV -> FacilityCsvSpec(

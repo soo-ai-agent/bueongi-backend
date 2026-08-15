@@ -24,7 +24,6 @@ enum class FacilityCoordSystem(@get:JsonValue val wireName: String) {
     /** 이 좌표계의 평면 좌표를 위경도로 옮긴다. 범위를 벗어나면 null. */
     abstract fun toWgs84(x: Double, y: Double): Wgs84Point?
 
-
     companion object {
         @JsonCreator
         @JvmStatic

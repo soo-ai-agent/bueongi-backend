@@ -118,7 +118,7 @@ class ShareService(
     }
 
     private fun locationViewOf(session: ShareSession): LocationView {
-        val overdue: Boolean = isOverdue(session, clock.instant())
+        val overdue: Boolean = session.isOverdue(clock.instant())
         val location: StoredLocation = session.location
             ?: return LocationView.waiting(overdue)
         return LocationView(
@@ -130,11 +130,6 @@ class ShareService(
             remainingS = location.remainingS,
             overdue = overdue,
         )
-    }
-
-    private fun isOverdue(session: ShareSession, now: Instant): Boolean {
-        val expected: Instant = session.expectedArrivalAt ?: return false
-        return now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
     }
 
     fun storeBackendLabel(): String = store.backend

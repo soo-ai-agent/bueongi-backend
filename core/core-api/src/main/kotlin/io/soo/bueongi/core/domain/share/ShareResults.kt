@@ -25,8 +25,6 @@ val ROUTE_TYPE_VALUES: Set<String> = setOf("safe", "fast", "main")
 const val MAX_ROUTE_PROVENANCE_LENGTH: Int = 200
 
 const val MISSED_ARRIVAL_GRACE_SECONDS: Long = 60L
-const val MISSED_ARRIVAL_OVERDUE_SECONDS: Long = 300L
-const val MISSED_ARRIVAL_STOPPED_SECONDS: Long = 90L
 
 fun StoredRoute.toRouteContext(): RouteContext = RouteContext(
     destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),

@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.share
 
+import io.soo.bueongi.storage.db.core.share.ShareSession
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -37,7 +38,7 @@ class ShareServiceCreateTest : ShareServiceTestSupport() {
     fun `getLocation 은 예정 도착 시각을 여유 넘겨 초과하면 overdue=true`() {
         val res = service.create(3, etaSeconds = 60)
         service.updateLocation(res.token, res.ownerSecret, report())
-        clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + MISSED_ARRIVAL_OVERDUE_SECONDS + 1)
+        clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + ShareSession.OVERDUE_SECONDS + 1)
         assertTrue(service.getLocation(res.token).overdue)
     }
 

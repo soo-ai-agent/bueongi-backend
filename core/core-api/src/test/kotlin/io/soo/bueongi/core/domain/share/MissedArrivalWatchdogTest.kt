@@ -27,43 +27,43 @@ class MissedArrivalWatchdogTest {
 
     @Test
     fun `ETA 미제공 세션은 의심하지 않는다`() {
-        assertThat(isMissedArrivalSuspect(session(expectedArrivalAt = null), now)).isFalse()
+        assertThat(session(expectedArrivalAt = null).isMissedArrivalSuspect(now)).isFalse()
     }
 
     @Test
     fun `예정 초과 전(여유 이내)이면 의심하지 않는다`() {
         val stillMoving = session(expectedArrivalAt = now.plusSeconds(60), lastLocationAt = now.minusSeconds(300))
-        assertThat(isMissedArrivalSuspect(stillMoving, now)).isFalse()
+        assertThat(stillMoving.isMissedArrivalSuspect(now)).isFalse()
     }
 
     @Test
     fun `예정 초과했으나 위치가 계속 갱신 중이면(늦지만 이동 중) 의심하지 않는다`() {
-        val expected = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 60)
+        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
         val movingLate = session(expectedArrivalAt = expected, lastLocationAt = now.minusSeconds(10))
-        assertThat(isMissedArrivalSuspect(movingLate, now)).isFalse()
+        assertThat(movingLate.isMissedArrivalSuspect(now)).isFalse()
     }
 
     @Test
     fun `예정 초과 + 위치 정지면 의심한다`() {
-        val expected = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 60)
+        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
         val stopped = session(
             expectedArrivalAt = expected,
-            lastLocationAt = now.minusSeconds(MISSED_ARRIVAL_STOPPED_SECONDS + 30),
+            lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 30),
         )
-        assertThat(isMissedArrivalSuspect(stopped, now)).isTrue()
+        assertThat(stopped.isMissedArrivalSuspect(now)).isTrue()
     }
 
     @Test
     fun `예정 초과 + 위치 한 번도 없음도 의심한다`() {
-        val expected = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 60)
-        assertThat(isMissedArrivalSuspect(session(expectedArrivalAt = expected, lastLocationAt = null), now)).isTrue()
+        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
+        assertThat(session(expectedArrivalAt = expected, lastLocationAt = null).isMissedArrivalSuspect(now)).isTrue()
     }
 
     @Test
     fun `scan 은 의심 세션만 운영자에게 알린다 — 토큰 마스킹·좌표 비노출`() {
         val suspect = session(
-            expectedArrivalAt = now.minusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS + 120),
-            lastLocationAt = now.minusSeconds(MISSED_ARRIVAL_STOPPED_SECONDS + 60),
+            expectedArrivalAt = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 120),
+            lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 60),
         )
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
         val notifier: RecordingNotifier = RecordingNotifier()
@@ -96,5 +96,27 @@ class MissedArrivalWatchdogTest {
         override fun notify(key: String, title: String, detail: String) {
             notified.add(Triple(key, title, detail))
         }
+    }
+
+    @Test
+    fun `초과 임계값은 5분이다 - 경계 전후를 절대값으로 고정`() {
+        val stopped: Instant = now.minusSeconds(10_000)
+
+        val at299 = session(expectedArrivalAt = now.minusSeconds(299), lastLocationAt = stopped)
+        val at301 = session(expectedArrivalAt = now.minusSeconds(301), lastLocationAt = stopped)
+
+        assertThat(at299.isOverdue(now)).isFalse()
+        assertThat(at301.isOverdue(now)).isTrue()
+    }
+
+    @Test
+    fun `위치 정지 임계값은 90초다 - 경계 전후를 절대값으로 고정`() {
+        val overdue: Instant = now.minusSeconds(10_000)
+
+        val at89 = session(expectedArrivalAt = overdue, lastLocationAt = now.minusSeconds(89))
+        val at91 = session(expectedArrivalAt = overdue, lastLocationAt = now.minusSeconds(91))
+
+        assertThat(at89.isLocationStopped(now)).isFalse()
+        assertThat(at91.isLocationStopped(now)).isTrue()
     }
 }

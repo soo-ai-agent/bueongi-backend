@@ -3,7 +3,6 @@ package io.soo.bueongi.core.domain.share
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.storage.db.core.share.ShareSession
-import io.soo.bueongi.storage.db.core.share.StoredLocation
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -25,7 +24,7 @@ class MissedArrivalWatchdog(
     fun scan() {
         val now: Instant = clock.instant()
         store.findActiveSessions()
-            .filter { isMissedArrivalSuspect(it, now) }
+            .filter { it.isMissedArrivalSuspect(now) }
             .forEach { alert(it, now) }
     }
 
@@ -48,13 +47,3 @@ class MissedArrivalWatchdog(
     }
 }
 
-fun isMissedArrivalSuspect(session: ShareSession, now: Instant): Boolean {
-    val expected: Instant = session.expectedArrivalAt ?: return false
-    val overdue: Boolean = now.isAfter(expected.plusSeconds(MISSED_ARRIVAL_OVERDUE_SECONDS))
-    return overdue && isLocationStopped(session, now)
-}
-
-fun isLocationStopped(session: ShareSession, now: Instant): Boolean {
-    val location: StoredLocation = session.location ?: return true
-    return now.isAfter(location.updatedAt.plusSeconds(MISSED_ARRIVAL_STOPPED_SECONDS))
-}

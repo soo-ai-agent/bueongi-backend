@@ -2,8 +2,6 @@ package io.soo.bueongi.core.domain.facility.csv
 
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 
-import io.soo.bueongi.support.util.Epsg5174
-import io.soo.bueongi.support.util.Epsg5179
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.storage.db.core.facility.CCTV_SECURITY_PURPOSES
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
@@ -22,7 +20,7 @@ class FacilityCsvParser {
             return FacilityCsvParseResult(spec.coordSystem, received = 0, points = emptyList())
         }
 
-        val columns: CsvColumns = locateColumns(buildHeaderIndex(records[headerPos]), spec)
+        val columns: CsvColumns = spec.locateColumns(buildHeaderIndex(records[headerPos]))
         val dataRows: List<List<String>> = collectDataRows(records, headerPos)
 
         val points: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
@@ -66,29 +64,6 @@ class FacilityCsvParser {
      * 헤더 이름으로 컬럼 위치를 한 번만 찾아 둔다.
      * 위경도 컬럼이 있으면 원천 좌표계와 무관하게 WGS84 로 읽는다(변환 불필요).
      */
-    private fun locateColumns(headerIndex: Map<String, Int>, spec: FacilityCsvSpec): CsvColumns {
-        val latIdx: Int? = firstIndexOf(headerIndex, spec.latHeaders)
-        val lngIdx: Int? = firstIndexOf(headerIndex, spec.lngHeaders)
-        val useWgs84: Boolean = latIdx != null && lngIdx != null
-        val coordSystem: FacilityCoordSystem = if (useWgs84) {
-            FacilityCoordSystem.WGS84
-        } else {
-            spec.coordSystem
-        }
-        return CsvColumns(
-            useWgs84 = useWgs84,
-            coordSystem = coordSystem,
-            latIndex = latIdx,
-            lngIndex = lngIdx,
-            xIndex = firstIndexOf(headerIndex, spec.xHeaders),
-            yIndex = firstIndexOf(headerIndex, spec.yHeaders),
-            nameIndex = firstIndexOf(headerIndex, spec.nameHeaders),
-            addressIndex = firstIndexOf(headerIndex, spec.addressHeaders),
-            purposeIndex = firstIndexOf(headerIndex, spec.purposeHeaders),
-            cameraCountIndex = firstIndexOf(headerIndex, spec.cameraCountHeaders),
-            phoneIndex = firstIndexOf(headerIndex, spec.phoneHeaders),
-        )
-    }
 
     /** 좌표가 없거나 방범 목적이 아닌 행은 버린다(null). */
     private fun toFacilityPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): FacilityPoint? {
@@ -141,9 +116,6 @@ class FacilityCsvParser {
         }
         return map
     }
-
-    private fun firstIndexOf(headerIndex: Map<String, Int>, candidates: List<String>): Int? =
-        candidates.firstNotNullOfOrNull { headerIndex[it] }
 
     private fun decode(bytes: ByteArray): String {
         if (bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) {

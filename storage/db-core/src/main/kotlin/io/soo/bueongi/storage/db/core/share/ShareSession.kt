@@ -18,4 +18,25 @@ data class ShareSession(
     fun withRoute(route: StoredRoute): ShareSession = copy(route = route)
 
     fun isExpired(now: Instant): Boolean = !now.isBefore(expiresAt)
+
+    /** 예정 도착 시간을 유예 이상 넘겼는가. 도착 예정이 없으면 판단 대상이 아니다. */
+    fun isOverdue(now: Instant): Boolean {
+        val expected: Instant = expectedArrivalAt ?: return false
+        return now.isAfter(expected.plusSeconds(OVERDUE_SECONDS))
+    }
+
+    /** 위치 보고가 끊겼는가. 한 번도 보고가 없으면 끊긴 것으로 본다. */
+    fun isLocationStopped(now: Instant): Boolean {
+        val reported: StoredLocation = location ?: return true
+        return now.isAfter(reported.updatedAt.plusSeconds(LOCATION_STOPPED_SECONDS))
+    }
+
+    fun isMissedArrivalSuspect(now: Instant): Boolean = isOverdue(now) && isLocationStopped(now)
+
+    companion object {
+
+        const val OVERDUE_SECONDS: Long = 300L
+
+        const val LOCATION_STOPPED_SECONDS: Long = 90L
+    }
 }
