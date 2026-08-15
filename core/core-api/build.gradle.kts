@@ -8,13 +8,7 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 
 dependencies {
     implementation(project(":core:core-enum"))
-    implementation(project(":core:core-common"))
     implementation(project(":storage:db-core"))
-    implementation(project(":domain:place"))
-    implementation(project(":domain:facility"))
-    implementation(project(":domain:route"))
-    implementation(project(":domain:share"))
-    implementation(project(":domain:admin"))
     implementation(project(":clients:client-tmap"))
     implementation(project(":clients:client-kakao"))
     implementation(project(":support:logging"))

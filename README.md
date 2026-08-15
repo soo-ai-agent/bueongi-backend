@@ -138,45 +138,56 @@ set +a
 ./gradlew bootRun --no-daemon
 ```
 
-## 프로젝트 구조 (멀티모듈 — 도메인별 모듈)
+## 프로젝트 구조 (멀티모듈 — 모듈은 템플릿 그대로, 패키지는 도메인 우선)
+
+모듈 구성은 [team-dodn/spring-boot-kotlin-template](https://github.com/team-dodn/spring-boot-kotlin-template) 을 따른다.
+**`core:core-api` 하나가 도메인들을 모두 포함한다** — 템플릿이 "초기 개발 생산성을 극대화하기 위해"
+택한 형태이고, 도메인별 모듈 분리는 필요해질 때 한다(2026-08-12 시도했다가 되돌렸다. 아래 참고).
 
 ```
 backend/
 ├── core/
 │   ├── core-api/                # 부팅 모듈(유일한 bootJar/bootRun)
-│   │   └── io/soo/bueongi/api/   #   도메인 없는 것만: 에러 어드바이스·config·auth·ads·health
-│   ├── core-common/             # 도메인이 함께 쓰는 것 — 공용 요청 DTO(LatLng·NamedLatLng), 도메인 예외
+│   │   └── src/main/kotlin/io/soo/bueongi/
+│   │       ├── route/            #   경로 탐색·안전점수 — 컨트롤러·요청DTO·유스케이스가 한자리
+│   │       ├── share/            #   위치공유 — 〃
+│   │       ├── facility/         #   안심시설(+coord: EPSG 좌표 변환) — 〃
+│   │       ├── place/            #   장소검색 — 〃
+│   │       ├── admin/            #   운영 관리자(+request) — 〃
+│   │       ├── api/              #   도메인 무관 공통: 에러 어드바이스·config·auth·ads·health·공용 DTO
+│   │       └── support/error/    #   도메인 예외(에러 계약)
 │   └── core-enum/               # 전 계층 공용 어휘(FacilityType·SafetyPreference)
-├── domain/                       # 도메인별 모듈 — 컨트롤러·요청 DTO·유스케이스가 한 모듈에 있다
-│   ├── facility/                #   안심시설(+coord: EPSG 좌표 변환)
-│   ├── route/                   #   경로 탐색·안전점수      → facility
-│   ├── share/                   #   위치공유
-│   ├── admin/                   #   운영 관리자             → facility, share
-│   └── place/                   #   장소검색
 ├── storage/
-│   └── db-core/                 # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
-├── clients/                      # 외부 API 어댑터(자립 모듈)
-│   ├── client-tmap/ · client-kakao/
-└── support/ (logging · monitoring)
+│   └── db-core/                 # 저장 격리 — 위치공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
+├── clients/                      # 외부 API 어댑터(자립 모듈 — 프로젝트 모듈 미의존)
+│   ├── client-tmap/              #   Tmap 보행자 경로(+10분 캐시)
+│   └── client-kakao/             #   Kakao Local 장소검색
+└── support/
+    ├── logging/                  # 로깅 설정 소유
+    └── monitoring/               # actuator + 운영 알림(Slack AlertNotifier)
 ```
 
-**도메인은 모듈로 나눈다.** 잘못된 도메인 간 참조가 빌드 실패로 잡힌다.
-컨트롤러도 도메인 모듈에 둬서 한 도메인을 한자리에서 읽는다 — 그 대가로 도메인 모듈이 spring-web 에 의존한다.
+**패키지는 레이어가 아니라 도메인으로 먼저 나눈다.** 한 도메인을 이해할 때
+`api/` 와 `domain/` 을 오갈 필요가 없도록, 컨트롤러·요청 DTO·유스케이스를 같은 패키지에 둔다.
+레이어는 파일 이름이 드러낸다(`ShareController`·`ShareService`·`CreateShareRequest`).
 
-의존 방향(단방향, 순환 없음):
+- 도메인 간 참조는 `route → facility` 하나뿐이다. 새 도메인 간 의존을 만들기 전에 정말 필요한지 따진다.
+- `api/` 에는 **도메인이 없는 것만** 둔다(에러 어드바이스·시큐리티·config·헬스·여러 도메인이 쓰는 `LatLng` 등).
+  도메인 이름이 붙은 파일이 `api/` 에 생기면 해당 도메인 패키지로 옮긴다.
+- 외부 API 클라이언트는 여전히 `clients/` 의 자립 모듈이다(`external-api-catalog.md` 참고).
 
-```
-core-common ←── facility ←── route
-      ↑             ↑
-      └── share ←── admin
-core-api ──▶ 전 도메인 모듈 (부팅·조립)
-```
+### 도메인별 모듈 분리를 되돌린 이유 (2026-08-12)
 
-- **도메인 → core-api 참조 금지.** 공용으로 쓸 것은 `core-common` 으로 내린다(그래서 공용 DTO·예외가 거기 있다).
-- 새 도메인 간 의존을 만들기 전에 정말 필요한지 따진다. 현재는 route→facility, admin→facility·share 셋뿐이다.
-- **Spring 컨텍스트가 필요한 테스트(`@WebMvcTest`·`@SpringBootTest`)는 `core-api` 에 둔다.**
-  `@SpringBootApplication` 이 거기 있어 도메인 모듈에서는 컨텍스트를 못 만든다.
-  도메인 모듈 테스트는 컨텍스트 없는 단위 테스트다.
+경계를 빌드가 강제하게 하려고 `domain:facility·route·share·admin·place` 5개 모듈로 나눠 봤다.
+동작은 했지만 되돌렸다.
+
+- 템플릿이 정한 형태(`core-api` 가 도메인을 포함)에서 벗어난다.
+- 도메인 간 참조가 route→facility, admin→facility·share 셋뿐이라 강제할 위반이 사실상 없었다.
+- 공용 DTO·예외를 담을 `core-common` 모듈이 추가로 필요했고(순환 회피),
+  `@WebMvcTest` 는 `@SpringBootApplication` 이 있는 core-api 에서만 뜨므로 웹 테스트를 그쪽으로 옮겨야 했다.
+  모듈을 나눌수록 테스트와 공용 코드가 흩어졌다.
+
+경계는 당분간 패키지 규율로 지킨다. 도메인이 늘고 참조가 얽히기 시작하면 그때 다시 나눈다.
 
 - 부팅 모듈이 core-api 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
 - 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
