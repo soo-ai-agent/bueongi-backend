@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.domain.admin
 
-import io.soo.bueongi.core.api.controller.v1.request.SlackConfigUpdateRequest
 import io.soo.bueongi.core.domain.share.ActiveShareView
 import io.soo.bueongi.core.domain.share.LocationView
 import io.soo.bueongi.core.domain.share.ShareService

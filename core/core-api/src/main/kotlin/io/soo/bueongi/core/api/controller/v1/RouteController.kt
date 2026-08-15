@@ -3,6 +3,7 @@ package io.soo.bueongi.core.api.controller.v1
 import io.soo.bueongi.core.api.controller.v1.request.toValidatedQuery
 
 import io.soo.bueongi.core.api.controller.v1.response.FacilitiesResponse
+import io.soo.bueongi.core.domain.route.RouteFacilities
 import io.soo.bueongi.core.domain.route.RouteFacilityService
 import io.soo.bueongi.core.domain.route.RouteOption
 import io.soo.bueongi.core.api.controller.v1.request.RouteRequest
@@ -32,6 +33,8 @@ class RouteController(
         safeRouteService.safeCompare(request.toValidatedQuery())
 
     @PostMapping("/facilities")
-    fun facilities(@Valid @RequestBody request: RouteRequest): FacilitiesResponse =
-        routeFacilityService.alongRoute(request.toValidatedQuery())
+    fun facilities(@Valid @RequestBody request: RouteRequest): FacilitiesResponse {
+        val facilities: RouteFacilities = routeFacilityService.alongRoute(request.toValidatedQuery())
+        return FacilitiesResponse(pois = facilities.pois, summary = facilities.summary)
+    }
 }

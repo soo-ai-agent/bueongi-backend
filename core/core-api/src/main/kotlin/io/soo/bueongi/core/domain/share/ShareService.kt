@@ -1,8 +1,5 @@
 package io.soo.bueongi.core.domain.share
 
-import io.soo.bueongi.core.api.controller.v1.response.CreateShareResponse
-import io.soo.bueongi.core.api.controller.v1.response.UpdateLocationResponse
-import io.soo.bueongi.core.api.controller.v1.response.WatchResponse
 
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
@@ -27,7 +24,7 @@ class ShareService(
     private val random: SecureRandom = SecureRandom()
     private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
-    fun create(expiresInHours: Int?, etaSeconds: Int? = null): CreateShareResponse {
+    fun create(expiresInHours: Int?, etaSeconds: Int? = null): ShareCreated {
         val hours: Int = expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token: String = newToken()
         val ownerSecret: String = newToken()
@@ -44,7 +41,7 @@ class ShareService(
                 expectedArrivalAt = expectedArrivalAt,
             ),
         )
-        return CreateShareResponse(
+        return ShareCreated(
             token = token,
             ownerSecret = ownerSecret,
             shareUrl = shareUrlFor(token),
@@ -77,7 +74,7 @@ class ShareService(
 
     private fun shareUrlFor(token: String): String = "${baseUrl.trimEnd('/')}/share/$token"
 
-    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
+    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): ShareLocationUpdated {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
@@ -89,15 +86,15 @@ class ShareService(
             remainingS = report.remainingS,
         )
         store.save(session.withLocation(location))
-        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+        return ShareLocationUpdated(updatedAt = now, expiresAt = session.expiresAt)
     }
 
-    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
+    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): ShareLocationUpdated {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
         store.save(session.withRoute(route))
-        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+        return ShareLocationUpdated(updatedAt = now, expiresAt = session.expiresAt)
     }
 
     fun getRoute(token: String): RouteView {
@@ -147,12 +144,12 @@ class ShareService(
         store.deleteByToken(token)
     }
 
-    fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
+    fun getWatchingStatus(token: String, ownerSecret: String?): ShareWatchStatus {
         val session: ShareSession = store.findByToken(token)
-            ?: return WatchResponse(watching = false, expired = true)
+            ?: return ShareWatchStatus(watching = false, expired = true)
         requireOwner(session, ownerSecret)
         val location: StoredLocation? = session.location
-        return WatchResponse(
+        return ShareWatchStatus(
             watching = store.isWatched(token),
             lat = location?.lat,
             lng = location?.lng,

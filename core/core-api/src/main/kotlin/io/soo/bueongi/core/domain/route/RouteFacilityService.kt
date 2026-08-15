@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.domain.route
 
-import io.soo.bueongi.core.api.controller.v1.response.FacilitiesResponse
 
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.springframework.stereotype.Service
@@ -10,7 +9,7 @@ class RouteFacilityService(
     private val markerBuilder: RouteMarkerBuilder,
 ) {
 
-    fun alongRoute(query: RouteQuery): FacilitiesResponse {
+    fun alongRoute(query: RouteQuery): RouteFacilities {
         val origin: GeoPoint = query.origin
         val destination: GeoPoint = query.destination
 
@@ -26,7 +25,7 @@ class RouteFacilityService(
             pedestrianSignal = pois.count { it.type == FacilityPoiType.PEDESTRIAN_SIGNAL },
             total = pois.count { it.type in SAFETY_TYPES },
         )
-        return FacilitiesResponse(pois = pois, summary = summary)
+        return RouteFacilities(pois = pois, summary = summary)
     }
 
     private companion object {
