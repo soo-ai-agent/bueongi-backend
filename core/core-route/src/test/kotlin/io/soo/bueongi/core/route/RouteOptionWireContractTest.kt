@@ -5,8 +5,8 @@ import io.soo.bueongi.core.route.marker.model.FacilityPoi
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.enums.FacilityPoiType
-import io.soo.bueongi.core.enums.RouteTag
-import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.RouteTag
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.databind.ObjectMapper

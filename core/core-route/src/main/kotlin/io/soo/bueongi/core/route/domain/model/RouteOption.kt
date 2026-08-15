@@ -2,7 +2,6 @@ package io.soo.bueongi.core.route.domain.model
 
 import io.soo.bueongi.core.route.marker.model.FacilityPoi
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
-import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.annotation.JsonInclude

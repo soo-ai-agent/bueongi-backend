@@ -1,7 +1,5 @@
 package io.soo.bueongi.core.route.domain.model
 
-import io.soo.bueongi.core.enums.RouteTag
-
 /**
  * 경로 종류를 화면에 어떻게 보여줄지. enum 은 종류만 세고, 이 표시 값은 [RouteTypeCatalog] 가 갖는다.
  *

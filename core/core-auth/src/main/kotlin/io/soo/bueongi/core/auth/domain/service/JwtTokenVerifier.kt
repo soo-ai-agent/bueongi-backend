@@ -3,7 +3,7 @@ package io.soo.bueongi.core.auth.domain.service
 import io.soo.bueongi.core.auth.domain.config.JwtProperties
 import io.soo.bueongi.core.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
-import io.soo.bueongi.core.enums.AdminTokenKind
+import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException

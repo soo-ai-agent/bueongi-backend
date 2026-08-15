@@ -4,7 +4,7 @@ import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
 import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import io.soo.bueongi.core.auth.domain.model.AdminTokenBundle
 import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
-import io.soo.bueongi.core.enums.AdminTokenKind
+import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException

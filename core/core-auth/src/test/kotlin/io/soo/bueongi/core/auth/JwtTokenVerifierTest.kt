@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.auth
 
-import io.soo.bueongi.core.enums.AdminTokenKind
+import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 import io.soo.bueongi.core.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.auth.domain.config.JwtProperties

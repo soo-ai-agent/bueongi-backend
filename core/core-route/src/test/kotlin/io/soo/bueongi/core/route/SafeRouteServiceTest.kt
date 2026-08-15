@@ -9,9 +9,9 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.core.enums.FacilityPoiType
-import io.soo.bueongi.core.enums.RouteTag
+import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 
 import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 

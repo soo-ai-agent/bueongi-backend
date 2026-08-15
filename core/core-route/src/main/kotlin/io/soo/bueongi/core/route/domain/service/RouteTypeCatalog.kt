@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.core.enums.RouteTag
-import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.RouteTag
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteTypeDisplay
 import org.springframework.stereotype.Component

@@ -6,8 +6,8 @@ import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
-import io.soo.bueongi.core.enums.RouteTag
-import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.RouteTag
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import io.soo.bueongi.support.util.DistanceFormat

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.enums.FacilityPoiType
-import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

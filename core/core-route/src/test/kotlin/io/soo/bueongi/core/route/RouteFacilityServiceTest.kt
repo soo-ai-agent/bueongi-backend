@@ -5,7 +5,6 @@ import io.soo.bueongi.core.route.domain.service.RouteFacilityService
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.enums.FacilityPoiType
-import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
