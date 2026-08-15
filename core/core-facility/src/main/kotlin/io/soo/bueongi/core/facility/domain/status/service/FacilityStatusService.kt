@@ -24,16 +24,19 @@ class FacilityStatusService(
 
     fun summarize(): FacilityStatusSummary {
         val freshness: FacilityFreshness? = facilitySource.freshness
-        val facilities: List<FacilityStatus> = FacilityType.entries.map { type ->
+        val facilities: ArrayList<FacilityStatus> = ArrayList<FacilityStatus>()
+        for (type in FacilityType.entries) {
             val record: FacilityRefreshRecord? = refreshStatusStore.findByType(type)
-            FacilityStatus(
-                type = type,
-                loadedCount = facilitySource.index(type).size,
-                lastRefreshAtMs = record?.atEpochMs,
-                lastRefreshCount = record?.replacedCount,
-                lastRefreshStatus = statusOf(record),
-                cdnGeneratedAt = freshness?.generatedAt,
-                cdnVersion = freshness?.version,
+            facilities.add(
+                FacilityStatus(
+                    type = type,
+                    loadedCount = facilitySource.index(type).size,
+                    lastRefreshAtMs = record?.atEpochMs,
+                    lastRefreshCount = record?.replacedCount,
+                    lastRefreshStatus = statusOf(record),
+                    cdnGeneratedAt = freshness?.generatedAt,
+                    cdnVersion = freshness?.version,
+                ),
             )
         }
         return FacilityStatusSummary(facilities = facilities)

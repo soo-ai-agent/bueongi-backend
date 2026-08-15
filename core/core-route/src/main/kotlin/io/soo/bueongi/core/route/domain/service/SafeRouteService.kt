@@ -73,7 +73,12 @@ class SafeRouteService(
         if (mainIdx != null) {
             picks[mainIdx] = RouteType.MAIN
         }
-        return picks.map { (i, type) -> ScoredRoute(scored[i].candidate, scored[i].score, type) }
+        val assigned: ArrayList<ScoredRoute> = ArrayList<ScoredRoute>()
+        for (pick in picks) {
+            val candidate: ScoredCandidate = scored[pick.key]
+            assigned.add(ScoredRoute(candidate.candidate, candidate.score, pick.value))
+        }
+        return assigned
     }
 
     private companion object {

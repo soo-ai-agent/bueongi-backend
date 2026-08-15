@@ -28,19 +28,23 @@ class RouteService(
     fun buildRoutes(query: RouteQuery): List<RouteOption> {
         val straightMeters: Double = query.origin.distanceMetersTo(query.destination)
         // 유형마다 우회 계수가 다르다(안심 1.18 · 주요 1.05 · 최단 0.92) — 3개를 한 번에 만든다.
-        return RouteType.entries.map { type ->
+        val options: ArrayList<RouteOption> = ArrayList<RouteOption>()
+        for (type in RouteType.entries) {
             val display: RouteTypeDisplay = routeTypeCatalog.displayOf(type)
             val meters: Double = straightMeters * display.distanceFactor
-            RouteOption(
-                id = display.id,
-                name = display.name,
-                time = "${DistanceFormat.walkMinutes(meters)}분",
-                dist = DistanceFormat.formatDistance(meters),
-                desc = display.desc,
-                tags = display.tags,
-                type = type,
+            options.add(
+                RouteOption(
+                    id = display.id,
+                    name = display.name,
+                    time = "${DistanceFormat.walkMinutes(meters)}분",
+                    dist = DistanceFormat.formatDistance(meters),
+                    desc = display.desc,
+                    tags = display.tags,
+                    type = type,
+                ),
             )
         }
+        return options
     }
 }
 

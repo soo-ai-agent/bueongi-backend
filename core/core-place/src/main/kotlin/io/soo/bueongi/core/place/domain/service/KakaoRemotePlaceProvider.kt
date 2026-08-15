@@ -11,5 +11,7 @@ class KakaoRemotePlaceProvider(private val client: KakaoPlaceClient) : RemotePla
         get() = client.isEnabled
 
     override fun search(keyword: String): List<PlaceItem> =
-        client.search(keyword).map { PlaceItem(name = it.name, address = it.address, lat = it.lat, lng = it.lng) }
+        client.search(keyword).map {
+            PlaceItem(name = it.name, address = it.address, lat = it.lat, lng = it.lng)
+        }
 }

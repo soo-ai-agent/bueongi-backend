@@ -61,9 +61,12 @@ class ShareService(
 
     fun listActiveSessions(): List<ActiveShareView> {
         val now: Instant = clock.instant()
-        return store.findActiveSessions()
-            .map { session -> toActiveShareView(session, now) }
-            .sortedWith(ACTIVE_SHARE_ORDER)
+        val views: ArrayList<ActiveShareView> = ArrayList<ActiveShareView>()
+        for (session in store.findActiveSessions()) {
+            views.add(toActiveShareView(session, now))
+        }
+        views.sortWith(ACTIVE_SHARE_ORDER)
+        return views
     }
 
     fun countActiveSessions(): Int =

@@ -16,12 +16,18 @@ class NearestPoliceFinder(
     fun findNearest(center: GeoPoint, radiusM: Double?, limit: Int?): List<NearestPolice> {
         val radius: Double = (radiusM ?: DEFAULT_RADIUS_M).coerceIn(MIN_RADIUS_M, MAX_RADIUS_M)
         val maxResults: Int = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)
-        return facilities.index(FacilityType.POLICE)
-            .withinRadius(center, radius)
-            .map { point -> FacilityWithDistance(point, center.distanceMetersTo(point.toGeoPoint())) }
-            .sortedBy { it.distanceMeters }
-            .take(maxResults)
-            .map { found ->
+        val withDistance: ArrayList<FacilityWithDistance> = ArrayList<FacilityWithDistance>()
+        for (point in facilities.index(FacilityType.POLICE).withinRadius(center, radius)) {
+            withDistance.add(FacilityWithDistance(point, center.distanceMetersTo(point.toGeoPoint())))
+        }
+        withDistance.sortBy { it.distanceMeters }
+
+        val nearest: ArrayList<NearestPolice> = ArrayList<NearestPolice>()
+        for (found in withDistance) {
+            if (nearest.size >= maxResults) {
+                break
+            }
+            nearest.add(
                 NearestPolice(
                     name = found.point.name,
                     address = found.point.address,
@@ -29,8 +35,10 @@ class NearestPoliceFinder(
                     lat = found.point.lat,
                     lng = found.point.lng,
                     distanceM = found.distanceMeters.roundToInt(),
-                )
-            }
+                ),
+            )
+        }
+        return nearest
     }
 
     companion object {

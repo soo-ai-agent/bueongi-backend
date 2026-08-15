@@ -21,9 +21,11 @@ class MissedArrivalWatchdog(
     @Scheduled(fixedDelayString = "\${bueongi.share.watchdog-interval-ms:60000}")
     fun scan() {
         val now: Instant = clock.instant()
-        store.findActiveSessions()
-            .filter { it.isMissedArrivalSuspect(now) }
-            .forEach { alert(it, now) }
+        for (session in store.findActiveSessions()) {
+            if (session.isMissedArrivalSuspect(now)) {
+                alert(session, now)
+            }
+        }
     }
 
     private fun alert(session: ShareSession, now: Instant) {

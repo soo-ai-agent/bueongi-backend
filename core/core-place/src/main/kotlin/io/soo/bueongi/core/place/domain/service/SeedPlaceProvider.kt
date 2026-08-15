@@ -8,8 +8,14 @@ import org.springframework.stereotype.Component
 class SeedPlaceProvider : PlaceProvider {
     override fun search(keyword: String): List<PlaceItem> {
         val needle: String = keyword.lowercase()
-        return SEED_PLACE_CATALOG.filter { place ->
-            place.name.lowercase().contains(needle) || place.address.lowercase().contains(needle)
+        val found: ArrayList<PlaceItem> = ArrayList<PlaceItem>()
+        for (place in SEED_PLACE_CATALOG) {
+            val inName: Boolean = place.name.lowercase().contains(needle)
+            val inAddress: Boolean = place.address.lowercase().contains(needle)
+            if (inName || inAddress) {
+                found.add(place)
+            }
         }
+        return found
     }
 }

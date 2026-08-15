@@ -30,7 +30,12 @@ class RequestMetricsFilter(
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path: String = request.requestURI
-        return EXCLUDED_PREFIXES.any { prefix -> path == prefix || path.startsWith("$prefix/") }
+        for (prefix in EXCLUDED_PREFIXES) {
+            if (path == prefix || path.startsWith("$prefix/")) {
+                return true
+            }
+        }
+        return false
     }
 
     private fun recordSafely(request: HttpServletRequest, response: HttpServletResponse, startedAt: Long) {

@@ -31,16 +31,34 @@ class AdStatsService(
 
     private fun todayCount(events: List<AdEvent>): Int {
         val todayStartMs: Long = todayStartMs(System.currentTimeMillis())
-        return events.count { it.atEpochMs >= todayStartMs }
+        var count: Int = 0
+        for (event in events) {
+            if (event.atEpochMs >= todayStartMs) {
+                count++
+            }
+        }
+        return count
     }
 
     private fun byPlacement(events: List<AdEvent>): Map<String, Int> {
-        val counts: Map<String, Int> = events.groupingBy { it.placement }.eachCount()
-        return TRACKED_PLACEMENTS.associateWith { placement -> counts[placement] ?: 0 }
+        val counts: MutableMap<String, Int> = HashMap<String, Int>()
+        for (event in events) {
+            counts[event.placement] = (counts[event.placement] ?: 0) + 1
+        }
+        val rows: LinkedHashMap<String, Int> = LinkedHashMap<String, Int>()
+        for (placement in TRACKED_PLACEMENTS) {
+            rows[placement] = counts[placement] ?: 0
+        }
+        return rows
     }
 
-    private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> =
-        HourlyBuckets.countOf(events.map { it.atEpochMs })
+    private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> {
+        val timestamps: ArrayList<Long> = ArrayList<Long>()
+        for (event in events) {
+            timestamps.add(event.atEpochMs)
+        }
+        return HourlyBuckets.countOf(timestamps)
+    }
 
     companion object {
         val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")

@@ -55,11 +55,14 @@ class ApiControllerAdvice(
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
-        val errors: List<ApiFieldError> = ex.bindingResult.fieldErrors.map { fe ->
-            ApiFieldError(
-                field = fe.field,
-                message = fe.defaultMessage ?: "유효하지 않은 값입니다.",
-                rejectedValue = fe.rejectedValue,
+        val errors: ArrayList<ApiFieldError> = ArrayList<ApiFieldError>()
+        for (fieldError in ex.bindingResult.fieldErrors) {
+            errors.add(
+                ApiFieldError(
+                    field = fieldError.field,
+                    message = fieldError.defaultMessage ?: "유효하지 않은 값입니다.",
+                    rejectedValue = fieldError.rejectedValue,
+                ),
             )
         }
         return ProblemDetail.forStatusAndDetail(

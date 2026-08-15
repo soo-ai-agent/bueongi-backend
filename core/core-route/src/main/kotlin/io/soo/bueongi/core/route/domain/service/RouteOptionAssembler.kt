@@ -27,8 +27,8 @@ class RouteOptionAssembler(
         // 출처 표기는 모든 경로가 같은 값을 쓰므로 한 번만 만든다.
         val provenance: DataProvenance = buildProvenance()
         // 안전 점수 높은 순으로 내려보낸다 — 프론트는 받은 순서대로 그린다.
-        return scoredRoutes
-            .sortedByDescending { it.score.score }
+        val ordered: List<ScoredRoute> = scoredRoutes.sortedByDescending { it.score.score }
+        return ordered
             .mapIndexed { index, scoredRoute ->
                 val candidate: RouteCandidate = scoredRoute.candidate
                 val breakdown: SafetyBreakdown = scoredRoute.score.breakdown

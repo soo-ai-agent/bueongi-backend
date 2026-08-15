@@ -70,12 +70,14 @@ class RouteMarkerBuilder(
         val spanLat: Double = maxLat - minLat
         val spanLng: Double = maxLng - minLng
         val drawableRange: Double = MINI_MAP_MAX - 2 * MARKER_PADDING
-        return map { marker ->
+        val placed: ArrayList<FacilityPoi> = ArrayList<FacilityPoi>()
+        for (marker in this) {
             // 화면 y 는 아래로 증가하므로 위도는 뒤집어 넣는다(북쪽이 위).
             val x: Int = percentOrCenter(marker.lng - minLng, spanLng, drawableRange)
             val y: Int = percentOrCenter(maxLat - marker.lat, spanLat, drawableRange)
-            marker.copy(x = x, y = y)
+            placed.add(marker.copy(x = x, y = y))
         }
+        return placed
     }
 
     private fun percentOrCenter(offset: Double, span: Double, drawableRange: Double): Int {

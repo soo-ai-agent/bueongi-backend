@@ -48,15 +48,21 @@ class SafeDetourPlanner(
             cluster.facilityCount += 1
         }
 
-        return clusters.values
-            .map { cluster ->
+        val anchors: ArrayList<SafeAnchor> = ArrayList<SafeAnchor>()
+        for (cluster in clusters.values) {
+            anchors.add(
                 SafeAnchor(
                     GeoPoint(cluster.sumLat / cluster.facilityCount, cluster.sumLng / cluster.facilityCount),
                     weight = cluster.facilityCount,
-                )
-            }
-            .sortedWith(compareByDescending<SafeAnchor> { it.weight }.thenBy { it.center.lat }.thenBy { it.center.lng })
-            .take(MAX_ANCHORS)
+                ),
+            )
+        }
+        // 시설이 많이 몰린 셀부터. 같은 수면 좌표 순으로 갈라 결과를 고정한다.
+        anchors.sortWith(compareByDescending<SafeAnchor> { it.weight }.thenBy { it.center.lat }.thenBy { it.center.lng })
+        if (anchors.size <= MAX_ANCHORS) {
+            return anchors
+        }
+        return anchors.subList(0, MAX_ANCHORS)
     }
 
     /**
