@@ -12,9 +12,16 @@ import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
+/**
+ * 경로 주변 안심시설을 지도 마커로 만든다.
+ *
+ * 마커의 [FacilityPoi.x]·[FacilityPoi.y] 는 위경도가 아니라 **미니맵 안 0~100 백분율 위치**다.
+ * 프론트가 지도 SDK 없이도 경로 미리보기를 그릴 수 있어야 해서, 마커 전체의 위경도 범위를
+ * 정사각형에 맞춰 늘린 값을 서버가 계산해 준다.
+ */
 @Component
 class RouteMarkerBuilder(
-    private val repository: FacilitySpatialSource,
+    private val facilities: FacilitySpatialSource,
     private val alertNotifier: AlertNotifier? = null,
 ) {
 
@@ -26,13 +33,14 @@ class RouteMarkerBuilder(
         alertIfIndexEmpty()
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
+        // x·y 는 전체 마커 범위를 알아야 정해지므로 여기서는 0 으로 두고 마지막에 한 번에 채운다.
         val raw: ArrayList<FacilityPoi> = ArrayList<FacilityPoi>()
         raw.add(FacilityPoi(type = FacilityPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
         for ((markerType, facilityType) in MARKER_TYPES) {
             val facilities: List<FacilityPoint> =
-                repository.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
+                facilities.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
             for (facility in facilities) {
                 raw.add(
                     FacilityPoi(
@@ -51,31 +59,36 @@ class RouteMarkerBuilder(
             }
         }
 
-        val minLat: Double = raw.minOf { it.lat }
-        val maxLat: Double = raw.maxOf { it.lat }
-        val minLng: Double = raw.minOf { it.lng }
-        val maxLng: Double = raw.maxOf { it.lng }
-        val range: Double = 100.0 - 2 * MARKER_PADDING
+        return raw.toMiniMapPercent()
+    }
+
+    /** 마커들의 위경도 범위를 미니맵 0~100 좌표로 늘린다. 모든 마커가 한 점이면 가운데(50)에 둔다. */
+    private fun List<FacilityPoi>.toMiniMapPercent(): List<FacilityPoi> {
+        val minLat: Double = minOf { it.lat }
+        val maxLat: Double = maxOf { it.lat }
+        val minLng: Double = minOf { it.lng }
+        val maxLng: Double = maxOf { it.lng }
         val spanLat: Double = maxLat - minLat
         val spanLng: Double = maxLng - minLng
-        return raw.map { marker ->
-            val x: Int = if (spanLng == 0.0) {
-                50
-            } else {
-                (MARKER_PADDING + (marker.lng - minLng) / spanLng * range).roundToInt()
-            }
-            val y: Int = if (spanLat == 0.0) {
-                50
-            } else {
-                (MARKER_PADDING + (maxLat - marker.lat) / spanLat * range).roundToInt()
-            }
-            marker.copy(x = x.coerceIn(0, 100), y = y.coerceIn(0, 100))
+        val drawableRange: Double = MINI_MAP_MAX - 2 * MARKER_PADDING
+        return map { marker ->
+            // 화면 y 는 아래로 증가하므로 위도는 뒤집어 넣는다(북쪽이 위).
+            val x: Int = percentOrCenter(marker.lng - minLng, spanLng, drawableRange)
+            val y: Int = percentOrCenter(maxLat - marker.lat, spanLat, drawableRange)
+            marker.copy(x = x, y = y)
         }
+    }
+
+    private fun percentOrCenter(offset: Double, span: Double, drawableRange: Double): Int {
+        if (span == 0.0) {
+            return MINI_MAP_CENTER
+        }
+        return (MARKER_PADDING + offset / span * drawableRange).roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
     }
 
     private fun alertIfIndexEmpty() {
         val notifier: AlertNotifier = alertNotifier ?: return
-        val totalLoaded: Int = MARKER_TYPES.sumOf { (_, facilityType) -> repository.index(facilityType).size }
+        val totalLoaded: Int = MARKER_TYPES.sumOf { (_, facilityType) -> facilities.index(facilityType).size }
         if (totalLoaded > 0) {
             return
         }
@@ -97,8 +110,14 @@ class RouteMarkerBuilder(
             FacilityPoiType.PEDESTRIAN_SIGNAL to FacilityType.PEDESTRIAN_SIGNAL,
         )
 
+        const val MINI_MAP_MAX: Double = 100.0
+
+        const val MINI_MAP_CENTER: Int = 50
+
+        /** 미니맵 가장자리 여백(%) — 테두리에 붙은 마커가 잘려 보이지 않게 한다. */
         const val MARKER_PADDING: Double = 12.0
 
+        /** 종류당 마커 상한. 응답 크기와 지도 가독성 때문에 자른다. */
         const val MAX_MARKERS_PER_TYPE: Int = 12
     }
 }

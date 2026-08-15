@@ -3,6 +3,13 @@ package io.soo.bueongi.storage.db.core.facility
 import kotlin.math.ceil
 import kotlin.math.floor
 
+/**
+ * 시설을 약 100m 격자 칸에 나눠 담아 "이 근처 시설"을 빠르게 찾는다.
+ *
+ * 전국 수십만 건을 매번 전부 훑을 수 없어서, 먼저 **주변 칸에 든 후보만 모으고**(candidateCells)
+ * 그 후보에만 실제 거리 계산을 돌린다. 칸은 넉넉히 잡으므로 후보에는 반경 밖도 섞여 있고,
+ * 정확한 걸러내기는 각 조회 메서드의 distance 비교가 한다.
+ */
 class GridSpatialIndex(points: List<FacilityPoint>) {
 
     private val buckets: Map<Long, List<FacilityPoint>> =
@@ -27,6 +34,10 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         return candidates.filter { it.toGeoPoint().distanceMetersToPath(path) <= corridorM }
     }
 
+    /**
+     * 경로 꼭짓점만으로는 긴 직선 구간의 중간 칸을 놓친다.
+     * 한 칸 간격으로 점을 채워 넣어 지나가는 칸이 빠지지 않게 한다.
+     */
     private fun densify(path: List<GeoPoint>): List<GeoPoint> {
         if (path.size < 2) {
             return path
@@ -46,6 +57,7 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         return out
     }
 
+    /** 기준점들 주변 ring 칸 범위의 시설을 모은다(중복 칸은 한 번만). 반경 밖도 섞여 있어 호출부가 다시 거른다. */
     private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<FacilityPoint> {
         if (buckets.isEmpty()) {
             return emptyList()
@@ -55,11 +67,11 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         val seenCells: HashSet<Long> = HashSet<Long>()
         val result: ArrayList<FacilityPoint> = ArrayList<FacilityPoint>()
         for (anchor in anchors) {
-            val cx: Int = cellIndex(anchor.lat, CELL_DEG)
-            val cy: Int = cellIndex(anchor.lng, CELL_DEG)
-            for (dx in -ring..ring) {
-                for (dy in -ring..ring) {
-                    val key: Long = cellKey(cx + dx, cy + dy)
+            val latCell: Int = cellIndex(anchor.lat, CELL_DEG)
+            val lngCell: Int = cellIndex(anchor.lng, CELL_DEG)
+            for (latStep in -ring..ring) {
+                for (lngStep in -ring..ring) {
+                    val key: Long = cellKey(latCell + latStep, lngCell + lngStep)
                     if (!seenCells.add(key)) {
                         continue
                     }
@@ -71,12 +83,14 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
     }
 
     companion object {
+        /** 격자 한 칸(약 100m). 작을수록 후보가 줄지만 칸 수와 ring 반복이 늘어난다. */
         private const val CELL_DEG: Double = 0.001
         /** 경도 1°의 보수적 최소 폭(m, 한국 최북단 기준) — 이보다 키우면 후보 셀 누락. */
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
         private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
 
-        fun cellKey(cx: Int, cy: Int): Long = (cx.toLong() shl 32) xor (cy.toLong() and 0xffffffffL)
+        /** 두 칸 번호를 Long 하나로 합친다(상위 32비트=위도 칸, 하위 32비트=경도 칸). */
+        fun cellKey(latCell: Int, lngCell: Int): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
 }

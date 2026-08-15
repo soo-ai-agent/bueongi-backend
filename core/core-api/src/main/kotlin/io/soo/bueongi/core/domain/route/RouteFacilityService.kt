@@ -19,7 +19,7 @@ class RouteFacilityService(
         val summary: FacilitySummary = FacilitySummary(
             cctv = pois.count { it.type == FacilityPoiType.CCTV },
             bell = pois.count { it.type == FacilityPoiType.BELL },
-            store = pois.count { it.type == FacilityPoiType.STORE },
+            convenienceStore = pois.count { it.type == FacilityPoiType.STORE },
             police = pois.count { it.type == FacilityPoiType.POLICE },
             safehouse = pois.count { it.type == FacilityPoiType.SAFEHOUSE },
             lamp = pois.count { it.type == FacilityPoiType.LAMP },

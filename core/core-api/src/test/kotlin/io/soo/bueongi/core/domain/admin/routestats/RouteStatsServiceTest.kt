@@ -40,15 +40,25 @@ class RouteStatsServiceTest {
     }
 
     @Test
-    fun `byPreference 는 나타난 값만 많은 순으로 집계한다`() {
+    fun `byPreference 는 전 종류를 enum 순서로 내고 없는 값은 0 이다`() {
         val logs = List(3) { log(preference = SafetyPreference.SAFE) } +
             List(2) { log(preference = SafetyPreference.BALANCED) } +
             List(1) { log(preference = SafetyPreference.SAFEST) }
 
         val byPreference = RouteStatsService(store(logs)).summarize().byPreference
 
-        assertThat(byPreference.map { it.preference }).containsExactly(SafetyPreference.SAFE, SafetyPreference.BALANCED, SafetyPreference.SAFEST)
-        assertThat(byPreference.map { it.count }).containsExactly(3, 2, 1)
+        assertThat(byPreference.map { it.preference })
+            .containsExactly(SafetyPreference.BALANCED, SafetyPreference.SAFE, SafetyPreference.SAFEST)
+        assertThat(byPreference.map { it.count }).containsExactly(2, 3, 1)
+    }
+
+    @Test
+    fun `한 번도 안 쓰인 안심강도도 0 으로 자리를 지킨다`() {
+        val byPreference = RouteStatsService(store(List(2) { log(preference = SafetyPreference.SAFE) }))
+            .summarize().byPreference
+
+        assertThat(byPreference).hasSize(SafetyPreference.entries.size)
+        assertThat(byPreference.single { it.preference == SafetyPreference.SAFEST }.count).isEqualTo(0)
     }
 
     @Test
@@ -84,14 +94,15 @@ class RouteStatsServiceTest {
     }
 
     @Test
-    fun `빈 로그면 total 0 엔드포인트 2종 0 선호·목적지 빈 트렌드 24개 0`() {
+    fun `빈 로그면 total 0 엔드포인트 2종 0 선호 3종 0 목적지 빈 트렌드 24개 0`() {
         val summary = RouteStatsService(store(emptyList())).summarize()
 
         assertThat(summary.total).isEqualTo(0)
         assertThat(summary.windowSize).isEqualTo(0)
         assertThat(summary.byEndpoint.map { it.endpoint }).containsExactly("compare", "safe-compare")
         assertThat(summary.byEndpoint.map { it.count }).containsExactly(0, 0)
-        assertThat(summary.byPreference).isEmpty()
+        assertThat(summary.byPreference.map { it.count }).containsOnly(0)
+        assertThat(summary.byPreference).hasSize(SafetyPreference.entries.size)
         assertThat(summary.topDestinations).isEmpty()
         assertThat(summary.hourlyTrend).hasSize(24)
         assertThat(summary.hourlyTrend.sumOf { it.count }).isEqualTo(0)

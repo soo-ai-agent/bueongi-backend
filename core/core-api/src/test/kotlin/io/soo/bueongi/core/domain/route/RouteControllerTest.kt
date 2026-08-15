@@ -96,6 +96,9 @@ class RouteControllerTest(
             status { isOk() }
             jsonPath("$.pois") { isArray() }
             jsonPath("$.summary") { exists() }
+            // 편의점 수의 와이어 키는 store 다(프론트 safetyFacilities.ts 계약) — 프로퍼티명은 convenienceStore.
+            jsonPath("$.summary.store") { exists() }
+            jsonPath("$.summary.convenienceStore") { doesNotExist() }
         }
     }
 

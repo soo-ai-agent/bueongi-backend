@@ -129,28 +129,38 @@ class FacilityCsvParser {
         null
     }
 
+    /**
+     * CSV 를 행×열로 쪼갠다(RFC 4180 기본형).
+     *
+     * 라이브러리를 쓰지 않는 이유: 공공데이터 CSV 는 **주소에 콤마가 들어간 따옴표 필드**와
+     * CRLF/LF/CR 이 섞인 줄바꿈이 함께 나오는데, 이 두 가지만 처리하면 되고
+     * 인코딩 판별([decode])은 이미 우리가 하고 있어 의존성을 늘릴 이유가 없다.
+     *
+     * 처리 규칙: `"` 안에서는 콤마·줄바꿈이 글자로 취급되고, `""` 는 따옴표 한 글자다.
+     */
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records: ArrayList<List<String>> = ArrayList<List<String>>()
         var record: ArrayList<String> = ArrayList<String>()
         val field: StringBuilder = StringBuilder()
         var inQuotes: Boolean = false
-        var i: Int = 0
-        val n: Int = text.length
-        while (i < n) {
-            val c: Char = text[i]
+        var cursor: Int = 0
+        val length: Int = text.length
+        while (cursor < length) {
+            val char: Char = text[cursor]
             if (inQuotes) {
-                if (c == '"') {
-                    if (i + 1 < n && text[i + 1] == '"') {
+                if (char == '"') {
+                    val isEscapedQuote: Boolean = cursor + 1 < length && text[cursor + 1] == '"'
+                    if (isEscapedQuote) {
                         field.append('"')
-                        i++
+                        cursor++
                     } else {
                         inQuotes = false
                     }
                 } else {
-                    field.append(c)
+                    field.append(char)
                 }
             } else {
-                when (c) {
+                when (char) {
                     '"' -> inQuotes = true
                     ',' -> {
                         record.add(field.toString())
@@ -163,18 +173,21 @@ class FacilityCsvParser {
                         field.setLength(0)
                     }
                     '\r' -> {
-                        if (i + 1 >= n || text[i + 1] != '\n') {
+                        // CRLF 는 뒤따르는 \n 이 행을 끊는다. 여기서 끊으면 빈 행이 하나 더 생긴다.
+                        val isCrLf: Boolean = cursor + 1 < length && text[cursor + 1] == '\n'
+                        if (!isCrLf) {
                             record.add(field.toString())
                             records.add(record)
                             record = ArrayList()
                             field.setLength(0)
                         }
                     }
-                    else -> field.append(c)
+                    else -> field.append(char)
                 }
             }
-            i++
+            cursor++
         }
+        // 마지막 줄에 줄바꿈이 없는 파일이 흔하다 — 남은 내용을 마지막 행으로 넣는다.
         if (field.isNotEmpty() || record.isNotEmpty()) {
             record.add(field.toString())
             records.add(record)

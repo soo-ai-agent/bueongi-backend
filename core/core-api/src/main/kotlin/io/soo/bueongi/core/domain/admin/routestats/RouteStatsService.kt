@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.domain.admin.routestats
 
 import io.soo.bueongi.core.domain.admin.traffic.EndpointCount
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.support.util.HourlyBuckets
 
@@ -26,6 +27,7 @@ class RouteStatsService(
         )
     }
 
+    /** 추적 대상 엔드포인트를 고정 순서로 모두 낸다 — 0건도 대시보드에 자리를 지킨다. */
     private fun byEndpoint(logs: List<RouteRecommendationLog>): List<EndpointCount> {
         val counts: Map<String, Int> = logs.groupingBy { it.endpoint }.eachCount()
         return TRACKED_ENDPOINTS.map { endpoint ->
@@ -33,10 +35,13 @@ class RouteStatsService(
         }
     }
 
-    private fun byPreference(logs: List<RouteRecommendationLog>): List<PreferenceCount> =
-        logs.groupingBy { it.preference }.eachCount()
-            .map { (preference, count) -> PreferenceCount(preference = preference, count = count) }
-            .sortedByDescending { it.count }
+    /** [byEndpoint] 와 같은 규칙 — 안심강도 전 종류를 enum 순서로 내고 없는 값은 0. */
+    private fun byPreference(logs: List<RouteRecommendationLog>): List<PreferenceCount> {
+        val counts: Map<SafetyPreference, Int> = logs.groupingBy { it.preference }.eachCount()
+        return SafetyPreference.entries.map { preference ->
+            PreferenceCount(preference = preference, count = counts[preference] ?: 0)
+        }
+    }
 
     private fun topDestinations(logs: List<RouteRecommendationLog>): List<DestinationCount> =
         logs.asSequence()

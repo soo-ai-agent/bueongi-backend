@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
 
 @Component
 class SafetyScorer(
-    private val repository: FacilitySpatialSource,
+    private val facilities: FacilitySpatialSource,
 ) {
 
     fun score(path: List<GeoPoint>): SafetyScore {
@@ -52,15 +52,15 @@ class SafetyScorer(
     )
 
     private fun countWithinCorridor(type: FacilityType, path: List<GeoPoint>): Int =
-        repository.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+        facilities.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
 
     /** 안심귀갓길과 겹치는 비율(0~1). 가장 많이 겹치는 한 노선을 기준으로 한다. */
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
-        if (lengthM <= 0 || repository.safePaths.isEmpty()) {
+        if (lengthM <= 0 || facilities.safePaths.isEmpty()) {
             return 0.0
         }
         var best: Double = 0.0
-        for (safePath in repository.safePaths) {
+        for (safePath in facilities.safePaths) {
             if (safePath.coords.size < 2) {
                 continue
             }

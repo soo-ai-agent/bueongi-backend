@@ -65,7 +65,7 @@ class RouteFacilityServiceTest {
         val res = request("safe", mixedSource())
         assertThat(res.summary.cctv).isEqualTo(res.pois.count { it.type == FacilityPoiType.CCTV })
         assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == FacilityPoiType.BELL })
-        assertThat(res.summary.store).isEqualTo(res.pois.count { it.type == FacilityPoiType.STORE })
+        assertThat(res.summary.convenienceStore).isEqualTo(res.pois.count { it.type == FacilityPoiType.STORE })
         assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == FacilityPoiType.POLICE })
         assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == FacilityPoiType.SAFEHOUSE })
         assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == FacilityPoiType.LAMP })
@@ -79,7 +79,7 @@ class RouteFacilityServiceTest {
         assertThat(res.cctv).isEqualTo(2)
         assertThat(res.safehouse).isEqualTo(1)
         assertThat(res.bell).isEqualTo(1)
-        assertThat(res.store).isEqualTo(0)
+        assertThat(res.convenienceStore).isEqualTo(0)
         assertThat(res.police).isEqualTo(0)
         assertThat(res.lamp).isEqualTo(1)
         assertThat(res.pedestrianSignal).isEqualTo(1)
@@ -89,25 +89,25 @@ class RouteFacilityServiceTest {
     fun `편의점(store)은 지도에서 제외되어 어떤 경우에도 마커로 생성되지 않는다`() {
         val res = request("safe", mixedSource())
         assertThat(res.pois).noneMatch { it.type == FacilityPoiType.STORE }
-        assertThat(res.summary.store).isEqualTo(0)
+        assertThat(res.summary.convenienceStore).isEqualTo(0)
     }
 
     @Test
     fun `실 시설이 하나도 없으면 시설 요약은 모두 0이고 화면은 텅 비지 않는다(start-end 유지)`() {
         val res = request("safe", FakeFacilitySource())
-        val s = res.summary
-        assertThat(s.total).isEqualTo(0)
-        assertThat(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp + s.pedestrianSignal).isEqualTo(0)
+        val summary = res.summary
+        assertThat(summary.total).isEqualTo(0)
+        assertThat(summary.cctv + summary.bell + summary.convenienceStore + summary.police + summary.safehouse + summary.lamp + summary.pedestrianSignal).isEqualTo(0)
         assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
     }
 
     @Test
     fun `total 은 안심시설 합계이며 start end 를 제외한다`() {
         val res = request("safe", mixedSource())
-        val s = res.summary
-        assertThat(s.total)
-            .isEqualTo(s.cctv + s.bell + s.store + s.police + s.safehouse + s.lamp + s.pedestrianSignal)
-        assertThat(s.total).isEqualTo(res.pois.size - 2)
+        val summary = res.summary
+        assertThat(summary.total)
+            .isEqualTo(summary.cctv + summary.bell + summary.convenienceStore + summary.police + summary.safehouse + summary.lamp + summary.pedestrianSignal)
+        assertThat(summary.total).isEqualTo(res.pois.size - 2)
     }
 
     @Test

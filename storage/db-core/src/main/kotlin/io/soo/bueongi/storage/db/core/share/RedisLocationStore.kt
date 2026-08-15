@@ -66,27 +66,35 @@ class RedisLocationStore(
         val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null
         val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
 
-        val locHash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
-        val location: StoredLocation? = if (locHash.isEmpty()) {
-            null
-        } else {
-            val lat: Double? = locHash[FIELD_LAT]?.toDoubleOrNull()
-            val lng: Double? = locHash[FIELD_LNG]?.toDoubleOrNull()
-            val updatedAt: Instant? = locHash[FIELD_UPDATED_AT]?.let(Instant::parse)
-            if (lat != null && lng != null && updatedAt != null) {
-                StoredLocation(
-                    lat = lat,
-                    lng = lng,
-                    updatedAt = updatedAt,
-                    remainingM = locHash[FIELD_REMAINING_M]?.toDoubleOrNull(),
-                    remainingS = locHash[FIELD_REMAINING_S]?.toDoubleOrNull(),
-                )
-            } else {
-                null
-            }
-        }
+        ShareSession(
+            token = token,
+            ownerSecret = ownerSecret,
+            createdAt = createdAt,
+            expiresAt = expiresAt,
+            location = readLocation(token),
+            route = readRoute(token),
+            expectedArrivalAt = expectedArrivalAt,
+        )
+    }
 
-        val route: StoredRoute? = redis.opsForValue().get(routeKey(token))?.let { json ->
+    /** 위치는 세션과 별도 키에 있고 아직 한 번도 보고되지 않았을 수 있다. 좌표 셋 중 하나라도 없으면 없는 것으로 본다. */
+    private fun readLocation(token: String): StoredLocation? {
+        val hash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
+        val lat: Double = hash[FIELD_LAT]?.toDoubleOrNull() ?: return null
+        val lng: Double = hash[FIELD_LNG]?.toDoubleOrNull() ?: return null
+        val updatedAt: Instant = hash[FIELD_UPDATED_AT]?.let(::parseInstantOrNull) ?: return null
+        return StoredLocation(
+            lat = lat,
+            lng = lng,
+            updatedAt = updatedAt,
+            remainingM = hash[FIELD_REMAINING_M]?.toDoubleOrNull(),
+            remainingS = hash[FIELD_REMAINING_S]?.toDoubleOrNull(),
+        )
+    }
+
+    /** 경로 JSON 이 깨져도 공유 자체는 살린다 — 보호자에게 위치는 계속 보여야 한다. */
+    private fun readRoute(token: String): StoredRoute? =
+        redis.opsForValue().get(routeKey(token))?.let { json ->
             try {
                 objectMapper.readValue<StoredRoute>(json)
             } catch (e: Exception) {
@@ -94,16 +102,6 @@ class RedisLocationStore(
                 null
             }
         }
-        ShareSession(
-            token = token,
-            ownerSecret = ownerSecret,
-            createdAt = createdAt,
-            expiresAt = expiresAt,
-            location = location,
-            route = route,
-            expectedArrivalAt = expectedArrivalAt,
-        )
-    }
 
     private fun parseInstantOrNull(value: String): Instant? =
         try {

@@ -109,7 +109,10 @@ class ApiLogsControllerTest(
                 jsonPath("$.byEndpoint[0].endpoint") { value("compare") }
                 jsonPath("$.byEndpoint[0].count") { value(1) }
                 jsonPath("$.byEndpoint[1].endpoint") { value("safe-compare") }
-                jsonPath("$.byPreference[0].preference") { value("safe") }
+                jsonPath("$.byPreference.length()") { value(3) }
+                jsonPath("$.byPreference[0].preference") { value("balanced") }
+                jsonPath("$.byPreference[1].preference") { value("safe") }
+                jsonPath("$.byPreference[2].preference") { value("safest") }
                 jsonPath("$.topDestinations[0].name") { value("강남역") }
                 jsonPath("$.hourlyTrend.length()") { value(24) }
             }

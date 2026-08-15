@@ -8,13 +8,13 @@ import kotlin.math.roundToInt
 
 @Component
 class NearestPoliceFinder(
-    private val repository: FacilitySpatialSource,
+    private val facilities: FacilitySpatialSource,
 ) {
 
     fun findNearest(center: GeoPoint, radiusM: Double?, limit: Int?): List<NearestPolice> {
         val radius: Double = (radiusM ?: DEFAULT_RADIUS_M).coerceIn(MIN_RADIUS_M, MAX_RADIUS_M)
         val maxResults: Int = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)
-        return repository.index(FacilityType.POLICE)
+        return facilities.index(FacilityType.POLICE)
             .withinRadius(center, radius)
             .map { point -> FacilityWithDistance(point, center.distanceMetersTo(point.toGeoPoint())) }
             .sortedBy { it.distanceMeters }
