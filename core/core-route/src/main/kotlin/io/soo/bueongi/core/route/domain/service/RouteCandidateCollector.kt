@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route.domain.service
 
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.client.tmap.TmapCoord
@@ -70,7 +71,7 @@ class RouteCandidateCollector(
             detourPlanner.pickDetourWaypoints(query.origin, query.destination, anchors)
 
         // 우회 예산 = 가장 짧은 후보 × (1 + 안심 강도). 사용자가 고른 강도만큼만 돌아간다.
-        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + query.safetyPreference.detourBudget)
+        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + detourBudgetOf(query.safetyPreference))
         val detours: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
         // 조합 하나가 Tmap 호출 한 번이다. 받아 보고 예산을 넘으면 버린다.
         for (waypoints in waypointCombos) {
@@ -87,9 +88,21 @@ class RouteCandidateCollector(
         return detours
     }
 
+    /** 안심 강도별 우회 허용 비율. 높을수록 더 멀리 돌아 안심 거점을 경유한다. */
+    private fun detourBudgetOf(preference: SafetyPreference): Double = DETOUR_BUDGETS.getValue(preference)
+
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
         val seen: HashSet<Long> = HashSet<Long>()
         return routes.filter { seen.add(it.identityKey) }
+    }
+
+    private companion object {
+
+        val DETOUR_BUDGETS: Map<SafetyPreference, Double> = mapOf(
+            SafetyPreference.BALANCED to 0.2,
+            SafetyPreference.SAFE to 0.35,
+            SafetyPreference.SAFEST to 0.6,
+        )
     }
 }
 
