@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.ops.domain.traffic
 
-import io.soo.bueongi.core.ops.domain.traffic.RequestMetricsService
+import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
 
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore

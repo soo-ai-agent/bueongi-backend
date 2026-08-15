@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.safety
 
-import io.soo.bueongi.core.route.safety.SafetyScorer
+import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.GeoPoint

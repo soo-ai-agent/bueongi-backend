@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.request
 
-import io.soo.bueongi.core.share.domain.LocationReport
+import io.soo.bueongi.core.share.domain.model.LocationReport
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.DecimalMax

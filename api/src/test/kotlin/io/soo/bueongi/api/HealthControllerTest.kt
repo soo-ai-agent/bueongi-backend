@@ -2,9 +2,9 @@ package io.soo.bueongi.api
 
 import io.soo.bueongi.api.HealthController
 
-import io.soo.bueongi.core.place.domain.PlaceItem
-import io.soo.bueongi.core.place.domain.RemotePlaceProvider
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.place.domain.model.PlaceItem
+import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
 import java.time.Clock

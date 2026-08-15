@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.ops.api
 
-import io.soo.bueongi.core.ops.domain.traffic.RequestMetricsService
-import io.soo.bueongi.core.ops.domain.traffic.TrafficSummary
+import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
+import io.soo.bueongi.core.ops.domain.traffic.model.TrafficSummary
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 

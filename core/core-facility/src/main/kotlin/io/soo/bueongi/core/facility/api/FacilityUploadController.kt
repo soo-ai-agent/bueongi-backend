@@ -3,8 +3,8 @@ package io.soo.bueongi.core.facility.api
 import io.soo.bueongi.core.facility.api.response.FacilityUploadResponse
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.core.facility.domain.csv.FacilityUploadResult
-import io.soo.bueongi.core.facility.domain.csv.FacilityUploadService
+import io.soo.bueongi.core.facility.domain.csv.model.FacilityUploadResult
+import io.soo.bueongi.core.facility.domain.csv.service.FacilityUploadService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping

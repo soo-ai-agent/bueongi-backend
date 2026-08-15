@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.api.request
 
-import io.soo.bueongi.core.route.domain.RouteQuery
+import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.core.common.request.LatLng

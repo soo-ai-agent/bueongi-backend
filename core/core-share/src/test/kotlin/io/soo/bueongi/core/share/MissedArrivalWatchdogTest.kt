@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share
 
-import io.soo.bueongi.core.share.domain.MissedArrivalWatchdog
+import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.storage.db.core.share.LocationStore

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.facility.api
 
-import io.soo.bueongi.core.facility.domain.status.FacilityStatusService
-import io.soo.bueongi.core.facility.domain.status.FacilityStatusSummary
+import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
+import io.soo.bueongi.core.facility.domain.status.model.FacilityStatusSummary
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 

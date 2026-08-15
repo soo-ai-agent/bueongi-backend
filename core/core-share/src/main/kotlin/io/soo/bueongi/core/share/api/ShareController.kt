@@ -3,10 +3,10 @@ package io.soo.bueongi.core.share.api
 import io.soo.bueongi.core.share.api.request.CreateShareRequest
 import io.soo.bueongi.core.share.api.response.CreateShareResponse
 import io.soo.bueongi.core.share.api.request.EndShareRequest
-import io.soo.bueongi.core.share.domain.LocationView
-import io.soo.bueongi.core.share.domain.route.RouteView
+import io.soo.bueongi.core.share.domain.model.LocationView
+import io.soo.bueongi.core.share.domain.route.model.RouteView
 import io.soo.bueongi.core.share.api.request.SaveRouteRequest
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.core.share.api.request.UpdateLocationRequest
 import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.request.WatchRequest

@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.share.api.request
 
-import io.soo.bueongi.core.share.domain.MAX_ROUTE_MARKERS
-import io.soo.bueongi.core.share.domain.MAX_ROUTE_PATH_POINTS
-import io.soo.bueongi.core.share.domain.MAX_ROUTE_PROVENANCE_LENGTH
-import io.soo.bueongi.core.share.domain.ROUTE_TYPE_VALUES
+import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_MARKERS
+import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PATH_POINTS
+import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PROVENANCE_LENGTH
+import io.soo.bueongi.core.share.domain.model.ROUTE_TYPE_VALUES
 
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng

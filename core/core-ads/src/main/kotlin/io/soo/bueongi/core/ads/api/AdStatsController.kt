@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.ads.api
 
-import io.soo.bueongi.core.ads.domain.AdStatsService
-import io.soo.bueongi.core.ads.domain.AdStatsSummary
+import io.soo.bueongi.core.ads.domain.service.AdStatsService
+import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 

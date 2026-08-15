@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.place
 
-import io.soo.bueongi.core.place.domain.KakaoRemotePlaceProvider
-import io.soo.bueongi.core.place.domain.PlaceItem
+import io.soo.bueongi.core.place.domain.service.KakaoRemotePlaceProvider
+import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.client.kakao.KakaoPlace
 import io.soo.bueongi.client.kakao.KakaoPlaceClient
 import org.assertj.core.api.Assertions.assertThat

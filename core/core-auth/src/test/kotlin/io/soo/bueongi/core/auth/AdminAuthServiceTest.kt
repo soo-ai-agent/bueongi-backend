@@ -1,14 +1,14 @@
 package io.soo.bueongi.core.auth
 
-import io.soo.bueongi.core.auth.domain.AdminAuthProperties
-import io.soo.bueongi.core.auth.domain.AdminAuthService
-import io.soo.bueongi.core.auth.domain.AdminAuthenticationException
+import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
+import io.soo.bueongi.core.auth.domain.service.AdminAuthService
+import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import io.soo.bueongi.core.auth.api.AdminLoginRequest
-import io.soo.bueongi.core.auth.domain.AdminTokenService
-import io.soo.bueongi.core.auth.domain.InvalidTokenException
-import io.soo.bueongi.core.auth.domain.JwtKeyMaterialFactory
-import io.soo.bueongi.core.auth.domain.JwtProperties
-import io.soo.bueongi.core.auth.domain.JwtTokenVerifier
+import io.soo.bueongi.core.auth.domain.service.AdminTokenService
+import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
+import io.soo.bueongi.core.auth.domain.service.JwtKeyMaterialFactory
+import io.soo.bueongi.core.auth.domain.config.JwtProperties
+import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.ops.api
 
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigUpdate
+import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.ops.api
 
-import io.soo.bueongi.core.ops.domain.apistatus.ApiStatusService
-import io.soo.bueongi.core.ops.domain.apistatus.ApiStatusSummary
+import io.soo.bueongi.core.ops.domain.apistatus.service.ApiStatusService
+import io.soo.bueongi.core.ops.domain.apistatus.model.ApiStatusSummary
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam

@@ -2,9 +2,9 @@ package io.soo.bueongi.core.ops.domain.apistatus
 
 import io.soo.bueongi.support.util.HourlyBucket
 
-import io.soo.bueongi.core.ops.domain.apistatus.ApiStatusService
-import io.soo.bueongi.core.ops.domain.apistatus.ApiStatusSummary
-import io.soo.bueongi.core.ops.domain.apistatus.ProviderStatus
+import io.soo.bueongi.core.ops.domain.apistatus.service.ApiStatusService
+import io.soo.bueongi.core.ops.domain.apistatus.model.ApiStatusSummary
+import io.soo.bueongi.core.ops.domain.apistatus.model.ProviderStatus
 
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore

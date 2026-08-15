@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.request
 
-import io.soo.bueongi.core.share.domain.ROUTE_MARKER_TYPE_PATTERN
+import io.soo.bueongi.core.share.domain.model.ROUTE_MARKER_TYPE_PATTERN
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.DecimalMax

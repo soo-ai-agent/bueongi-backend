@@ -3,11 +3,11 @@ package io.soo.bueongi.core.route.api
 import io.soo.bueongi.core.route.api.request.toValidatedQuery
 
 import io.soo.bueongi.core.route.api.response.FacilitiesResponse
-import io.soo.bueongi.core.route.domain.RouteFacilityService
-import io.soo.bueongi.core.route.domain.RouteOption
+import io.soo.bueongi.core.route.domain.service.RouteFacilityService
+import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.domain.RouteService
-import io.soo.bueongi.core.route.domain.SafeRouteService
+import io.soo.bueongi.core.route.domain.service.RouteService
+import io.soo.bueongi.core.route.domain.service.SafeRouteService
 
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping

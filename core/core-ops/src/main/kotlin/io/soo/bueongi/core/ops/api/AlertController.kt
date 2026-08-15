@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.ops.api
 
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigService
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigSummary
-import io.soo.bueongi.core.ops.domain.slack.SlackTestResult
+import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
+import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigSummary
+import io.soo.bueongi.core.ops.domain.slack.model.SlackTestResult
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping

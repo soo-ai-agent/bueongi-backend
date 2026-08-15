@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.place.api
 
-import io.soo.bueongi.core.place.domain.PlaceItem
-import io.soo.bueongi.core.place.domain.PlaceSearchService
+import io.soo.bueongi.core.place.domain.model.PlaceItem
+import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.place
 
-import io.soo.bueongi.core.place.domain.SEED_PLACE_CATALOG
+import io.soo.bueongi.core.place.domain.model.SEED_PLACE_CATALOG
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.stats.api
 
-import io.soo.bueongi.core.route.stats.domain.RouteStatsService
-import io.soo.bueongi.core.route.stats.domain.RouteStatsSummary
+import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
+import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 

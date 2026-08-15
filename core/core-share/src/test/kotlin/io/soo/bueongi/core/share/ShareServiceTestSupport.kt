@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share
 
-import io.soo.bueongi.core.share.domain.LocationReport
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.share.domain.model.LocationReport
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
 
 internal const val BASE_URL: String = "http://localhost:8119"

@@ -1,16 +1,14 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.share.domain.LocationView
-import io.soo.bueongi.core.ads.domain.AdStatsService
-import io.soo.bueongi.core.ops.domain.apistatus.ApiStatusService
-import io.soo.bueongi.core.facility.domain.status.FacilityStatusService
-import io.soo.bueongi.core.ops.domain.traffic.RequestMetricsService
-import io.soo.bueongi.core.route.stats.domain.RouteStatsService
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigService
+import io.soo.bueongi.core.ads.domain.service.AdStatsService
+import io.soo.bueongi.core.ops.domain.apistatus.service.ApiStatusService
+import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
+import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
+import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
+import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import io.soo.bueongi.support.monitoring.SlackAlertConfig
-import io.soo.bueongi.core.ops.api.ApiStatusController
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
@@ -27,20 +25,14 @@ import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
 import io.soo.bueongi.storage.db.core.facility.SafePath
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
 import io.soo.bueongi.storage.db.core.share.StoredLocation
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
 
 /** 관리자 조회 엔드포인트들이 공유하는 가짜 저장소. 각 테스트는 자기 컨트롤러만 띄우고 이것을 @Import 한다. */
 class AdminEndpointFixtures {

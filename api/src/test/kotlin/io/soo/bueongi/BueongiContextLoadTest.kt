@@ -1,9 +1,9 @@
 package io.soo.bueongi
 
-import io.soo.bueongi.core.place.domain.KakaoRemotePlaceProvider
-import io.soo.bueongi.core.place.domain.PlaceSearchService
-import io.soo.bueongi.core.place.domain.RemotePlaceProvider
-import io.soo.bueongi.core.place.domain.SeedPlaceProvider
+import io.soo.bueongi.core.place.domain.service.KakaoRemotePlaceProvider
+import io.soo.bueongi.core.place.domain.service.PlaceSearchService
+import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
+import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

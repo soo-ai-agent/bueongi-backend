@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.auth.api
 
-import io.soo.bueongi.core.auth.domain.AdminAuthService
+import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.auth.api.AdminLoginRequest
 import io.soo.bueongi.core.auth.api.AdminLoginResponse
 import io.soo.bueongi.core.auth.api.AdminRefreshRequest

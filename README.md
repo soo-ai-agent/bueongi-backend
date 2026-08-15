@@ -154,7 +154,7 @@ backend/
 ├── core/
 │   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립
 │   │   ├── api/                 #   RouteController + request/ · response/
-│   │   └── domain/              #   RouteService · SafeRouteService · Collector · Assembler
+│   │   └── domain/              #   service/ (일하는 것) · model/ (값)
 │   ├── core-route-safety/       # 안전 채점·안심 우회 계획(route 본체가 일방향으로 쓴다)
 │   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(FacilityPoi 소유)
 │   ├── core-route-stats/        # 경로 추천 통계 — route 본체와 무관, 저장소만 읽는다
@@ -174,7 +174,10 @@ backend/
                                  #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
 ```
 
-- **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/`(서비스·모델) 로 나눈다.
+- **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/` 으로 나누고,
+  `domain/` 안은 다시 **역할별**로 나눈다: `service/`(일하는 것) · `model/`(값) ·
+  필요하면 `config/`(설정·필터) · `error/`(도메인 예외). 관심사 하위폴더가 먼저 있으면
+  그 **안에서** 나눈다(예: `domain/csv/service`, `domain/slack/model`).
 - **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
 - **도메인 모듈끼리는 참조하지 않는다(현재 0건).** 공유가 필요하면 `core-common`(공용 타입)이나
   `storage:db-core`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,

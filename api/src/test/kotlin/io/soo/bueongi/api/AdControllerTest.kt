@@ -2,7 +2,7 @@ package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ads.api.AdController
 import io.soo.bueongi.api.ApiControllerAdvice
-import io.soo.bueongi.core.ads.domain.AdStatsService
+import io.soo.bueongi.core.ads.domain.service.AdStatsService
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.assertj.core.api.Assertions.assertThat

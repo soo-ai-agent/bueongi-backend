@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.facility.domain.NearestPoliceFinder
+import io.soo.bueongi.core.facility.domain.service.NearestPoliceFinder
 import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 
 import io.soo.bueongi.core.facility.api.FacilityController

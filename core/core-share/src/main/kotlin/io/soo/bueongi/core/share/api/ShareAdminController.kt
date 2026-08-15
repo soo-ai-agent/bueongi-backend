@@ -2,8 +2,8 @@ package io.soo.bueongi.core.share.api
 
 import io.soo.bueongi.core.share.api.response.ShareSessionsResponse
 import io.soo.bueongi.core.share.api.response.ShareStatusResponse
-import io.soo.bueongi.core.share.domain.LocationView
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.share.domain.model.LocationView
+import io.soo.bueongi.core.share.domain.service.ShareService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping

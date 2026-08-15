@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.facility.csv
 
-import io.soo.bueongi.core.facility.domain.csv.FacilityCsvParser
-import io.soo.bueongi.core.facility.domain.csv.FacilityUploadService
+import io.soo.bueongi.core.facility.domain.csv.service.FacilityCsvParser
+import io.soo.bueongi.core.facility.domain.csv.service.FacilityUploadService
 
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 

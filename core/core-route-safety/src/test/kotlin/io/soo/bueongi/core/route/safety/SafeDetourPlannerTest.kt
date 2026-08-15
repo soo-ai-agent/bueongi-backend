@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.safety
 
-import io.soo.bueongi.core.route.safety.SafeAnchor
-import io.soo.bueongi.core.route.safety.SafeDetourPlanner
+import io.soo.bueongi.core.route.safety.model.SafeAnchor
+import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint

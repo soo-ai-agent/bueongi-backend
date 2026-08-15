@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.facility.domain.status
 
-import io.soo.bueongi.core.facility.domain.status.FacilityStatusService
+import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
 
 import io.soo.bueongi.core.enums.FacilityRefreshStatus
 

@@ -1,7 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.share.MutableTestClock
-import io.soo.bueongi.core.share.domain.ShareService
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.core.share.api.GuardianPage
 import io.soo.bueongi.core.share.api.ShareController
 

@@ -1,7 +1,6 @@
 package io.soo.bueongi.support.util
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class DistanceFormatTest {

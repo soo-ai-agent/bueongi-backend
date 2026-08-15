@@ -2,8 +2,8 @@ package io.soo.bueongi.core.ads.domain
 
 import io.soo.bueongi.support.util.HourlyBucket
 
-import io.soo.bueongi.core.ads.domain.AdStatsService
-import io.soo.bueongi.core.ads.domain.AdStatsSummary
+import io.soo.bueongi.core.ads.domain.service.AdStatsService
+import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
 
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore

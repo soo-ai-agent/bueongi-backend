@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.ops.domain.slack
 
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigService
-import io.soo.bueongi.core.ops.domain.slack.SlackConfigUpdate
+import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
+import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.SlackAlertConfig

@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.route.api.response
 
-import io.soo.bueongi.core.route.marker.FacilityPoi
-import io.soo.bueongi.core.route.domain.RouteFacilities
-import io.soo.bueongi.core.route.domain.FacilitySummary
+import io.soo.bueongi.core.route.marker.model.FacilityPoi
+import io.soo.bueongi.core.route.domain.model.RouteFacilities
+import io.soo.bueongi.core.route.domain.model.FacilitySummary
 
 data class FacilitiesResponse(
     val pois: List<FacilityPoi>,

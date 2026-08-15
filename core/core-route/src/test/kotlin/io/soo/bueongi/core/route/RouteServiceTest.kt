@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.RouteQuery
-import io.soo.bueongi.core.route.domain.RouteService
+import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.core.enums.SafetyPreference

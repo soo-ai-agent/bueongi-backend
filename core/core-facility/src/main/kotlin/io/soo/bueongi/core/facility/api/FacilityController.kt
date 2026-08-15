@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.facility.api
 
-import io.soo.bueongi.core.facility.domain.NearestPoliceFinder
+import io.soo.bueongi.core.facility.domain.service.NearestPoliceFinder
 import io.soo.bueongi.core.facility.api.response.NearestPoliceResponse
 import io.soo.bueongi.core.facility.api.request.toValidatedGeoPoint
 

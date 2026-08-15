@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.stats.domain
 
-import io.soo.bueongi.core.route.stats.domain.RouteStatsService
+import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog

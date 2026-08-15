@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.ShareCreated
+import io.soo.bueongi.core.share.domain.model.ShareCreated
 import java.time.Instant
 
 data class CreateShareResponse(

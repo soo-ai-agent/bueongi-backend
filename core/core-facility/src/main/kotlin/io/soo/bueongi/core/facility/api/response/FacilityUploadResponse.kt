@@ -2,7 +2,7 @@ package io.soo.bueongi.core.facility.api.response
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.FacilityCoordSystem
-import io.soo.bueongi.core.facility.domain.csv.FacilityUploadResult
+import io.soo.bueongi.core.facility.domain.csv.model.FacilityUploadResult
 
 data class FacilityUploadResponse(
     val type: FacilityType,

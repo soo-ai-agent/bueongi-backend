@@ -1,5 +1,5 @@
 package io.soo.bueongi.core.facility.api.response
 
-import io.soo.bueongi.core.facility.domain.NearestPolice
+import io.soo.bueongi.core.facility.domain.model.NearestPolice
 
 data class NearestPoliceResponse(val items: List<NearestPolice>)

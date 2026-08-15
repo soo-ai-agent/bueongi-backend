@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.place
 
-import io.soo.bueongi.core.place.domain.PlaceItem
-import io.soo.bueongi.core.place.domain.PlaceSearchService
-import io.soo.bueongi.core.place.domain.RemotePlaceProvider
-import io.soo.bueongi.core.place.domain.SeedPlaceProvider
+import io.soo.bueongi.core.place.domain.model.PlaceItem
+import io.soo.bueongi.core.place.domain.service.PlaceSearchService
+import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
+import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.assertj.core.api.Assertions.assertThat

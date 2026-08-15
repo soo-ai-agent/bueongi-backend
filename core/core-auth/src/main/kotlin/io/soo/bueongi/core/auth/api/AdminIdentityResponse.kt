@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.auth.api
 
-import io.soo.bueongi.core.auth.domain.AdminAuthenticationException
+import io.soo.bueongi.core.auth.domain.config.JwtAuthenticationFilter
+import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import org.springframework.security.core.Authentication
 
 data class AdminIdentityResponse(

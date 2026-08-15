@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.ShareLocationUpdated
+import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
 import java.time.Instant
 
 data class UpdateLocationResponse(
