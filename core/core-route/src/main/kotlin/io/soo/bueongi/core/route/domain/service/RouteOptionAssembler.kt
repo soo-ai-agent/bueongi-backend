@@ -20,6 +20,7 @@ import kotlin.math.roundToInt
 class RouteOptionAssembler(
     private val markerBuilder: RouteMarkerBuilder,
     private val facilitySource: FacilitySpatialSource,
+    private val routeTypeCatalog: RouteTypeCatalog,
 ) {
 
     internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {
@@ -33,7 +34,7 @@ class RouteOptionAssembler(
                 val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
                 RouteOption(
                     id = "tmap-${candidate.searchOption}-$index",
-                    name = scoredRoute.type.scoredName,
+                    name = routeTypeCatalog.displayOf(scoredRoute.type).scoredName,
                     time = "${max(1, (candidate.timeS / 60.0).roundToInt())}분",
                     dist = DistanceFormat.formatDistance(candidate.distanceM),
                     desc = "안전 점수 ${scoredRoute.score.score}점 · CCTV ${breakdown.cctvDensity}/km",
@@ -52,7 +53,7 @@ class RouteOptionAssembler(
 
     /** 유형 고유 태그(안심·빠른길) 뒤에, 채점 결과가 기준을 넘긴 항목만 덧붙인다. */
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
-        addAll(scoredRoute.type.signatureTags)
+        addAll(routeTypeCatalog.displayOf(scoredRoute.type).signatureTags)
         val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
         if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) {
             add(RouteTag("CCTV 많음", RouteTagVariant.MINT))

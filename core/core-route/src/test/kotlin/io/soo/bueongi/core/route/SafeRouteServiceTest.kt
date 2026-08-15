@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route
 
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
@@ -52,7 +53,7 @@ class SafeRouteServiceTest {
     private val source = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv))
     private val scorer: SafetyScorer = SafetyScorer(source)
     private val detourPlanner: SafeDetourPlanner = SafeDetourPlanner(source)
-    private val routeService: RouteService = RouteService()
+    private val routeService: RouteService = RouteService(RouteTypeCatalog())
 
     private val routeA = TmapRoute(
         searchOption = "0",
@@ -80,7 +81,7 @@ class SafeRouteServiceTest {
         routeService = routeService,
         collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
         scorer = scorer,
-        assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
+        assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
     )
 
     @Test
@@ -119,6 +120,7 @@ class SafeRouteServiceTest {
         assertThat(result[0].score!!).isGreaterThanOrEqualTo(result[1].score!!)
         assertThat(result[0].type).isEqualTo(RouteType.SAFE)
         assertThat(result[0].tags.first()).isEqualTo(RouteTag("안심", RouteTagVariant.MINT))
+        assertThat(result[0].name).isEqualTo("안심 경로")
         assertThat(result[0].score!!).isGreaterThan(0)
         assertThat(result.map { it.type }).contains(RouteType.FAST)
         assertThat(result[0].path).isNotNull
@@ -227,10 +229,10 @@ class SafeRouteServiceTest {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
         val svc = SafeRouteService(
-            routeService = RouteService(recording),
+            routeService = RouteService(RouteTypeCatalog(), recording),
             collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
             scorer = scorer,
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
             routeStatsStore = recording,
         )
 
@@ -247,10 +249,10 @@ class SafeRouteServiceTest {
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
         val svc = SafeRouteService(
-            routeService = RouteService(recording),
+            routeService = RouteService(RouteTypeCatalog(), recording),
             collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
             scorer = scorer,
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
             routeStatsStore = recording,
         )
 

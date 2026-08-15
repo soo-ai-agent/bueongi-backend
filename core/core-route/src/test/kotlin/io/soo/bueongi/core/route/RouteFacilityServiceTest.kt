@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.api.request.toRouteType
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteFacilityService
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
@@ -28,7 +28,7 @@ class RouteFacilityServiceTest {
                 origin = origin,
                 destination = destination,
                 destinationName = "목적지",
-                routeType = toRouteType(routeType),
+                routeType = RouteTypeCatalog().typeOf(routeType),
                 safetyPreference = SafetyPreference.SAFE,
             ),
         )

@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route
 
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.core.route.api.request.toValidatedQuery
@@ -28,7 +29,7 @@ class RouteRequestMetaAbsorptionTest {
             destination = destination,
             routeType = "unknown",
             safetyPreference = "nope",
-        ).toValidatedQuery()
+        ).toValidatedQuery(RouteTypeCatalog())
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
@@ -41,7 +42,7 @@ class RouteRequestMetaAbsorptionTest {
             destination = destination,
             routeType = null,
             safetyPreference = null,
-        ).toValidatedQuery()
+        ).toValidatedQuery(RouteTypeCatalog())
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
@@ -54,7 +55,7 @@ class RouteRequestMetaAbsorptionTest {
             destination = destination,
             routeType = "fast",
             safetyPreference = "safest",
-        ).toValidatedQuery()
+        ).toValidatedQuery(RouteTypeCatalog())
 
         assertThat(query.routeType).isEqualTo(RouteType.FAST)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFEST)
@@ -68,7 +69,7 @@ class RouteRequestMetaAbsorptionTest {
              "routeType":999,"safetyPreference":42}
         """.trimIndent()
 
-        val query = mapper.readValue<RouteRequest>(json).toValidatedQuery()
+        val query = mapper.readValue<RouteRequest>(json).toValidatedQuery(RouteTypeCatalog())
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)

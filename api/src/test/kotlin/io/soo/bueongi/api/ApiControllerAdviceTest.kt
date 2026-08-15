@@ -1,5 +1,6 @@
 package io.soo.bueongi.api
 
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.api.ApiControllerAdvice
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.post
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
     RouteService::class,
+    RouteTypeCatalog::class,
     RouteFacilityService::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,

@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route.api.request
 
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.enums.RouteType
 
@@ -22,7 +23,7 @@ data class RouteRequest(
     val safetyPreference: String? = null,
 )
 
-fun RouteRequest.toValidatedQuery(): RouteQuery {
+fun RouteRequest.toValidatedQuery(routeTypeCatalog: RouteTypeCatalog): RouteQuery {
     val origin: GeoPoint = requireOrigin()
     val destinationPoint: GeoPoint = destinationPoint()
     requireDistinctEndpoints(origin, destinationPoint)
@@ -31,7 +32,7 @@ fun RouteRequest.toValidatedQuery(): RouteQuery {
         origin = origin,
         destination = destinationPoint,
         destinationName = destination?.name,
-        routeType = toRouteType(routeType),
+        routeType = routeTypeCatalog.typeOf(routeType),
         safetyPreference = toSafetyPreference(safetyPreference),
     )
 }
