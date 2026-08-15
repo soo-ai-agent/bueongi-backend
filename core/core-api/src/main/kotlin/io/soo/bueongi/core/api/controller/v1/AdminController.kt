@@ -60,7 +60,7 @@ class AdminController(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): List<ApiCallLogResponse> {
         val bounded: Int = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT)
-        return apiStatusService.listRecentCalls(provider, bounded).map { it.toResponse() }
+        return apiStatusService.listRecentCalls(provider, bounded).map { ApiCallLogResponse.from(it) }
     }
 
     @GetMapping("/api-status")
@@ -107,12 +107,3 @@ class AdminController(
     fun testSlackConfig(): SlackTestResult = slackConfigService.test()
 }
 
-private fun ApiCallLog.toResponse(): ApiCallLogResponse =
-    ApiCallLogResponse(
-        atEpochMs = atEpochMs,
-        provider = provider,
-        endpoint = endpoint,
-        success = success,
-        durationMs = durationMs,
-        detail = detail,
-    )

@@ -36,13 +36,14 @@ class ShareController(
 
     @PostMapping("/create")
     fun create(@Valid @RequestBody(required = false) request: CreateShareRequest?): CreateShareResponse =
-        toResponse(service.create(request?.expiresInHours, request?.etaSeconds))
+        CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
 
     @PostMapping("/{token}/location")
     fun updateLocation(
         @PathVariable token: String,
         @Valid @RequestBody request: UpdateLocationRequest,
-    ): UpdateLocationResponse = toResponse(service.updateLocation(token, request.ownerSecret, request.toReport()))
+    ): UpdateLocationResponse =
+        UpdateLocationResponse.from(service.updateLocation(token, request.ownerSecret, request.toReport()))
 
     @GetMapping("/{token}/location")
     fun getLocation(@PathVariable token: String): LocationView = service.getLocation(token)
@@ -51,7 +52,8 @@ class ShareController(
     fun saveRoute(
         @PathVariable token: String,
         @Valid @RequestBody request: SaveRouteRequest,
-    ): UpdateLocationResponse = toResponse(service.saveRoute(token, request.ownerSecret, request.toStoredRoute()))
+    ): UpdateLocationResponse =
+        UpdateLocationResponse.from(service.saveRoute(token, request.ownerSecret, request.toStoredRoute()))
 
     @GetMapping("/{token}/route")
     fun getRoute(@PathVariable token: String): RouteView = service.getRoute(token)
@@ -66,7 +68,7 @@ class ShareController(
     fun watching(
         @PathVariable token: String,
         @Valid @RequestBody request: WatchRequest,
-    ): WatchResponse = toResponse(service.getWatchingStatus(token, request.ownerSecret))
+    ): WatchResponse = WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
     fun page(@PathVariable token: String): String =
@@ -79,25 +81,6 @@ class ShareController(
         const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"
     }
 
-    private fun toResponse(created: ShareCreated): CreateShareResponse = CreateShareResponse(
-        token = created.token,
-        ownerSecret = created.ownerSecret,
-        shareUrl = created.shareUrl,
-        expiresAt = created.expiresAt,
-    )
 
-    private fun toResponse(updated: ShareLocationUpdated): UpdateLocationResponse = UpdateLocationResponse(
-        updatedAt = updated.updatedAt,
-        expiresAt = updated.expiresAt,
-    )
 
-    private fun toResponse(status: ShareWatchStatus): WatchResponse = WatchResponse(
-        watching = status.watching,
-        lat = status.lat,
-        lng = status.lng,
-        updatedAt = status.updatedAt,
-        expired = status.expired,
-        remainingM = status.remainingM,
-        remainingS = status.remainingS,
-    )
 }
