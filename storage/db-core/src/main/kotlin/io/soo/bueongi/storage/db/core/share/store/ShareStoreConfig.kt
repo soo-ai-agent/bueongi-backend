@@ -48,7 +48,8 @@ class ShareStoreConfig {
     @Conditional(RedisNotConfigured::class)
     class InMemoryShareStore {
         @Bean
-        fun locationStore(clock: Clock): LocationStore = InMemoryLocationStore(clock)
+        fun locationStore(clock: Clock): LocationStore =
+            InMemoryLocationStore(clock)
     }
 
     private companion object {

@@ -19,21 +19,29 @@ class CsvColumns(
     private val cameraCountIndex: Int?,
     private val phoneIndex: Int?,
 ) {
-    fun name(row: List<String>): String? = textAt(row, nameIndex)
+    fun name(row: List<String>): String? =
+        textAt(row, nameIndex)
 
-    fun address(row: List<String>): String? = textAt(row, addressIndex)
+    fun address(row: List<String>): String? =
+        textAt(row, addressIndex)
 
-    fun purpose(row: List<String>): String? = textAt(row, purposeIndex)
+    fun purpose(row: List<String>): String? =
+        textAt(row, purposeIndex)
 
-    fun phone(row: List<String>): String? = textAt(row, phoneIndex)
+    fun phone(row: List<String>): String? =
+        textAt(row, phoneIndex)
 
-    fun latitude(row: List<String>): Double? = numberAt(row, latIndex)
+    fun latitude(row: List<String>): Double? =
+        numberAt(row, latIndex)
 
-    fun longitude(row: List<String>): Double? = numberAt(row, lngIndex)
+    fun longitude(row: List<String>): Double? =
+        numberAt(row, lngIndex)
 
-    fun projectedX(row: List<String>): Double? = numberAt(row, xIndex)
+    fun projectedX(row: List<String>): Double? =
+        numberAt(row, xIndex)
 
-    fun projectedY(row: List<String>): Double? = numberAt(row, yIndex)
+    fun projectedY(row: List<String>): Double? =
+        numberAt(row, yIndex)
 
     /** 0 이하는 값이 없는 것으로 본다 — 원천이 빈칸 대신 0 을 넣는 경우가 있다. */
     fun cameraCount(row: List<String>): Int? {

@@ -13,5 +13,6 @@ data class FacilityPoint(
     val address: String? = null,
     val phone: String? = null,
 ) {
-    fun toGeoPoint(): GeoPoint = GeoPoint(lat, lng)
+    fun toGeoPoint(): GeoPoint =
+        GeoPoint(lat, lng)
 }

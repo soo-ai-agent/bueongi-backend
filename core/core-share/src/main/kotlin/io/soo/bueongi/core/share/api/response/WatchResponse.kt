@@ -18,7 +18,8 @@ data class WatchResponse(
 ) {
     companion object {
 
-        fun from(status: ShareWatchStatus): WatchResponse = WatchResponse(
+        fun from(status: ShareWatchStatus): WatchResponse =
+            WatchResponse(
             watching = status.watching,
             lat = status.lat,
             lng = status.lng,

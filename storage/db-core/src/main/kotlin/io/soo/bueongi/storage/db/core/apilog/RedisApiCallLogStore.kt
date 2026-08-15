@@ -19,7 +19,8 @@ class RedisApiCallLogStore(
         label = "API 호출 로그",
     )
 
-    override fun record(log: ApiCallLog) = entries.push(log)
+    override fun record(log: ApiCallLog) =
+        entries.push(log)
 
     override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> =
         entries.readRecent()

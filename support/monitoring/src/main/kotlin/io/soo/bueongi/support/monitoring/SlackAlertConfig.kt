@@ -21,20 +21,27 @@ class SlackAlertConfig(
     @Volatile
     private var mutedCategorySet: Set<String> = emptySet()
 
-    fun webhookConfigured(): Boolean = webhook.isNotEmpty()
+    fun webhookConfigured(): Boolean =
+        webhook.isNotEmpty()
 
-    fun enabled(): Boolean = masterEnabled
+    fun enabled(): Boolean =
+        masterEnabled
 
-    fun throttleMinutes(): Int = throttleMinutesValue
+    fun throttleMinutes(): Int =
+        throttleMinutesValue
 
-    fun mutedCategories(): Set<String> = mutedCategorySet
+    fun mutedCategories(): Set<String> =
+        mutedCategorySet
 
-    fun sendEnabled(): Boolean = webhookConfigured() && masterEnabled
+    fun sendEnabled(): Boolean =
+        webhookConfigured() && masterEnabled
 
-    fun throttleMillis(): Long = throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
+    fun throttleMillis(): Long =
+        throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
 
     /** 발송 전용 원문 — 응답·로그·예외 어디에도 노출 금지. */
-    fun webhookUrl(): String = webhook
+    fun webhookUrl(): String =
+        webhook
 
     fun isMuted(key: String): Boolean {
         val category: String = key.substringBefore(DELIMITER)
@@ -79,7 +86,8 @@ class SlackAlertConfig(
         return prefix + maskedSegments.joinToString("/")
     }
 
-    private fun conservativeMask(url: String): String = url.take(CONSERVATIVE_PREFIX_LENGTH) + MASK
+    private fun conservativeMask(url: String): String =
+        url.take(CONSERVATIVE_PREFIX_LENGTH) + MASK
 
     companion object {
         /** 요청 DTO @Min/@Max 와 동일 경계를 유지해야 한다. */

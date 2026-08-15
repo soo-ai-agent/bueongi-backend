@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class RouteTypeCatalog {
 
-    fun displayOf(type: RouteType): RouteTypeDisplay = DISPLAYS.getValue(type)
+    fun displayOf(type: RouteType): RouteTypeDisplay =
+        DISPLAYS.getValue(type)
 
     /**
      * 요청이 보낸 문자열을 종류로 읽는다. apiType("safe")과 id("1") 둘 다 받는다.

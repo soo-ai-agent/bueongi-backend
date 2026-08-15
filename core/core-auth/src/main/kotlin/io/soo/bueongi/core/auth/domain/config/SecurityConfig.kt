@@ -34,7 +34,8 @@ class SecurityConfig(
         JwtKeyMaterialFactory.create(props, environment.activeProfiles.contains("local"))
 
     @Bean
-    fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier = JwtTokenVerifier(keys.publicKey, keys.issuer)
+    fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier =
+        JwtTokenVerifier(keys.publicKey, keys.issuer)
 
     @Bean
     fun adminTokenService(keys: JwtKeyMaterial, auth: AdminAuthProperties): AdminTokenService =
@@ -74,7 +75,8 @@ class SecurityConfig(
         return http.build()
     }
 
-    private fun unauthorizedEntryPoint() = AuthenticationEntryPoint { _, response, _ ->
+    private fun unauthorizedEntryPoint() =
+        AuthenticationEntryPoint { _, response, _ ->
         AuthProblemWriter.write(
             response = response,
             objectMapper = objectMapper,
@@ -85,7 +87,8 @@ class SecurityConfig(
         )
     }
 
-    private fun forbiddenHandler() = AccessDeniedHandler { _, response, _ ->
+    private fun forbiddenHandler() =
+        AccessDeniedHandler { _, response, _ ->
         AuthProblemWriter.write(
             response = response,
             objectMapper = objectMapper,

@@ -29,12 +29,14 @@ class AlertController(
     ): AlertsResponse = AlertsResponse(alerts = alertNotifier.findRecentAlerts(limit))
 
     @GetMapping("/slack-config")
-    fun slackConfig(): SlackConfigSummary = slackConfigService.view()
+    fun slackConfig(): SlackConfigSummary =
+        slackConfigService.view()
 
     @PutMapping("/slack-config")
     fun updateSlackConfig(@Valid @RequestBody request: SlackConfigUpdateRequest): SlackConfigSummary =
         slackConfigService.update(request.toUpdate())
 
     @PostMapping("/slack-config/test")
-    fun testSlackConfig(): SlackTestResult = slackConfigService.test()
+    fun testSlackConfig(): SlackTestResult =
+        slackConfigService.test()
 }

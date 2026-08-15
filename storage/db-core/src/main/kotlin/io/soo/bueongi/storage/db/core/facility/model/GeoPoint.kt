@@ -39,7 +39,8 @@ data class GeoPoint(val lat: Double, val lng: Double) {
         )
     }
 
-    fun distanceMetersToSegment(a: GeoPoint, b: GeoPoint): Double = projectOnto(a, b).distanceMeters
+    fun distanceMetersToSegment(a: GeoPoint, b: GeoPoint): Double =
+        projectOnto(a, b).distanceMeters
 
     fun distanceMetersToPath(path: List<GeoPoint>): Double {
         if (path.isEmpty()) {

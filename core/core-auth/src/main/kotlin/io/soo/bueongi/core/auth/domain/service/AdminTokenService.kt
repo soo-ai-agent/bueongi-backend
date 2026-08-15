@@ -25,7 +25,8 @@ class AdminTokenService(
     private val publicKey: RSAPublicKey = keyMaterial.publicKey
     private val issuer: String = keyMaterial.issuer
 
-    fun issue(): AdminTokenBundle = AdminTokenBundle(
+    fun issue(): AdminTokenBundle =
+        AdminTokenBundle(
         accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
         tokenType = "Bearer",
         expiresIn = authProperties.accessTokenSeconds,

@@ -12,7 +12,8 @@ class GuardianPage {
         ClassPathResource("share/guardian.html").inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
-    fun render(token: String): String = template.replace(TOKEN_PLACEHOLDER, JsEscape.escape(token))
+    fun render(token: String): String =
+        template.replace(TOKEN_PLACEHOLDER, JsEscape.escape(token))
 
     private companion object {
         const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"

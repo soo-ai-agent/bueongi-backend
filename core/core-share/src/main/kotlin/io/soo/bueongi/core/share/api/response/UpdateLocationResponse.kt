@@ -12,7 +12,8 @@ data class UpdateLocationResponse(
 ) {
     companion object {
 
-        fun from(updated: ShareLocationUpdated): UpdateLocationResponse = UpdateLocationResponse(
+        fun from(updated: ShareLocationUpdated): UpdateLocationResponse =
+            UpdateLocationResponse(
             updatedAt = updated.updatedAt,
             expiresAt = updated.expiresAt,
         )

@@ -90,9 +90,11 @@ class GridSpatialIndex(points: List<FacilityPoint>) {
         /** 경도 1°의 보수적 최소 폭(m, 한국 최북단 기준) — 이보다 키우면 후보 셀 누락. */
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
-        private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
+        private fun cellIndex(value: Double, cellDeg: Double): Int =
+            floor(value / cellDeg).toInt()
 
         /** 두 칸 번호를 Long 하나로 합친다(상위 32비트=위도 칸, 하위 32비트=경도 칸). */
-        fun cellKey(latCell: Int, lngCell: Int): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
+        fun cellKey(latCell: Int, lngCell: Int): Long =
+            (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
 }

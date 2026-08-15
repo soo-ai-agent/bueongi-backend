@@ -56,7 +56,8 @@ class SafetyScorer(
         )
     }
 
-    private fun countNearby(path: List<GeoPoint>): FacilityCounts = FacilityCounts(
+    private fun countNearby(path: List<GeoPoint>): FacilityCounts =
+        FacilityCounts(
         cctv = countWithinCorridor(FacilityType.CCTV, path),
         lamp = countWithinCorridor(FacilityType.LAMP, path),
         bell = countWithinCorridor(FacilityType.BELL, path),
@@ -100,8 +101,10 @@ class SafetyScorer(
         return max(0.0, min(1.0, value / saturationCeiling))
     }
 
-    private fun round2(v: Double): Double = (v * 100).roundToInt() / 100.0
-    private fun round3(v: Double): Double = (v * 1000).roundToInt() / 1000.0
+    private fun round2(v: Double): Double =
+        (v * 100).roundToInt() / 100.0
+    private fun round3(v: Double): Double =
+        (v * 1000).roundToInt() / 1000.0
 
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0

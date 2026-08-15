@@ -178,10 +178,14 @@ class RedisLocationStore(
     private companion object {
         const val SESSION_KEY_PREFIX: String = "share:"
 
-        fun shareKey(token: String) = "$SESSION_KEY_PREFIX$token"
-        fun locationKey(token: String) = "location:$token"
-        fun routeKey(token: String) = "route:$token"
-        fun viewerKey(token: String) = "viewer:$token"
+        fun shareKey(token: String) =
+            "$SESSION_KEY_PREFIX$token"
+        fun locationKey(token: String) =
+            "location:$token"
+        fun routeKey(token: String) =
+            "route:$token"
+        fun viewerKey(token: String) =
+            "viewer:$token"
 
         const val SESSION_KEY_PATTERN: String = "$SESSION_KEY_PREFIX*"
 

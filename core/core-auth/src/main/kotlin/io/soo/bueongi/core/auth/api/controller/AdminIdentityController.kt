@@ -14,5 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 class AdminIdentityController {
 
     @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentityResponse = AdminIdentityResponse.from(authentication)
+    fun me(authentication: Authentication): AdminIdentityResponse =
+        AdminIdentityResponse.from(authentication)
 }

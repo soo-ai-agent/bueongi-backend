@@ -12,9 +12,11 @@ class ApiCallLogStoreConfig {
 
     @Bean
     @Conditional(RedisConfigured::class)
-    fun redisApiCallLogStore(template: StringRedisTemplate): ApiCallLogStore = RedisApiCallLogStore(template)
+    fun redisApiCallLogStore(template: StringRedisTemplate): ApiCallLogStore =
+        RedisApiCallLogStore(template)
 
     @Bean
     @Conditional(RedisNotConfigured::class)
-    fun inMemoryApiCallLogStore(): ApiCallLogStore = InMemoryApiCallLogStore()
+    fun inMemoryApiCallLogStore(): ApiCallLogStore =
+        InMemoryApiCallLogStore()
 }

@@ -12,5 +12,6 @@ class TrafficController(
 ) {
 
     @GetMapping("/api/admin/traffic")
-    fun traffic(): TrafficSummary = requestMetricsService.summarize()
+    fun traffic(): TrafficSummary =
+        requestMetricsService.summarize()
 }

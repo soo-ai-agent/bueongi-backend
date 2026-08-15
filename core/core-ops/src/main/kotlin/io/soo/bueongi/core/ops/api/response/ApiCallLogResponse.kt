@@ -12,7 +12,8 @@ data class ApiCallLogResponse(
 ) {
     companion object {
 
-        fun from(log: ApiCallLog): ApiCallLogResponse = ApiCallLogResponse(
+        fun from(log: ApiCallLog): ApiCallLogResponse =
+            ApiCallLogResponse(
             atEpochMs = log.atEpochMs,
             provider = log.provider,
             endpoint = log.endpoint,

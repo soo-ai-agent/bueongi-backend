@@ -19,7 +19,8 @@ class RedisRouteStatsStore(
         label = "추천 통계",
     )
 
-    override fun record(log: RouteRecommendationLog) = entries.push(log)
+    override fun record(log: RouteRecommendationLog) =
+        entries.push(log)
 
     override fun findRecent(limit: Int): List<RouteRecommendationLog> =
         entries.readRecent().take(limit.coerceAtLeast(0))

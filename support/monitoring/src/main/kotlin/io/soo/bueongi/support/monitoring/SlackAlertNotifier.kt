@@ -124,7 +124,8 @@ class SlackAlertNotifier internal constructor(
 
         const val TEST_MESSAGE: String = ":white_check_mark: bueongi 운영 알림 테스트 — 이 메시지가 보이면 Slack 연동이 정상입니다."
 
-        fun newDaemonSingleThreadExecutor(): Executor = Executors.newSingleThreadExecutor { r ->
+        fun newDaemonSingleThreadExecutor(): Executor =
+            Executors.newSingleThreadExecutor { r ->
             Thread(r, "slack-alert").apply { isDaemon = true }
         }
     }

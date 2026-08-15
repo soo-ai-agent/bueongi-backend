@@ -25,7 +25,8 @@ data class UpdateLocationRequest(
     @JsonProperty("remaining_s")
     val remainingS: Double? = null,
 ) {
-    fun toReport(): LocationReport = LocationReport(
+    fun toReport(): LocationReport =
+        LocationReport(
         lat = requireNotNull(lat) { "lat 은 @NotNull 검증을 통과했어야 한다" },
         lng = requireNotNull(lng) { "lng 도 동일" },
         remainingM = remainingM,

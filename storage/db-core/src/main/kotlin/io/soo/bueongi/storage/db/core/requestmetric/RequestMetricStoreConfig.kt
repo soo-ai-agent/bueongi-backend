@@ -12,9 +12,11 @@ class RequestMetricStoreConfig {
 
     @Bean
     @Conditional(RedisConfigured::class)
-    fun redisRequestMetricStore(template: StringRedisTemplate): RequestMetricStore = RedisRequestMetricStore(template)
+    fun redisRequestMetricStore(template: StringRedisTemplate): RequestMetricStore =
+        RedisRequestMetricStore(template)
 
     @Bean
     @Conditional(RedisNotConfigured::class)
-    fun inMemoryRequestMetricStore(): RequestMetricStore = InMemoryRequestMetricStore()
+    fun inMemoryRequestMetricStore(): RequestMetricStore =
+        InMemoryRequestMetricStore()
 }

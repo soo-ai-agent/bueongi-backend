@@ -43,7 +43,8 @@ class MissedArrivalWatchdog(
     }
 
     private companion object {
-        fun maskToken(token: String): String = token.take(6) + "…"
+        fun maskToken(token: String): String =
+            token.take(6) + "…"
     }
 }
 

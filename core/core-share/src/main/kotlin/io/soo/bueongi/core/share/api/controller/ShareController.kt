@@ -40,7 +40,8 @@ class ShareController(
         UpdateLocationResponse.from(service.updateLocation(token, request.ownerSecret, request.toReport()))
 
     @GetMapping("/{token}/location")
-    fun getLocation(@PathVariable token: String): LocationView = service.getLocation(token)
+    fun getLocation(@PathVariable token: String): LocationView =
+        service.getLocation(token)
 
     @PostMapping("/{token}/route")
     fun saveRoute(
@@ -50,7 +51,8 @@ class ShareController(
         UpdateLocationResponse.from(service.saveRoute(token, request.ownerSecret, request.toStoredRoute()))
 
     @GetMapping("/{token}/route")
-    fun getRoute(@PathVariable token: String): RouteView = service.getRoute(token)
+    fun getRoute(@PathVariable token: String): RouteView =
+        service.getRoute(token)
 
     @PostMapping("/{token}/end")
     fun end(
@@ -65,6 +67,7 @@ class ShareController(
     ): WatchResponse = WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
-    fun page(@PathVariable token: String): String = guardianPage.render(token)
+    fun page(@PathVariable token: String): String =
+        guardianPage.render(token)
 
 }

@@ -66,7 +66,8 @@ class ShareService(
             .sortedWith(ACTIVE_SHARE_ORDER)
     }
 
-    fun countActiveSessions(): Int = store.countActiveSessions()
+    fun countActiveSessions(): Int =
+        store.countActiveSessions()
 
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
         val location: StoredLocation? = session.location
@@ -82,7 +83,8 @@ class ShareService(
         )
     }
 
-    private fun shareUrlFor(token: String): String = "${baseUrl.trimEnd('/')}/share/$token"
+    private fun shareUrlFor(token: String): String =
+        "${baseUrl.trimEnd('/')}/share/$token"
 
     fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): ShareLocationUpdated {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
@@ -141,7 +143,8 @@ class ShareService(
         )
     }
 
-    fun storeBackendLabel(): String = store.backend
+    fun storeBackendLabel(): String =
+        store.backend
 
     fun end(token: String, ownerSecret: String?) {
         val session: ShareSession = store.findByToken(token) ?: return

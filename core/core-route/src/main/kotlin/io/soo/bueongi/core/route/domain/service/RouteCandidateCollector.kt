@@ -89,7 +89,8 @@ class RouteCandidateCollector(
     }
 
     /** 안심 강도별 우회 허용 비율. 높을수록 더 멀리 돌아 안심 거점을 경유한다. */
-    private fun detourBudgetOf(preference: SafetyPreference): Double = DETOUR_BUDGETS.getValue(preference)
+    private fun detourBudgetOf(preference: SafetyPreference): Double =
+        DETOUR_BUDGETS.getValue(preference)
 
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
         val seen: HashSet<Long> = HashSet<Long>()
@@ -109,6 +110,8 @@ class RouteCandidateCollector(
 private fun TmapRoute.toCandidate(): RouteCandidate =
     RouteCandidate(searchOption = searchOption, path = path.toGeoPoints(), distanceM = distanceM, timeS = timeS, steps = steps)
 
-private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
+private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> =
+    map { GeoPoint(it.lat, it.lng) }
 
-private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)
+private fun GeoPoint.toTmapCoord(): TmapCoord =
+    TmapCoord(lat, lng)

@@ -27,5 +27,6 @@ class FacilityRefreshStatusStore {
         records.updateAndGet { current -> current + (type to recorded) }
     }
 
-    fun findByType(type: FacilityType): FacilityRefreshRecord? = records.get()[type]
+    fun findByType(type: FacilityType): FacilityRefreshRecord? =
+        records.get()[type]
 }

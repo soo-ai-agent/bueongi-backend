@@ -16,7 +16,8 @@ class ApiStatusController(
 ) {
 
     @GetMapping("/api-status")
-    fun apiStatus(): ApiStatusSummary = apiStatusService.summarize()
+    fun apiStatus(): ApiStatusSummary =
+        apiStatusService.summarize()
 
     @GetMapping("/api-logs")
     fun apiLogs(

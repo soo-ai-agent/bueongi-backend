@@ -12,5 +12,6 @@ class RouteStatsController(
 ) {
 
     @GetMapping("/api/admin/route-stats")
-    fun routeStats(): RouteStatsSummary = routeStatsService.summarize()
+    fun routeStats(): RouteStatsSummary =
+        routeStatsService.summarize()
 }

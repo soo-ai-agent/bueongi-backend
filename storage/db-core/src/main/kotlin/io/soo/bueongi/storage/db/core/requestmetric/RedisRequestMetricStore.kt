@@ -19,7 +19,8 @@ class RedisRequestMetricStore(
         label = "수신 요청 메트릭",
     )
 
-    override fun record(metric: RequestMetric) = entries.push(metric)
+    override fun record(metric: RequestMetric) =
+        entries.push(metric)
 
     override fun findRecent(limit: Int): List<RequestMetric> =
         entries.readRecent().take(limit.coerceAtLeast(0))

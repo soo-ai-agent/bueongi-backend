@@ -17,11 +17,14 @@ class ShareAdminController(
 ) {
 
     @GetMapping("/share-status")
-    fun shareStatus(): ShareStatusResponse = ShareStatusResponse(activeSessions = shareService.countActiveSessions())
+    fun shareStatus(): ShareStatusResponse =
+        ShareStatusResponse(activeSessions = shareService.countActiveSessions())
 
     @GetMapping("/share-sessions")
-    fun shareSessions(): ShareSessionsResponse = ShareSessionsResponse(sessions = shareService.listActiveSessions())
+    fun shareSessions(): ShareSessionsResponse =
+        ShareSessionsResponse(sessions = shareService.listActiveSessions())
 
     @GetMapping("/share-sessions/{token}/location")
-    fun shareSessionLocation(@PathVariable token: String): LocationView = shareService.getLocationForAdmin(token)
+    fun shareSessionLocation(@PathVariable token: String): LocationView =
+        shareService.getLocationForAdmin(token)
 }

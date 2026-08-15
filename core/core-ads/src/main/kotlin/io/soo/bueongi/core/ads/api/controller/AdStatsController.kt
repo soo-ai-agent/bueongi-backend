@@ -12,5 +12,6 @@ class AdStatsController(
 ) {
 
     @GetMapping("/api/admin/ad-stats")
-    fun adStats(): AdStatsSummary = adStatsService.summarize()
+    fun adStats(): AdStatsSummary =
+        adStatsService.summarize()
 }

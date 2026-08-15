@@ -12,7 +12,8 @@ data class FacilityUploadResponse(
     val skipped: Int,
 ) {
     companion object {
-        fun from(result: FacilityUploadResult): FacilityUploadResponse = FacilityUploadResponse(
+        fun from(result: FacilityUploadResult): FacilityUploadResponse =
+            FacilityUploadResponse(
             type = result.type,
             coordSystem = result.coordSystem,
             received = result.received,

@@ -15,7 +15,8 @@ data class CreateShareResponse(
 ) {
     companion object {
 
-        fun from(created: ShareCreated): CreateShareResponse = CreateShareResponse(
+        fun from(created: ShareCreated): CreateShareResponse =
+            CreateShareResponse(
             token = created.token,
             ownerSecret = created.ownerSecret,
             shareUrl = created.shareUrl,

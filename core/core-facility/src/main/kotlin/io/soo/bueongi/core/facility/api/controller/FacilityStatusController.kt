@@ -12,5 +12,6 @@ class FacilityStatusController(
 ) {
 
     @GetMapping("/api/admin/facility-status")
-    fun facilityStatus(): FacilityStatusSummary = facilityStatusService.summarize()
+    fun facilityStatus(): FacilityStatusSummary =
+        facilityStatusService.summarize()
 }

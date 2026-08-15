@@ -28,7 +28,8 @@ class TmapRouteCache(
         entries[key(origin, dest, searchOption, passList)] = Entry(route, clock() + ttlMillis)
     }
 
-    fun size(): Int = entries.size
+    fun size(): Int =
+        entries.size
 
     private fun key(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?): String {
         val sb: StringBuilder = StringBuilder()
@@ -39,7 +40,8 @@ class TmapRouteCache(
         return sb.toString()
     }
 
-    private fun round5(v: Double): Double = Math.round(v * 1e5) / 1e5
+    private fun round5(v: Double): Double =
+        Math.round(v * 1e5) / 1e5
 
     companion object {
         const val DEFAULT_TTL_MILLIS: Long = 10 * 60 * 1000L
