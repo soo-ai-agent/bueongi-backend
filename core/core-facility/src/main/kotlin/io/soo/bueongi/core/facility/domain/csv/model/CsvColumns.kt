@@ -19,30 +19,46 @@ class CsvColumns(
     private val cameraCountIndex: Int?,
     private val phoneIndex: Int?,
 ) {
-    fun name(row: List<String>): String? = row.at(nameIndex)
+    fun name(row: List<String>): String? = textAt(row, nameIndex)
 
-    fun address(row: List<String>): String? = row.at(addressIndex)
+    fun address(row: List<String>): String? = textAt(row, addressIndex)
 
-    fun purpose(row: List<String>): String? = row.at(purposeIndex)
+    fun purpose(row: List<String>): String? = textAt(row, purposeIndex)
 
-    fun phone(row: List<String>): String? = row.at(phoneIndex)
+    fun phone(row: List<String>): String? = textAt(row, phoneIndex)
 
-    /** 0 이하는 값이 없는 것으로 본다(원천이 빈칸 대신 0 을 넣는 경우가 있다). */
-    fun cameraCount(row: List<String>): Int? = row.at(cameraCountIndex)?.toIntOrNull()?.takeIf { it > 0 }
+    fun latitude(row: List<String>): Double? = numberAt(row, latIndex)
 
-    fun latitude(row: List<String>): Double? = row.at(latIndex)?.toDoubleOrNull()
+    fun longitude(row: List<String>): Double? = numberAt(row, lngIndex)
 
-    fun longitude(row: List<String>): Double? = row.at(lngIndex)?.toDoubleOrNull()
+    fun projectedX(row: List<String>): Double? = numberAt(row, xIndex)
 
-    fun projectedX(row: List<String>): Double? = row.at(xIndex)?.toDoubleOrNull()
+    fun projectedY(row: List<String>): Double? = numberAt(row, yIndex)
 
-    fun projectedY(row: List<String>): Double? = row.at(yIndex)?.toDoubleOrNull()
-
-    /** 컬럼이 없거나(index null) 행이 짧거나 빈칸이면 없음으로 본다 — 원천마다 컬럼 구성이 다르다. */
-    private fun List<String>.at(index: Int?): String? {
-        if (index == null || index >= size) {
+    /** 0 이하는 값이 없는 것으로 본다 — 원천이 빈칸 대신 0 을 넣는 경우가 있다. */
+    fun cameraCount(row: List<String>): Int? {
+        val text: String = textAt(row, cameraCountIndex) ?: return null
+        val count: Int = text.toIntOrNull() ?: return null
+        if (count <= 0) {
             return null
         }
-        return this[index].trim().takeIf { it.isNotEmpty() }
+        return count
+    }
+
+    /** 컬럼이 없거나(index null) 행이 짧거나 빈칸이면 없음으로 본다 — 원천마다 컬럼 구성이 다르다. */
+    private fun textAt(row: List<String>, index: Int?): String? {
+        if (index == null || index >= row.size) {
+            return null
+        }
+        val trimmed: String = row[index].trim()
+        if (trimmed.isEmpty()) {
+            return null
+        }
+        return trimmed
+    }
+
+    private fun numberAt(row: List<String>, index: Int?): Double? {
+        val text: String = textAt(row, index) ?: return null
+        return text.toDoubleOrNull()
     }
 }
