@@ -60,11 +60,6 @@ class FacilityCsvParser {
         return false
     }
 
-    /**
-     * 헤더 이름으로 컬럼 위치를 한 번만 찾아 둔다.
-     * 위경도 컬럼이 있으면 원천 좌표계와 무관하게 WGS84 로 읽는다(변환 불필요).
-     */
-
     /** 좌표가 없거나 방범 목적이 아닌 행은 버린다(null). */
     private fun toFacilityPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): FacilityPoint? {
         val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
