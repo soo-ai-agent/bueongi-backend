@@ -12,5 +12,4 @@ interface AlertNotifier {
     fun sendTest(): Boolean = false
 }
 
-
 const val ALERT_HISTORY_MAX_LIMIT: Int = 500

@@ -1,7 +1,9 @@
 package io.soo.bueongi.core.domain.route
 
 import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.enums.RouteTagVariant
 
 import io.soo.bueongi.core.domain.facility.FakeFacilitySource
 
@@ -106,6 +108,7 @@ class SafeRouteServiceTest {
         assertThat(result).hasSize(2)
         assertThat(result[0].score!!).isGreaterThanOrEqualTo(result[1].score!!)
         assertThat(result[0].type).isEqualTo(RouteType.SAFE)
+        assertThat(result[0].tags.first()).isEqualTo(RouteTag("안심", RouteTagVariant.MINT))
         assertThat(result[0].score!!).isGreaterThan(0)
         assertThat(result.map { it.type }).contains(RouteType.FAST)
         assertThat(result[0].path).isNotNull

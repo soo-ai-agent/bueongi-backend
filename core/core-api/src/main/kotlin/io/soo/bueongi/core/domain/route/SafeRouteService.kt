@@ -155,7 +155,7 @@ class SafeRouteService(
                 val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
                 RouteOption(
                     id = "tmap-${candidate.searchOption}-$index",
-                    name = TYPE_NAME.getValue(scoredRoute.type),
+                    name = scoredRoute.type.scoredName,
                     time = "${max(1, (candidate.timeS / 60.0).roundToInt())}분",
                     dist = RouteFormat.formatDistance(candidate.distanceM),
                     desc = "안전 점수 ${scoredRoute.score.score}점 · CCTV ${breakdown.cctvDensity}/km",
@@ -194,12 +194,7 @@ class SafeRouteService(
     }
 
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
-        if (scoredRoute.type == RouteType.SAFE) {
-            add(RouteTag("안심", RouteTagVariant.MINT))
-        }
-        if (scoredRoute.type == RouteType.FAST) {
-            add(RouteTag("빠른길", RouteTagVariant.BLUE))
-        }
+        addAll(scoredRoute.type.signatureTags)
         val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
         if (breakdown.cctvDensity >= TAG_CCTV_DENSITY_MIN_PER_KM) {
             add(RouteTag("CCTV 많음", RouteTagVariant.MINT))
@@ -219,7 +214,6 @@ class SafeRouteService(
     }
 
     private companion object {
-        val TYPE_NAME: Map<RouteType, String> = mapOf(RouteType.SAFE to "안심 경로", RouteType.MAIN to "기본 경로", RouteType.FAST to "빠른 경로")
 
         const val TIE_BREAK_EPSILON: Double = 1e-9
 

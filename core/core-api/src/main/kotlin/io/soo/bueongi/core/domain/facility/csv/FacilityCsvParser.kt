@@ -78,22 +78,22 @@ class FacilityCsvParser {
         return CsvColumns(
             useWgs84 = useWgs84,
             coordSystem = coordSystem,
-            lat = latIdx,
-            lng = lngIdx,
-            x = firstIndexOf(headerIndex, spec.xHeaders),
-            y = firstIndexOf(headerIndex, spec.yHeaders),
-            name = firstIndexOf(headerIndex, spec.nameHeaders),
-            address = firstIndexOf(headerIndex, spec.addressHeaders),
-            purpose = firstIndexOf(headerIndex, spec.purposeHeaders),
-            cameraCount = firstIndexOf(headerIndex, spec.cameraCountHeaders),
-            phone = firstIndexOf(headerIndex, spec.phoneHeaders),
+            latIndex = latIdx,
+            lngIndex = lngIdx,
+            xIndex = firstIndexOf(headerIndex, spec.xHeaders),
+            yIndex = firstIndexOf(headerIndex, spec.yHeaders),
+            nameIndex = firstIndexOf(headerIndex, spec.nameHeaders),
+            addressIndex = firstIndexOf(headerIndex, spec.addressHeaders),
+            purposeIndex = firstIndexOf(headerIndex, spec.purposeHeaders),
+            cameraCountIndex = firstIndexOf(headerIndex, spec.cameraCountHeaders),
+            phoneIndex = firstIndexOf(headerIndex, spec.phoneHeaders),
         )
     }
 
     /** 좌표가 없거나 방범 목적이 아닌 행은 버린다(null). */
     private fun toFacilityPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): FacilityPoint? {
         val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
-        val purpose: String? = row.field(columns.purpose)
+        val purpose: String? = columns.purpose(row)
         if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
             return null
         }
@@ -101,24 +101,24 @@ class FacilityCsvParser {
             type = spec.type,
             lat = geo.lat,
             lng = geo.lng,
-            name = row.field(columns.name),
+            name = columns.name(row),
             purpose = purpose,
-            cameraCount = row.field(columns.cameraCount)?.toIntOrNull()?.takeIf { it > 0 },
-            address = row.field(columns.address),
-            phone = row.field(columns.phone),
+            cameraCount = columns.cameraCount(row),
+            address = columns.address(row),
+            phone = columns.phone(row),
         )
     }
 
     private fun readGeoPoint(row: List<String>, columns: CsvColumns, spec: FacilityCsvSpec): GeoPoint? {
         if (columns.useWgs84) {
             return GeoPoint.orNull(
-                row.field(columns.lat)?.toDoubleOrNull(),
-                row.field(columns.lng)?.toDoubleOrNull(),
+                columns.latitude(row),
+                columns.longitude(row),
             )
         }
         return projectXy(
-            row.field(columns.x)?.toDoubleOrNull(),
-            row.field(columns.y)?.toDoubleOrNull(),
+            columns.projectedX(row),
+            columns.projectedY(row),
             spec.coordSystem,
         )
     }
@@ -148,13 +148,6 @@ class FacilityCsvParser {
 
     private fun firstIndexOf(headerIndex: Map<String, Int>, candidates: List<String>): Int? =
         candidates.firstNotNullOfOrNull { headerIndex[it] }
-
-    private fun List<String>.field(index: Int?): String? {
-        if (index == null || index >= size) {
-            return null
-        }
-        return this[index].trim().takeIf { it.isNotEmpty() }
-    }
 
     private fun decode(bytes: ByteArray): String {
         if (bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) {

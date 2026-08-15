@@ -6,8 +6,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-
-
 /** EPSG:5179(UTM-K) — proj4 `+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80` 과 동일 파라미터의 Snyder 급수 구현. */
 object Epsg5179 {
     private const val A: Double = 6378137.0 // GRS80 장반경(m)

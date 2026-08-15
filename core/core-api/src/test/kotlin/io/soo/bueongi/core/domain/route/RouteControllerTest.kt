@@ -145,7 +145,6 @@ class RouteControllerTest(
         }.andExpect { status { isBadRequest() } }
     }
 
-
     @Test
     fun `좌표가 양의 무한대로 오버플로(lat 1e400)면 400 VALIDATION_FAILED`() {
         mockMvc.post("/api/routes/compare") {

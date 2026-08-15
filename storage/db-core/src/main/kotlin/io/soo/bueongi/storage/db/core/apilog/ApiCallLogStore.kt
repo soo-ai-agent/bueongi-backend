@@ -2,7 +2,6 @@ package io.soo.bueongi.storage.db.core.apilog
 
 import io.soo.bueongi.core.enums.ApiProvider
 
-
 interface ApiCallLogStore {
     /** 계약: 절대 예외를 던지지 않는다(계측 실패가 서비스 호출을 깨면 안 됨 — 내부에서 삼킨다). */
     fun record(log: ApiCallLog)

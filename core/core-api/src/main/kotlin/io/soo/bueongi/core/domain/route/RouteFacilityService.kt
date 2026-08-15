@@ -2,7 +2,6 @@ package io.soo.bueongi.core.domain.route
 
 import io.soo.bueongi.core.enums.FacilityPoiType
 
-
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import org.springframework.stereotype.Service
 

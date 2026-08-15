@@ -2,7 +2,6 @@ package io.soo.bueongi.core.domain.share
 
 import io.soo.bueongi.core.domain.share.route.RouteView
 
-
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession
 import io.soo.bueongi.storage.db.core.share.StoredLocation
@@ -101,27 +100,27 @@ class ShareService(
 
     fun getRoute(token: String): RouteView {
         val session: ShareSession = store.findByToken(token)
-            ?: return RouteView(expired = true, route = null)
+            ?: return RouteView.EXPIRED
         return RouteView(expired = false, route = session.route?.toRouteContext())
     }
 
     fun getLocation(token: String): LocationView {
         val session: ShareSession = store.findByToken(token)
-            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
+            ?: return LocationView.EXPIRED
         store.markViewed(token)
         return locationViewOf(session)
     }
 
     fun getLocationForAdmin(token: String): LocationView {
         val session: ShareSession = store.findByToken(token)
-            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = true)
+            ?: return LocationView.EXPIRED
         return locationViewOf(session)
     }
 
     private fun locationViewOf(session: ShareSession): LocationView {
         val overdue: Boolean = isOverdue(session, clock.instant())
         val location: StoredLocation = session.location
-            ?: return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
+            ?: return LocationView.waiting(overdue)
         return LocationView(
             lat = location.lat,
             lng = location.lng,
