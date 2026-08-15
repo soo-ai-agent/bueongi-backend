@@ -1,5 +1,6 @@
 package io.soo.bueongi.client.tmap
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,6 +23,8 @@ class TmapRouteClient(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     private val cache: TmapRouteCache = TmapRouteCache()
+
+    private val objectMapper: ObjectMapper = ObjectMapper()
 
     fun fetchRoutes(
         origin: TmapCoord,
@@ -65,24 +68,57 @@ class TmapRouteClient(
         cache.get(origin, dest, searchOption, passList)?.let { return it }
         return try {
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
-            val json: JsonNode? = restClient.post()
+            // Tmap 응답에는 NUL 이 섞여 오므로 문자열로 받아 다듬은 뒤 파싱한다(sanitizeTmapJson 주석 참고).
+            val raw: String? = restClient.post()
                 .uri(TmapApiSpec.PEDESTRIAN_ENDPOINT)
                 .header("appKey", appKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
-                .body(JsonNode::class.java)
-            val route: TmapRoute? = json?.let { TmapGeoJson.parse(it, searchOption) }
+                .body(String::class.java)
+            val json: JsonNode? = if (raw == null) {
+                null
+            } else {
+                objectMapper.readTree(sanitizeTmapJson(raw))
+            }
+            val route: TmapRoute?
+            if (json == null) {
+                route = null
+            } else {
+                route = TmapGeoJson.parse(json, searchOption)
+            }
             if (route != null) {
                 cache.put(origin, dest, searchOption, passList, route)
             }
             route
         } catch (e: Exception) {
-            // 시크릿(appKey) 비노출 — 메시지만 로깅
-            log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, e.message)
+            // 시크릿(appKey) 비노출 — 스택 대신 원인 사슬만 남긴다.
+            log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, causeChainOf(e))
             null
         }
+    }
+
+    /**
+     * 예외 메시지만 남기면 진짜 원인이 사라진다 — 실제로 파싱 오류가 겉의
+     * "Error while extracting response" 뒤에 가려 오래 안 보였다(NUL 사건, 2026-08-15).
+     */
+    private fun causeChainOf(e: Throwable): String {
+        val chain: StringBuilder = StringBuilder()
+        var current: Throwable? = e
+        var depth: Int = 0
+        while (current != null && depth < MAX_CAUSE_DEPTH) {
+            if (depth > 0) {
+                chain.append(" <- ")
+            }
+            chain.append(current.javaClass.simpleName).append(": ").append(current.message)
+            if (current.cause === current) {
+                return chain.toString()
+            }
+            current = current.cause
+            depth++
+        }
+        return chain.toString()
     }
 
     private fun buildRequestBody(
@@ -109,3 +145,6 @@ class TmapRouteClient(
         return body
     }
 }
+
+/** 원인 사슬 로깅 깊이 상한 — 순환·과다 로그 방지. */
+private const val MAX_CAUSE_DEPTH: Int = 5
