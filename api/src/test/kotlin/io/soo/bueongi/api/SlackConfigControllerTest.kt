@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.admin.api.AdminController
+import io.soo.bueongi.core.ops.api.AlertController
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,9 +14,9 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 
-@WebMvcTest(AdminController::class)
+@WebMvcTest(AlertController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiLogsControllerTest.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SlackConfigControllerTest(
     @Autowired private val mockMvc: MockMvc,
