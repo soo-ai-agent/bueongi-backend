@@ -1,7 +1,5 @@
 package io.soo.bueongi.storage.db.core.share
 
-import java.time.Instant
-
 data class StoredMarker(
     val type: String,
     val lat: Double,

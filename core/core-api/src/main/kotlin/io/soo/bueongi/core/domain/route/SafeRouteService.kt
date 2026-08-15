@@ -6,7 +6,6 @@ import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
-import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
@@ -14,7 +13,6 @@ import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.core.domain.facility.SafeAnchor
 import io.soo.bueongi.core.domain.facility.SafeDetourPlanner
 import io.soo.bueongi.core.domain.facility.SafetyBreakdown
-import io.soo.bueongi.core.domain.facility.SafetyScore
 import io.soo.bueongi.core.domain.facility.SafetyScorer
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
@@ -236,9 +234,6 @@ class SafeRouteService(
         const val TAG_SAFE_PATH_OVERLAP_MIN: Double = 0.2
     }
 }
-
-
-
 
 private fun TmapRoute.toCandidate(): RouteCandidate =
     RouteCandidate(searchOption = searchOption, path = path.toGeoPoints(), distanceM = distanceM, timeS = timeS, steps = steps)

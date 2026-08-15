@@ -2,9 +2,6 @@ package io.soo.bueongi.core.domain.route
 
 import io.soo.bueongi.core.enums.FacilityPoiType
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonValue
-
 data class FacilityPoi(
     val type: FacilityPoiType,
     val x: Int,

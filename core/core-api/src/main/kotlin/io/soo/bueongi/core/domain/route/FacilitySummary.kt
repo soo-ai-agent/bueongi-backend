@@ -1,8 +1,5 @@
 package io.soo.bueongi.core.domain.route
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonValue
-
 data class FacilitySummary(
     val cctv: Int,
     val bell: Int,

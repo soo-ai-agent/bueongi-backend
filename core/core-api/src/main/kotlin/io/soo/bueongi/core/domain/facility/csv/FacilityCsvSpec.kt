@@ -2,8 +2,6 @@ package io.soo.bueongi.core.domain.facility.csv
 
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonValue
 import io.soo.bueongi.core.enums.FacilityType
 
 /** 헤더 후보·좌표계 값은 pipeline sources.yaml 의 keyColumns 와 일치시킨다 — 위도/경도 헤더가 있으면 WGS84 우선. */

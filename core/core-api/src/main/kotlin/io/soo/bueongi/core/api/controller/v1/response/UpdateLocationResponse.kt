@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.api.controller.v1.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.storage.db.core.share.StoredRoute
 import java.time.Instant
 
 data class UpdateLocationResponse(

@@ -1,13 +1,5 @@
 package io.soo.bueongi.storage.db.core.share
 
-import java.time.Instant
-
-
-
-
-
-
-
 interface LocationStore {
     /** health 라벨: "redis" | "memory" — 자격증명·주소는 노출하지 않는다. */
     val backend: String

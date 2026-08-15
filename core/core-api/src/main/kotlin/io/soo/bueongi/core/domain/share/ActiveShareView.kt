@@ -1,8 +1,6 @@
 package io.soo.bueongi.core.domain.share
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.storage.db.core.share.StoredRoute
-import java.time.Instant
 
 /** 어드민 응답 계약은 camelCase — 보호자용 snake_case 결과들과 달리 @JsonProperty 를 붙이지 않는다. */
 data class ActiveShareView(

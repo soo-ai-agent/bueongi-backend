@@ -5,10 +5,7 @@ import io.soo.bueongi.core.domain.share.route.RouteDestination
 import io.soo.bueongi.core.domain.share.route.RouteMarker
 import io.soo.bueongi.core.domain.share.route.RoutePoint
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.storage.db.core.share.StoredRoute
-import java.time.Instant
-
 
 const val MIN_EXPIRES_HOURS: Int = 1
 
@@ -30,16 +27,6 @@ const val MAX_ROUTE_PROVENANCE_LENGTH: Int = 200
 const val MISSED_ARRIVAL_GRACE_SECONDS: Long = 60L
 const val MISSED_ARRIVAL_OVERDUE_SECONDS: Long = 300L
 const val MISSED_ARRIVAL_STOPPED_SECONDS: Long = 90L
-
-
-
-
-
-
-
-
-
-
 
 fun StoredRoute.toRouteContext(): RouteContext = RouteContext(
     destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),

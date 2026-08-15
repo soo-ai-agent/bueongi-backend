@@ -2,10 +2,6 @@ package io.soo.bueongi.client.kakao
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpHeaders
-import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClient
 
 /** Kakao Local 좌표 규격: x=경도(lng), y=위도(lat), 문자열로 온다. */
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -2,18 +2,13 @@ package io.soo.bueongi.storage.db.core.share
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Condition
-import org.springframework.context.annotation.ConditionContext
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.type.AnnotatedTypeMetadata
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.net.URI
 import java.time.Clock
-
-
 
 /** RedisAutoConfiguration 은 BueongiApplication 에서 제외됨 — URL 미지정 시 localhost:6379 자동 연결을 막으려 접속 팩토리는 여기서만 만든다. */
 @Configuration

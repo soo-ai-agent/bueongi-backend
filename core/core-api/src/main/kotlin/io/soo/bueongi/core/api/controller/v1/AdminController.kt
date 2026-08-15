@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.api.controller.v1
 
+import io.soo.bueongi.core.api.auth.InvalidTokenException
+
 import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
@@ -23,10 +25,8 @@ import io.soo.bueongi.core.domain.admin.slack.SlackTestResult
 import io.soo.bueongi.core.domain.admin.traffic.TrafficSummary
 
 import io.soo.bueongi.core.api.controller.v1.request.SlackConfigUpdateRequest
-import io.soo.bueongi.core.domain.share.ActiveShareView
 import io.soo.bueongi.core.domain.share.LocationView
 import io.soo.bueongi.core.domain.share.ShareService
-import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_DEFAULT_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import jakarta.validation.Valid
@@ -54,11 +54,15 @@ class AdminController(
 ) {
 
     @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentity =
-        AdminIdentity(
-            userId = authentication.principal as Long,
+    fun me(authentication: Authentication): AdminIdentity {
+        // principal 은 JwtAuthenticationFilter 가 넣은 userId(Long) 다. 아니면 인증 배선이 깨진 것이라 401 로 돌린다.
+        val userId: Long = authentication.principal as? Long
+            ?: throw InvalidTokenException("인증 주체가 올바르지 않습니다")
+        return AdminIdentity(
+            userId = userId,
             roles = authentication.authorities.map { it.authority },
         )
+    }
 
     @GetMapping("/api-logs")
     fun apiLogs(
@@ -112,11 +116,6 @@ class AdminController(
     @PostMapping("/slack-config/test")
     fun testSlackConfig(): SlackTestResult = slackConfigService.test()
 }
-
-
-
-
-
 
 private fun ApiCallLog.toResponse(): ApiCallLogResponse =
     ApiCallLogResponse(

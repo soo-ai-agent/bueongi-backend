@@ -2,15 +2,7 @@ package io.soo.bueongi.core.domain.facility.csv
 
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 
-import io.soo.bueongi.core.domain.facility.coord.Epsg5174
-import io.soo.bueongi.core.domain.facility.coord.Epsg5179
-import io.soo.bueongi.core.domain.facility.coord.Wgs84Point
-import io.soo.bueongi.storage.db.core.facility.CCTV_SECURITY_PURPOSES
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import org.springframework.stereotype.Component
-import java.nio.charset.Charset
-import java.nio.charset.CodingErrorAction
 
 data class FacilityCsvParseResult(
     val coordSystem: FacilityCoordSystem,

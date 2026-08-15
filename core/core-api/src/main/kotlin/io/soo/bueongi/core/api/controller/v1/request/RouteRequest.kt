@@ -12,12 +12,8 @@ import io.soo.bueongi.core.support.error.OriginRequiredException
 import io.soo.bueongi.core.support.error.SameOriginDestinationException
 import io.soo.bueongi.core.support.error.TripTooFarException
 import jakarta.validation.Valid
-import jakarta.validation.constraints.DecimalMax
-import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
-
-
 
 data class RouteRequest(
     /** origin 은 의도적으로 @NotNull 미적용 — 누락은 400 이 아니라 [toValidatedQuery] 의 422 ORIGIN_REQUIRED. */

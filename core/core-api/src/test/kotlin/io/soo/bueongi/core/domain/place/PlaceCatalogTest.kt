@@ -1,6 +1,4 @@
 package io.soo.bueongi.core.domain.place
-import io.soo.bueongi.core.api.controller.v1.request.RouteRequest
-import io.soo.bueongi.client.kakao.KakaoPlaceClient
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
