@@ -2,7 +2,7 @@ package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.RouteMarkerBuilder
+import io.soo.bueongi.core.route.marker.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.RouteQuery
 import io.soo.bueongi.core.route.domain.RouteService

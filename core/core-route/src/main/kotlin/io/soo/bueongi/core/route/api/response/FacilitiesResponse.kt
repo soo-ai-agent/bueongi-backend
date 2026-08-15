@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.api.response
 
-import io.soo.bueongi.core.route.domain.FacilityPoi
+import io.soo.bueongi.core.route.marker.FacilityPoi
 import io.soo.bueongi.core.route.domain.RouteFacilities
 import io.soo.bueongi.core.route.domain.FacilitySummary
 

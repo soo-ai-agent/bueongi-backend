@@ -13,7 +13,7 @@ import io.soo.bueongi.core.route.api.RouteController
 import io.soo.bueongi.core.route.domain.RouteService
 import io.soo.bueongi.core.route.domain.SafeRouteService
 import io.soo.bueongi.core.route.domain.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.RouteMarkerBuilder
+import io.soo.bueongi.core.route.marker.RouteMarkerBuilder
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

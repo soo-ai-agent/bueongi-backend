@@ -156,6 +156,7 @@ backend/
 │   │   ├── api/                 #   RouteController + request/ · response/
 │   │   └── domain/              #   RouteService · SafeRouteService · Collector · Assembler
 │   ├── core-route-safety/       # 안전 채점·안심 우회 계획(route 본체가 일방향으로 쓴다)
+│   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(FacilityPoi 소유)
 │   ├── core-route-stats/        # 경로 추천 통계 — route 본체와 무관, 저장소만 읽는다
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
 │   ├── core-facility/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환

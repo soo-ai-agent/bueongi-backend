@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route.domain
+package io.soo.bueongi.core.route.marker
 
 import io.soo.bueongi.core.enums.FacilityPoiType
 

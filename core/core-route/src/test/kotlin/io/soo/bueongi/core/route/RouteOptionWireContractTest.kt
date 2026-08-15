@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.DataProvenance
-import io.soo.bueongi.core.route.domain.FacilityPoi
+import io.soo.bueongi.core.route.marker.FacilityPoi
 import io.soo.bueongi.core.route.domain.RouteOption
 import io.soo.bueongi.core.route.safety.SafetyBreakdown
 import io.soo.bueongi.core.enums.FacilityPoiType

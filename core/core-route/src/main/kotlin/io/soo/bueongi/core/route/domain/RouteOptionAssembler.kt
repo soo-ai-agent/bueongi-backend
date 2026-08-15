@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route.domain
 
+import io.soo.bueongi.core.route.marker.RouteMarkerBuilder
 import io.soo.bueongi.core.route.safety.SafetyBreakdown
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteTagVariant
