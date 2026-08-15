@@ -5,8 +5,8 @@ import io.soo.bueongi.core.place.domain.model.SEED_PLACE_CATALOG
 import org.springframework.stereotype.Component
 
 @Component
-class SeedPlaceProvider : PlaceProvider {
-    override fun search(keyword: String): List<PlaceItem> {
+class SeedPlaceProvider {
+    fun search(keyword: String): List<PlaceItem> {
         val needle: String = keyword.lowercase()
         val found: ArrayList<PlaceItem> = ArrayList<PlaceItem>()
         for (place in SEED_PLACE_CATALOG) {
