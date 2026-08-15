@@ -6,8 +6,8 @@ import io.soo.bueongi.api.ApiControllerAdvice
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
 import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
-import io.soo.bueongi.core.route.domain.safety.SafeDetourPlanner
-import io.soo.bueongi.core.route.domain.safety.SafetyScorer
+import io.soo.bueongi.core.route.safety.SafeDetourPlanner
+import io.soo.bueongi.core.route.safety.SafetyScorer
 import io.soo.bueongi.core.route.domain.RouteFacilityService
 import io.soo.bueongi.core.route.api.RouteController
 import io.soo.bueongi.core.route.domain.RouteService

@@ -5,7 +5,7 @@ import io.soo.bueongi.core.enums.FacilityPoiType
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.core.route.domain.safety.SafetyScorer
+import io.soo.bueongi.core.route.safety.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.GeoPoint

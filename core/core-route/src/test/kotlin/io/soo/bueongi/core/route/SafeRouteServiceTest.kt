@@ -22,8 +22,8 @@ import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.core.route.domain.safety.SafeDetourPlanner
-import io.soo.bueongi.core.route.domain.safety.SafetyScorer
+import io.soo.bueongi.core.route.safety.SafeDetourPlanner
+import io.soo.bueongi.core.route.safety.SafetyScorer
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.assertj.core.api.Assertions.assertThat

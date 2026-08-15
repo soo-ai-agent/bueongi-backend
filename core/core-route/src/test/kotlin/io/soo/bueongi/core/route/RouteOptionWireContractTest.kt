@@ -3,7 +3,7 @@ package io.soo.bueongi.core.route
 import io.soo.bueongi.core.route.domain.DataProvenance
 import io.soo.bueongi.core.route.domain.FacilityPoi
 import io.soo.bueongi.core.route.domain.RouteOption
-import io.soo.bueongi.core.route.domain.safety.SafetyBreakdown
+import io.soo.bueongi.core.route.safety.SafetyBreakdown
 import io.soo.bueongi.core.enums.FacilityPoiType
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteTagVariant

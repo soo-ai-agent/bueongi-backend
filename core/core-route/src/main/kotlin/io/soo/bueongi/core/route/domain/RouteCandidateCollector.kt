@@ -3,8 +3,8 @@ package io.soo.bueongi.core.route.domain
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.route.domain.safety.SafeAnchor
-import io.soo.bueongi.core.route.domain.safety.SafeDetourPlanner
+import io.soo.bueongi.core.route.safety.SafeAnchor
+import io.soo.bueongi.core.route.safety.SafeDetourPlanner
 import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
