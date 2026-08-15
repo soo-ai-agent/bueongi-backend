@@ -18,7 +18,9 @@ class RouteOptionAssembler(
 ) {
 
     internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {
+        // 출처 표기는 모든 경로가 같은 값을 쓰므로 한 번만 만든다.
         val provenance: DataProvenance = buildProvenance()
+        // 안전 점수 높은 순으로 내려보낸다 — 프론트는 받은 순서대로 그린다.
         return scoredRoutes
             .sortedByDescending { it.score.score }
             .mapIndexed { index, scoredRoute ->
@@ -35,6 +37,7 @@ class RouteOptionAssembler(
                     path = candidate.path,
                     steps = candidate.steps,
                     score = scoredRoute.score.score,
+                    // 마커는 경로마다 다시 계산한다(경로가 다르면 회랑도 다르다).
                     markers = markerBuilder.buildMarkers(origin, destination, candidate.path),
                     breakdown = breakdown,
                     provenance = provenance,
@@ -42,6 +45,7 @@ class RouteOptionAssembler(
             }
     }
 
+    /** 유형 고유 태그(안심·빠른길) 뒤에, 채점 결과가 기준을 넘긴 항목만 덧붙인다. */
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
         addAll(scoredRoute.type.signatureTags)
         val breakdown: SafetyBreakdown = scoredRoute.score.breakdown

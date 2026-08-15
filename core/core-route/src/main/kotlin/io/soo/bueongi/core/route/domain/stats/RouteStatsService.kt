@@ -16,6 +16,7 @@ class RouteStatsService(
 ) {
 
     fun summarize(): RouteStatsSummary {
+        // 최근 것만 상한까지 읽어 그 자리에서 집계한다(누적 집계를 따로 저장하지 않는다).
         val logs: List<RouteRecommendationLog> = routeStatsStore.findRecent(ROUTE_STATS_CAP)
         return RouteStatsSummary(
             total = logs.size,
@@ -43,6 +44,7 @@ class RouteStatsService(
         }
     }
 
+    /** 이름 없는 목적지(좌표만 찍은 경우)는 셀 수 없으니 뺀다. */
     private fun topDestinations(logs: List<RouteRecommendationLog>): List<DestinationCount> =
         logs.asSequence()
             .mapNotNull { it.destinationName?.trim()?.takeIf(String::isNotEmpty) }

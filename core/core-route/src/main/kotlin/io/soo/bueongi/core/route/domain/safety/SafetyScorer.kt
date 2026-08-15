@@ -10,6 +10,13 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+/**
+ * 경로 하나의 안전 점수(0~100)를 낸다.
+ *
+ * 계산 얼개: 경로 양옆 [DEFAULT_CORRIDOR_METERS] 안의 시설을 종류별로 세고,
+ * **km당 밀도**로 바꾼 뒤 종류별 포화 기준([SAT_*])으로 0~1 로 눌러 가중 합산한다.
+ * 밀도를 쓰는 이유는 긴 경로가 개수만으로 유리해지지 않게 하기 위해서다.
+ */
 @Component
 class SafetyScorer(
     private val facilities: FacilitySpatialSource,
@@ -25,8 +32,11 @@ class SafetyScorer(
             0.001
         }
 
+        // 1. 회랑 안 시설 수를 종류별로 센다.
         val counts: FacilityCounts = countNearby(path)
+        // 2. 지자체가 지정한 안심귀갓길과 얼마나 겹치는지(0~1) 구한다.
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
+        // 3. 둘을 가중 합산해 0~1 로 만든다.
         val normalized: Double = normalizedScore(counts, km, safePathOverlap)
 
         return SafetyScore(
@@ -70,6 +80,7 @@ class SafetyScorer(
         return min(1.0, best)
     }
 
+    /** 각 항목을 포화 기준으로 0~1 로 누른 뒤 가중치를 곱해 더한다(가중치 합 = 1.0). */
     private fun normalizedScore(counts: FacilityCounts, km: Double, safePathOverlap: Double): Double =
         WEIGHT_CCTV * saturate(counts.cctv / km, SAT_CCTV_PER_KM) +
             WEIGHT_LAMP * saturate(counts.lamp / km, SAT_LAMP_PER_KM) +
@@ -78,6 +89,7 @@ class SafetyScorer(
             WEIGHT_POLICE * saturate(counts.police.toDouble(), SAT_POLICE_COUNT) +
             WEIGHT_SAFE_PATH * safePathOverlap
 
+    /** 기준치를 넘으면 더 늘어도 1 로 본다 — CCTV 100대가 20대보다 5배 안전하진 않다. */
     private fun saturate(value: Double, saturationCeiling: Double): Double {
         if (saturationCeiling <= 0) {
             return 0.0
