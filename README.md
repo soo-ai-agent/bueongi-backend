@@ -42,7 +42,7 @@ set +a
 ./gradlew build
 
 # 빌드된 jar 직접 실행
-java -jar core/core-api/build/libs/core-api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(core:core-api) 산출물
+java -jar api/build/libs/api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(:api) 산출물
 ```
 
 `local` 프로파일은 `backend/.env.local`을 자동으로 읽는다. 로컬 실행은 아래 명령을 표준으로 사용한다.
@@ -138,43 +138,44 @@ set +a
 ./gradlew bootRun --no-daemon
 ```
 
-## 프로젝트 구조 (멀티모듈 — 템플릿 그대로)
+## 프로젝트 구조 (멀티모듈 — 도메인별 분리)
 
-모듈과 패키지 모두 [team-dodn/spring-boot-kotlin-template](https://github.com/team-dodn/spring-boot-kotlin-template) 을 따른다.
-**`core:core-api` 하나가 도메인들을 모두 포함한다** — 템플릿이 "초기 개발 생산성을 극대화하기 위해" 택한 형태다.
+레이어 이름과 패키지 규약은 [team-dodn/spring-boot-kotlin-template](https://github.com/team-dodn/spring-boot-kotlin-template) 을 따르되,
+**도메인마다 모듈을 하나씩 둔다.** 한 도메인의 컨트롤러부터 서비스까지가 한 모듈 안에서 끝난다
+("경로 기능을 고치려면 `core-route` 만 열면 된다").
 
 ```
 backend/
+├── api/                         # 유일한 실행 모듈(bootJar/bootRun)
+│   └── io/soo/bueongi/
+│       ├── BueongiApplication.kt
+│       └── api/                 # ApiControllerAdvice · HealthController
+│           └── config/          # CORS·CDN·Clock·스케줄링·요청 계측 필터
 ├── core/
-│   ├── core-api/                # 부팅 모듈(유일한 bootJar/bootRun)
-│   │   └── io/soo/bueongi/
-│   │       ├── BueongiApplication.kt
-│   │       └── core/
-│   │           ├── api/
-│   │           │   ├── auth/            # 인증(JWT·시큐리티 설정·토큰 서비스)
-│   │           │   ├── config/          # CORS·CDN·스케줄링·요청 계측
-│   │           │   └── controller/
-│   │           │       ├── ApiControllerAdvice.kt · HealthController.kt
-│   │           │       └── v1/          # 도메인별 컨트롤러
-│   │           │           ├── request/     # 요청 DTO
-│   │           │           └── response/    # 응답 DTO
-│   │           ├── domain/              # 유스케이스 — 도메인별 서브패키지
-│   │           │   ├── route/ share/ facility/(+coord) place/ admin/
-│   │           └── support/error/       # 도메인 예외(에러 계약)
+│   ├── core-route/              # io.soo.bueongi.core.route
+│   │   ├── api/                 #   RouteController + request/ · response/
+│   │   └── domain/              #   RouteService · SafeRouteService · Assembler …
+│   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
+│   ├── core-facility/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환
+│   ├── core-place/              # 장소 검색(Kakao + 시드 폴백)
+│   ├── core-admin/              # 관리자 통계 + 인증 일체(JWT·SecurityConfig)
+│   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외·공용 요청 DTO
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
-│   ├── client-tmap/ · client-kakao/
+│   └── client-tmap/ · client-kakao/
 └── support/ (logging · monitoring · util)
-    └── util/                           # 도메인 지식 없는 범용 함수만 — 좌표변환(EPSG)·통계·시간버킷·포맷·JS이스케이프·PEM파싱
-                                        #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
+    └── util/                    # 도메인 지식 없는 범용 함수만 — 좌표변환(EPSG)·통계·시간버킷·포맷·JS이스케이프·PEM파싱
+                                 #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
 ```
 
-- **컨트롤러는 `core/api/controller/v1`, 유스케이스는 `core/domain/<도메인>`.** 레이어로 먼저 나누고 그 안에서 도메인으로 나눈다.
-- 요청·응답 DTO 는 `controller/v1/request`·`response` 에 둔다. 도메인 패키지에 두지 않는다.
-- 도메인 서브패키지는 템플릿의 성장형이다(템플릿 동봉 예제는 `core/domain/` 평면).
+- **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/`(서비스·모델) 로 나눈다.
+- **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
+- 도메인 모듈 간 참조는 최소로 유지한다(현재 `route → facility`, `admin → share` 둘뿐, 순환 없음).
+- **`@WebMvcTest`·`@SpringBootTest` 는 `api` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
+  도메인 단위 테스트는 각 도메인 모듈에 둔다. 모듈을 넘나드는 테스트 헬퍼는 `java-test-fixtures` 로 노출한다.
 
-- 부팅 모듈이 core-api 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
+- 부팅 모듈이 `api` 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
 - 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
 
 ## 코드 작성 규칙
@@ -191,8 +192,8 @@ backend/
 3. **상세 구현은 구현 레이어로 분리**하고 재사용 가능한 단위로 작성한다
    (예: `SafetyScorer`·`SafeDetourPlanner`·`NearestPoliceFinder`·`SlackAlertNotifier`).
 4. **저장소 접근은 `storage:db-core` 로 격리**한다 — 파일/Redis 접근 코드는 storage 밖에 두지 않는다.
-5. **레이어 참조는 상위 → 하위 단방향**: core-api → (storage·clients·support·core-enum).
-   storage/clients/support 는 서로도, 상위도 참조하지 않는다(clients 는 완전 자립).
+5. **레이어 참조는 상위 → 하위 단방향**: api → core-<도메인> → (core-common·core-enum·storage·clients·support).
+   storage/clients/support 는 서로도, 상위도 참조하지 않는다(clients 는 완전 자립). 도메인 모듈 간 순환 금지.
 6. **외부 시스템/DB/프레임워크 의존 로직은 도메인 모델 밖**(clients 어댑터·storage)으로 분리한다.
 
 ### 명명
