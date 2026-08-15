@@ -31,8 +31,8 @@ fun RouteRequest.toValidatedQuery(): RouteQuery {
         origin = origin,
         destination = destinationPoint,
         destinationName = destination?.name,
-        routeType = RouteType.from(routeType),
-        safetyPreference = SafetyPreference.from(safetyPreference),
+        routeType = toRouteType(routeType),
+        safetyPreference = toSafetyPreference(safetyPreference),
     )
 }
 

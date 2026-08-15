@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.enums
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 
 /** [apiType] 이 와이어 계약([JsonValue]) — RouteOption.type 이 정확히 'safe'|'main'|'fast' 를 내야 하는 프론트 계약. */
@@ -46,14 +45,4 @@ enum class RouteType(
         tags = listOf(RouteTag("최단 거리", RouteTagVariant.OUTLINE)),
         signatureTags = listOf(RouteTag("빠른길", RouteTagVariant.BLUE)),
     ),
-    ;
-
-    companion object {
-        @JsonCreator
-        @JvmStatic
-        fun from(value: String?): RouteType {
-            val normalized: String = value?.trim()?.lowercase() ?: return SAFE
-            return entries.firstOrNull { it.apiType == normalized || it.id == normalized } ?: SAFE
-        }
-    }
 }

@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.enums
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 
 /** [wire] 가 와이어 계약([JsonValue]) — lastRefreshStatus 가 정확히 replaced|kept|never|skipped 를 내야 한다. */
@@ -16,11 +15,4 @@ enum class FacilityRefreshStatus(@get:JsonValue val wire: String) {
 
     /** 교체 이력 없음 — 파이프라인이 만든 CDN 파일 그대로 쓰는 정상 상태다. */
     SKIPPED("skipped"),
-    ;
-
-    companion object {
-        @JsonCreator
-        @JvmStatic
-        fun from(value: String): FacilityRefreshStatus = entries.first { it.wire == value }
-    }
 }

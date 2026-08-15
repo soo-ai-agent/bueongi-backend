@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.facility.domain.csv.service
 
+import io.soo.bueongi.support.util.Epsg5179
+import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.core.facility.domain.csv.model.CsvColumns
 import io.soo.bueongi.core.facility.domain.csv.model.FacilityCsvParseResult
 import io.soo.bueongi.core.facility.domain.csv.model.FacilityCsvSpec
@@ -100,8 +102,19 @@ class FacilityCsvParser {
         if (x == null || y == null) {
             return null
         }
-        val wgs: Wgs84Point? = coordSystem.toWgs84(x, y)
+        val wgs: Wgs84Point? = toWgs84(coordSystem, x, y)
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
+    }
+
+    /** 원천 좌표계의 평면 좌표를 위경도로 옮긴다. WGS84 는 이미 위경도라 변환이 없다(null). */
+    private fun toWgs84(coordSystem: FacilityCoordSystem, x: Double, y: Double): Wgs84Point? {
+        if (coordSystem == FacilityCoordSystem.EPSG5179) {
+            return Epsg5179.toWgs84(x, y)
+        }
+        if (coordSystem == FacilityCoordSystem.EPSG5174) {
+            return Epsg5174.toWgs84(x, y)
+        }
+        return null
     }
 
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
