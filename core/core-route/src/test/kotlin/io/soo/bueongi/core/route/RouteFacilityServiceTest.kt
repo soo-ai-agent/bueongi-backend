@@ -1,28 +1,28 @@
 package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.RouteFacilityService
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
-import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.SafetySpotPoiType
 
-import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 
-import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class RouteFacilityServiceTest {
+class RouteSafetySpotServiceTest {
 
     private val origin: GeoPoint = GeoPoint(37.5, 127.000)
     private val destination: GeoPoint = GeoPoint(37.5, 127.020)
 
-    private fun request(routeType: String?, source: FakeFacilitySource) =
-        RouteFacilityService(RouteMarkerBuilder(source)).alongRoute(
+    private fun request(routeType: String?, source: FakeSafetySpotSource) =
+        RouteSafetySpotService(RouteMarkerBuilder(source)).alongRoute(
             RouteQuery(
                 origin = origin,
                 destination = destination,
@@ -32,33 +32,33 @@ class RouteFacilityServiceTest {
             ),
         )
 
-    private fun mixedSource() = FakeFacilitySource(
+    private fun mixedSource() = FakeSafetySpotSource(
         mapOf(
-            FacilityType.CCTV to listOf(
-                FacilityPoint(FacilityType.CCTV, 37.5, 127.005, name = "CCTV-A"),
-                FacilityPoint(FacilityType.CCTV, 37.5, 127.010, name = "CCTV-B"),
+            SafetySpotType.CCTV to listOf(
+                SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.005, name = "CCTV-A"),
+                SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.010, name = "CCTV-B"),
             ),
-            FacilityType.SAFEHOUSE to listOf(
-                FacilityPoint(FacilityType.SAFEHOUSE, 37.5, 127.008, name = "안심지킴이집-1"),
+            SafetySpotType.SAFEHOUSE to listOf(
+                SafetySpotPoint(SafetySpotType.SAFEHOUSE, 37.5, 127.008, name = "안심지킴이집-1"),
             ),
-            FacilityType.BELL to listOf(
-                FacilityPoint(FacilityType.BELL, 37.5, 127.012),
+            SafetySpotType.BELL to listOf(
+                SafetySpotPoint(SafetySpotType.BELL, 37.5, 127.012),
             ),
-            FacilityType.LAMP to listOf(
-                FacilityPoint(FacilityType.LAMP, 37.5, 127.014, name = "가로등-1"),
+            SafetySpotType.LAMP to listOf(
+                SafetySpotPoint(SafetySpotType.LAMP, 37.5, 127.014, name = "가로등-1"),
             ),
-            FacilityType.PEDESTRIAN_SIGNAL to listOf(
-                FacilityPoint(FacilityType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
+            SafetySpotType.PEDESTRIAN_SIGNAL to listOf(
+                SafetySpotPoint(SafetySpotType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
             ),
         ),
     )
 
     @Test
     fun `start 와 end POI 가 항상 포함된다`() {
-        val res = request("safe", FakeFacilitySource())
-        assertThat(res.pois.map { it.type }).contains(FacilityPoiType.START, FacilityPoiType.END)
-        val start = res.pois.first { it.type == FacilityPoiType.START }
-        val end = res.pois.first { it.type == FacilityPoiType.END }
+        val res = request("safe", FakeSafetySpotSource())
+        assertThat(res.pois.map { it.type }).contains(SafetySpotPoiType.START, SafetySpotPoiType.END)
+        val start = res.pois.first { it.type == SafetySpotPoiType.START }
+        val end = res.pois.first { it.type == SafetySpotPoiType.END }
         assertThat(start.lat).isEqualTo(origin.lat)
         assertThat(end.lng).isEqualTo(destination.lng)
     }
@@ -66,14 +66,14 @@ class RouteFacilityServiceTest {
     @Test
     fun `요약은 생성된 POI 집계와 정확히 일치한다`() {
         val res = request("safe", mixedSource())
-        assertThat(res.summary.cctv).isEqualTo(res.pois.count { it.type == FacilityPoiType.CCTV })
-        assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == FacilityPoiType.BELL })
-        assertThat(res.summary.convenienceStore).isEqualTo(res.pois.count { it.type == FacilityPoiType.STORE })
-        assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == FacilityPoiType.POLICE })
-        assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == FacilityPoiType.SAFEHOUSE })
-        assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == FacilityPoiType.LAMP })
+        assertThat(res.summary.cctv).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.CCTV })
+        assertThat(res.summary.bell).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.BELL })
+        assertThat(res.summary.convenienceStore).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.STORE })
+        assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.POLICE })
+        assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.SAFEHOUSE })
+        assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.LAMP })
         assertThat(res.summary.pedestrianSignal)
-            .isEqualTo(res.pois.count { it.type == FacilityPoiType.PEDESTRIAN_SIGNAL })
+            .isEqualTo(res.pois.count { it.type == SafetySpotPoiType.PEDESTRIAN_SIGNAL })
     }
 
     @Test
@@ -91,17 +91,17 @@ class RouteFacilityServiceTest {
     @Test
     fun `편의점(store)은 지도에서 제외되어 어떤 경우에도 마커로 생성되지 않는다`() {
         val res = request("safe", mixedSource())
-        assertThat(res.pois).noneMatch { it.type == FacilityPoiType.STORE }
+        assertThat(res.pois).noneMatch { it.type == SafetySpotPoiType.STORE }
         assertThat(res.summary.convenienceStore).isEqualTo(0)
     }
 
     @Test
     fun `실 시설이 하나도 없으면 시설 요약은 모두 0이고 화면은 텅 비지 않는다(start-end 유지)`() {
-        val res = request("safe", FakeFacilitySource())
+        val res = request("safe", FakeSafetySpotSource())
         val summary = res.summary
         assertThat(summary.total).isEqualTo(0)
         assertThat(summary.cctv + summary.bell + summary.convenienceStore + summary.police + summary.safehouse + summary.lamp + summary.pedestrianSignal).isEqualTo(0)
-        assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
+        assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(SafetySpotPoiType.START, SafetySpotPoiType.END)
     }
 
     @Test
@@ -115,8 +115,8 @@ class RouteFacilityServiceTest {
 
     @Test
     fun `유형별 시설 개수는 마커 상한 12 를 넘지 않는다`() {
-        val many = (1..20).map { FacilityPoint(FacilityType.CCTV, 37.5, 127.000 + it * 0.0005) }
-        val res = request("safe", FakeFacilitySource(mapOf(FacilityType.CCTV to many)))
+        val many = (1..20).map { SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.000 + it * 0.0005) }
+        val res = request("safe", FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to many)))
         assertThat(res.summary.cctv).isLessThanOrEqualTo(12)
     }
 
@@ -135,11 +135,11 @@ class RouteFacilityServiceTest {
     @Test
     fun `실측 시설 POI 는 실 좌표(회랑 안)로 표시된다`() {
         val res = request("safe", mixedSource())
-        val cctv = res.pois.filter { it.type == FacilityPoiType.CCTV }
+        val cctv = res.pois.filter { it.type == SafetySpotPoiType.CCTV }
         assertThat(cctv).hasSize(2)
         assertThat(cctv.map { it.lng }).containsExactlyInAnyOrder(127.005, 127.010)
         assertThat(cctv).allMatch { it.lat == 37.5 }
-        val safehouse = res.pois.first { it.type == FacilityPoiType.SAFEHOUSE }
+        val safehouse = res.pois.first { it.type == SafetySpotPoiType.SAFEHOUSE }
         assertThat(safehouse.name).isEqualTo("안심지킴이집-1")
     }
 }

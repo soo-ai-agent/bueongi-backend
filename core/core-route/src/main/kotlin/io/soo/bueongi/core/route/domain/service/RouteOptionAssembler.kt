@@ -8,8 +8,8 @@ import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.support.util.DistanceFormat
 import org.springframework.stereotype.Component
 import kotlin.math.max
@@ -19,7 +19,7 @@ import kotlin.math.roundToInt
 @Component
 class RouteOptionAssembler(
     private val markerBuilder: RouteMarkerBuilder,
-    private val facilitySource: FacilitySpatialSource,
+    private val safetySpotSource: SafetySpotSpatialSource,
     private val routeTypeCatalog: RouteTypeCatalog,
 ) {
 
@@ -73,7 +73,7 @@ class RouteOptionAssembler(
     }
 
     private fun buildProvenance(): DataProvenance {
-        val generatedAt: String? = facilitySource.freshness?.generatedAt
+        val generatedAt: String? = safetySpotSource.freshness?.generatedAt
         val basedOn: String? = if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
             generatedAt.substring(0, YEAR_MONTH_LENGTH).replace('-', '.')
         } else {

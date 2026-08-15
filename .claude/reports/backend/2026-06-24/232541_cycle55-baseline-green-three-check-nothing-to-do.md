@@ -11,9 +11,9 @@
 3. **칸반 신규 backend ready 0건**: ready 4건(`6ccdc2a5` 슬랙 E2E·`9694868a` 대시보드 기동상태·`6ccbb6b6` 모니터링 분리=플랫폼-운영, `50634312` SEC-AUTH-ENV-GITIGNORE=soo-auth-service) 전부 경계 밖. 내 영역 `t_a049358c`/`cdb5314d`(Redis 위치공유) done. bueongi backend 신규/미완료 0건 → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
 
 ## 왜 nothing-to-do 가 정당한가
-52회차 facility 도메인 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당(작위적 신규 점검 발명 금지). escalate/report-issue 미호출. 시크릿 비노출.
+52회차 safetySpot 도메인 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당(작위적 신규 점검 발명 금지). escalate/report-issue 미호출. 시크릿 비노출.
 
 ## 경계 (places/routes/share 3 도메인)
-- routes: `/api/routes/compare`·`/facilities` (origin 누락→422 ORIGIN_REQUIRED, 동일좌표→422, 원거리→422, routeType safe/main/fast)
+- routes: `/api/routes/compare`·`/safetySpots` (origin 누락→422 ORIGIN_REQUIRED, 동일좌표→422, 원거리→422, routeType safe/main/fast)
 - share: `/share` (POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case)
 - places: 장소검색(Kakao)

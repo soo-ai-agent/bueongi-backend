@@ -9,14 +9,14 @@
 1. 베이스라인 확인: `./gradlew test` BUILD SUCCESSFUL, 72개 통과(깨진 빌드 없음).
 2. Next Action #1(Frontend)은 projectPath 경계 밖 → backend 산출물 #4 선택.
 3. SAME_ORIGIN_DESTINATION(거리 하한) 패턴을 그대로 본떠 거리 상한 가드 구현.
-4. 기존 테스트 좌표가 새 임계(100km)에 걸리는지 점검 → FacilityServiceTest 580km 케이스 충돌 발견·조정.
-5. #5 검토: ApiExceptionHandlerTest 가 compare/facilities 양쪽 이미 커버 → 작업 불요 확인.
+4. 기존 테스트 좌표가 새 임계(100km)에 걸리는지 점검 → SafetySpotServiceTest 580km 케이스 충돌 발견·조정.
+5. #5 검토: ApiExceptionHandlerTest 가 compare/safetySpots 양쪽 이미 커버 → 작업 불요 확인.
 
 ## 산출물 (소스 4 파일 / 테스트 +4, 72→76)
 - `common/ApiExceptionHandler.kt`: `TripTooFarException(distanceMeters, maxMeters)` + 422 핸들러(`code:"TRIP_TOO_FAR"`, errors[destination]).
 - `routes/RouteDtos.kt`: `requireWithinReach(origin)` 가드 + `MAX_TRIP_DISTANCE_METERS=100_000.0`(100km).
-- `routes/RouteService.kt`, `routes/FacilityService.kt`: `requireDistinctEndpoints` 직후 `requireWithinReach` 호출.
-- 테스트: RouteServiceTest +2(초과 예외/89km 경계 정상), FacilityServiceTest +1(초과 예외) + 기존 cap 테스트 좌표 89km 조정, ApiExceptionHandlerTest +1(HTTP 422 본문 계약).
+- `routes/RouteService.kt`, `routes/SafetySpotService.kt`: `requireDistinctEndpoints` 직후 `requireWithinReach` 호출.
+- 테스트: RouteServiceTest +2(초과 예외/89km 경계 정상), SafetySpotServiceTest +1(초과 예외) + 기존 cap 테스트 좌표 89km 조정, ApiExceptionHandlerTest +1(HTTP 422 본문 계약).
 
 ## 검증
 - `./gradlew clean test` → BUILD SUCCESSFUL. 테스트 76개 전부 통과(failures=0, errors=0). build/test-results XML 집계로 확인.

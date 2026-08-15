@@ -1,7 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ads.domain.service.AdStatsService
-import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
+import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
 import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
@@ -14,14 +14,14 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
-import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.model.FacilityFreshness
-import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
-import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.store.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.facility.model.SafePath
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.store.LocationStore
@@ -86,24 +86,24 @@ class AdminEndpointFixtures {
         fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)
 
         @Bean
-        fun facilityStatusService(): FacilityStatusService {
-            val source = object : FacilitySpatialSource {
+        fun safetySpotStatusService(): SafetySpotStatusService {
+            val source = object : SafetySpotSpatialSource {
                 private val cctv: GridSpatialIndex = GridSpatialIndex(
-                    List(2) { FacilityPoint(type = FacilityType.CCTV, lat = 37.5, lng = 127.0) },
+                    List(2) { SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.5, lng = 127.0) },
                 )
-                override fun index(type: FacilityType): GridSpatialIndex =
-                    if (type == FacilityType.CCTV) {
+                override fun index(type: SafetySpotType): GridSpatialIndex =
+                    if (type == SafetySpotType.CCTV) {
                         cctv
                     } else {
                         GridSpatialIndex(emptyList())
                     }
                 override val safePaths: List<SafePath> = emptyList()
-                override val freshness: FacilityFreshness = FacilityFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
+                override val freshness: SafetySpotFreshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }
-            val holder: FacilityRefreshStatusStore = FacilityRefreshStatusStore().apply {
-                record(mapOf(FacilityType.CCTV to 2), atEpochMs = 1L)
+            val holder: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore().apply {
+                record(mapOf(SafetySpotType.CCTV to 2), atEpochMs = 1L)
             }
-            return FacilityStatusService(source, holder)
+            return SafetySpotStatusService(source, holder)
         }
 
         @Bean

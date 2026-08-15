@@ -3,7 +3,7 @@ package io.soo.bueongi.api
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.service.RouteFacilityService
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteService
@@ -11,8 +11,8 @@ import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.client.tmap.TmapRouteClient
 
-import io.soo.bueongi.storage.db.core.facility.store.FacilityRepository
-import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.post
 @Import(
     RouteService::class,
     RouteTypeCatalog::class,
-    RouteFacilityService::class,
+    RouteSafetySpotService::class,
     SafeRouteService::class,
     RouteCandidateCollector::class,
     RouteOptionAssembler::class,
@@ -38,8 +38,8 @@ import org.springframework.test.web.servlet.post
     RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeDetourPlanner::class,
-    FacilityRepository::class,
-    FacilityUploadStore::class,
+    SafetySpotRepository::class,
+    SafetySpotUploadStore::class,
 )
 class RouteControllerTest(
     @Autowired private val mockMvc: MockMvc,
@@ -96,9 +96,9 @@ class RouteControllerTest(
     }
 
     @Test
-    fun `facilities 정상 요청은 200 과 pois summary`() {
+    fun `safetySpots 정상 요청은 200 과 pois summary`() {
         val body: String = validBody.dropLast(1) + ""","routeType":"safe"}"""
-        mockMvc.post("/api/routes/facilities") {
+        mockMvc.post("/api/routes/safety-spots") {
             contentType = MediaType.APPLICATION_JSON
             content = body
         }.andExpect {
@@ -128,8 +128,8 @@ class RouteControllerTest(
     }
 
     @Test
-    fun `facilities 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
-        mockMvc.post("/api/routes/facilities") {
+    fun `safetySpots 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
+        mockMvc.post("/api/routes/safety-spots") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.0,"lng":127.0},"destination":{"lat":38.5,"lng":127.0},"routeType":"safe"}"""
         }.andExpect { status { isUnprocessableEntity() } }

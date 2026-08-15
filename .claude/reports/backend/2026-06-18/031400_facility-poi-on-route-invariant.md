@@ -13,12 +13,12 @@
 1. 메모리 복원: consensus.md / handoff.md / 에이전트 정의(`bueongi-backend.md`) 읽음.
 2. 베이스라인: `./gradlew test` BUILD SUCCESSFUL, 96개 통과(깨진 것 없음).
 3. 도메인 검증·에러 계약·가드 단일화·외부 데이터 경계·SAFE floor 가 모두 포화 → 백로그 발굴(코드 직접 점검).
-4. **미고정 핵심 도메인 불변식 발견**: `FacilityService.addFacilities` 가 시설 lat/lng 를 `o + (d-o)*t`
+4. **미고정 핵심 도메인 불변식 발견**: `SafetySpotService.addFacilities` 가 시설 lat/lng 를 `o + (d-o)*t`
    선형 보간으로 출발→도착 선분 위에 배치하는데, 기존 테스트는 개수·x/y(정규화 표시 좌표) 범위·summary 일치·floor·결정론만
    고정할 뿐 시설 **지리 좌표(lat/lng)가 실제 경로(선분) 위에 있는지**는 미검증. 배치 리팩터로 경로 이탈해도 기존 테스트는 전부 통과.
 
 ## 산출물
-- **소스 0 수정 / 테스트 1 신규(96→97)**: `src/test/kotlin/io/soo/bueongi/routes/FacilityServiceTest.kt`
+- **소스 0 수정 / 테스트 1 신규(96→97)**: `src/test/kotlin/io/soo/bueongi/routes/SafetySpotServiceTest.kt`
   - `안심시설 POI 는 출발-도착 직선 경로 위에 놓인다(공선성 + 구간 내)`:
     11km safe 경로의 모든 시설 POI(cctv/bell/store/police)에 대해 ① 2D 외적 `(P−O)×(D−O) ≈ 0`(within 1e-9, 공선성)
     ② lat/lng 가 출발-도착 바운딩 박스 안(연장선 아닌 구간 내)을 고정.
@@ -28,7 +28,7 @@
 ## 검증
 - `./gradlew test` → BUILD SUCCESSFUL.
 - 테스트 **97개 전부 통과**(failures=0, errors=0). 직전 96 → +1. (`build/test-results/test/*.xml` 합산 확인.)
-- FacilityService 카운트 12→13, 그 외 클래스 무변동(거동 보존).
+- SafetySpotService 카운트 12→13, 그 외 클래스 무변동(거동 보존).
 
 ## 잔여·인계
 - **Frontend(#1, 명확한 병목)**: `/api/routes/compare` 클라이언트 스켈레톤 + 응답 분기(400/422 4종). 백엔드 계약 전부 준비 완료.

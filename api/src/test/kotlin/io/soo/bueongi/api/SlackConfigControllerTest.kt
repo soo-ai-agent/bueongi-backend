@@ -60,7 +60,7 @@ class SlackConfigControllerTest(
     fun `PUT 후 GET 하면 변경이 반영되어 있다`() {
         mockMvc.put("/api/admin/slack-config") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"enabled":true,"throttleMinutes":45,"mutedCategories":["facility-refresh"]}"""
+            content = """{"enabled":true,"throttleMinutes":45,"mutedCategories":["safetySpot-refresh"]}"""
         }.andExpect { status { isOk() } }
 
         mockMvc.get("/api/admin/slack-config")
@@ -68,7 +68,7 @@ class SlackConfigControllerTest(
                 status { isOk() }
                 jsonPath("$.enabled") { value(true) }
                 jsonPath("$.throttleMinutes") { value(45) }
-                jsonPath("$.categories[4].key") { value("facility-refresh") }
+                jsonPath("$.categories[4].key") { value("safetySpot-refresh") }
                 jsonPath("$.categories[4].muted") { value(true) }
             }
     }

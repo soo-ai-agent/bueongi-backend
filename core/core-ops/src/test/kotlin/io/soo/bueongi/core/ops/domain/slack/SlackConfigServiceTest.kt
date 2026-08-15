@@ -51,7 +51,7 @@ class SlackConfigServiceTest {
         val categories = svc.view().categories
 
         assertThat(categories.map { it.key }).containsExactly(
-            "api-500", "kakao-place-fallback", "tmap-route-fallback", "facility-index-empty", "facility-refresh",
+            "api-500", "kakao-place-fallback", "tmap-route-fallback", "safetySpot-index-empty", "safetySpot-refresh",
         )
         assertThat(categories.first { it.key == "api-500" }.label).isEqualTo("서버 오류(미처리 500)")
         assertThat(categories.all { !it.muted }).isTrue()
@@ -76,14 +76,14 @@ class SlackConfigServiceTest {
             SlackConfigUpdate(
                 enabled = false,
                 throttleMinutes = 30,
-                mutedCategories = setOf("api-500", "facility-refresh"),
+                mutedCategories = setOf("api-500", "safetySpot-refresh"),
             ),
         )
 
         assertThat(updated.enabled).isFalse()
         assertThat(updated.throttleMinutes).isEqualTo(30)
         assertThat(updated.categories.first { it.key == "api-500" }.muted).isTrue()
-        assertThat(updated.categories.first { it.key == "facility-refresh" }.muted).isTrue()
+        assertThat(updated.categories.first { it.key == "safetySpot-refresh" }.muted).isTrue()
         assertThat(updated.categories.first { it.key == "tmap-route-fallback" }.muted).isFalse()
         assertThat(config.isMuted("api-500:NullPointerException")).isTrue()
         assertThat(config.sendEnabled()).isFalse()

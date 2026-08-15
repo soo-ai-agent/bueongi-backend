@@ -18,12 +18,12 @@
 - `common/ApiExceptionHandler.kt`: `OriginRequiredException` + 핸들러(422, title="Origin Required", code="ORIGIN_REQUIRED").
   기존 400 핸들러에 `code` 추가(VALIDATION_FAILED / MALFORMED_REQUEST) — 에러 응답 전반 머신리더블화.
 - `routes/RouteDtos.kt`: `RouteRequest.origin` @NotNull 제거(@Valid 유지) + `requireOrigin()` 가드. destination @NotNull 유지.
-- `routes/RouteService.kt`, `routes/FacilityService.kt`: `origin!!` → `requireOrigin()`.
+- `routes/RouteService.kt`, `routes/SafetySpotService.kt`: `origin!!` → `requireOrigin()`.
 - 테스트: `ApiExceptionHandlerTest`(3→5), `RouteControllerTest`(origin 케이스 422로 갱신).
 
 ## 검증
 - `./gradlew test` BUILD SUCCESSFUL, **45개 전부 통과**(failures=0, errors=0). 직전 43 → +2.
-- 신규/변경 회귀: compare·facilities origin 누락 → 422 ORIGIN_REQUIRED, origin 있고 범위초과 → 400 VALIDATION_FAILED.
+- 신규/변경 회귀: compare·safetySpots origin 누락 → 422 ORIGIN_REQUIRED, origin 있고 범위초과 → 400 VALIDATION_FAILED.
 
 ## 잔여·인계
 - Frontend(Next Action #1): 422 `ORIGIN_REQUIRED` 수신 시 위치 권한 재요청 / 출발지 직접 선택 UI 유도(에러 토스트 아님). `/api/routes/compare` 클라이언트 스켈레톤.

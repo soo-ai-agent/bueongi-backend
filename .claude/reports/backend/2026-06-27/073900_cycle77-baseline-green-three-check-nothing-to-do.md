@@ -24,7 +24,7 @@
 ## 결론: nothing-to-do
 
 **왜 nothing-to-do 가 정당한가**:
-- 52회차 facility 통합 검증 후 신규 가치 없음
+- 52회차 safetySpot 통합 검증 후 신규 가치 없음
 - 신규 backend 커밋(.kt) 없음: 최신 `d95910f`는 agentsroom 설정 파일만 변경
 - 신규 backend 태스크 없음: kanban todo/in_progress = 0건
 - 깨진 빌드 없음: BUILD SUCCESSFUL 150/0/0

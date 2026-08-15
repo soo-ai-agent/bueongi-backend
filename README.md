@@ -156,10 +156,10 @@ backend/
 │   │   ├── api/                 #   controller/ · request/ · response/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
 │   ├── core-route-safety/       # 안전 채점·안심 우회 계획(route 본체가 일방향으로 쓴다)
-│   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(FacilityPoi 소유)
+│   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(SafetySpotPoi 소유)
 │   ├── core-route-stats/        # 경로 추천 통계 — route 본체와 무관, 저장소만 읽는다
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
-│   ├── core-facility/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환
+│   ├── core-safetySpot/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환
 │   ├── core-place/              # 장소 검색(Kakao + 시드 폴백)
 │   ├── core-ads/                # 광고 노출 집계(/api/ads/impression · /api/admin/ad-stats)
 │   ├── core-ops/                # 운영 관측 — 외부API 상태·수신 요청 지표·알림/Slack 설정
@@ -167,7 +167,7 @@ backend/
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
-│   ├── facility/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
+│   ├── safetySpot/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
 │   ├── share/{store,model}          #   13파일이라 역할로 나눔
 │   └── apilog · routestats · requestmetric · adevent   # 각 4~5파일이라 그대로 둔다
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
@@ -190,7 +190,7 @@ backend/
   그 코드의 주어가 어느 도메인인지 다시 본다 — 대개 잘못된 모듈에 놓여 있다.
 - `core-auth` 는 다른 도메인 모듈을 전혀 참조하지 않는다. 관리자 화면 보호는 `SecurityConfig` 의 **경로 문자열**로만 이어진다.
 - **`/api/admin/**` 은 모듈이 아니라 경로 규약이다.** 관리자 조회도 그 데이터를 가진 도메인 모듈이 답한다
-  (`facility-status`→core-facility, `route-stats`→core-route, `share-*`→core-share, `ad-stats`→core-ads,
+  (`safetySpot-status`→core-safetySpot, `route-stats`→core-route, `share-*`→core-share, `ad-stats`→core-ads,
   `api-status`·`traffic`·`alerts`·`slack-config`→core-ops). 관리자 전용 모듈을 두지 않는다.
 - **`@WebMvcTest`·`@SpringBootTest` 는 `api` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
   도메인 단위 테스트는 각 도메인 모듈에 둔다. 모듈을 넘나드는 테스트 헬퍼는 `java-test-fixtures` 로 노출한다.
@@ -223,14 +223,14 @@ backend/
    `list`·`create`·`update` 같은 행위 중심, 모호하면 `getById`·`listActive` 처럼 조건/목적/대상을 보강한다.
 9. **저장소 계층은 `findBy...`·`existsBy...`·`save`·`deleteBy...`** 등 의도가 드러나는 이름을 쓴다
    (예: `LocationStore.findByToken`/`deleteByToken`).
-10. **도메인 용어(route·place·share·facility)를 클래스/메서드명에 일관** 반영한다.
+10. **도메인 용어(route·place·share·safetySpot)를 클래스/메서드명에 일관** 반영한다.
 
 ### 도메인 모델
 11. **상태 변경 규칙/불변식은 엔티티 메서드에 캡슐화**한다
     (예: `ShareSession.withLocation()`·`withRoute()`·`isExpired()` — 외부에서 필드 조작 금지).
 12. **애그리게이트 경계를 넘는 상태 변경은 루트 엔티티를 통해** 수행한다.
 13. **Domain Service 는 유스케이스 오케스트레이션/트랜잭션 경계에 집중**한다
-    (예: `ShareService`·`SafeRouteService`·`FacilityRefreshService`).
+    (예: `ShareService`·`SafeRouteService`·`SafetySpotRefreshService`).
 
 ### 기초 문법·가독성
 14. 코드를 모르는 사람이 봐도 흐름을 따라갈 수 있게 **기초 문법에 충실**하게 쓴다 —
@@ -255,7 +255,7 @@ backend/
 | `GET` | `/api/health` | 운영 readiness + `placeSource`·`locationStore` |
 | `GET` | `/api/places/search?keyword=` | 장소 검색(이름/주소 부분일치) |
 | `POST` | `/api/routes/compare` | safe/main/fast 3개 경로 비교 |
-| `POST` | `/api/routes/facilities` | 경로상 안심시설(CCTV·비상벨·편의점·경찰) |
+| `POST` | `/api/routes/safetySpots` | 경로상 안심시설(CCTV·비상벨·편의점·경찰) |
 | `POST` | `/share/create` | 위치 공유 토큰 생성(`expires_in_hours` 1~3) |
 | `POST` | `/share/{token}/location` | 사용자 위치 갱신(5초마다) |
 | `GET` | `/share/{token}/location` | 보호자 위치 조회(5초 폴링, `expired` 플래그) |

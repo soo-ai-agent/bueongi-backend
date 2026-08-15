@@ -2,10 +2,10 @@ package io.soo.bueongi.core.route.safety
 
 import io.soo.bueongi.core.route.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
-import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
-import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -24,10 +24,10 @@ class SafeDetourPlannerTest {
             GeoPoint(37.50001, 127.00502),
         )
         val bell = listOf(GeoPoint(37.5, 127.007))
-        val source = FakeFacilitySource(
+        val source = FakeSafetySpotSource(
             mapOf(
-                FacilityType.CCTV to cctvCluster.map { FacilityPoint(FacilityType.CCTV, it.lat, it.lng) },
-                FacilityType.BELL to bell.map { FacilityPoint(FacilityType.BELL, it.lat, it.lng) },
+                SafetySpotType.CCTV to cctvCluster.map { SafetySpotPoint(SafetySpotType.CCTV, it.lat, it.lng) },
+                SafetySpotType.BELL to bell.map { SafetySpotPoint(SafetySpotType.BELL, it.lat, it.lng) },
             ),
         )
         val anchors = SafeDetourPlanner(source).extractSafeAnchors(directPath)
@@ -41,13 +41,13 @@ class SafeDetourPlannerTest {
     @Test
     fun `extractSafeAnchors - 회랑 밖 시설은 앵커가 되지 않는다`() {
         val far = listOf(GeoPoint(37.51, 127.005))
-        val source = FakeFacilitySource.of(FacilityType.CCTV, far)
+        val source = FakeSafetySpotSource.of(SafetySpotType.CCTV, far)
         assertThat(SafeDetourPlanner(source).extractSafeAnchors(directPath)).isEmpty()
     }
 
     @Test
     fun `pickDetourWaypoints - 중간 구간 두 앵커로 단일과 쌍 조합 생성(출발거리순)`() {
-        val planner = SafeDetourPlanner(FakeFacilitySource())
+        val planner = SafeDetourPlanner(FakeSafetySpotSource())
         val a = SafeAnchor(GeoPoint(37.5004, 127.004), weight = 5)
         val d = SafeAnchor(GeoPoint(37.5004, 127.006), weight = 3)
         val combos = planner.pickDetourWaypoints(origin, dest, listOf(a, d))
@@ -59,7 +59,7 @@ class SafeDetourPlannerTest {
 
     @Test
     fun `pickDetourWaypoints - 끝점 근처와 과도 측방이탈 앵커 제외`() {
-        val planner = SafeDetourPlanner(FakeFacilitySource())
+        val planner = SafeDetourPlanner(FakeSafetySpotSource())
         val nearOrigin = SafeAnchor(GeoPoint(37.5, 127.0005), weight = 9)
         val farLateral = SafeAnchor(GeoPoint(37.503, 127.005), weight = 9)
         val combos = planner.pickDetourWaypoints(origin, dest, listOf(nearOrigin, farLateral))
@@ -68,7 +68,7 @@ class SafeDetourPlannerTest {
 
     @Test
     fun `pickDetourWaypoints - 앵커 없으면 빈 결과`() {
-        val planner = SafeDetourPlanner(FakeFacilitySource())
+        val planner = SafeDetourPlanner(FakeSafetySpotSource())
         assertThat(planner.pickDetourWaypoints(origin, dest, emptyList())).isEmpty()
     }
 }

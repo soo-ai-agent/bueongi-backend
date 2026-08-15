@@ -8,21 +8,21 @@ import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 
-import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 
-import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
-import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -48,9 +48,9 @@ class SafeRouteServiceTest {
     )
 
     private val cctv = listOf(127.002, 127.004, 127.006, 127.008).map {
-        FacilityPoint(FacilityType.CCTV, 37.5, it)
+        SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
     }
-    private val source = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv))
+    private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer: SafetyScorer = SafetyScorer(source)
     private val detourPlanner: SafeDetourPlanner = SafeDetourPlanner(source)
     private val routeService: RouteService = RouteService(RouteTypeCatalog())
@@ -76,7 +76,7 @@ class SafeRouteServiceTest {
         tmap: TmapRouteClient,
         scorer: SafetyScorer,
         detourPlanner: SafeDetourPlanner,
-        source: FakeFacilitySource,
+        source: FakeSafetySpotSource,
     ) = SafeRouteService(
         routeService = routeService,
         collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
@@ -126,7 +126,7 @@ class SafeRouteServiceTest {
         assertThat(result[0].path).isNotNull
         assertThat(result[0].markers).isNotNull
         val markerTypes = result[0].markers!!.map { it.type }
-        assertThat(markerTypes).contains(FacilityPoiType.START, FacilityPoiType.END, FacilityPoiType.CCTV)
+        assertThat(markerTypes).contains(SafetySpotPoiType.START, SafetySpotPoiType.END, SafetySpotPoiType.CCTV)
         val breakdown = result[0].breakdown!!
         assertThat(breakdown.cctvDensity).isGreaterThan(0.0)
         assertThat(breakdown.routeKm).isGreaterThan(0.0)
@@ -144,14 +144,14 @@ class SafeRouteServiceTest {
 
         val safe = service(tmap).safeCompare(request).first { it.type == RouteType.SAFE }
         val markerTypes = safe.markers!!.map { it.type }
-        assertThat(markerTypes).contains(FacilityPoiType.START, FacilityPoiType.END, FacilityPoiType.CCTV)
-        assertThat(markerTypes).doesNotContain(FacilityPoiType.STORE, FacilityPoiType.POLICE, FacilityPoiType.SAFEHOUSE)
+        assertThat(markerTypes).contains(SafetySpotPoiType.START, SafetySpotPoiType.END, SafetySpotPoiType.CCTV)
+        assertThat(markerTypes).doesNotContain(SafetySpotPoiType.STORE, SafetySpotPoiType.POLICE, SafetySpotPoiType.SAFEHOUSE)
     }
 
     @Test
     fun `회랑에 실 지구대가 있으면 추정으로 중복 채우지 않는다`() {
-        val police = listOf(FacilityPoint(FacilityType.POLICE, 37.5, 127.005, name = "역삼지구대"))
-        val richSource = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv, FacilityType.POLICE to police))
+        val police = listOf(SafetySpotPoint(SafetySpotType.POLICE, 37.5, 127.005, name = "역삼지구대"))
+        val richSource = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv, SafetySpotType.POLICE to police))
         val svc = safeRouteService(
             tmap = mock<TmapRouteClient>().also {
                 whenever(it.isEnabled).thenReturn(true)
@@ -164,7 +164,7 @@ class SafeRouteServiceTest {
         )
 
         val safe = svc.safeCompare(request).first { it.type == RouteType.SAFE }
-        val policeMarkers = safe.markers!!.filter { it.type == FacilityPoiType.POLICE }
+        val policeMarkers = safe.markers!!.filter { it.type == SafetySpotPoiType.POLICE }
         assertThat(policeMarkers).hasSize(1)
         assertThat(policeMarkers.first().name).isEqualTo("역삼지구대")
     }

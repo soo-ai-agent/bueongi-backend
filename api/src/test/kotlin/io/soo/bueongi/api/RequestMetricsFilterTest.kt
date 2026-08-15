@@ -69,7 +69,7 @@ class RequestMetricsFilterTest {
     fun `관리자와 운영 경로는 계측하지 않는다`() {
         val store: CapturingStore = CapturingStore()
         val filter: RequestMetricsFilter = RequestMetricsFilter(store)
-        val excluded: List<String> = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/facilities.json")
+        val excluded: List<String> = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/safetySpots.json")
 
         excluded.forEach { path ->
             filter.doFilter(MockHttpServletRequest("GET", path), MockHttpServletResponse(), chainSetting(200))

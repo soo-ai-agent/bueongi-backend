@@ -60,8 +60,8 @@ class SlackConfigService(
             "api-500" to "서버 오류(미처리 500)",
             "kakao-place-fallback" to "장소검색 폴백(Kakao)",
             "tmap-route-fallback" to "경로 폴백(Tmap)",
-            "facility-index-empty" to "안심시설 데이터 없음",
-            "facility-refresh" to "시설 라이브 갱신 실패",
+            "safetySpot-index-empty" to "안심시설 데이터 없음",
+            "safetySpot-refresh" to "시설 라이브 갱신 실패",
         )
     }
 }

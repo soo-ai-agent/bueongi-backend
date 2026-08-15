@@ -24,8 +24,8 @@ Dorothy 자동 루프 backend 역할의 "다음 한 사이클" 수행: 깨진 �
 - 매핑 검증 결과(미고정 갭 없음):
   - 로직 보유 소스 전부 전용 테스트 보유 — ApiExceptionHandler(+UncaughtExceptionHandlerTest)·WebCorsConfig·
     HealthController·KakaoPlaceProvider(+HttpTest)·PlaceCatalog·PlaceController·PlaceSearchService(+SourceTest)·
-    FacilityService·Geo·RouteController·RouteDtos(RouteRequestGuardTest)·RouteService·RouteType.
-  - 전용 테스트 부재분: 순수 data class(PlaceDtos/FacilityDtos)·인터페이스/마커(PlaceProvider/RemotePlaceProvider)·
+    SafetySpotService·Geo·RouteController·RouteDtos(RouteRequestGuardTest)·RouteService·RouteType.
+  - 전용 테스트 부재분: 순수 data class(PlaceDtos/SafetySpotDtos)·인터페이스/마커(PlaceProvider/RemotePlaceProvider)·
     SeedPlaceProvider(매칭 로직은 PlaceSearchServiceTest 가 서비스 위임 경로로 행위 커버) → 테스트 가치 없음.
 
 ## 검증

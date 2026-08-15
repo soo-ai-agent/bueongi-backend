@@ -24,5 +24,5 @@ Dorothy 자동 루프 backend 역할 56회차. "다음 한 사이클" 결정적 
 
 ## 잔여·인계
 - **[유지] 3대 조건**: 다음 사이클도 ① 베이스라인 그린(150/0) ② 신규 커밋 여부(`git log -3`/`find src -newermt`) ③ 칸반 신규 backend ready — 신규 커밋 있으면 통합 검증(52회차처럼), 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-- **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+- **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 - **신규 backend 태스크/커밋 등장 시에만 착수**.

@@ -1,4 +1,4 @@
-# 작업 보고서 — FacilityService SAFE 최소 시설 보정(floor) 회귀 테스트
+# 작업 보고서 — SafetySpotService SAFE 최소 시설 보정(floor) 회귀 테스트
 
 - 메타: roleId=backend / 엔진=Claude(opus) / 일시=2026-06-18 02:07:49 (KST) / projectPath=bueongi/backend
 
@@ -9,18 +9,18 @@
 - 상태 복원: consensus.md / handoff.md / 에이전트 정의(`.claude/agents/bueongi-backend.md`) 읽음.
 - 베이스라인: `./gradlew test` BUILD SUCCESSFUL, 94개 통과(깨진 것 없음).
 - 도메인 검증·에러 계약·가드 단일화·외부 데이터 경계 양방향이 모두 포화 → 백로그 발굴(코드 직접 점검) 수행.
-- 발견: `FacilityService.alongRoute` 의 `count(perKm, floorWhenSafe)` 가 SAFE 경로에 한해 cctv≥2/bell≥1/store≥1 최소 보정을 적용하나,
+- 발견: `SafetySpotService.alongRoute` 의 `count(perKm, floorWhenSafe)` 가 SAFE 경로에 한해 cctv≥2/bell≥1/store≥1 최소 보정을 적용하나,
   기존 테스트는 전부 11km 장거리(강남→홍대)라 floor 가 발동하지 않아 **이 핵심 안전 불변식이 미고정**이었음.
 
 ## 산출물
-- `routes/FacilityServiceTest.kt` 테스트 2건 신규(소스 무변경):
+- `routes/SafetySpotServiceTest.kt` 테스트 2건 신규(소스 무변경):
   1. 짧은 경로(≈111m)에서 추천(safe) 경로의 floor 보장(cctv≥2, bell≥1, store≥1) 고정.
   2. floor 가 SAFE 전용임을 대조로 고정(같은 짧은 경로에서 safe.total > fast.total, fast.bell=0).
 - consensus.md / handoff.md 갱신(이번 사이클 산출물·Next Action·핸드오프 동기).
 
 ## 검증
 - `./gradlew test` → BUILD SUCCESSFUL.
-- 테스트 96개 전부 통과(failures=0, errors=0). 직전 94 → +2. FacilityService 10→12, 그 외 무변동(거동 보존).
+- 테스트 96개 전부 통과(failures=0, errors=0). 직전 94 → +2. SafetySpotService 10→12, 그 외 무변동(거동 보존).
 - 외부 동작/응답 계약 완전 불변(순수 가산적 가드 테스트, 소스 0 수정).
 
 ## 잔여·인계

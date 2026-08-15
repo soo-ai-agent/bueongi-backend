@@ -23,7 +23,7 @@
 
 ## 5. 잔여·인계
 - 3대 조건 유지: 다음 사이클도 ① 베이스라인 그린 ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부. 신규 커밋 있으면 통합 검증(52회차처럼), 없으면 nothing-to-do.
-- 경계: places(Kakao 장소검색)/routes(`/api/routes/compare`·`/facilities`)/share(`/share` 위치공유) 3 도메인.
+- 경계: places(Kakao 장소검색)/routes(`/api/routes/compare`·`/safetySpots`)/share(`/share` 위치공유) 3 도메인.
 - escalate/report-issue 미호출. 칸반 claim 건너뜀(관련 ready 0). 시크릿 비노출.
 
 ## 메타

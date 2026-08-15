@@ -1,17 +1,17 @@
 package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.model.DataProvenance
-import io.soo.bueongi.core.route.marker.model.FacilityPoi
+import io.soo.bueongi.core.route.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
-import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.tmap.NavStep
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -30,7 +30,7 @@ class RouteOptionWireContractTest {
         path = listOf(GeoPoint(37.5, 127.0)),
         steps = listOf(NavStep(index = 0, lat = 37.5, lng = 127.0, description = "출발", turnType = 200, distanceM = 10, timeS = 8, pointType = "SP")),
         score = 80,
-        markers = listOf(FacilityPoi(type = FacilityPoiType.CCTV, x = 50, y = 50, lat = 37.5, lng = 127.0)),
+        markers = listOf(SafetySpotPoi(type = SafetySpotPoiType.CCTV, x = 50, y = 50, lat = 37.5, lng = 127.0)),
         breakdown = SafetyBreakdown(routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0, policeCount = 0, safePathOverlap = 0.0),
         provenance = DataProvenance(kind = "live", basedOn = "2026.06", origin = "공공데이터포털"),
     )

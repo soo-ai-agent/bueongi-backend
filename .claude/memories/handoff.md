@@ -6,12 +6,12 @@
 - 상태 복원: consensus.md(76회차)·handoff.md(76회차)·팀 노트 읽음.
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 26s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 76회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 `d95910f`(06-27 chore: update project agent configuration) → `.agentsroom` 설정파일 2건만 변경, `find src -name '*.kt' -newermt "2026-06-26 07:15"`=0건, backend/src(.kt) 무영향 ③ 칸반 신규 backend ready 0건(todo=0, in_progress=0).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋 `d95910f`는 agentsroom 설정 파일만 변경 — backend 경계 밖. 신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋 `d95910f`는 agentsroom 설정 파일만 변경 — backend 경계 밖. 신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-27/073900_cycle77-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 77회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부 — **`backend/src`(.kt)를 건드린 커밋일 때에만** 통합 검증 착수. agentsroom 설정·pipeline/frontend 등 타 워커 커밋은 backend 무영향(`d95910f`·`845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
 
 ---
@@ -23,12 +23,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 42s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 75회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -5` 최신 `845aedb` 06-26 04:48 pipeline TS 그대로 — backend 경계 밖, `find src -name '*.kt' -newermt "2026-06-26 06:15"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/071500_cycle76-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 76회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부 — **`backend/src`(.kt)를 건드린 커밋일 때에만** 통합 검증 착수. pipeline/frontend 등 타 워커 커밋은 backend 무영향(74·75·76회차 `845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
 
 ---
@@ -40,12 +40,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 29s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 74회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -5` 최신 `845aedb` 06-26 04:48 pipeline TS 그대로 — 74회차에서 backend 경계 밖 분석 완료, `find src -name '*.kt' -newermt "2026-06-26 05:12"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/061500_cycle75-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 75회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부 — **`backend/src`(.kt)를 건드린 커밋일 때에만** 통합 검증 착수. pipeline/frontend 등 타 워커 커밋은 backend 무영향(74·75회차 `845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
 
 ---
@@ -62,7 +62,7 @@
 
 ## 다음 사이클로 넘기는 것 (핵심, 74회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부 — **`backend/src`(.kt)를 건드린 커밋일 때에만** 통합 검증 착수. pipeline/frontend 등 타 워커 커밋은 backend 무영향(74회차 `845aedb` 선례). 없으면 nothing-to-do. 작위적 신규 점검 발명 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋(backend/src) 등장 시에만 착수**.
 
 ---
@@ -74,12 +74,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 26s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 72회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-26 03:25"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/042746_cycle73-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 73회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -91,12 +91,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 24s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 71회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-26 02:00"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/032523_cycle72-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 72회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -108,12 +108,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 27s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 70회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-26 00:17"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/cycle71-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 71회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -125,12 +125,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 29s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 69회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-26 00:17"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/cycle70-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 70회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -142,12 +142,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 33s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 68회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-25 23:14"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-26/001732_cycle69-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 69회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -159,12 +159,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 32s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 67회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-25 22:00"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/231419_cycle68-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 68회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -176,12 +176,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 14s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 66회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-25 21:00"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/221140_cycle67-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 67회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -193,12 +193,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 20s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 65회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -name '*.kt' -newermt "2026-06-25 09:00"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반: planned `cdb5314d`(내 영역)=100% done, `f8aaf6dd`=soo-auth, `78eb6275`=frontend. backlog 4건(`9694868a`/`6ccbb6b6`/`6ccdc2a5`=플랫폼-운영, `0e823341`=DB) 전부 경계 밖 → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/210843_cycle66-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 66회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -210,12 +210,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 16s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 64회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 그대로, `find src -newermt "2026-06-25 08:50"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/cycle65-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 65회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -227,12 +227,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 14s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 63회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-25 07:00"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/085010_cycle64-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 64회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -244,12 +244,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 12s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 62회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/cycle63-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 63회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -261,12 +261,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 13s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 61회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지). planned `f8aaf6dd`=soo-auth, `cdb5314d`(내 영역)·`78eb6275`(Frontend)=100% done.
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/064509_cycle62-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 62회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -278,12 +278,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 11s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 60회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/054233_cycle61-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 61회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -295,12 +295,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, 5 executed. XML 집계 **tests=150 / failures=0 / errors=0** — 회귀 0, 59회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 점검: planned `f8aaf6dd`(SEC-REFRESH-FAMILY=soo-auth)·`cdb5314d`(Redis 위치공유=내 영역 100% done)·`78eb6275`(Frontend 100%), backlog `9694868a`/`6ccbb6b6`/`6ccdc2a5`(플랫폼-운영)·`0e823341`(DB) — 전부 경계 밖 → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/043000_cycle60-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 60회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -312,12 +312,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 12s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 58회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 점검: planned `f8aaf6dd`(SEC-REFRESH-FAMILY=soo-auth)·`cdb5314d`(Redis 위치공유=내 영역 100% done)·`78eb6275`(Frontend 100%), backlog `9694868a`/`6ccbb6b6`/`6ccdc2a5`(플랫폼-운영)·`0e823341`(DB) — 전부 경계 밖 → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/033725_cycle59-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 59회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -329,12 +329,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 57회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드)·`6ccbb6b6`(모니터링)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/023450_cycle58-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 58회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -346,12 +346,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 10s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 56회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드)·`6ccbb6b6`(모니터링)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/013135_cycle57-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 57회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -363,12 +363,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 13s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 55회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드)·`6ccbb6b6`(모니터링)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-25/002824_cycle56-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 56회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -380,12 +380,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 54회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 신규 커밋 없음(`git log -3` 최신 `3d420ae` 06-22 07:50 그대로, `find src -newermt "2026-06-22 07:30"`=0건, main 27 / test 23 .kt 불변) ③ 칸반 신규 backend ready 0건.
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드)·`6ccbb6b6`(모니터링)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-24/232541_cycle55-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 55회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -397,12 +397,12 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 53회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 없음. `git log -3` 최신 `3d420ae`(52회차 통합 검증 완료분) 그대로, `find src -newermt "2026-06-22 07:30"`=0건(main 27 / test 23 .kt 불변).
 - 칸반 **34건**(53회차 동일): 내 영역 `cdb5314d`(Redis 위치공유) planned 100% done. backend 신규/미완료 0건. `f8aaf6dd`=soo-auth, `78eb6275`/`5f2bced5`/`3842fabd`=bueongi-dev(frontend), `9694868a`/`6ccbb6b6`/`6ccdc2a5`=플랫폼-운영, `0e823341`=DB — 전부 경계 밖 → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-24/221920_cycle54-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 54회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -414,32 +414,32 @@
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 13s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0, 52회차와 일치.
 - **3대 조건 전부 충족**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 없음. `git log -3` 최신 `3d420ae`(06-22 07:50)는 52회차 통합 검증 완료 → 이후 신규 커밋 0, `find src -newermt "2026-06-22 07:30"`=0건(main 27 / test 23 .kt 불변).
 - 칸반 **34건**(52회차 동일): 내 영역 `cdb5314d`(Redis 위치공유) planned 100% done. backend 신규/미완료 0건. `5f2bced5`/`3842fabd`/`78eb6275`=bueongi-dev(frontend), `9694868a`/`6ccbb6b6`/`6ccdc2a5`=플랫폼-운영, `f8aaf6dd`/`0e823341`=soo-auth/DB — 전부 경계 밖 → claim 건너뜀(다른 프로젝트 태스크 claim 금지).
-- **왜 nothing-to-do 가 정당한가**: 52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
+- **왜 nothing-to-do 가 정당한가**: 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음. 소스/테스트/문서 변경 0건. escalate/report-issue 미호출. 시크릿 비노출.
 - 보고서: `.claude/reports/backend/2026-06-24/211601_cycle53-baseline-green-three-check-nothing-to-do.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 53회차)
 1. **[유지] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ 신규 커밋 여부(`git log -3`/`find src -newermt`) — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/facilities`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
+2. **[경계] places/routes/share 3 도메인**. routes=`/api/routes/compare`·`/safetySpots`(origin 누락/동일좌표/원거리→422, routeType safe/main/fast). share=`/share`(POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case).
 3. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
 
 ## 이전 사이클 기록 (52회차 이하)
 
-## 이번 사이클에 한 일 (backend, 52회차) — 산출물: 거점/경로 facility 도메인 통합 검증 (포화 깨짐)
+## 이번 사이클에 한 일 (backend, 52회차) — 산출물: 거점/경로 safetySpot 도메인 통합 검증 (포화 깨짐)
 - 상태 복원: consensus.md(51회차)·handoff.md(51회차)·에이전트 정의 읽음.
-- **포화 깨짐 감지**: `find src -newermt "2026-06-21 07:30"` 가 51회차까지의 0건과 달리 `routes/FacilityService.kt`·`FacilityDtos.kt`·`RouteType.kt`·`test/FacilityServiceTest.kt`(mtime 06-22 07:26~27) 4건 반환. git clean + `git log`: 신규 커밋 `3d420ae`("병렬 워커 보강 — backend 거점/경로 + pipeline + CI") 가 51회차(06:49) 이후 route/facility 도메인 보강·커밋함.
+- **포화 깨짐 감지**: `find src -newermt "2026-06-21 07:30"` 가 51회차까지의 0건과 달리 `routes/SafetySpotService.kt`·`SafetySpotDtos.kt`·`RouteType.kt`·`test/SafetySpotServiceTest.kt`(mtime 06-22 07:26~27) 4건 반환. git clean + `git log`: 신규 커밋 `3d420ae`("병렬 워커 보강 — backend 거점/경로 + pipeline + CI") 가 51회차(06:49) 이후 route/safetySpot 도메인 보강·커밋함.
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 23s, 5 executed. XML **tests=150 / failures=0 / errors=0** — 회귀 0.
-- **통합 검증(산출물)**: 신규 `POST /api/routes/facilities` 가 전 레이어 봉인됨을 독립 확인 — 서비스 단위 `FacilityServiceTest`(15)·웹 슬라이스 `RouteControllerTest`·공용 가드 `RouteRequestGuardTest`·예외매핑 `ApiExceptionHandlerTest`·문서 `docs/API.md §152`. `alongRoute`는 `validatedOrigin()`(ORIGIN_REQUIRED→SAME_ORIGIN→TRIP_TOO_FAR)+`destination!!`로 시작, summary=pois 재집계라 표시-불일치 불가. drift 0, 갭 0.
+- **통합 검증(산출물)**: 신규 `POST /api/routes/safetySpots` 가 전 레이어 봉인됨을 독립 확인 — 서비스 단위 `SafetySpotServiceTest`(15)·웹 슬라이스 `RouteControllerTest`·공용 가드 `RouteRequestGuardTest`·예외매핑 `ApiExceptionHandlerTest`·문서 `docs/API.md §152`. `alongRoute`는 `validatedOrigin()`(ORIGIN_REQUIRED→SAME_ORIGIN→TRIP_TOO_FAR)+`destination!!`로 시작, summary=pois 재집계라 표시-불일치 불가. drift 0, 갭 0.
 - **★중요 정정**: consensus 의 "share 중심" 서술이 코드 실태와 어긋남 — 실제 경계는 **places/routes/share 3 도메인**(150 테스트). 51회차까지 routes·places 도메인 검증 기록 없었음.
-- 칸반 34건: bueongi backend 신규 ready 0건. facility 전용 backend 태스크 부재. 관련 planned `3842fabd`(경로 추천)=frontend→claim 금지. `cdb5314d`(share)=done. → claim 건너뜀.
+- 칸반 34건: bueongi backend 신규 ready 0건. safetySpot 전용 backend 태스크 부재. 관련 planned `3842fabd`(경로 추천)=frontend→claim 금지. `cdb5314d`(share)=done. → claim 건너뜀.
 - **왜 추가 코드 미작성이 정당한가**: 신규 거점/경로는 완결·커밋·그린·전 레이어 테스트·문서 완비로 도착 → 고칠 깨짐·메울 갭 없음. 산출물=통합 검증 보고서. escalate/report-issue 미호출. 시크릿 비노출. 소스 변경 0건(순수 검증).
-- 보고서: `.claude/reports/backend/2026-06-24/090000_cycle52-facilities-domain-integration-verify.md`.
+- 보고서: `.claude/reports/backend/2026-06-24/090000_cycle52-safetySpots-domain-integration-verify.md`.
 
 ## 다음 사이클로 넘기는 것 (핵심, 52회차)
 1. **[재정의] 3대 조건**: ① 베이스라인 그린(150/0) ② 칸반 신규 backend ready 0건 ③ `git log -3`/`find src -newermt <직전사이클시각>` 로 **신규 커밋 여부** — 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지 유지.
-2. **[정정] 경계 = places/routes/share 3 도메인**. routes=거점/경로 안심시설(`/api/routes/compare`·`/facilities`), places=장소검색(Kakao). 향후 점검은 3 도메인 모두 포함(share 만 아님).
-3. **Frontend `78eb6275`(80%)·`3842fabd`(80%) 지금 안전 연동 가능**: share=`API.md §/share`(`/share`, POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case). routes=`API.md §106/§152`(compare·facilities, origin 누락/동일좌표/원거리→422, routeType safe/main/fast).
+2. **[정정] 경계 = places/routes/share 3 도메인**. routes=거점/경로 안심시설(`/api/routes/compare`·`/safetySpots`), places=장소검색(Kakao). 향후 점검은 3 도메인 모두 포함(share 만 아님).
+3. **Frontend `78eb6275`(80%)·`3842fabd`(80%) 지금 안전 연동 가능**: share=`API.md §/share`(`/share`, POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case). routes=`API.md §106/§152`(compare·safetySpots, origin 누락/동일좌표/원거리→422, routeType safe/main/fast).
 4. **신규 backend 태스크/커밋 등장 시에만 착수**.
 
 ---
@@ -1107,8 +1107,8 @@
 - **점검 각도(신규)**: 14회차의 API.md drift 검증은 `RouteType` 중심(distanceFactor·밀도 8값·상수·포트/CORS)이었고 **에러 code 10종 표 + 4개 엔드포인트 요청/응답 shape 는 독립 대조 안 됨**. frontend 분기의 핵심이라 이 미검증 구역을 코드와 1:1 대조:
   - 에러 code 10종 표 ↔ `ApiExceptionHandler.kt`: HTTP status·title·code·errors 유무 **10/10 일치**.
   - RouteRequest shape·가드 순서·MIN/MAX_TRIP ↔ `RouteDtos.kt` ✅ / RouteOption/RouteTag(variant 5종) ✅.
-  - FacilityPoi/Summary/Response ↔ `FacilityDtos.kt` ✅ / PlaceItem ↔ `PlaceDtos.kt` ✅ / HealthStatus(status="UP"/service="bueongi-backend"/placeSource live|seed) ↔ `HealthController.kt` ✅.
-  - MAX_KEYWORD_LENGTH=100(`PlaceSearchService`)·MAX_PER_TYPE=8(`FacilityService`) ✅.
+  - SafetySpotPoi/Summary/Response ↔ `SafetySpotDtos.kt` ✅ / PlaceItem ↔ `PlaceDtos.kt` ✅ / HealthStatus(status="UP"/service="bueongi-backend"/placeSource live|seed) ↔ `HealthController.kt` ✅.
+  - MAX_KEYWORD_LENGTH=100(`PlaceSearchService`)·MAX_PER_TYPE=8(`SafetySpotService`) ✅.
   - **결론: drift 0. 14회차(RouteType 구역)와 합쳐 `docs/API.md` 전 구역 독립검증 완료 — 프론트 연동 참조 문서로 전면 신뢰 가능.** 소스/테스트/문서 변경 0건(신규는 보고서 1파일).
 - **왜 억지 작업이 아닌가**: 직전 사이클의 검증이 부분적(14회차=RouteType 구역만)이었음을 인지하고 나머지 구역을 마저 검증한 것 — 점검 각도를 바꾼 정당한 QA. 단 이로써 전 구역 검증 완료됐으니 계약 변경 없는 한 다음 사이클은 API.md 재검증조차 불요(반복=busywork). nothing-to-do 가 정상.
 - escalate/report-issue 호출 없음(새 막힘 아님 — 외부 API 키는 합의된 보류, Frontend 는 projectPath 밖).
@@ -1133,7 +1133,7 @@
 - **산출물: `docs/API.md`(신규)** — 코드(컨트롤러·DTO·서비스·상수)를 정독해 직접 파생한 현재 계약 스냅샷:
   - 개요(Base URL·포트 8119·CORS·stateless·결정론·외부 키 없이 동작).
   - 공통 에러 스키마(RFC 7807 ProblemDetail+`code`) + **에러 code 10종 전체 표**(HTTP/title/errors 유무/발생조건·프론트 처리).
-  - 엔드포인트 4종: `GET /api/health`, `GET /api/places/search`, `POST /api/routes/compare`, `POST /api/routes/facilities` — 각 요청·200 응답 JSON 예시·필드 의미 표·동작 정책·가드 순서.
+  - 엔드포인트 4종: `GET /api/health`, `GET /api/places/search`, `POST /api/routes/compare`, `POST /api/routes/safetySpots` — 각 요청·200 응답 JSON 예시·필드 의미 표·동작 정책·가드 순서.
   - 도메인 상수 한눈에 표(MAX_KEYWORD_LENGTH·MIN/MAX_TRIP_DISTANCE·MAX_PER_TYPE·도보속도·거리표기경계·distanceFactor).
   - 문서 상단에 **"코드에서 파생, 계약 변경 시 코드와 함께 갱신"(drift 방지) + "누적 이력은 consensus.md, 이 문서는 현재 스냅샷"(역할 분리)** 명기.
 - **검증(drift 방지)**: 문서의 모든 상수·리터럴을 `grep` 으로 코드와 교차검증 — code 10종, `MAX_KEYWORD_LENGTH=100`/`MIN=1.0`/`MAX=100_000.0`/`MAX_PER_TYPE=8`, distanceFactor(1.18/1.05/0.92), 포트 8119·CORS 3619 전부 일치. 소스/테스트 **무변경**(문서만 추가 → 빌드/테스트 영향 0, 108 그린 유지).
@@ -1145,8 +1145,8 @@
   (절차가 가리킨 `.claude/agents/backend.md`·`.claude/skills/backlog-discovery/`는 부재 확인 → 코드 직접 점검으로 백로그 발굴 대체.)
 - 베이스라인 확인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, **108개 전부 통과**(클린 5 executed). 깨진 빌드/테스트 없음.
 - **점검 각도 변경(핸드오프 교훈 적용)**: 이번엔 **main 소스(19) ↔ test 소스(17) 매핑을 직접 추출해 1:1 커버리지를 독립 재검증**(베이턴 "포화" 주장 맹신 대신).
-  - 로직 보유 소스 전부 전용 테스트 보유 확인: `ApiExceptionHandler`(+`UncaughtExceptionHandlerTest`)·`WebCorsConfig`·`HealthController`·`KakaoPlaceProvider`(+`HttpTest`)·`PlaceCatalog`·`PlaceController`·`PlaceSearchService`(+`SourceTest`)·`FacilityService`·`Geo`·`RouteController`·`RouteDtos`(`RouteRequestGuardTest`)·`RouteService`·`RouteType`.
-  - 전용 테스트 부재분은 순수 data class(`PlaceDtos`/`FacilityDtos`)·인터페이스/마커(`PlaceProvider`/`RemotePlaceProvider`)·`SeedPlaceProvider`(매칭 로직은 `PlaceSearchServiceTest`가 서비스 위임 경로로 행위 커버)뿐 → 테스트 가치 없음.
+  - 로직 보유 소스 전부 전용 테스트 보유 확인: `ApiExceptionHandler`(+`UncaughtExceptionHandlerTest`)·`WebCorsConfig`·`HealthController`·`KakaoPlaceProvider`(+`HttpTest`)·`PlaceCatalog`·`PlaceController`·`PlaceSearchService`(+`SourceTest`)·`SafetySpotService`·`Geo`·`RouteController`·`RouteDtos`(`RouteRequestGuardTest`)·`RouteService`·`RouteType`.
+  - 전용 테스트 부재분은 순수 data class(`PlaceDtos`/`SafetySpotDtos`)·인터페이스/마커(`PlaceProvider`/`RemotePlaceProvider`)·`SeedPlaceProvider`(매칭 로직은 `PlaceSearchServiceTest`가 서비스 위임 경로로 행위 커버)뿐 → 테스트 가치 없음.
   - **결론: 미고정 갭 없음.** TODO/FIXME/XXX 0건. → 억지 테스트 금지 원칙대로 nothing-to-do 보고가 정상.
 - escalate/report-issue 호출 없음(새 막힘 아님 — 외부 API 키는 합의된 보류, Frontend 는 projectPath 밖).
 
@@ -1156,7 +1156,7 @@
 - 베이스라인 확인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL, **108개 전부 통과**(클린 5 executed). 깨진 빌드/테스트 없음.
 - **점검 각도 변경(핸드오프 교훈 적용)**: 10회차에 마지막 미점검 main 소스(`PlaceCatalog`)까지 봉인됐으므로, 이번엔 아직 직접 안 본 **resources/config/DTO** 를 데이터 흐름 관점으로 재점검:
   - `application.yml`: CORS allowed-origins + Kakao 키 주입뿐 → 각각 `WebCorsConfigTest`·health `placeSource` 가 이미 커버.
-  - `PlaceDtos`(PlaceItem)·`FacilityDtos`(FacilityPoi/Summary/Response): 순수 data class, 로직·검증 애너테이션 없음 → 테스트 대상 아님(생성 로직은 RouteService/FacilityService 테스트가 이미 검증).
+  - `PlaceDtos`(PlaceItem)·`SafetySpotDtos`(SafetySpotPoi/Summary/Response): 순수 data class, 로직·검증 애너테이션 없음 → 테스트 대상 아님(생성 로직은 RouteService/SafetySpotService 테스트가 이미 검증).
   - `PlaceProvider`·`RemotePlaceProvider`: 인터페이스(구현체 SeedPlaceProvider/KakaoPlaceProvider 는 전용 테스트 보유).
   - **결론: 미고정 갭 없음.** TODO/FIXME/XXX 0건, 오늘 소스 변경 0건. → 억지 테스트 금지 원칙대로 nothing-to-do 보고가 정상.
 - escalate/report-issue 호출 없음(새 막힘 아님 — 외부 API 키는 합의된 보류, Frontend 는 projectPath 밖).
@@ -1188,13 +1188,13 @@
 - 동일하게 베이스라인 그린(99) + due-diligence(TODO 0·소스 무변경) 확인, 억지 작업 없이 마침.
 
 ## 4회차 점검 결과(유지) — 핵심 도메인 4종 정독
-- `RouteService`/`Geo`/`RouteType`/`FacilityService`와 각 테스트 정독 → 모든 의미 있는 불변식 이미 봉인됨 확인.
+- `RouteService`/`Geo`/`RouteType`/`SafetySpotService`와 각 테스트 정독 → 모든 의미 있는 불변식 이미 봉인됨 확인.
 
 ## 점검에서 확인한 커버리지 (미고정 갭 없음)
 - **RouteService**: 반환 순서 safe/main/fast, 프론트 계약 필드, 거리정렬(safe>fast), 결정론, SAME_ORIGIN_DESTINATION, TRIP_TOO_FAR, 1m·89km 경계.
 - **Geo**: haversine(0·근사·대칭), formatDistance(0m·10m단위·**999→"1000m" 경계 명시**·1km이상 km표기·음수→0m), walkMinutes(67m/분·최소1분·음수방어).
 - **RouteType**: from() apiType/id/트림·대소문자/미상→SAFE, distanceFactor 단조, **per-km 안심밀도(cctv/bell/police) SAFE>MAIN>FAST 단조**, store 비단조(MAIN 최대) 대조군.
-- **FacilityService**: start/end 포함, summary==POI집계, **total==cctv+bell+store+police==pois-2**, 밀도차(safe>fast), 유형별 상한8, x/y 0~100, 결정론, routeType 누락→safe, **floor(SAFE 전용 cctv≥2/bell≥1/store≥1)**, **공선성+구간내(시설이 출발-도착 선분 위)**, SAME_ORIGIN/TRIP_TOO_FAR 가드.
+- **SafetySpotService**: start/end 포함, summary==POI집계, **total==cctv+bell+store+police==pois-2**, 밀도차(safe>fast), 유형별 상한8, x/y 0~100, 결정론, routeType 누락→safe, **floor(SAFE 전용 cctv≥2/bell≥1/store≥1)**, **공선성+구간내(시설이 출발-도착 선분 위)**, SAME_ORIGIN/TRIP_TOO_FAR 가드.
 
 ## 왜 새 테스트를 만들지 않았나 (의도적 결정)
 - consensus/handoff 가 반복 명시한 원칙: **"가산적 후보 거의 소진 — 억지 작업 금지, nothing-to-do 보고가 정상."**
@@ -1220,11 +1220,11 @@
 - **이번 사이클(17회차) 계약 변경 없음** — 소스/테스트/문서 무변경(보고서 1파일만). 모든 엔드포인트 거동·응답 shape 완전 불변.
 - (보안 참고) bueongi 백엔드는 Kakao REST 키를 **서버측에만** 보유(`/api/places/search` 프록시). 프론트는 키를 번들에 인라인하면 안 됨 — triplan 의 SEC-KAKAO-REST-KEY-IN-BUNDLE(`kakaoSdk.ts` 브라우저 직접 OAuth 토큰 교환) 같은 패턴을 bueongi 프론트가 도입하지 말 것. 장소 검색은 백엔드 프록시 경유가 정답.
 - **이전 사이클(16회차)**: `README.md`(운영/온보딩 문서) 신규 추가 — 백엔드 기동·설정 단일 가이드(`./gradlew bootRun`→`:8119`, `curl /api/health`, env 2종). API 계약은 `docs/API.md` 가 단일 레퍼런스.
-- **`backend/README.md` 신규**: 백엔드 기동·설정 단일 가이드. `./gradlew bootRun`→`:8119`, `curl /api/health` 로 가동 확인, env 2종(`KAKAO_REST_API_KEY` 미설정 시 시드 폴백·`BUEONGI_CORS_ORIGINS` 기본 `http://localhost:3619`). API 계약은 `docs/API.md` 가 단일 레퍼런스(README 는 링크만). compare/facilities 연동(#1) 시작 시 README 로 백엔드를 띄우고 API.md 로 계약을 참조하면 된다.
-- **`backend/docs/API.md` 전 구역 정확성 보증(14+15회차 합산)**: 14회차가 RouteType 구역(밀도·distanceFactor·상수), 15회차가 나머지 구역(에러 code 10종 표 + 4개 엔드포인트 요청/응답 shape + 상수 출처)을 각각 코드와 독립 대조 → **전 구역 drift 0**. compare/facilities 클라이언트 연동(#1) 시 이 문서 하나로 엔드포인트·요청/응답 shape·에러 code 10종(분기 키)·도메인 상수를 전면 신뢰하고 참조하면 된다. 계약 변경 시 backend 가 코드와 함께 갱신.
+- **`backend/README.md` 신규**: 백엔드 기동·설정 단일 가이드. `./gradlew bootRun`→`:8119`, `curl /api/health` 로 가동 확인, env 2종(`KAKAO_REST_API_KEY` 미설정 시 시드 폴백·`BUEONGI_CORS_ORIGINS` 기본 `http://localhost:3619`). API 계약은 `docs/API.md` 가 단일 레퍼런스(README 는 링크만). compare/safetySpots 연동(#1) 시작 시 README 로 백엔드를 띄우고 API.md 로 계약을 참조하면 된다.
+- **`backend/docs/API.md` 전 구역 정확성 보증(14+15회차 합산)**: 14회차가 RouteType 구역(밀도·distanceFactor·상수), 15회차가 나머지 구역(에러 code 10종 표 + 4개 엔드포인트 요청/응답 shape + 상수 출처)을 각각 코드와 독립 대조 → **전 구역 drift 0**. compare/safetySpots 클라이언트 연동(#1) 시 이 문서 하나로 엔드포인트·요청/응답 shape·에러 code 10종(분기 키)·도메인 상수를 전면 신뢰하고 참조하면 된다. 계약 변경 시 backend 가 코드와 함께 갱신.
 - (참고) 시드 검색 카탈로그는 한국 본토 좌표·non-blank·무중복 불변식이 회귀 테스트로 고정됨 — 시드 추가/수정 시 좌표 swap/오타는 `PlaceCatalogTest` 가 차단(프론트엔 영향 없음, 계약 동일).
 - (참고) CORS 는 dev origin `http://localhost:3619` + GET/POST/OPTIONS 만 허용(application.yml 기본). 프론트 dev 서버 포트가 바뀌거나 운영 도메인 추가 필요 시 `BUEONGI_CORS_ORIGINS`(콤마 구분) env 로 주입 — 코드 변경 불요.
-- (직전 유지) `/api/routes/facilities` 추천(safe) 경로는 per-km CCTV·비상벨·경찰 밀도가 항상 main/fast 보다 높다(편의점 store 만 예외로 main 최대). 시설 POI 는 출발-도착 직선 경로 위에 배치. safe 는 짧아도 cctv≥2/bell≥1/store≥1 보장.
+- (직전 유지) `/api/routes/safetySpots` 추천(safe) 경로는 per-km CCTV·비상벨·경찰 밀도가 항상 main/fast 보다 높다(편의점 store 만 예외로 main 최대). 시설 POI 는 출발-도착 직선 경로 위에 배치. safe 는 짧아도 cctv≥2/bell≥1/store≥1 보장.
 - (직전 유지) 모든 에러 응답에 `code` 보장: 404 NOT_FOUND / 500 INTERNAL_ERROR(내부 details 비노출) / 405 METHOD_NOT_ALLOWED(+Allow) / 415 UNSUPPORTED_MEDIA_TYPE / 422 TRIP_TOO_FAR·SAME_ORIGIN_DESTINATION·ORIGIN_REQUIRED / 400 INVALID_KEYWORD·VALIDATION_FAILED(좌표 오버플로 1e400)·MALFORMED_REQUEST(NaN/Infinity 리터럴). `GET /api/health`→`{status,service,placeSource(live|seed)}`(키 비노출).
 - 통지 채널: SendMessage 미사용 → consensus.md 베이턴 기록(양 역할 매 사이클 읽어 동기).
 

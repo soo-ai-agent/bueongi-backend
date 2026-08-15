@@ -15,7 +15,7 @@
 - 내 영역 places/routes/share 태스크 전부 done.
 
 ## 왜 nothing-to-do 가 정당한가
-- 52회차 facility 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당.
+- 52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 backend 커밋(.kt)·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당.
 - 소스/테스트/문서 변경 0건(순수 검증·분석). escalate/report-issue 미호출. 시크릿 비노출.
 
 ## 다음 사이클로

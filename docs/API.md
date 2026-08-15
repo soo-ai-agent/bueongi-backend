@@ -47,7 +47,7 @@
 | `VALIDATION_FAILED` | 400 | Validation Failed | ✅ field별 | `@Valid` 좌표 범위 위반(lat ±90·lng ±180 초과), 좌표 오버플로(`1e400`→±Infinity). 좌표 입력 인라인 에러 표시. |
 | `MALFORMED_REQUEST` | 400 | Malformed Request | ❌ | 빈 본문·깨진 JSON·타입 불일치·`NaN`/`Infinity` 비숫자 리터럴(Jackson 거부). |
 | `INVALID_KEYWORD` | 400 | Invalid Keyword | ✅ `keyword`(rejectedValue=입력 길이) | 검색어가 트림 후 100자 초과. 검색어 줄이도록 안내. |
-| `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/facilities 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
+| `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/safetySpots 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
 | `SAME_ORIGIN_DESTINATION` | 422 | Same Origin And Destination | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 < 1m(사실상 같은 지점). 도착지 재선택 유도. |
 | `TRIP_TOO_FAR` | 422 | Trip Too Far | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 > 100km(도착지 오선택/위경도 뒤바뀜 추정). 도착지 재선택 유도("100km 이내" 안내). |
 | `INVALID_SLACK_CATEGORY` | 422 | Invalid Slack Category | ✅ `mutedCategories`(rejectedValue=알 수 없는 key 목록) | 관리자 Slack 설정 편집(PUT `/api/admin/slack-config`)의 `mutedCategories` 에 알려진 5종 밖 key. 허용 카테고리만 뮤트하도록 안내. |
@@ -120,7 +120,7 @@
 
 - `origin` (`{lat,lng}`): **누락 가능**(위치 권한 거부/미지원). 누락 → 422 `ORIGIN_REQUIRED`. 값이 있으면 좌표 범위 검증(범위 초과 → 400 `VALIDATION_FAILED`).
 - `destination` (`{lat,lng,name?}`): **필수**(누락 → 400 `VALIDATION_FAILED`, `destination` @NotNull). `name` 은 optional 표시명.
-- `routeType` (optional): compare 에서는 **무시됨**(항상 3개 경로 반환). facilities 전용.
+- `routeType` (optional): compare 에서는 **무시됨**(항상 3개 경로 반환). safetySpots 전용.
 
 **200 응답** (`List<RouteOption>`, 항상 safe→main→fast 순):
 
@@ -150,9 +150,9 @@
 
 ---
 
-## `POST /api/routes/facilities` — 경로상 안심시설
+## `POST /api/routes/safetySpots` — 경로상 안심시설
 
-선택 경로(routeType) 위의 안심시설 POI + 집계. 출처: `routes/RouteController.kt`, `routes/FacilityService.kt`, `routes/FacilityDtos.kt`.
+선택 경로(routeType) 위의 안심시설 POI + 집계. 출처: `routes/RouteController.kt`, `routes/SafetySpotService.kt`, `routes/SafetySpotDtos.kt`.
 
 **요청 본문** (`RouteRequest`, compare 와 동일):
 
@@ -167,7 +167,7 @@
 - `routeType` (optional): `safe`/`main`/`fast`(또는 id `1`/`2`/`3`). **null/미상 → safe**(안전 우선 기본).
 - `origin`/`destination` 규약·가드는 compare 와 동일.
 
-**200 응답** (`FacilitiesResponse`):
+**200 응답** (`SafetySpotsResponse`):
 
 ```json
 {
@@ -180,7 +180,7 @@
 }
 ```
 
-**`pois[]`** (`FacilityPoi`):
+**`pois[]`** (`SafetySpotPoi`):
 
 | 필드 | 의미 |
 |------|------|
@@ -189,7 +189,7 @@
 | `lat`,`lng` | 실 지리 좌표. **출발-도착 직선 경로 위**에 결정론적 배치(선형 보간). |
 | `name` | optional. |
 
-**`summary`** (`FacilitySummary`): `cctv`/`bell`/`store`/`police` 와 `total`. **생성된 POI 를 실제로 집계한 값**이라 화면 표시와 항상 일치(없는 데이터를 지어내지 않음). `total = cctv + bell + store + police`(start/end 제외).
+**`summary`** (`SafetySpotSummary`): `cctv`/`bell`/`store`/`police` 와 `total`. **생성된 POI 를 실제로 집계한 값**이라 화면 표시와 항상 일치(없는 데이터를 지어내지 않음). `total = cctv + bell + store + police`(start/end 제외).
 
 **시설 개수 도메인 불변식**:
 
@@ -391,8 +391,8 @@
 | `api-500` | 서버 오류(미처리 500) | `api-500:<예외클래스>` |
 | `kakao-place-fallback` | 장소검색 폴백(Kakao) | `kakao-place-fallback` |
 | `tmap-route-fallback` | 경로 폴백(Tmap) | `tmap-route-fallback` |
-| `facility-index-empty` | 안심시설 데이터 없음 | `facility-index-empty` |
-| `facility-refresh` | 시설 라이브 갱신 실패 | `facility-refresh:<cdnType>` |
+| `safetySpot-index-empty` | 안심시설 데이터 없음 | `safetySpot-index-empty` |
+| `safetySpot-refresh` | 시설 라이브 갱신 실패 | `safetySpot-refresh:<cdnType>` |
 
 ### `GET /api/admin/slack-config` — 현재 설정 조회
 
@@ -408,8 +408,8 @@
     { "key": "api-500", "label": "서버 오류(미처리 500)", "muted": false },
     { "key": "kakao-place-fallback", "label": "장소검색 폴백(Kakao)", "muted": false },
     { "key": "tmap-route-fallback", "label": "경로 폴백(Tmap)", "muted": false },
-    { "key": "facility-index-empty", "label": "안심시설 데이터 없음", "muted": false },
-    { "key": "facility-refresh", "label": "시설 라이브 갱신 실패", "muted": false }
+    { "key": "safetySpot-index-empty", "label": "안심시설 데이터 없음", "muted": false },
+    { "key": "safetySpot-refresh", "label": "시설 라이브 갱신 실패", "muted": false }
   ]
 }
 ```
@@ -457,7 +457,7 @@
 | `MAX_KEYWORD_LENGTH` | 100 자 | `PlaceSearchService` |
 | `MIN_TRIP_DISTANCE_METERS` | 1.0 m | `RouteDtos.kt` |
 | `MAX_TRIP_DISTANCE_METERS` | 100_000 m (100km) | `RouteDtos.kt` |
-| `MAX_PER_TYPE`(시설) | 8 | `FacilityService` |
+| `MAX_PER_TYPE`(시설) | 8 | `SafetySpotService` |
 | 도보 속도 | 67 m/분 (최소 1분) | `Geo.walkMinutes` |
 | 거리 표기 경계 | < 1000m → `"m"`, 이상 → `"km"` | `Geo.formatDistance` |
 | distanceFactor | safe 1.18 / main 1.05 / fast 0.92 | `RouteType` |

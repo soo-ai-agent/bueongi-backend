@@ -14,13 +14,13 @@ class MarkerEventPublisher(
 ) {
 
     /** 안심시설 색인이 통째로 비어 경로변 마커를 만들 수 없다. */
-    fun facilityIndexEmpty(detail: String) {
+    fun safetySpotIndexEmpty(detail: String) {
         events.publishEvent(OperationEvent(key = INDEX_EMPTY_KEY, title = INDEX_EMPTY_TITLE, detail = detail))
     }
 
     companion object {
 
-        private const val INDEX_EMPTY_KEY: String = "facility-index-empty"
+        private const val INDEX_EMPTY_KEY: String = "safetySpot-index-empty"
         private const val INDEX_EMPTY_TITLE: String = "안심시설 데이터 제공 실패"
     }
 }

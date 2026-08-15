@@ -14,9 +14,9 @@
    (절차가 가리킨 `.claude/agents/backend.md`·`.claude/skills/backlog-discovery/`는 부재 → 실제 존재 파일 기준 진행.)
 2. 베이스라인: `./gradlew test` BUILD SUCCESSFUL, 97개 통과(깨진 것 없음).
 3. 도메인 검증·에러 계약·가드 단일화·외부 데이터 경계(양방향)·SAFE floor·시설 경로 위 배치가 모두 포화 → 백로그 발굴(코드 직접 점검).
-4. RouteService/RouteType/Geo/FacilityService 정독 중 **미고정 핵심 가치 약속 발견**: `RouteType` doc 은 "safe→main→fast 로
+4. RouteService/RouteType/Geo/SafetySpotService 정독 중 **미고정 핵심 가치 약속 발견**: `RouteType` doc 은 "safe→main→fast 로
    갈수록 시설이 준다"를 명시하고, 안심시설(cctv/bell/police) per-km 밀도가 SAFE>MAIN>FAST 로 엄격히 단조 감소하도록 enum 상수가 잡혀 있다.
-   이것이 곧 앱의 핵심 가치(추천 경로=가장 안심시설 많은 길)인데, `RouteTypeTest`는 distanceFactor 단조성만, `FacilityServiceTest`는
+   이것이 곧 앱의 핵심 가치(추천 경로=가장 안심시설 많은 길)인데, `RouteTypeTest`는 distanceFactor 단조성만, `SafetySpotServiceTest`는
    total 기준 SAFE>FAST(MAIN 누락)만 고정 → 밀도 단조성이 상수 레벨에서 미고정.
 
 ## 산출물

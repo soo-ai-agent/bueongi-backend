@@ -21,7 +21,7 @@
 - `src/test/kotlin/io/soo/bueongi/routes/RouteTypeTest.kt` — from() 매핑·SAFE 기본·계수 순서 (5)
 - `src/test/kotlin/io/soo/bueongi/places/PlaceSearchServiceTest.kt` — 부분일치/트림/빈검색어/좌표 (6)
 - `src/test/kotlin/io/soo/bueongi/routes/RouteServiceTest.kt` — 3경로 계약/거리정렬/결정론/0거리 (5)
-- `src/test/kotlin/io/soo/bueongi/routes/FacilityServiceTest.kt` — summary↔POI 일치/상한8/좌표범위/결정론 (8)
+- `src/test/kotlin/io/soo/bueongi/routes/SafetySpotServiceTest.kt` — summary↔POI 일치/상한8/좌표범위/결정론 (8)
 - 메모리 갱신: `.claude/memories/consensus.md`, `.claude/memories/handoff.md`
 
 ## 4. 검증

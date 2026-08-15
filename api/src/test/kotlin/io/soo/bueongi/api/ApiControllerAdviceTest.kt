@@ -5,11 +5,11 @@ import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.api.ApiControllerAdvice
 
-import io.soo.bueongi.storage.db.core.facility.store.FacilityRepository
-import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
-import io.soo.bueongi.core.route.domain.service.RouteFacilityService
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
 import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.post
 @Import(
     RouteService::class,
     RouteTypeCatalog::class,
-    RouteFacilityService::class,
+    RouteSafetySpotService::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,
     RouteCandidateCollector::class,
@@ -41,8 +41,8 @@ import org.springframework.test.web.servlet.post
     RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeDetourPlanner::class,
-    FacilityRepository::class,
-    FacilityUploadStore::class,
+    SafetySpotRepository::class,
+    SafetySpotUploadStore::class,
 )
 class ApiExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,
@@ -112,8 +112,8 @@ class ApiExceptionHandlerTest(
     }
 
     @Test
-    fun `facilities 도 출발지와 도착지가 같으면 422 SAME_ORIGIN_DESTINATION`() {
-        mockMvc.post("/api/routes/facilities") {
+    fun `safetySpots 도 출발지와 도착지가 같으면 422 SAME_ORIGIN_DESTINATION`() {
+        mockMvc.post("/api/routes/safety-spots") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.5,"lng":127.0},"destination":{"lat":37.5,"lng":127.0},"routeType":"safe"}"""
         }.andExpect {
@@ -123,8 +123,8 @@ class ApiExceptionHandlerTest(
     }
 
     @Test
-    fun `facilities 도 origin 누락 시 422 ORIGIN_REQUIRED 를 반환`() {
-        mockMvc.post("/api/routes/facilities") {
+    fun `safetySpots 도 origin 누락 시 422 ORIGIN_REQUIRED 를 반환`() {
+        mockMvc.post("/api/routes/safety-spots") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"destination":{"lat":37.5572,"lng":126.9245},"routeType":"safe"}"""
         }.andExpect {

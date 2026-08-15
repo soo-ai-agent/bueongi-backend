@@ -18,7 +18,7 @@
 - **`docs/API.md`(신규)** — 코드에서 직접 파생한 현재 API 계약 스냅샷:
   - 개요(Base URL·포트 8119·CORS·stateless·결정론·외부 키 없이 동작)
   - 공통 에러 스키마(RFC 7807 ProblemDetail+`code`) + **에러 code 10종 전체 표**(HTTP/title/errors/조건·프론트 처리)
-  - 엔드포인트 4종(health·places/search·routes/compare·routes/facilities): 요청·200 응답 JSON 예시·필드 의미·동작 정책·가드 순서
+  - 엔드포인트 4종(health·places/search·routes/compare·routes/safetySpots): 요청·200 응답 JSON 예시·필드 의미·동작 정책·가드 순서
   - 도메인 상수 한눈에 표
   - drift 방지/역할 분리 주석(코드와 함께 갱신·누적 이력은 consensus.md)
 - 소스/테스트 **무변경**(문서만 추가) → 모든 엔드포인트 거동·응답 shape 완전 불변.
@@ -28,7 +28,7 @@
 - **drift 교차검증**: 문서의 모든 상수/리터럴을 `grep` 으로 코드와 대조 — code 10종, `MAX_KEYWORD_LENGTH=100`/`MIN_TRIP_DISTANCE_METERS=1.0`/`MAX_TRIP_DISTANCE_METERS=100_000.0`/`MAX_PER_TYPE=8`, distanceFactor(1.18/1.05/0.92), 포트 8119·CORS 3619 전부 일치 확인.
 
 ## 잔여·인계
-- **Frontend(#1, 최우선·유일 병목)**: `/api/routes/compare`·`/facilities` 클라이언트 연동. 이제 `backend/docs/API.md` 하나로 계약 참조 가능(consensus 이력 안 뒤져도 됨). projectPath 밖이라 backend 가 직접 못 함.
+- **Frontend(#1, 최우선·유일 병목)**: `/api/routes/compare`·`/safetySpots` 클라이언트 연동. 이제 `backend/docs/API.md` 하나로 계약 참조 가능(consensus 이력 안 뒤져도 됨). projectPath 밖이라 backend 가 직접 못 함.
 - **Backend**: 테스트 커버리지·도메인/에러 계약·문서 전부 포화. 다음 사이클은 베이스라인 그린 확인 + `docs/API.md` 코드 동기 확인 후, 실제 갭 없으면 nothing-to-do 정상. 계약 변경 시 `docs/API.md` 동기화 필수.
 - 외부 API 키 주입은 합의된 보류(MVP 범위 밖) — 재에스컬레이션 대상 아님.
 - escalate/report-issue 호출 없음(새 막힘 없음). secret 노출·사용량 우회·git 커밋 없음.

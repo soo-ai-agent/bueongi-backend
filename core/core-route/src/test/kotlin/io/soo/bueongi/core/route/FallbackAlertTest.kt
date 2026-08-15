@@ -16,8 +16,8 @@ import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -38,7 +38,7 @@ class FallbackAlertTest {
         }
     }
 
-    private val source = FakeFacilitySource()
+    private val source = FakeSafetySpotSource()
 
     private val query = RouteQuery(
         origin = GeoPoint(37.5, 127.0),

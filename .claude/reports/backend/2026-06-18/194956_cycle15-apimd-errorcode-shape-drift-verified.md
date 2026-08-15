@@ -23,10 +23,10 @@ Dorothy 자동 루프 backend 사이클. 직전 상태 복원 → 깨진 빌드/
 | RouteRequest shape(origin nullable·destination @NotNull·routeType optional) | `routes/RouteDtos.kt` | 일치 |
 | 가드 순서 ORIGIN_REQUIRED→SAME_ORIGIN_DESTINATION→TRIP_TOO_FAR | `validatedOrigin()` | 일치 |
 | RouteOption/RouteTag(variant 5종) shape | `routes/RouteDtos.kt` | 일치 |
-| FacilityPoi/FacilitySummary/FacilitiesResponse shape | `routes/FacilityDtos.kt` | 일치 |
+| SafetySpotPoi/SafetySpotSummary/FacilitiesResponse shape | `routes/SafetySpotDtos.kt` | 일치 |
 | PlaceItem(name/address/lat/lng) shape | `places/PlaceDtos.kt` | 일치 |
 | HealthStatus(status="UP"/service="bueongi-backend"/placeSource live\|seed) | `health/HealthController.kt` | 일치 |
-| MAX_KEYWORD_LENGTH=100 / MAX_PER_TYPE=8 | `PlaceSearchService`·`FacilityService` | 일치 |
+| MAX_KEYWORD_LENGTH=100 / MAX_PER_TYPE=8 | `PlaceSearchService`·`SafetySpotService` | 일치 |
 | MIN_TRIP=1.0 / MAX_TRIP=100_000.0 | `routes/RouteDtos.kt` | 일치 |
 
 **결론: 에러 code 표 10종 + 4개 엔드포인트 요청/응답 shape + 상수 출처 전부 코드와 정확히 일치. 14회차(RouteType 구역)와 합쳐 `docs/API.md` 전 구역 독립검증 완료 — 프론트 연동 참조 문서로 전면 신뢰 가능.**
@@ -35,7 +35,7 @@ Dorothy 자동 루프 backend 사이클. 직전 상태 복원 → 깨진 빌드/
 
 ## 검증
 - `./gradlew test --rerun-tasks` → BUILD SUCCESSFUL, `build/test-results/test/*.xml` 집계 tests=108/skipped=0/failures=0/errors=0(클린 5 executed).
-- API.md drift: `ApiExceptionHandler.kt`·`RouteDtos.kt`·`FacilityDtos.kt`·`PlaceDtos.kt`·`HealthController.kt` 정독 + `MAX_KEYWORD_LENGTH`/`MAX_PER_TYPE`/리터럴 grep 으로 코드와 1:1 대조 → drift 0.
+- API.md drift: `ApiExceptionHandler.kt`·`RouteDtos.kt`·`SafetySpotDtos.kt`·`PlaceDtos.kt`·`HealthController.kt` 정독 + `MAX_KEYWORD_LENGTH`/`MAX_PER_TYPE`/리터럴 grep 으로 코드와 1:1 대조 → drift 0.
 - 소스/테스트/문서 무변경.
 
 ## 잔여·인계

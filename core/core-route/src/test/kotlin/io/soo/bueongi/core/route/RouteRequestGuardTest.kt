@@ -6,7 +6,7 @@ import io.soo.bueongi.core.route.api.request.toValidatedQuery
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
 import io.soo.bueongi.core.route.domain.error.OriginRequiredException
 import io.soo.bueongi.core.route.domain.error.SameOriginDestinationException

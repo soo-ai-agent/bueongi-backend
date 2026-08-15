@@ -9,7 +9,7 @@ tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 dependencies {
     implementation(project(":core:core-enum"))
     implementation(project(":core:core-common"))
-    implementation(project(":core:core-facility"))
+    implementation(project(":core:core-safety-spot"))
     implementation(project(":core:core-share"))
     implementation(project(":core:core-place"))
     implementation(project(":core:core-route"))

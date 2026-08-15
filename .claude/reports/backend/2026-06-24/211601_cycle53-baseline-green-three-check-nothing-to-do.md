@@ -22,9 +22,9 @@ Dorothy 자동 루프(backend 역할) 1 사이클. 깨진 빌드/테스트 최�
 - git: 52회차 이후 신규 커밋 0, 소스 변경 0.
 
 ## 잔여·인계
-- bueongi backend 포화 유지(52회차 facility 도메인 통합 검증 후 신규 가치 없음). 경계 = **places/routes/share 3 도메인**.
+- bueongi backend 포화 유지(52회차 safetySpot 도메인 통합 검증 후 신규 가치 없음). 경계 = **places/routes/share 3 도메인**.
 - 다음 사이클도 ① 베이스라인 그린(150) ② 칸반 신규 backend ready 0 ③ 신규 커밋 여부 — 3가지만 확인. 신규 커밋 있으면 통합 검증, 없으면 nothing-to-do. 작위적 신규 점검 발명·억지 마이크로 가드 금지.
-- Frontend `78eb6275`(100%)·`3842fabd`(95%)·`5f2bced5`(90%) 연동 시 계약: share=`API.md §/share`(`/share`, POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case). routes=`API.md §106/§152`(compare·facilities, origin 누락/동일좌표/원거리→422, routeType safe/main/fast).
+- Frontend `78eb6275`(100%)·`3842fabd`(95%)·`5f2bced5`(90%) 연동 시 계약: share=`API.md §/share`(`/share`, POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case). routes=`API.md §106/§152`(compare·safetySpots, origin 누락/동일좌표/원거리→422, routeType safe/main/fast).
 
 ## 메타
 - escalate/report-issue 미호출(사람 개입 필요한 막힘 없음). 시크릿 비노출. 커밋/푸시 없음(사용자 승인 영역).

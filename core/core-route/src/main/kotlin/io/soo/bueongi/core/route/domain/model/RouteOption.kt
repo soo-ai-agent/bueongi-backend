@@ -1,12 +1,12 @@
 package io.soo.bueongi.core.route.domain.model
 
-import io.soo.bueongi.core.route.marker.model.FacilityPoi
+import io.soo.bueongi.core.route.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.soo.bueongi.client.tmap.NavStep
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RouteOption(
@@ -20,7 +20,7 @@ data class RouteOption(
     val path: List<GeoPoint>? = null,
     val steps: List<NavStep>? = null,
     val score: Int? = null,
-    val markers: List<FacilityPoi>? = null,
+    val markers: List<SafetySpotPoi>? = null,
     val breakdown: SafetyBreakdown? = null,
     val provenance: DataProvenance? = null,
 )

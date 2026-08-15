@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.route.safety.service
 import io.soo.bueongi.core.route.safety.model.SafeAnchor
-import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.store.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.facility.model.SegmentProjection
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.model.SegmentProjection
 
 import org.springframework.stereotype.Component
 import kotlin.math.floor
@@ -18,7 +18,7 @@ import kotlin.math.floor
  */
 @Component
 class SafeDetourPlanner(
-    private val facilities: FacilitySpatialSource,
+    private val safetySpots: SafetySpotSpatialSource,
 ) {
 
     /**
@@ -29,31 +29,31 @@ class SafeDetourPlanner(
         if (directPath.size < 2) {
             return emptyList()
         }
-        val nearby: List<FacilityPoint> = ANCHOR_TYPES.flatMap {
-            facilities.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
+        val nearby: List<SafetySpotPoint> = ANCHOR_TYPES.flatMap {
+            safetySpots.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
         }
         if (nearby.isEmpty()) {
             return emptyList()
         }
 
-        data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var facilityCount: Int = 0)
+        data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var safetySpotCount: Int = 0)
         val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap<Long, ClusterAccumulator>()
-        for (facility in nearby) {
-            val latCell: Int = floor(facility.lat / CLUSTER_CELL_DEG).toInt()
-            val lngCell: Int = floor(facility.lng / CLUSTER_CELL_DEG).toInt()
+        for (safetySpot in nearby) {
+            val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
+            val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
             val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
             val cluster: ClusterAccumulator = clusters.getOrPut(key) { ClusterAccumulator() }
-            cluster.sumLat += facility.lat
-            cluster.sumLng += facility.lng
-            cluster.facilityCount += 1
+            cluster.sumLat += safetySpot.lat
+            cluster.sumLng += safetySpot.lng
+            cluster.safetySpotCount += 1
         }
 
         val anchors: ArrayList<SafeAnchor> = ArrayList<SafeAnchor>()
         for (cluster in clusters.values) {
             anchors.add(
                 SafeAnchor(
-                    GeoPoint(cluster.sumLat / cluster.facilityCount, cluster.sumLng / cluster.facilityCount),
-                    weight = cluster.facilityCount,
+                    GeoPoint(cluster.sumLat / cluster.safetySpotCount, cluster.sumLng / cluster.safetySpotCount),
+                    weight = cluster.safetySpotCount,
                 ),
             )
         }
@@ -141,6 +141,6 @@ class SafeDetourPlanner(
         /** 거점 1개짜리 조합 수 = Tmap 추가 호출 수. */
         const val SINGLE_ANCHOR_COMBOS: Int = 3
 
-        val ANCHOR_TYPES: List<FacilityType> = listOf(FacilityType.CCTV, FacilityType.SAFEHOUSE, FacilityType.BELL, FacilityType.POLICE)
+        val ANCHOR_TYPES: List<SafetySpotType> = listOf(SafetySpotType.CCTV, SafetySpotType.SAFEHOUSE, SafetySpotType.BELL, SafetySpotType.POLICE)
     }
 }

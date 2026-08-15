@@ -11,4 +11,4 @@
 - 칸반 ready 4건 전부 경계 밖: `6ccdc2a5`(슬랙 E2E)·`9694868a`(대시보드 기동상태)·`6ccbb6b6`(모니터링 분리)=플랫폼-운영, `50634312`(SEC-AUTH-ENV-GITIGNORE)=soo-auth-service → claim 건너뜀(다른 프로젝트 태스크 claim 금지). 내 영역 places/routes/share 태스크 전부 done.
 
 ## 왜 nothing-to-do 가 정당한가
-52회차 facility 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당. 소스/테스트/문서 변경 0건(순수 검증). escalate/report-issue 미호출. 시크릿 비노출.
+52회차 safetySpot 통합 검증 후 신규 가치 없음. 신규 커밋·신규 backend 태스크·깨진 빌드 모두 없음 → 3대 조건 확인이 충분·정당. 소스/테스트/문서 변경 0건(순수 검증). escalate/report-issue 미호출. 시크릿 비노출.

@@ -26,7 +26,7 @@ class RequestPathNormalizerTest {
         assertThat(RequestPathNormalizer.normalize("/api/places/search")).isEqualTo("/api/places/search")
         assertThat(RequestPathNormalizer.normalize("/api/routes/compare")).isEqualTo("/api/routes/compare")
         assertThat(RequestPathNormalizer.normalize("/api/routes/safe-compare")).isEqualTo("/api/routes/safe-compare")
-        assertThat(RequestPathNormalizer.normalize("/api/facilities")).isEqualTo("/api/facilities")
+        assertThat(RequestPathNormalizer.normalize("/api/safety-spots")).isEqualTo("/api/safety-spots")
         assertThat(RequestPathNormalizer.normalize("/something/else")).isEqualTo("/something/else")
     }
 

@@ -1,12 +1,12 @@
 package io.soo.bueongi.core.route.safety.service
-import io.soo.bueongi.core.route.safety.model.FacilityCounts
+import io.soo.bueongi.core.route.safety.model.SafetySpotCounts
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.route.safety.model.SafetyScore
-import io.soo.bueongi.storage.db.core.facility.model.overlapMetersWith
-import io.soo.bueongi.storage.db.core.facility.model.pathLengthMeters
-import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
+import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
 import org.springframework.stereotype.Component
 import kotlin.math.max
@@ -22,7 +22,7 @@ import kotlin.math.roundToInt
  */
 @Component
 class SafetyScorer(
-    private val facilities: FacilitySpatialSource,
+    private val safetySpots: SafetySpotSpatialSource,
 ) {
 
     fun score(path: List<GeoPoint>): SafetyScore {
@@ -36,7 +36,7 @@ class SafetyScorer(
         }
 
         // 1. 회랑 안 시설 수를 종류별로 센다.
-        val counts: FacilityCounts = countNearby(path)
+        val counts: SafetySpotCounts = countNearby(path)
         // 2. 지자체가 지정한 안심귀갓길과 얼마나 겹치는지(0~1) 구한다.
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
         // 3. 둘을 가중 합산해 0~1 로 만든다.
@@ -56,25 +56,25 @@ class SafetyScorer(
         )
     }
 
-    private fun countNearby(path: List<GeoPoint>): FacilityCounts =
-        FacilityCounts(
-        cctv = countWithinCorridor(FacilityType.CCTV, path),
-        lamp = countWithinCorridor(FacilityType.LAMP, path),
-        bell = countWithinCorridor(FacilityType.BELL, path),
-        safehouse = countWithinCorridor(FacilityType.SAFEHOUSE, path),
-        police = countWithinCorridor(FacilityType.POLICE, path),
+    private fun countNearby(path: List<GeoPoint>): SafetySpotCounts =
+        SafetySpotCounts(
+        cctv = countWithinCorridor(SafetySpotType.CCTV, path),
+        lamp = countWithinCorridor(SafetySpotType.LAMP, path),
+        bell = countWithinCorridor(SafetySpotType.BELL, path),
+        safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),
+        police = countWithinCorridor(SafetySpotType.POLICE, path),
     )
 
-    private fun countWithinCorridor(type: FacilityType, path: List<GeoPoint>): Int =
-        facilities.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+    private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
+        safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
 
     /** 안심귀갓길과 겹치는 비율(0~1). 가장 많이 겹치는 한 노선을 기준으로 한다. */
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
-        if (lengthM <= 0 || facilities.safePaths.isEmpty()) {
+        if (lengthM <= 0 || safetySpots.safePaths.isEmpty()) {
             return 0.0
         }
         var best: Double = 0.0
-        for (safePath in facilities.safePaths) {
+        for (safePath in safetySpots.safePaths) {
             if (safePath.coords.size < 2) {
                 continue
             }
@@ -85,7 +85,7 @@ class SafetyScorer(
     }
 
     /** 각 항목을 포화 기준으로 0~1 로 누른 뒤 가중치를 곱해 더한다(가중치 합 = 1.0). */
-    private fun normalizedScore(counts: FacilityCounts, km: Double, safePathOverlap: Double): Double =
+    private fun normalizedScore(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Double =
         WEIGHT_CCTV * saturate(counts.cctv / km, SAT_CCTV_PER_KM) +
             WEIGHT_LAMP * saturate(counts.lamp / km, SAT_LAMP_PER_KM) +
             WEIGHT_BELL * saturate(counts.bell / km, SAT_BELL_PER_KM) +

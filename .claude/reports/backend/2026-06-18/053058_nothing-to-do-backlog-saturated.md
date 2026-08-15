@@ -8,8 +8,8 @@
 ## 진행
 - 상태 복원: consensus.md / handoff.md / 에이전트 정의(`bueongi-backend.md`) 읽음.
 - 베이스라인: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL — 캐시 아닌 클린 재실행으로 99개 전부 통과. 깨진 빌드/테스트 없음.
-- 백로그 발굴(코드 직접 점검) 재수행: 핵심 도메인 4종(`RouteService`/`Geo`/`RouteType`/`FacilityService`)과 각 단위 테스트 정독.
-  - 후보 검토 및 기각: ① RouteService 반환 순서 → 이미 `containsExactly("safe","main","fast")` 고정. ② Geo formatDistance 999→"1000m" 경계 → 이미 GeoTest 명시. ③ summary.total==컴포넌트 합 → 이미 FacilityServiceTest line 47 고정. → **미고정 갭 없음**.
+- 백로그 발굴(코드 직접 점검) 재수행: 핵심 도메인 4종(`RouteService`/`Geo`/`RouteType`/`SafetySpotService`)과 각 단위 테스트 정독.
+  - 후보 검토 및 기각: ① RouteService 반환 순서 → 이미 `containsExactly("safe","main","fast")` 고정. ② Geo formatDistance 999→"1000m" 경계 → 이미 GeoTest 명시. ③ summary.total==컴포넌트 합 → 이미 SafetySpotServiceTest line 47 고정. → **미고정 갭 없음**.
 
 ## 산출물
 - **신규 코드/테스트 없음(소스·테스트 무변경)**. 포화 상태에서 한계 가치 테스트를 억지로 추가하지 않음(consensus/handoff 의 "억지 작업 금지, nothing-to-do 정상" 원칙 준수).

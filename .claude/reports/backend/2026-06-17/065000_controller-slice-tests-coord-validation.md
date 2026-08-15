@@ -22,14 +22,14 @@
   - keyword 없음 / 무일치 → 200 빈 배열
 - 신규: `src/test/kotlin/io/soo/bueongi/routes/RouteControllerTest.kt` (6 케이스)
   - compare 200 + safe/main/fast 3건 + tags(text/variant) 계약
-  - facilities 200 (pois 배열 / summary)
+  - safetySpots 200 (pois 배열 / summary)
   - origin 누락 / destination 좌표 누락 → 400
   - lat 100 / lng 200(범위 초과) → 400
 
 ## 검증
 - `./gradlew test` → BUILD SUCCESSFUL.
 - 테스트 40개 전부 통과 (failures=0, errors=0). 직전 31개 → +9.
-- 클래스별: Geo7 / RouteType5 / PlaceSearchService6 / RouteService5 / FacilityService8 / **PlaceController3 / RouteController6**.
+- 클래스별: Geo7 / RouteType5 / PlaceSearchService6 / RouteService5 / SafetySpotService8 / **PlaceController3 / RouteController6**.
 
 ## 잔여·인계
 - 검증 실패 400 응답 body 가 Spring 기본 포맷 → @RestControllerAdvice 로 field/message 표준화 필요(다음 Next Action 2).

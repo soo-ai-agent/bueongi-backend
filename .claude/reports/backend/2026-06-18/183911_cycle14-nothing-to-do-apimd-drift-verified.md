@@ -17,7 +17,7 @@ Dorothy 자동 루프(backend 역할) 한 사이클 수행: 상태 복원 → �
 ## 산출물
 - **`docs/API.md` 독립 drift 검증 — 전 항목 코드와 일치(drift 0)**:
   - `RouteType.kt` 직접 정독 대조: distanceFactor SAFE 1.18 / MAIN 1.05 / FAST 0.92 ✅, km당 밀도 cctv 6/4/2·bell 3/1.5/0.5·store 2/4/1.5·police 1/0.5/0.0 ✅, name(추천 경로/주요 도로/최단 경로)·desc·tags variant(mint/yellow/blue/default/outline) ✅, id 1/2/3 ✅, `from()` 미상→SAFE ✅.
-  - 상수 grep 대조: `MAX_KEYWORD_LENGTH=100`(PlaceSearchService) ✅, `MIN_TRIP_DISTANCE_METERS=1.0`·`MAX_TRIP_DISTANCE_METERS=100_000.0`(RouteDtos.kt) ✅, `MAX_PER_TYPE=8`(FacilityService) ✅.
+  - 상수 grep 대조: `MAX_KEYWORD_LENGTH=100`(PlaceSearchService) ✅, `MIN_TRIP_DISTANCE_METERS=1.0`·`MAX_TRIP_DISTANCE_METERS=100_000.0`(RouteDtos.kt) ✅, `MAX_PER_TYPE=8`(SafetySpotService) ✅.
   - 인프라 대조: `application.yml` port 8119 ✅, CORS `allowed-origins: ${BUEONGI_CORS_ORIGINS:http://localhost:3619}` ✅.
   - **결론: API.md 는 현재 코드 계약의 정확한 스냅샷. 프론트(bueongi-dev) 연동 참조 문서로 신뢰 가능.**
 - 소스/테스트/문서 **변경 0건**. 억지 테스트/리팩터 금지 원칙 준수(consensus 4~13회차 반복 확정 — 실제 미고정 갭 없을 때 nothing-to-do 가 정상).
@@ -29,7 +29,7 @@ Dorothy 자동 루프(backend 역할) 한 사이클 수행: 상태 복원 → �
 
 ## 잔여·인계
 - **백엔드 실질 잔여 없음(포화)**: 도메인 검증·운영 가시성(health)·에러 계약(code 10종)·입력 가드 단일화·외부/클라이언트/시드 3대 좌표 경계·도메인 안전 불변식(floor·경로 위 배치·밀도 단조성)·CORS 보안·API 계약 문서까지 전부 완성·검증.
-- **명확한 다음 병목 = Frontend(#1, projectPath 밖)**: `/api/routes/compare`·`/facilities` 클라이언트 연동 + 4종 422/400 분기. 백엔드 계약은 전부 준비됨(`docs/API.md` 단일 참조).
+- **명확한 다음 병목 = Frontend(#1, projectPath 밖)**: `/api/routes/compare`·`/safetySpots` 클라이언트 연동 + 4종 422/400 분기. 백엔드 계약은 전부 준비됨(`docs/API.md` 단일 참조).
 - 새 백엔드 가치는 (a) Frontend 가 계약을 실제 호출하거나 (b) 실 외부 API 키 주입(Tmap/Kakao 라우팅·공공 시설데이터, MVP 범위 밖·합의된 보류) 중 하나가 있어야 발생. 외부 키 보류는 새 막힘이 아님 → escalate 재요청 대상 아님.
 - 다음 사이클 권장: ① 베이스라인 그린 확인 ② 계약 변경 발생 시 `docs/API.md` 동기화 ③ 실 갭 없으면 nothing-to-do 보고가 정상.
 

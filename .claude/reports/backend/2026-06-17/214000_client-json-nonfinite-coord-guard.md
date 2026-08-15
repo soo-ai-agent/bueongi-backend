@@ -11,7 +11,7 @@
 ## 2. 진행
 - 상태 복원(consensus.md / handoff.md / 에이전트 정의 `bueongi-backend.md`). `backlog-discovery` 스킬·`backend.md`는 부재 → 실제 존재 파일 기준 진행(직전 사이클들과 동일).
 - 베이스라인: `./gradlew test` BUILD SUCCESSFUL, 90개 통과.
-- 코드 직접 점검(Geo/RouteService/FacilityService/RouteDtos/RouteType/컨트롤러/application.yml).
+- 코드 직접 점검(Geo/RouteService/SafetySpotService/RouteDtos/RouteType/컨트롤러/application.yml).
   - **대칭 갭 발견**: 직전 사이클이 Kakao 외부 응답 매핑(`toPlaceItem`)의 비유한 좌표를 걸렀으나, 좌표의 1차 유입 경로(클라이언트 POST 본문 origin/destination)는 동일 위험 테스트가 없었다. 비유한 좌표는 haversine 에서 NaN 거리를 내고 거리 가드(`<`/`>` 가 NaN 에 항상 false)를 우회해 garbage 경로/시설을 만들 수 있음.
 - 임시 ProbeTest(@WebMvcTest)로 4 입력 실제 거동 관찰 후 삭제 → 정식 회귀 테스트로 봉인.
 

@@ -3,8 +3,8 @@ package io.soo.bueongi.core.route.api.controller
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.api.request.toValidatedQuery
 
-import io.soo.bueongi.core.route.api.response.FacilitiesResponse
-import io.soo.bueongi.core.route.domain.service.RouteFacilityService
+import io.soo.bueongi.core.route.api.response.SafetySpotsResponse
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.service.RouteService
@@ -22,7 +22,7 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 @RequestMapping("/api/routes")
 class RouteController(
     private val routeService: RouteService,
-    private val routeFacilityService: RouteFacilityService,
+    private val routeSafetySpotService: RouteSafetySpotService,
     private val safeRouteService: SafeRouteService,
     private val routeTypeCatalog: RouteTypeCatalog,
 ) {
@@ -35,10 +35,10 @@ class RouteController(
     fun safeCompare(@Valid @RequestBody request: RouteRequest): List<RouteOption> =
         safeRouteService.safeCompare(request.toValidatedQuery(routeTypeCatalog))
 
-    @PostMapping("/facilities")
-    fun facilities(@Valid @RequestBody request: RouteRequest): FacilitiesResponse {
+    @PostMapping("/safety-spots")
+    fun safetySpots(@Valid @RequestBody request: RouteRequest): SafetySpotsResponse {
         val query: RouteQuery = request.toValidatedQuery(routeTypeCatalog)
-        val facilities: RouteFacilities = routeFacilityService.alongRoute(query)
-        return FacilitiesResponse.from(facilities)
+        val safetySpots: RouteFacilities = routeSafetySpotService.alongRoute(query)
+        return SafetySpotsResponse.from(safetySpots)
     }
 }

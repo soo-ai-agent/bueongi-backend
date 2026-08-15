@@ -3,7 +3,7 @@ rootProject.name = "bueongi-backend"
 include(
     "core:core-enum",
     "core:core-common",
-    "core:core-facility",
+    "core:core-safety-spot",
     "core:core-share",
     "core:core-place",
     "core:core-route",

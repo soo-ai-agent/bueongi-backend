@@ -3,7 +3,7 @@
 > 2026-06-25 (KST, 67회차) / 엔진: Claude(opus, backend)
 
 ## 결론
-3대 조건 전부 충족 → 정당한 nothing-to-do. 신규 가치 없음(52회차 facility 통합 검증 이후 포화).
+3대 조건 전부 충족 → 정당한 nothing-to-do. 신규 가치 없음(52회차 safetySpot 통합 검증 이후 포화).
 
 ## 검증 내역
 - **① 베이스라인 그린**: `./gradlew test --rerun-tasks` BUILD SUCCESSFUL in 14s, 5 executed. XML 집계 **tests=150 / skipped=0 / failures=0 / errors=0** — 회귀 0, 66회차와 일치. 깨진 빌드/테스트 없음.
@@ -14,6 +14,6 @@
 - 소스/테스트/문서 변경 0건(순수 검증). escalate/report-issue 미호출(막힘 없음). 시크릿 비노출. 강제 푸시/삭제 없음.
 
 ## 경계 (불변)
-- places(Kakao 장소검색) / routes(`/api/routes/compare`·`/facilities`) / share(`/share` 위치공유) 3 도메인.
+- places(Kakao 장소검색) / routes(`/api/routes/compare`·`/safetySpots`) / share(`/share` 위치공유) 3 도메인.
 - routes: origin 누락→422 ORIGIN_REQUIRED, 동일좌표→422, 원거리→422, routeType safe/main/fast.
 - share: POST not PUT, DELETE 없음, GET location 항상 200+`expired`, TTL 1~3h, snake_case.

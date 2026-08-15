@@ -1,15 +1,15 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.soo.bueongi.core.enums.FacilityType
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.enums.FacilityRefreshStatus
-import io.soo.bueongi.core.enums.FacilityCoordSystem
+import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
+import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -39,15 +39,15 @@ class WireEnumRoundTripTest {
     }
 
     @Test
-    fun `FacilityPoiType 전 종류`() {
-        roundTrip(FacilityPoiType.START, "start")
-        roundTrip(FacilityPoiType.END, "end")
-        roundTrip(FacilityPoiType.CCTV, "cctv")
-        roundTrip(FacilityPoiType.BELL, "bell")
-        roundTrip(FacilityPoiType.STORE, "store")
-        roundTrip(FacilityPoiType.POLICE, "police")
-        roundTrip(FacilityPoiType.SAFEHOUSE, "safehouse")
-        roundTrip(FacilityPoiType.LAMP, "lamp")
+    fun `SafetySpotPoiType 전 종류`() {
+        roundTrip(SafetySpotPoiType.START, "start")
+        roundTrip(SafetySpotPoiType.END, "end")
+        roundTrip(SafetySpotPoiType.CCTV, "cctv")
+        roundTrip(SafetySpotPoiType.BELL, "bell")
+        roundTrip(SafetySpotPoiType.STORE, "store")
+        roundTrip(SafetySpotPoiType.POLICE, "police")
+        roundTrip(SafetySpotPoiType.SAFEHOUSE, "safehouse")
+        roundTrip(SafetySpotPoiType.LAMP, "lamp")
     }
 
     @Test
@@ -58,25 +58,25 @@ class WireEnumRoundTripTest {
     }
 
     @Test
-    fun `FacilityCoordSystem wgs84 epsg5179 epsg5174`() {
-        roundTrip(FacilityCoordSystem.WGS84, "wgs84")
-        roundTrip(FacilityCoordSystem.EPSG5179, "epsg5179")
-        roundTrip(FacilityCoordSystem.EPSG5174, "epsg5174")
+    fun `SafetySpotCoordSystem wgs84 epsg5179 epsg5174`() {
+        roundTrip(SafetySpotCoordSystem.WGS84, "wgs84")
+        roundTrip(SafetySpotCoordSystem.EPSG5179, "epsg5179")
+        roundTrip(SafetySpotCoordSystem.EPSG5174, "epsg5174")
     }
 
     @Test
-    fun `FacilityType cdnType`() {
-        roundTrip(FacilityType.CCTV, "cctv")
-        roundTrip(FacilityType.LAMP, "lamp")
-        roundTrip(FacilityType.BELL, "emergency_bell")
-        roundTrip(FacilityType.SAFEHOUSE, "safehouse")
-        roundTrip(FacilityType.POLICE, "police")
+    fun `SafetySpotType cdnType`() {
+        roundTrip(SafetySpotType.CCTV, "cctv")
+        roundTrip(SafetySpotType.LAMP, "lamp")
+        roundTrip(SafetySpotType.BELL, "emergency_bell")
+        roundTrip(SafetySpotType.SAFEHOUSE, "safehouse")
+        roundTrip(SafetySpotType.POLICE, "police")
     }
 
     @Test
-    fun `FacilityRefreshStatus never replaced kept`() {
-        roundTrip(FacilityRefreshStatus.NEVER, "never")
-        roundTrip(FacilityRefreshStatus.REPLACED, "replaced")
-        roundTrip(FacilityRefreshStatus.KEPT, "kept")
+    fun `SafetySpotRefreshStatus never replaced kept`() {
+        roundTrip(SafetySpotRefreshStatus.NEVER, "never")
+        roundTrip(SafetySpotRefreshStatus.REPLACED, "replaced")
+        roundTrip(SafetySpotRefreshStatus.KEPT, "kept")
     }
 }
