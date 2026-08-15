@@ -13,8 +13,6 @@ dependencies {
     implementation(project(":core:core-share"))
     implementation(project(":core:core-place"))
     implementation(project(":core:core-route"))
-    implementation(project(":core:core-route-safety"))
-    implementation(project(":core:core-route-marker"))
     implementation(project(":core:core-route-stats"))
     implementation(project(":core:core-ads"))
     implementation(project(":core:core-ops"))

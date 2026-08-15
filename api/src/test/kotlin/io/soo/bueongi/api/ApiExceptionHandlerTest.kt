@@ -7,14 +7,14 @@ import io.soo.bueongi.api.ApiControllerAdvice
 
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
-import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
-import io.soo.bueongi.core.route.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
 import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
-import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

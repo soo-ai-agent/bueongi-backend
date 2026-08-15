@@ -155,8 +155,6 @@ backend/
 │   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립
 │   │   ├── api/                 #   controller/ · request/ · response/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
-│   ├── core-route-safety/       # 안전 채점·안심 우회 계획(route 본체가 일방향으로 쓴다)
-│   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(SafetySpotPoi 소유)
 │   ├── core-route-stats/        # 경로 추천 통계 — route 본체와 무관, 저장소만 읽는다
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
 │   ├── core-safetySpot/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환

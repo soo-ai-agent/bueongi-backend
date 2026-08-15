@@ -2,7 +2,7 @@ package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
-import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.enums.SafetySpotPoiType
 

@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.api.response
 
-import io.soo.bueongi.core.route.marker.model.SafetySpotPoi
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.model.RouteSafetySpots
 import io.soo.bueongi.core.route.domain.model.SafetySpotSummary
 

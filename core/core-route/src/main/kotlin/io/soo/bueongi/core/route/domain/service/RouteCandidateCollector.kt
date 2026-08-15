@@ -6,8 +6,8 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.route.safety.model.SafeAnchor
-import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
+import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 

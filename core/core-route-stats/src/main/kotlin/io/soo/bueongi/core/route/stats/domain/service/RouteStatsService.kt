@@ -19,7 +19,7 @@ class RouteStatsService(
 ) {
 
     fun summarize(): RouteStatsSummary {
-        // 최근 것만 상한까지 읽어 그 자리에서 집계한다(누적 집계를 따로 저장하지 않는다).
+        // 최근 것만 상한까지 읽 어 그 자리에서 집계한다(누적 집계를 따로 저장하지 않는다).
         val logs: List<RouteRecommendationLog> = routeStatsStore.findRecent(ROUTE_STATS_CAP)
         return RouteStatsSummary(
             total = logs.size,

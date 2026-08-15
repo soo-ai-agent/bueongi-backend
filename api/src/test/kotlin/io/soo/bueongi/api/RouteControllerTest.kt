@@ -4,7 +4,7 @@ import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
-import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
@@ -13,8 +13,8 @@ import io.soo.bueongi.client.tmap.TmapRouteClient
 
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
-import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
-import io.soo.bueongi.core.route.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc

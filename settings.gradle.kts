@@ -7,8 +7,6 @@ include(
     "core:core-share",
     "core:core-place",
     "core:core-route",
-    "core:core-route-safety",
-    "core:core-route-marker",
     "core:core-route-stats",
     "core:core-ads",
     "core:core-ops",

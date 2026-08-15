@@ -6,7 +6,7 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.client.tmap.TmapRoute
-import io.soo.bueongi.core.route.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
