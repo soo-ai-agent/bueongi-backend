@@ -78,4 +78,27 @@ class FacilityControllerTest(
             status { isBadRequest() }
         }
     }
+
+    @Test
+    fun `범위 밖 좌표는 400 INVALID_COORDINATE`() {
+        mockMvc.get("/api/facilities/police/nearest") {
+            param("lat", "999.0")
+            param("lng", "127.0276")
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("INVALID_COORDINATE") }
+        }
+    }
+
+    @Test
+    fun `숫자가 아닌 좌표는 400 VALIDATION_FAILED`() {
+        mockMvc.get("/api/facilities/police/nearest") {
+            param("lat", "abc")
+            param("lng", "127.0276")
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.errors[0].field") { value("lat") }
+        }
+    }
 }

@@ -2,19 +2,9 @@ package io.soo.bueongi.core.api.controller
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
+import io.soo.bueongi.core.support.error.ApiException
 import io.soo.bueongi.core.support.error.ApiFieldError
-import io.soo.bueongi.core.support.error.EmptyFacilityUploadException
-import io.soo.bueongi.core.support.error.InvalidCoordinateException
-import io.soo.bueongi.core.support.error.InvalidKeywordException
-import io.soo.bueongi.core.support.error.InvalidRouteMetaException
-import io.soo.bueongi.core.support.error.InvalidSlackCategoryException
-import io.soo.bueongi.core.support.error.OriginRequiredException
-import io.soo.bueongi.core.support.error.SameOriginDestinationException
-import io.soo.bueongi.core.support.error.ShareSessionNotFoundException
-import io.soo.bueongi.core.support.error.TripTooFarException
-import io.soo.bueongi.core.support.error.UnknownFacilityTypeException
 import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
-import io.soo.bueongi.core.api.auth.AdminAuthenticationException
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,6 +16,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.support.MissingServletRequestPartException
@@ -38,15 +29,36 @@ class ApiControllerAdvice(
 
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
-    @ExceptionHandler(AdminAuthenticationException::class)
-    fun handleAdminAuthentication(@Suppress("UNUSED_PARAMETER") ex: AdminAuthenticationException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNAUTHORIZED,
-            "아이디 또는 비밀번호가 올바르지 않거나 인증 토큰이 만료되었습니다.",
-        ).apply {
-            title = "Unauthorized"
-            setProperty("code", "UNAUTHORIZED")
+    /** 응답 내용은 예외가 안다. 여기서는 종류를 확인하지 않고 옮겨 담기만 한다. */
+    @ExceptionHandler(ApiException::class)
+    fun handleApi(ex: ApiException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(ex.status, ex.detail).apply {
+            title = ex.title
+            setProperty("code", ex.code)
+            if (ex.fieldErrors.isNotEmpty()) {
+                setProperty("errors", ex.fieldErrors)
+            }
         }
+
+    /** 경로변수·쿼리 변환 실패. Converter 가 [ApiException] 을 던졌다면 그 응답을 그대로 쓴다. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail {
+        val declared: ApiException? = generateSequence(ex.cause) { it.cause }.filterIsInstance<ApiException>().firstOrNull()
+        if (declared != null) {
+            return handleApi(declared)
+        }
+        return ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "요청 값의 형식이 올바르지 않습니다.",
+        ).apply {
+            title = "Validation Failed"
+            setProperty("code", "VALIDATION_FAILED")
+            setProperty(
+                "errors",
+                listOf(ApiFieldError(field = ex.name, message = "형식이 올바르지 않습니다.", rejectedValue = ex.value)),
+            )
+        }
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
@@ -77,166 +89,6 @@ class ApiControllerAdvice(
             setProperty("code", "MALFORMED_REQUEST")
         }
 
-    @ExceptionHandler(OriginRequiredException::class)
-    fun handleOriginRequired(@Suppress("UNUSED_PARAMETER") ex: OriginRequiredException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "출발지를 확인할 수 없습니다. 위치 권한을 허용하거나 출발지를 직접 선택해 주세요.",
-        ).apply {
-            title = "Origin Required"
-            setProperty("code", "ORIGIN_REQUIRED")
-        }
-
-    @ExceptionHandler(InvalidKeywordException::class)
-    fun handleInvalidKeyword(ex: InvalidKeywordException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            "검색어가 허용된 최대 길이를 초과했습니다.",
-        ).apply {
-            title = "Invalid Keyword"
-            setProperty("code", "INVALID_KEYWORD")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "keyword",
-                        message = "검색어는 최대 ${ex.maxLength}자까지 입력할 수 있습니다.",
-                        rejectedValue = ex.actualLength,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(InvalidCoordinateException::class)
-    fun handleInvalidCoordinate(ex: InvalidCoordinateException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            ex.message ?: "위경도 범위가 올바르지 않습니다.",
-        ).apply {
-            title = "Bad Request"
-            setProperty("code", "INVALID_COORDINATE")
-        }
-
-    @ExceptionHandler(SameOriginDestinationException::class)
-    fun handleSameOriginDestination(ex: SameOriginDestinationException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "출발지와 도착지가 동일하거나 너무 가깝습니다. 다른 도착지를 선택해 주세요.",
-        ).apply {
-            title = "Same Origin And Destination"
-            setProperty("code", "SAME_ORIGIN_DESTINATION")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "destination",
-                        message = "도착지는 출발지와 다른 지점이어야 합니다.",
-                        rejectedValue = ex.distanceMeters,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(TripTooFarException::class)
-    fun handleTripTooFar(ex: TripTooFarException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "출발지에서 도착지까지 거리가 너무 멉니다. 가까운 도착지를 선택해 주세요.",
-        ).apply {
-            title = "Trip Too Far"
-            setProperty("code", "TRIP_TOO_FAR")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "destination",
-                        message = "도착지는 출발지에서 ${ex.maxMeters / 1000}km 이내여야 합니다.",
-                        rejectedValue = ex.distanceMeters,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(InvalidRouteMetaException::class)
-    fun handleInvalidRouteMeta(ex: InvalidRouteMetaException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            ex.message,
-        ).apply {
-            title = "Invalid Route Metadata"
-            setProperty("code", "INVALID_ROUTE_META")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = ex.field,
-                        message = ex.message,
-                        rejectedValue = ex.rejectedValue,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(InvalidSlackCategoryException::class)
-    fun handleInvalidSlackCategory(ex: InvalidSlackCategoryException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            "알 수 없는 알림 카테고리입니다. 허용된 카테고리만 뮤트할 수 있습니다.",
-        ).apply {
-            title = "Invalid Slack Category"
-            setProperty("code", "INVALID_SLACK_CATEGORY")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "mutedCategories",
-                        message = "허용된 카테고리: ${ex.knownKeys.joinToString(", ")}",
-                        rejectedValue = ex.rejectedValue,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(UnknownFacilityTypeException::class)
-    fun handleUnknownFacilityType(ex: UnknownFacilityTypeException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            "알 수 없는 시설 종류입니다. 허용된 종류로만 업로드할 수 있습니다.",
-        ).apply {
-            title = "Unknown Facility Type"
-            setProperty("code", "UNKNOWN_FACILITY_TYPE")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "type",
-                        message = "허용된 시설 종류: ${ex.knownTypes.joinToString(", ")}",
-                        rejectedValue = ex.rejectedType,
-                    ),
-                ),
-            )
-        }
-
-    @ExceptionHandler(EmptyFacilityUploadException::class)
-    fun handleEmptyFacilityUpload(ex: EmptyFacilityUploadException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            "업로드에서 유효한 시설 좌표를 찾지 못했습니다. 표준 CSV(헤더 포함)인지 확인해 주세요.",
-        ).apply {
-            title = "Validation Failed"
-            setProperty("code", "VALIDATION_FAILED")
-            setProperty(
-                "errors",
-                listOf(
-                    ApiFieldError(
-                        field = "file",
-                        message = "유효한 좌표가 있는 데이터 행이 없습니다.",
-                        rejectedValue = ex.received,
-                    ),
-                ),
-            )
-        }
-
     @ExceptionHandler(MissingServletRequestPartException::class)
     fun handleMissingPart(ex: MissingServletRequestPartException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -255,16 +107,6 @@ class ApiControllerAdvice(
                     ),
                 ),
             )
-        }
-
-    @ExceptionHandler(ShareSessionNotFoundException::class)
-    fun handleShareSessionNotFound(@Suppress("UNUSED_PARAMETER") ex: ShareSessionNotFoundException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.NOT_FOUND,
-            "공유 세션을 찾을 수 없거나 만료되었습니다.",
-        ).apply {
-            title = "Share Session Not Found"
-            setProperty("code", "SHARE_SESSION_NOT_FOUND")
         }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)

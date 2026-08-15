@@ -1,13 +1,11 @@
 package io.soo.bueongi.core.api.controller.v1
 
-import io.soo.bueongi.core.api.auth.InvalidTokenException
-
 import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.domain.admin.adstats.AdStatsService
 import io.soo.bueongi.core.domain.admin.adstats.AdStatsSummary
-import io.soo.bueongi.core.domain.admin.AdminIdentity
+import io.soo.bueongi.core.api.controller.v1.response.AdminIdentityResponse
 import io.soo.bueongi.core.api.controller.v1.response.AlertsResponse
 import io.soo.bueongi.core.api.controller.v1.response.ApiCallLogResponse
 import io.soo.bueongi.core.domain.admin.apistatus.ApiStatusService
@@ -54,15 +52,7 @@ class AdminController(
 ) {
 
     @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentity {
-        // principal 은 JwtAuthenticationFilter 가 넣은 userId(Long) 다. 아니면 인증 배선이 깨진 것이라 401 로 돌린다.
-        val userId: Long = authentication.principal as? Long
-            ?: throw InvalidTokenException("인증 주체가 올바르지 않습니다")
-        return AdminIdentity(
-            userId = userId,
-            roles = authentication.authorities.map { it.authority },
-        )
-    }
+    fun me(authentication: Authentication): AdminIdentityResponse = AdminIdentityResponse.from(authentication)
 
     @GetMapping("/api-logs")
     fun apiLogs(
