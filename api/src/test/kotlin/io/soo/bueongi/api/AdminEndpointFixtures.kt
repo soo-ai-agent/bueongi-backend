@@ -1,7 +1,6 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ads.domain.service.AdStatsService
-import io.soo.bueongi.core.ops.domain.apistatus.service.ApiStatusService
 import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
 import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
@@ -11,8 +10,6 @@ import io.soo.bueongi.support.monitoring.AlertRecord
 import io.soo.bueongi.support.monitoring.SlackAlertConfig
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
-import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
-import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -38,19 +35,6 @@ import org.springframework.context.annotation.Import
 class AdminEndpointFixtures {
     @TestConfiguration
     class FakeStoreConfig {
-        @Bean
-        fun apiCallLogStore(): ApiCallLogStore = object : ApiCallLogStore {
-            override fun record(log: ApiCallLog) = Unit
-            override fun findRecent(provider: String?, limit: Int): List<ApiCallLog> {
-                lastLimit = limit
-                return listOf(
-                    ApiCallLog(atEpochMs = 1L, provider = "KAKAO", endpoint = "search", success = true, durationMs = 12),
-                )
-            }
-        }
-
-        @Bean
-        fun apiStatusService(store: ApiCallLogStore): ApiStatusService = ApiStatusService(store)
 
         @Bean
         fun routeStatsStore(): RouteStatsStore = object : RouteStatsStore {

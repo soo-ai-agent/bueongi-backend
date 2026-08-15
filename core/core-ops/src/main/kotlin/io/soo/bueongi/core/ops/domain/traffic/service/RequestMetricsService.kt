@@ -8,7 +8,7 @@ import io.soo.bueongi.core.ops.domain.traffic.model.EstimatedUsers
 import io.soo.bueongi.core.ops.domain.traffic.model.TrafficSummary
 import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.support.util.HourlyBuckets
-import io.soo.bueongi.core.ops.domain.apistatus.model.LatencyPercentiles
+import io.soo.bueongi.core.ops.domain.traffic.model.LatencyPercentiles
 import io.soo.bueongi.support.util.Percentiles
 
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP

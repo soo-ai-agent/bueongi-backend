@@ -8,9 +8,6 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.route.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
-import io.soo.bueongi.core.enums.ApiProvider
-import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
-import io.soo.bueongi.storage.db.core.apilog.measure
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.stereotype.Component
 
@@ -20,32 +17,17 @@ class RouteCandidateCollector(
     private val tmapClient: TmapRouteClient,
     private val detourPlanner: SafeDetourPlanner,
     private val candidateMerger: RouteCandidateMerger,
-    private val apiCallLogStore: ApiCallLogStore? = null,
 ) {
 
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
     /** 기본 경로 후보(추천·대로우선·최단). 전멸하면 빈 목록 — 호출부가 폴백을 결정한다. */
     fun collectBase(query: RouteQuery): List<TmapRoute> =
-        // ponytail: service 레벨 계측 — HTTP statusCode 등 client 내부 상세는 후속. client 모듈 계측 훅(nullable recorder 주입)으로 승격 가능.
-        apiCallLogStore.measure(
-            provider = ApiProvider.TMAP,
-            endpoint = "route",
-            success = { it.isNotEmpty() },
-            detail = {
-                if (it.isEmpty()) {
-                    "경로 후보 0건 — 폴백"
-                } else {
-                    null
-                }
-            },
-        ) {
-            tmapClient.fetchRoutes(
-                query.origin.toTmapCoord(),
-                query.destination.toTmapCoord(),
-                query.destinationName,
-            )
-        }
+        tmapClient.fetchRoutes(
+            query.origin.toTmapCoord(),
+            query.destination.toTmapCoord(),
+            query.destinationName,
+        )
 
     /** 기본 후보에 안심 우회 후보를 더해 중복을 걷어낸 최종 후보 목록. */
     fun collectAll(query: RouteQuery, base: List<TmapRoute>): List<RouteCandidate> {

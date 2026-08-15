@@ -5,9 +5,7 @@ import io.soo.bueongi.client.kakao.KakaoPlaceClient
 import org.springframework.stereotype.Component
 
 @Component
-class KakaoRemotePlaceProvider(
-    private val client: KakaoPlaceClient,
-) : RemotePlaceProvider {
+class KakaoRemotePlaceProvider(private val client: KakaoPlaceClient) : RemotePlaceProvider {
 
     override val isEnabled: Boolean
         get() = client.isEnabled

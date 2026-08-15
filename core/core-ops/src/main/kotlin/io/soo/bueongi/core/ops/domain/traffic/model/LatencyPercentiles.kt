@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.ops.domain.apistatus.model
+package io.soo.bueongi.core.ops.domain.traffic.model
 
 data class LatencyPercentiles(
     val p50Ms: Long,

@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.ops.domain.traffic.model
 
 import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.core.ops.domain.apistatus.model.LatencyPercentiles
 
 data class TrafficSummary(
     val totalCalls: Int,

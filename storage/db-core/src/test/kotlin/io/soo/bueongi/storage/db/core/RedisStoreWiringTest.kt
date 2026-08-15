@@ -1,8 +1,5 @@
 package io.soo.bueongi.storage.db.core
 
-import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_CAP
-import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
-import io.soo.bueongi.storage.db.core.apilog.RedisApiCallLogStore
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RedisRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
@@ -20,23 +17,13 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
-/** 세 저장소가 각자의 Redis 키와 상한을 쓰는지 고정한다 — 공용 [RedisJsonLog] 로 묶으며 섞이기 쉬운 지점. */
+/** 두 저장소가 각자의 Redis 키와 상한을 쓰는지 고정한다 — 공용 [RedisJsonLog] 로 묶으며 섞이기 쉬운 지점. */
 class RedisStoreWiringTest {
 
     private val listOps: ListOperations<String, String> = mock()
 
     private val redis: StringRedisTemplate = mock<StringRedisTemplate>().also {
         whenever(it.opsForList()).thenReturn(listOps)
-    }
-
-    @Test
-    fun `API 호출 로그는 apilog 키에 상한만큼 쌓는다`() {
-        RedisApiCallLogStore(redis).record(
-            ApiCallLog(atEpochMs = 1L, provider = "TMAP", endpoint = "route", success = true, durationMs = 12L),
-        )
-
-        verify(listOps).leftPush(eq("apilog"), any())
-        verify(listOps).trim("apilog", 0, (API_CALL_LOG_CAP - 1).toLong())
     }
 
     @Test
@@ -71,20 +58,4 @@ class RedisStoreWiringTest {
         verify(listOps).trim("requestmetric", 0, (REQUEST_METRIC_CAP - 1).toLong())
     }
 
-    @Test
-    fun `API 호출 로그 조회는 provider 로 거르고 limit 만큼만 낸다`() {
-        whenever(listOps.range("apilog", 0, -1)).thenReturn(
-            listOf(
-                """{"atEpochMs":3,"provider":"KAKAO","endpoint":"search","success":true,"durationMs":5}""",
-                """{"atEpochMs":2,"provider":"TMAP","endpoint":"route","success":true,"durationMs":9}""",
-                """{"atEpochMs":1,"provider":"KAKAO","endpoint":"search","success":false,"durationMs":7}""",
-            ),
-        )
-
-        val kakao: List<ApiCallLog> = RedisApiCallLogStore(redis).findRecent(provider = "KAKAO", limit = 10)
-        assertThat(kakao.map { it.atEpochMs }).containsExactly(3L, 1L)
-
-        val capped: List<ApiCallLog> = RedisApiCallLogStore(redis).findRecent(provider = null, limit = 2)
-        assertThat(capped.map { it.atEpochMs }).containsExactly(3L, 2L)
-    }
 }
