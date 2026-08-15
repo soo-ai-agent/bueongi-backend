@@ -173,7 +173,9 @@ backend/
 
 - **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/`(서비스·모델) 로 나눈다.
 - **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
-- 도메인 모듈 간 참조는 최소로 유지한다(현재 `route → facility`, `admin → share` 둘뿐, 순환 없음).
+- **도메인 모듈끼리는 참조하지 않는다(현재 0건).** 공유가 필요하면 `core-common`(공용 타입)이나
+  `storage:db-core`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,
+  그 코드의 주어가 어느 도메인인지 다시 본다 — 대개 잘못된 모듈에 놓여 있다.
 - `core-auth` 는 다른 도메인 모듈을 전혀 참조하지 않는다. 관리자 화면 보호는 `SecurityConfig` 의 **경로 문자열**로만 이어진다.
 - **`/api/admin/**` 은 모듈이 아니라 경로 규약이다.** 관리자 조회도 그 데이터를 가진 도메인 모듈이 답한다
   (`facility-status`→core-facility, `route-stats`→core-route, `share-*`→core-share, `ad-stats`→core-ads,

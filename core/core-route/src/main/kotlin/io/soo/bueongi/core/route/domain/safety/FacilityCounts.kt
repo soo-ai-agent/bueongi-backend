@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.facility.domain
+package io.soo.bueongi.core.route.domain.safety
 
 /** 경로 회랑 안에서 센 시설 수. 안전 점수 계산의 입력이다. */
 data class FacilityCounts(

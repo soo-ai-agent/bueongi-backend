@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.domain
 
 import io.soo.bueongi.client.tmap.TmapRoute
-import io.soo.bueongi.core.facility.domain.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.SafetyScorer
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.support.monitoring.AlertNotifier

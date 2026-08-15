@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.facility.domain
+package io.soo.bueongi.core.route.domain.safety
 
 /** 안전 점수의 근거 수치. 그대로 RouteOption.breakdown 으로 나가는 응답 계약이다. */
 data class SafetyBreakdown(

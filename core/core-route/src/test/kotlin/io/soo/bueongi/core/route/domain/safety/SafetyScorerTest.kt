@@ -1,7 +1,7 @@
-package io.soo.bueongi.core.facility
+package io.soo.bueongi.core.route.domain.safety
 
-import io.soo.bueongi.core.facility.domain.SafetyScorer
-import io.soo.bueongi.core.facility.FakeFacilitySource
+import io.soo.bueongi.core.route.domain.safety.SafetyScorer
+import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 import io.soo.bueongi.storage.db.core.facility.SafePath

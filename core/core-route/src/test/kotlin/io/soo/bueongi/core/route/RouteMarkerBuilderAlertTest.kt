@@ -3,7 +3,7 @@ package io.soo.bueongi.core.route
 import io.soo.bueongi.core.route.domain.RouteMarkerBuilder
 import io.soo.bueongi.core.enums.FacilityPoiType
 
-import io.soo.bueongi.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 

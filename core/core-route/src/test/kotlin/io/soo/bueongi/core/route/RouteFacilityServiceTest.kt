@@ -6,7 +6,7 @@ import io.soo.bueongi.core.route.domain.RouteQuery
 import io.soo.bueongi.core.enums.FacilityPoiType
 import io.soo.bueongi.core.enums.RouteType
 
-import io.soo.bueongi.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.SafetyPreference

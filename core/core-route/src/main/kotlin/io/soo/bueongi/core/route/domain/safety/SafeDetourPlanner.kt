@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.facility.domain
+package io.soo.bueongi.core.route.domain.safety
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource

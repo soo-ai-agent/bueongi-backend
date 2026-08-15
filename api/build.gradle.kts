@@ -32,6 +32,6 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.jsonwebtoken:jjwt-api:0.12.6")
 
-    testImplementation(testFixtures(project(":core:core-facility")))
+    testImplementation(testFixtures(project(":storage:db-core")))
     testImplementation(testFixtures(project(":core:core-share")))
 }

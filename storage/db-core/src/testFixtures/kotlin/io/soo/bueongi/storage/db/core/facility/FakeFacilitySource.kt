@@ -1,10 +1,5 @@
-package io.soo.bueongi.core.facility
+package io.soo.bueongi.storage.db.core.facility
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
-import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.facility.SafePath
 
 class FakeFacilitySource(
     points: Map<FacilityType, List<FacilityPoint>> = emptyMap(),

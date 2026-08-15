@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.facility.domain
+package io.soo.bueongi.core.route.domain.safety
 
 data class SafetyScore(
     val score: Int,

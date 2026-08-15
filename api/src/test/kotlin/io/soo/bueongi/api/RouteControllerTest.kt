@@ -12,8 +12,8 @@ import io.soo.bueongi.client.tmap.TmapRouteClient
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
 import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
-import io.soo.bueongi.core.facility.domain.SafeDetourPlanner
-import io.soo.bueongi.core.facility.domain.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.SafetyScorer
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
