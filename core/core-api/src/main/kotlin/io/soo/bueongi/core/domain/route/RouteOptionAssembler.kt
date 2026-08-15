@@ -36,15 +36,7 @@ class RouteOptionAssembler(
                     steps = candidate.steps,
                     score = scoredRoute.score.score,
                     markers = markerBuilder.buildMarkers(origin, destination, candidate.path),
-                    breakdown = ScoreBreakdown(
-                        routeKm = breakdown.routeKm,
-                        cctvDensity = breakdown.cctvDensity,
-                        lampDensity = breakdown.lampDensity,
-                        bellDensity = breakdown.bellDensity,
-                        safehouseCount = breakdown.safehouseCount,
-                        policeCount = breakdown.policeCount,
-                        safePathOverlap = breakdown.safePathOverlap,
-                    ),
+                    breakdown = breakdown,
                     provenance = provenance,
                 )
             }

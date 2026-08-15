@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.domain.facility.SafetyBreakdown
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteType
 
@@ -20,6 +21,6 @@ data class RouteOption(
     val steps: List<NavStep>? = null,
     val score: Int? = null,
     val markers: List<FacilityPoi>? = null,
-    val breakdown: ScoreBreakdown? = null,
+    val breakdown: SafetyBreakdown? = null,
     val provenance: DataProvenance? = null,
 )

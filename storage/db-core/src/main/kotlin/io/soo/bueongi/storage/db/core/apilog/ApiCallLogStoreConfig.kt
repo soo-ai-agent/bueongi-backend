@@ -10,17 +10,11 @@ import org.springframework.data.redis.core.StringRedisTemplate
 @Configuration
 class ApiCallLogStoreConfig {
 
-    @Configuration
+    @Bean
     @Conditional(RedisConfigured::class)
-    class RedisApiCallLog {
-        @Bean
-        fun apiCallLogStore(template: StringRedisTemplate): ApiCallLogStore = RedisApiCallLogStore(template)
-    }
+    fun redisApiCallLogStore(template: StringRedisTemplate): ApiCallLogStore = RedisApiCallLogStore(template)
 
-    @Configuration
+    @Bean
     @Conditional(RedisNotConfigured::class)
-    class InMemoryApiCallLog {
-        @Bean
-        fun apiCallLogStore(): ApiCallLogStore = InMemoryApiCallLogStore()
-    }
+    fun inMemoryApiCallLogStore(): ApiCallLogStore = InMemoryApiCallLogStore()
 }

@@ -18,7 +18,8 @@ const val API_CALL_LOG_MAX_LIMIT: Int = 500
 inline fun <T> ApiCallLogStore?.measure(
     provider: ApiProvider,
     endpoint: String,
-    success: (T) -> Boolean,
+    /** 예외 없이 돌아온 결과도 실패로 볼지 정한다. 기본은 "예외만 실패"(Kakao 검색 0건은 정상 응답). */
+    success: (T) -> Boolean = { true },
     detail: (T) -> String? = { null },
     block: () -> T,
 ): T {

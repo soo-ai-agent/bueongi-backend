@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.domain.facility.SafetyBreakdown
 import io.soo.bueongi.core.enums.FacilityPoiType
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteTagVariant
@@ -27,7 +28,7 @@ class RouteOptionWireContractTest {
         steps = listOf(NavStep(index = 0, lat = 37.5, lng = 127.0, description = "출발", turnType = 200, distanceM = 10, timeS = 8, pointType = "SP")),
         score = 80,
         markers = listOf(FacilityPoi(type = FacilityPoiType.CCTV, x = 50, y = 50, lat = 37.5, lng = 127.0)),
-        breakdown = ScoreBreakdown(routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0, policeCount = 0, safePathOverlap = 0.0),
+        breakdown = SafetyBreakdown(routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0, policeCount = 0, safePathOverlap = 0.0),
         provenance = DataProvenance(kind = "live", basedOn = "2026.06", origin = "공공데이터포털"),
     )
 

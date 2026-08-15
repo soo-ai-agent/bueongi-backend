@@ -10,17 +10,11 @@ import org.springframework.data.redis.core.StringRedisTemplate
 @Configuration
 class RequestMetricStoreConfig {
 
-    @Configuration
+    @Bean
     @Conditional(RedisConfigured::class)
-    class RedisRequestMetric {
-        @Bean
-        fun requestMetricStore(template: StringRedisTemplate): RequestMetricStore = RedisRequestMetricStore(template)
-    }
+    fun redisRequestMetricStore(template: StringRedisTemplate): RequestMetricStore = RedisRequestMetricStore(template)
 
-    @Configuration
+    @Bean
     @Conditional(RedisNotConfigured::class)
-    class InMemoryRequestMetric {
-        @Bean
-        fun requestMetricStore(): RequestMetricStore = InMemoryRequestMetricStore()
-    }
+    fun inMemoryRequestMetricStore(): RequestMetricStore = InMemoryRequestMetricStore()
 }

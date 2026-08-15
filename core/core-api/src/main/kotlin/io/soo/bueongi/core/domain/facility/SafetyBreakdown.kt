@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.facility
 
+/** 안전 점수의 근거 수치. 그대로 RouteOption.breakdown 으로 나가는 응답 계약이다. */
 data class SafetyBreakdown(
     val routeKm: Double,
     val cctvDensity: Double,
