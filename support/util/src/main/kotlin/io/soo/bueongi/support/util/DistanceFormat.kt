@@ -1,9 +1,9 @@
-package io.soo.bueongi.core.domain.route
+package io.soo.bueongi.support.util
 
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-object RouteFormat {
+object DistanceFormat {
 
     fun formatDistance(meters: Double): String {
         val clampedMeters: Double = max(0.0, meters)

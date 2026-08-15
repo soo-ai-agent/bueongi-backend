@@ -1,3 +1,3 @@
-package io.soo.bueongi.core.domain.facility.coord
+package io.soo.bueongi.support.util
 
 data class Wgs84Point(val lat: Double, val lng: Double)

@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.domain.admin.traffic
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
-import io.soo.bueongi.core.domain.admin.HourlyBuckets
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBuckets
 import io.soo.bueongi.core.domain.admin.apistatus.LatencyPercentiles
-import io.soo.bueongi.core.domain.admin.Percentiles
+import io.soo.bueongi.support.util.Percentiles
 
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric

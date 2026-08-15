@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.domain.admin.adstats
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBucket
 
 data class AdStatsSummary(
     val total: Int,

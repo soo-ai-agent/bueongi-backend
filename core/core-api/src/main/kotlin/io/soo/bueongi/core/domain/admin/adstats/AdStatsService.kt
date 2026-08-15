@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.domain.admin.adstats
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
-import io.soo.bueongi.core.domain.admin.HourlyBuckets
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBuckets
 
 import io.soo.bueongi.storage.db.core.adevent.AD_EVENT_CAP
 import io.soo.bueongi.storage.db.core.adevent.AdEvent

@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.support.util.DistanceFormat
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
@@ -157,7 +158,7 @@ class SafeRouteService(
                     id = "tmap-${candidate.searchOption}-$index",
                     name = scoredRoute.type.scoredName,
                     time = "${max(1, (candidate.timeS / 60.0).roundToInt())}분",
-                    dist = RouteFormat.formatDistance(candidate.distanceM),
+                    dist = DistanceFormat.formatDistance(candidate.distanceM),
                     desc = "안전 점수 ${scoredRoute.score.score}점 · CCTV ${breakdown.cctvDensity}/km",
                     tags = buildTags(scoredRoute),
                     type = scoredRoute.type,

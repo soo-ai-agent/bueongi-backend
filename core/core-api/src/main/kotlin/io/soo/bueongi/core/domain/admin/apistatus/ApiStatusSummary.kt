@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.domain.admin.apistatus
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBucket
 
 data class ApiStatusSummary(
     val providers: List<ProviderStatus>,

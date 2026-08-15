@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.api.auth
+package io.soo.bueongi.support.util
 
 import java.security.KeyFactory
 import java.security.interfaces.RSAPrivateKey

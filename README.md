@@ -165,7 +165,9 @@ backend/
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   ├── client-tmap/ · client-kakao/
-└── support/ (logging · monitoring)
+└── support/ (logging · monitoring · util)
+    └── util/                           # 도메인 지식 없는 범용 함수만 — 좌표변환(EPSG)·통계·시간버킷·포맷·JS이스케이프·PEM파싱
+                                        #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
 ```
 
 - **컨트롤러는 `core/api/controller/v1`, 유스케이스는 `core/domain/<도메인>`.** 레이어로 먼저 나누고 그 안에서 도메인으로 나눈다.

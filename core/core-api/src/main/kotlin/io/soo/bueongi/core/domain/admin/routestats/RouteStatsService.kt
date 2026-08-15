@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.domain.admin.routestats
 
 import io.soo.bueongi.core.domain.admin.traffic.EndpointCount
-import io.soo.bueongi.core.domain.admin.HourlyBucket
-import io.soo.bueongi.core.domain.admin.HourlyBuckets
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBuckets
 
 import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog

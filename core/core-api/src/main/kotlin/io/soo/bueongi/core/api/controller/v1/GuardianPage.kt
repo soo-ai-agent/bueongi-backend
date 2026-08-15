@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.api.controller.v1
 
+import io.soo.bueongi.support.util.JsEscape
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
 
@@ -11,10 +12,7 @@ class GuardianPage {
         ClassPathResource("share/guardian.html").inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
-    fun render(token: String): String = template.replace(TOKEN_PLACEHOLDER, escapeJs(token))
-
-    private fun escapeJs(value: String): String =
-        value.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e")
+    fun render(token: String): String = template.replace(TOKEN_PLACEHOLDER, JsEscape.escape(token))
 
     private companion object {
         const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"

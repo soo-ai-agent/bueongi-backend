@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.domain.admin.routestats
 
 import io.soo.bueongi.core.domain.admin.traffic.EndpointCount
-import io.soo.bueongi.core.domain.admin.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBucket
 
 data class RouteStatsSummary(
     val total: Int,

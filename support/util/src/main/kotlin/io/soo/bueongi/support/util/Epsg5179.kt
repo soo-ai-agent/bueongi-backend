@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.domain.facility.coord
+package io.soo.bueongi.support.util
 
 import kotlin.math.cos
 import kotlin.math.pow

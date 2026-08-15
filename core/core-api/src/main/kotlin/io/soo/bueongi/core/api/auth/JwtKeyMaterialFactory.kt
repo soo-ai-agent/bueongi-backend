@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.api.auth
 
+import io.soo.bueongi.support.util.JwtPrivateKeyParser
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey

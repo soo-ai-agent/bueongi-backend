@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.domain.admin.traffic
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.core.domain.admin.apistatus.LatencyPercentiles
 
 data class TrafficSummary(

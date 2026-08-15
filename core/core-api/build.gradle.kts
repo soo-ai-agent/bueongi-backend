@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":clients:client-kakao"))
     implementation(project(":support:logging"))
     implementation(project(":support:monitoring"))
+    implementation(project(":support:util"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
 

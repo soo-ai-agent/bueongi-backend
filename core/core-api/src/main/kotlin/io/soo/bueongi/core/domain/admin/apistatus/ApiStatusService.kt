@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.domain.admin.apistatus
 
-import io.soo.bueongi.core.domain.admin.HourlyBucket
-import io.soo.bueongi.core.domain.admin.HourlyBuckets
-import io.soo.bueongi.core.domain.admin.Percentiles
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.HourlyBuckets
+import io.soo.bueongi.support.util.Percentiles
 
 import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_CAP

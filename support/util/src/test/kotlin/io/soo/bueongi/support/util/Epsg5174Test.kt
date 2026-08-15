@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.domain.facility.coord
+package io.soo.bueongi.support.util
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within

@@ -8,6 +8,7 @@ include(
     "clients:client-kakao",
     "support:logging",
     "support:monitoring",
+    "support:util",
 )
 
 pluginManagement {

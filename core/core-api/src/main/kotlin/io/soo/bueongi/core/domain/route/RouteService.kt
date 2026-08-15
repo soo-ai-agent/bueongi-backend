@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.support.util.DistanceFormat
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.storage.db.core.facility.SpatialMath
@@ -24,8 +25,8 @@ class RouteService(
             RouteOption(
                 id = type.id,
                 name = type.displayName,
-                time = "${RouteFormat.walkMinutes(meters)}분",
-                dist = RouteFormat.formatDistance(meters),
+                time = "${DistanceFormat.walkMinutes(meters)}분",
+                dist = DistanceFormat.formatDistance(meters),
                 desc = type.desc,
                 tags = type.tags,
                 type = type,

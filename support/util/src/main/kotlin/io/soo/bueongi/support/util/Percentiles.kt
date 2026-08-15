@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.domain.admin
+package io.soo.bueongi.support.util
 
 import kotlin.math.ceil
 
