@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.ops.domain.traffic.service
 
+import io.soo.bueongi.support.util.todayStartMs
+import io.soo.bueongi.support.util.SERVICE_ZONE
 import io.soo.bueongi.core.ops.domain.traffic.model.DailyActive
 import io.soo.bueongi.core.ops.domain.traffic.model.EndpointTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.EstimatedUsers
@@ -15,7 +17,6 @@ import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.roundToLong
 
@@ -125,19 +126,14 @@ class RequestMetricsService(
     }
 
     private fun dailyActiveUsers(metrics: List<RequestMetric>): List<DailyActive> {
-        val today: LocalDate = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SEOUL).toLocalDate()
+        val today: LocalDate = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(SERVICE_ZONE).toLocalDate()
         return (DAILY_ACTIVE_DAYS - 1 downTo 0).map { daysAgo ->
-            val dayStart: ZonedDateTime = today.minusDays(daysAgo.toLong()).atStartOfDay(SEOUL)
+            val dayStart: ZonedDateTime = today.minusDays(daysAgo.toLong()).atStartOfDay(SERVICE_ZONE)
             val startMs: Long = dayStart.toInstant().toEpochMilli()
             val endMs: Long = dayStart.plusDays(1).toInstant().toEpochMilli()
             val ofDay: List<RequestMetric> = metrics.filter { it.atEpochMs >= startMs && it.atEpochMs < endMs }
             DailyActive(dateEpochMs = startMs, distinctClients = distinctClients(ofDay))
         }
-    }
-
-    private fun todayStartMs(nowMs: Long): Long {
-        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
-        return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
     }
 
     private data class EndpointKey(
@@ -158,7 +154,5 @@ class RequestMetricsService(
         const val DAYS_7_MS: Long = 7L * 24 * 60 * 60 * 1000
 
         const val DAYS_30_MS: Long = 30L * 24 * 60 * 60 * 1000
-
-        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }

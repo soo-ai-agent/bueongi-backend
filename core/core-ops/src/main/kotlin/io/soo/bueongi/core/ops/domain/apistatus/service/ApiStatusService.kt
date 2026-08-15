@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.ops.domain.apistatus.service
 
+import io.soo.bueongi.support.util.todayStartMs
 import io.soo.bueongi.core.ops.domain.apistatus.model.ApiStatusSummary
 import io.soo.bueongi.core.ops.domain.apistatus.model.ProviderStatus
 import io.soo.bueongi.support.util.HourlyBucket
@@ -12,9 +13,6 @@ import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.springframework.stereotype.Service
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -99,11 +97,6 @@ class ApiStatusService(
         return (burnPerHour * HOURS_PER_DAY).roundToInt()
     }
 
-    private fun todayStartMs(nowMs: Long): Long {
-        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
-        return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
-    }
-
     companion object {
         /** [ApiProvider] 전체를 추적한다 — 원천이 늘어도 화면에서 빠지지 않게 enum 을 진실로 삼는다. */
         val TRACKED_PROVIDERS: List<ApiProvider> = ApiProvider.entries
@@ -115,7 +108,5 @@ class ApiStatusService(
         const val HOUR_MS: Long = 3_600_000L
 
         const val HOURS_PER_DAY: Int = 24
-
-        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }

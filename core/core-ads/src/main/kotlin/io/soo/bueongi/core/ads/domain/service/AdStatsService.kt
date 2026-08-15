@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.ads.domain.service
 
+import io.soo.bueongi.support.util.todayStartMs
 import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
 import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.support.util.HourlyBuckets
@@ -8,9 +9,6 @@ import io.soo.bueongi.storage.db.core.adevent.AD_EVENT_CAP
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.springframework.stereotype.Service
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 @Service
 class AdStatsService(
@@ -44,14 +42,7 @@ class AdStatsService(
     private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> =
         HourlyBuckets.countOf(events.map { it.atEpochMs })
 
-    private fun todayStartMs(nowMs: Long): Long {
-        val today: LocalDate = Instant.ofEpochMilli(nowMs).atZone(SEOUL).toLocalDate()
-        return today.atStartOfDay(SEOUL).toInstant().toEpochMilli()
-    }
-
     companion object {
         val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")
-
-        private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }

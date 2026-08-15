@@ -1,7 +1,6 @@
 package io.soo.bueongi.support.util
 
 import java.time.Instant
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -9,7 +8,7 @@ object HourlyBuckets {
 
     fun countOf(timestampsMs: List<Long>): List<HourlyBucket> {
         val currentHour: ZonedDateTime = Instant.ofEpochMilli(System.currentTimeMillis())
-            .atZone(SEOUL)
+            .atZone(SERVICE_ZONE)
             .truncatedTo(ChronoUnit.HOURS)
         return (BUCKET_COUNT - 1 downTo 0).map { hoursAgo ->
             val bucketStart: ZonedDateTime = currentHour.minusHours(hoursAgo.toLong())
@@ -21,6 +20,4 @@ object HourlyBuckets {
     }
 
     const val BUCKET_COUNT: Int = 24
-
-    private val SEOUL: ZoneId = ZoneId.of("Asia/Seoul")
 }
