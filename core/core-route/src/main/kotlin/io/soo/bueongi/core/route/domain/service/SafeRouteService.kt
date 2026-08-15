@@ -9,7 +9,6 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
-import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.stereotype.Service
 
 /**
@@ -22,7 +21,7 @@ class SafeRouteService(
     private val collector: RouteCandidateCollector,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    private val alertNotifier: AlertNotifier? = null,
+    private val routeEvents: RouteEventPublisher? = null,
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
@@ -38,11 +37,7 @@ class SafeRouteService(
         // 3. 기본 후보(추천·대로우선·최단)를 받는다. 전멸이면 Tmap 장애로 보고 알린 뒤 폴백.
         val base: List<TmapRoute> = collector.collectBase(query)
         if (base.isEmpty()) {
-            alertNotifier?.notify(
-                key = "tmap-route-fallback",
-                title = "Tmap 경로 API 실패",
-                detail = "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)",
-            )
+            routeEvents?.safeRouteFellBack("모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)")
             return routeService.buildRoutes(query)
         }
 

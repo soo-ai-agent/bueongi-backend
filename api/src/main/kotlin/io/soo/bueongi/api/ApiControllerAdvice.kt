@@ -1,7 +1,5 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.support.monitoring.AlertNotifier
-
 import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
@@ -24,7 +22,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class ApiControllerAdvice(
-    private val alertNotifier: AlertNotifier? = null,
+    private val apiEvents: ApiEventPublisher? = null,
 ) {
 
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
@@ -141,10 +139,8 @@ class ApiControllerAdvice(
     @ExceptionHandler(LocationStoreUnavailableException::class)
     fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
         log.error("위치 공유 저장소 접근 실패 — 503 SHARE_STORE_UNAVAILABLE 로 응답합니다.", ex)
-        alertNotifier?.notify(
-            key = "share-store-unavailable",
-            title = "위치 공유 저장소(Redis) 접근 실패",
-            detail = "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
+        apiEvents?.shareStoreUnavailable(
+            "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
         )
         val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.SERVICE_UNAVAILABLE,
@@ -161,9 +157,8 @@ class ApiControllerAdvice(
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
         log.error("처리되지 않은 예외 — 500 INTERNAL_ERROR 로 응답합니다.", ex)
-        alertNotifier?.notify(
-            key = "api-500:${ex.javaClass.simpleName}",
-            title = "처리되지 않은 서버 오류(500)",
+        apiEvents?.unhandledServerError(
+            exceptionName = ex.javaClass.simpleName,
             detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
         )
         return ProblemDetail.forStatusAndDetail(

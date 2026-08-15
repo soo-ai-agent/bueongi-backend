@@ -5,7 +5,6 @@ dependencies {
     implementation(project(":core:core-route-marker"))
     implementation(project(":clients:client-tmap"))
     implementation(project(":storage:db-core"))
-    implementation(project(":support:monitoring"))
     implementation(project(":support:util"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")

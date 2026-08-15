@@ -1,5 +1,8 @@
 package io.soo.bueongi.core.route
 
+import io.soo.bueongi.core.route.domain.service.RouteEventPublisher
+import io.soo.bueongi.core.common.event.SafeRouteFellBack
+import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
@@ -15,7 +18,6 @@ import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
-import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -29,11 +31,10 @@ import org.mockito.kotlin.whenever
  */
 class FallbackAlertTest {
 
-    private class RecordingNotifier : AlertNotifier {
-        override val isEnabled: Boolean = true
-        val keys: MutableList<String> = ArrayList()
-        override fun notify(key: String, title: String, detail: String) {
-            keys.add(key)
+    private class RecordingPublisher : ApplicationEventPublisher {
+        val events: MutableList<Any> = ArrayList()
+        override fun publishEvent(event: Any) {
+            events.add(event)
         }
     }
 
@@ -47,13 +48,13 @@ class FallbackAlertTest {
         safetyPreference = SafetyPreference.SAFE,
     )
 
-    private fun service(tmap: TmapRouteClient, notifier: AlertNotifier): SafeRouteService =
+    private fun service(tmap: TmapRouteClient, publisher: RecordingPublisher): SafeRouteService =
         SafeRouteService(
             routeService = RouteService(RouteTypeCatalog()),
             collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
             scorer = SafetyScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
-            alertNotifier = notifier,
+            routeEvents = RouteEventPublisher(publisher),
         )
 
     @Test
@@ -61,23 +62,23 @@ class FallbackAlertTest {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
-        val notifier = RecordingNotifier()
+        val notifier = RecordingPublisher()
 
         val result = service(tmap, notifier).safeCompare(query)
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().score).isNull()
-        assertThat(notifier.keys).containsExactly("tmap-route-fallback")
+        assertThat(notifier.events).singleElement().isInstanceOf(SafeRouteFellBack::class.java)
     }
 
     @Test
     fun `Tmap 키가 없으면 폴백이지만 장애가 아니라 알리지 않는다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
-        val notifier = RecordingNotifier()
+        val notifier = RecordingPublisher()
 
         service(tmap, notifier).safeCompare(query)
 
-        assertThat(notifier.keys).isEmpty()
+        assertThat(notifier.events).isEmpty()
     }
 }

@@ -3,8 +3,6 @@ package io.soo.bueongi.core.route.marker.service
 import io.soo.bueongi.core.route.marker.model.FacilityPoi
 import io.soo.bueongi.core.enums.FacilityPoiType
 
-import io.soo.bueongi.support.monitoring.AlertNotifier
-
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
@@ -23,7 +21,7 @@ import kotlin.math.roundToInt
 @Component
 class RouteMarkerBuilder(
     private val facilities: FacilitySpatialSource,
-    private val alertNotifier: AlertNotifier? = null,
+    private val markerEvents: MarkerEventPublisher? = null,
 ) {
 
     fun buildMarkers(
@@ -88,15 +86,13 @@ class RouteMarkerBuilder(
     }
 
     private fun alertIfIndexEmpty() {
-        val notifier: AlertNotifier = alertNotifier ?: return
+        val publisher: MarkerEventPublisher = markerEvents ?: return
         val totalLoaded: Int = MARKER_TYPES.sumOf { (_, facilityType) -> facilities.index(facilityType).size }
         if (totalLoaded > 0) {
             return
         }
-        notifier.notify(
-            key = "facility-index-empty",
-            title = "안심시설 데이터 제공 실패",
-            detail = "시설 인덱스 총 적재 0(적재 실패/부재) — /api/routes/facilities·/api/routes/safe-compare 의 " +
+        publisher.facilityIndexEmpty(
+            "시설 인덱스 총 적재 0(적재 실패/부재) — /api/routes/facilities·/api/routes/safe-compare 의 " +
                 "경로변 시설 마커를 생성할 수 없음. 데이터 적재/원천 확인 필요",
         )
     }

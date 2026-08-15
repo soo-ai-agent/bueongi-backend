@@ -1,7 +1,9 @@
 package io.soo.bueongi.core.share
 
+import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
+import io.soo.bueongi.core.common.event.MissedArrivalSuspected
+import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
-import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
@@ -67,13 +69,16 @@ class MissedArrivalWatchdogTest {
             lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 60),
         )
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
-        val notifier: RecordingNotifier = RecordingNotifier()
-        val watchdog = MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), notifier)
+        val notifier: RecordingPublisher = RecordingPublisher()
+        val watchdog = MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), ShareEventPublisher(notifier))
 
         watchdog.scan()
 
-        assertThat(notifier.notified).hasSize(1)
-        val (key, title, detail) = notifier.notified[0]
+        assertThat(notifier.events).hasSize(1)
+        val event: MissedArrivalSuspected = notifier.events[0] as MissedArrivalSuspected
+        val key: String = event.key
+        val title: String = event.title
+        val detail: String = event.detail
         assertThat(key).isEqualTo("missed-arrival:tok-ab…")
         assertThat(title).contains("미도착")
         assertThat(detail).doesNotContain(suspect.token)
@@ -91,11 +96,10 @@ class MissedArrivalWatchdogTest {
         override fun findActiveSessions(): List<ShareSession> = active
     }
 
-    private class RecordingNotifier : AlertNotifier {
-        val notified = ArrayList<Triple<String, String, String>>()
-        override val isEnabled: Boolean = true
-        override fun notify(key: String, title: String, detail: String) {
-            notified.add(Triple(key, title, detail))
+    private class RecordingPublisher : ApplicationEventPublisher {
+        val events: MutableList<Any> = ArrayList()
+        override fun publishEvent(event: Any) {
+            events.add(event)
         }
     }
 

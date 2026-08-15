@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.place.domain.service
 
 import io.soo.bueongi.core.place.domain.model.PlaceItem
-import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.common.error.InvalidKeywordException
 import org.slf4j.Logger
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Service
 class PlaceSearchService(
     private val seedProvider: SeedPlaceProvider,
     private val remoteProvider: RemotePlaceProvider,
-    private val alertNotifier: AlertNotifier? = null,
+    private val placeEvents: PlaceEventPublisher? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -31,10 +30,8 @@ class PlaceSearchService(
             remoteProvider.search(trimmed)
         } catch (e: Exception) {
             log.warn("외부 장소 검색 실패 → 시드 폴백 (keyword='{}'): {}", trimmed, e.message)
-            alertNotifier?.notify(
-                key = "kakao-place-fallback",
-                title = "Kakao 장소검색 실패",
-                detail = "${e.javaClass.simpleName}: ${e.message ?: "메시지 없음"} — 시드 카탈로그로 폴백 중",
+            placeEvents?.placeSearchFellBack(
+                "${e.javaClass.simpleName}: ${e.message ?: "메시지 없음"} — 시드 카탈로그로 폴백 중",
             )
             seedProvider.search(trimmed)
         }
