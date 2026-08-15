@@ -153,7 +153,7 @@ backend/
 │           └── config/          # CORS·CDN·Clock·스케줄링·요청 계측 필터
 ├── core/
 │   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립
-│   │   ├── api/                 #   RouteController + request/ · response/
+│   │   ├── api/                 #   controller/ · request/ · response/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
 │   ├── core-route-safety/       # 안전 채점·안심 우회 계획(route 본체가 일방향으로 쓴다)
 │   ├── core-route-marker/       # 경로변 시설 마커 + 미니맵 백분율 좌표(FacilityPoi 소유)
@@ -177,7 +177,8 @@ backend/
                                  #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
 ```
 
-- **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/` 으로 나누고,
+- **한 도메인 = 한 모듈.** 그 안에서 `api/` → `domain/` 으로 나누고,
+  `api/` 안은 **`controller/` · `request/` · `response/`** 로,
   `domain/` 안은 다시 **역할별**로 나눈다: `service/`(일하는 것) · `model/`(값) ·
   필요하면 `config/`(설정·필터) · `error/`(도메인 예외). 관심사 하위폴더가 먼저 있으면
   그 **안에서** 나눈다(예: `domain/csv/service`, `domain/slack/model`).

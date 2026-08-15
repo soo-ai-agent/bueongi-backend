@@ -7,7 +7,7 @@ import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.route.api.RouteController
+import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.client.tmap.TmapRouteClient
 
 import io.soo.bueongi.storage.db.core.facility.store.FacilityRepository

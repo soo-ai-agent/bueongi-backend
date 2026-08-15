@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.facility.api.FacilityUploadController
+import io.soo.bueongi.core.facility.api.controller.FacilityUploadController
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType

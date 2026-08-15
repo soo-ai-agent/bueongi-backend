@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.share.api.ShareAdminController
+import io.soo.bueongi.core.share.api.controller.ShareAdminController
 import io.soo.bueongi.core.share.domain.model.LocationView
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

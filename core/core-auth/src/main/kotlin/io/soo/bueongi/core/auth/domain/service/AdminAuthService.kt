@@ -2,11 +2,11 @@ package io.soo.bueongi.core.auth.domain.service
 
 import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
 import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
-import io.soo.bueongi.core.auth.api.AdminLoginRequest
-import io.soo.bueongi.core.auth.api.AdminLoginResponse
-import io.soo.bueongi.core.auth.api.AdminRefreshRequest
-import io.soo.bueongi.core.auth.api.AdminRefreshResponse
-import io.soo.bueongi.core.auth.api.AdminUserResponse
+import io.soo.bueongi.core.auth.api.request.AdminLoginRequest
+import io.soo.bueongi.core.auth.api.response.AdminLoginResponse
+import io.soo.bueongi.core.auth.api.request.AdminRefreshRequest
+import io.soo.bueongi.core.auth.api.response.AdminRefreshResponse
+import io.soo.bueongi.core.auth.api.response.AdminUserResponse
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 

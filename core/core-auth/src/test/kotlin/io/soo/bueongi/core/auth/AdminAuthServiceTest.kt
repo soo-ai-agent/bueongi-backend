@@ -3,7 +3,7 @@ package io.soo.bueongi.core.auth
 import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
 import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
-import io.soo.bueongi.core.auth.api.AdminLoginRequest
+import io.soo.bueongi.core.auth.api.request.AdminLoginRequest
 import io.soo.bueongi.core.auth.domain.service.AdminTokenService
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.auth.domain.service.JwtKeyMaterialFactory

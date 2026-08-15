@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.auth
 
-import io.soo.bueongi.core.auth.api.AdminIdentityResponse
+import io.soo.bueongi.core.auth.api.response.AdminIdentityResponse
 import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

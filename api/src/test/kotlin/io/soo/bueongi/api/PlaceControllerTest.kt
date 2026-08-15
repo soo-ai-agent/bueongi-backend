@@ -4,7 +4,7 @@ import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
-import io.soo.bueongi.core.place.api.PlaceController
+import io.soo.bueongi.core.place.api.controller.PlaceController
 
 import io.soo.bueongi.api.ApiControllerAdvice
 import org.junit.jupiter.api.Test

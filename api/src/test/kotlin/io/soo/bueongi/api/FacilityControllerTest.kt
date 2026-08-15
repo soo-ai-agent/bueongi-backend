@@ -3,7 +3,7 @@ package io.soo.bueongi.api
 import io.soo.bueongi.core.facility.domain.service.NearestPoliceFinder
 import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
-import io.soo.bueongi.core.facility.api.FacilityController
+import io.soo.bueongi.core.facility.api.controller.FacilityController
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint

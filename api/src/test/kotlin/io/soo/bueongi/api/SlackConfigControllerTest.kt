@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.ops.api.AlertController
+import io.soo.bueongi.core.ops.api.controller.AlertController
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

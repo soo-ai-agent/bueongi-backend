@@ -2,8 +2,8 @@ package io.soo.bueongi.api
 
 import io.soo.bueongi.core.share.MutableTestClock
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.core.share.api.GuardianPage
-import io.soo.bueongi.core.share.api.ShareController
+import io.soo.bueongi.core.share.api.controller.GuardianPage
+import io.soo.bueongi.core.share.api.controller.ShareController
 
 import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.store.LocationStore

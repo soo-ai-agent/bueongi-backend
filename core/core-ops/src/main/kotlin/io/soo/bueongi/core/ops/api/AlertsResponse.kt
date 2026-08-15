@@ -1,7 +1,0 @@
-package io.soo.bueongi.core.ops.api
-
-import io.soo.bueongi.support.monitoring.AlertRecord
-
-data class AlertsResponse(
-    val alerts: List<AlertRecord>,
-)
