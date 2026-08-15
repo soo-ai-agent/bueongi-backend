@@ -1,7 +1,6 @@
 package io.soo.bueongi.api
 
 
-import io.soo.bueongi.core.common.event.ShareStoreUnavailable
 import io.soo.bueongi.api.ApiEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
@@ -53,7 +52,7 @@ class ApiControllerAdviceAlertTest {
         )
 
         assertThat(notifier.events).hasSize(1)
-        assertThat(notifier.events[0]).isInstanceOf(ShareStoreUnavailable::class.java)
+        assertThat((notifier.events[0] as OperationEvent).key).isEqualTo("share-store-unavailable")
         assertThat(response.statusCode.value()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
         assertThat(response.body?.properties?.get("code")).isEqualTo("SHARE_STORE_UNAVAILABLE")
         assertThat(response.headers.getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("5")

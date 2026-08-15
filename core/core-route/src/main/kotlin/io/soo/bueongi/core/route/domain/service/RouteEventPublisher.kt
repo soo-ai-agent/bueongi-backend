@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.core.common.event.SafeRouteFellBack
+import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
@@ -13,8 +13,14 @@ class RouteEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
 
-    /** Tmap 경로 후보가 전멸해 직선거리 추정으로 응답했다. */
+    /** Tmap 경로 후보가 전멸해 직선거리 추정으로 응답했다. 사용자는 실제 길이 아닌 것을 모른다. */
     fun safeRouteFellBack(detail: String) {
-        events.publishEvent(SafeRouteFellBack(detail))
+        events.publishEvent(OperationEvent(key = FELL_BACK_KEY, title = FELL_BACK_TITLE, detail = detail))
+    }
+
+    companion object {
+
+        private const val FELL_BACK_KEY: String = "tmap-route-fallback"
+        private const val FELL_BACK_TITLE: String = "Tmap 경로 API 실패"
     }
 }

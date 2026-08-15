@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.marker
 
 import io.soo.bueongi.core.route.marker.service.MarkerEventPublisher
-import io.soo.bueongi.core.common.event.FacilityIndexEmpty
+import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.enums.FacilityPoiType
@@ -37,7 +37,8 @@ class RouteMarkerBuilderAlertTest {
         val markers = build(FakeFacilitySource(), MarkerEventPublisher(notifier))
 
         assertThat(markers.map { it.type }).containsExactlyInAnyOrder(FacilityPoiType.START, FacilityPoiType.END)
-        assertThat(notifier.events).singleElement().isInstanceOf(FacilityIndexEmpty::class.java)
+        assertThat(notifier.events).singleElement()
+            .satisfies({ assertThat((it as OperationEvent).key).isEqualTo("facility-index-empty") })
     }
 
     @Test
@@ -60,8 +61,7 @@ class RouteMarkerBuilderAlertTest {
 
         repeat(3) { build(source, MarkerEventPublisher(notifier)) }
 
-        assertThat(notifier.events).allMatch { it is FacilityIndexEmpty }
-        assertThat(notifier.events.map { (it as FacilityIndexEmpty).key }.toSet())
+        assertThat(notifier.events.map { (it as OperationEvent).key }.toSet())
             .containsExactly("facility-index-empty")
     }
 

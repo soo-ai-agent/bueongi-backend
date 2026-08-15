@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.service.RouteEventPublisher
-import io.soo.bueongi.core.common.event.SafeRouteFellBack
+import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
@@ -68,7 +68,8 @@ class FallbackAlertTest {
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().score).isNull()
-        assertThat(notifier.events).singleElement().isInstanceOf(SafeRouteFellBack::class.java)
+        assertThat(notifier.events).singleElement()
+            .isEqualTo(OperationEvent("tmap-route-fallback", "Tmap 경로 API 실패", "모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)"))
     }
 
     @Test

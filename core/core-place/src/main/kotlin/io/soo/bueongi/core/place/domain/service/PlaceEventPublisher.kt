@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.place.domain.service
 
-import io.soo.bueongi.core.common.event.PlaceSearchFellBack
+import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
@@ -15,6 +15,12 @@ class PlaceEventPublisher(
 
     /** 외부 장소 검색이 실패해 시드 카탈로그로 답했다. */
     fun placeSearchFellBack(detail: String) {
-        events.publishEvent(PlaceSearchFellBack(detail))
+        events.publishEvent(OperationEvent(key = FELL_BACK_KEY, title = FELL_BACK_TITLE, detail = detail))
+    }
+
+    companion object {
+
+        private const val FELL_BACK_KEY: String = "kakao-place-fallback"
+        private const val FELL_BACK_TITLE: String = "Kakao 장소검색 실패"
     }
 }

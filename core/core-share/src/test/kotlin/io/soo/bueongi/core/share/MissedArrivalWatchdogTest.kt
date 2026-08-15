@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
-import io.soo.bueongi.core.common.event.MissedArrivalSuspected
+import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
 
@@ -75,7 +75,7 @@ class MissedArrivalWatchdogTest {
         watchdog.scan()
 
         assertThat(notifier.events).hasSize(1)
-        val event: MissedArrivalSuspected = notifier.events[0] as MissedArrivalSuspected
+        val event: OperationEvent = notifier.events[0] as OperationEvent
         val key: String = event.key
         val title: String = event.title
         val detail: String = event.detail
