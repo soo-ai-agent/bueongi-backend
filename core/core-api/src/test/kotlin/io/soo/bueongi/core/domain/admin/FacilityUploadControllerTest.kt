@@ -4,8 +4,8 @@ import io.soo.bueongi.core.api.controller.v1.FacilityUploadController
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.core.domain.facility.FacilityCsvParser
-import io.soo.bueongi.core.domain.facility.FacilityUploadService
+import io.soo.bueongi.core.domain.facility.csv.FacilityCsvParser
+import io.soo.bueongi.core.domain.facility.csv.FacilityUploadService
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityPoint
 import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore

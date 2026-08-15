@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.share
 
+import io.soo.bueongi.core.domain.share.route.RouteView
+
 
 import io.soo.bueongi.storage.db.core.share.LocationStore
 import io.soo.bueongi.storage.db.core.share.ShareSession

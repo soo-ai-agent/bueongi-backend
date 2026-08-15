@@ -3,7 +3,7 @@ package io.soo.bueongi.core.api.controller.v1
 import io.soo.bueongi.core.api.controller.v1.request.placementValue
 
 import io.soo.bueongi.core.api.controller.v1.request.AdImpressionRequest
-import io.soo.bueongi.core.domain.admin.AdStatsService
+import io.soo.bueongi.core.domain.admin.adstats.AdStatsService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

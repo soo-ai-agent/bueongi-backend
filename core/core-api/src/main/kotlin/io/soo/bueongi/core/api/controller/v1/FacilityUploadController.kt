@@ -4,8 +4,8 @@ import io.soo.bueongi.core.api.controller.v1.response.FacilityUploadResponse
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.FacilityCoordSystem
-import io.soo.bueongi.core.domain.facility.FacilityUploadResult
-import io.soo.bueongi.core.domain.facility.FacilityUploadService
+import io.soo.bueongi.core.domain.facility.csv.FacilityUploadResult
+import io.soo.bueongi.core.domain.facility.csv.FacilityUploadService
 import io.soo.bueongi.core.support.error.UnknownFacilityTypeException
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable

@@ -7,7 +7,7 @@ import io.soo.bueongi.core.domain.share.ShareWatchStatus
 import io.soo.bueongi.core.api.controller.v1.response.CreateShareResponse
 import io.soo.bueongi.core.api.controller.v1.request.EndShareRequest
 import io.soo.bueongi.core.domain.share.LocationView
-import io.soo.bueongi.core.domain.share.RouteView
+import io.soo.bueongi.core.domain.share.route.RouteView
 import io.soo.bueongi.core.api.controller.v1.request.SaveRouteRequest
 import io.soo.bueongi.core.domain.share.ShareService
 import io.soo.bueongi.core.api.controller.v1.request.UpdateLocationRequest
