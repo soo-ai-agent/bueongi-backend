@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.facility.domain.csv.service
 
+import io.soo.bueongi.support.util.CP949
 import io.soo.bueongi.support.util.Epsg5179
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.core.facility.domain.csv.model.CsvColumns
@@ -211,10 +212,5 @@ class FacilityCsvParser {
         return records
     }
 
-    private companion object {
-        val CP949: Charset = Charset.forName("MS949")
-    }
 }
 
-/** 공공데이터 CSV 는 UTF-8 아니면 CP949(MS949) 다. */
-private val CP949: java.nio.charset.Charset = java.nio.charset.Charset.forName("MS949")

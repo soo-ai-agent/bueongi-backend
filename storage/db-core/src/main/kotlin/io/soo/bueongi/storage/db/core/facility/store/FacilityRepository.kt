@@ -232,8 +232,6 @@ class FacilityRepository(
     }
 }
 
-private val CP949: Charset = Charset.forName("MS949")
-
 /** 전국 CCTV 표준데이터 설치목적구분 10종 중 방범 성격 4종만 적재 — 부팅 CSV·관리자 업로드 공용 단일 기준. */
 val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
 
@@ -262,3 +260,6 @@ internal fun parseCctvCsvLine(line: String): FacilityPoint? {
         cameraCount = cameraCount,
     )
 }
+
+// 자립 계층 원칙상 support:util 을 참조하지 않는 의도적 중복(clients 의 EARTH_RADIUS_M 와 같은 이유).
+private val CP949: Charset = Charset.forName("MS949")
