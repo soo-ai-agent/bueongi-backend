@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.RouteType
+
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.facility.GeoPoint
 

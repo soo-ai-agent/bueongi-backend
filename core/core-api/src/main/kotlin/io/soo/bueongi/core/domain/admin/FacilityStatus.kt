@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.admin
 
+import io.soo.bueongi.core.enums.FacilityRefreshStatus
+
 import io.soo.bueongi.core.enums.FacilityType
 
 data class FacilityStatus(

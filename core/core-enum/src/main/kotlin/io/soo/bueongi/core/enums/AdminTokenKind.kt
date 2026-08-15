@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.api.auth
+package io.soo.bueongi.core.enums
 
 enum class AdminTokenKind {
     ACCESS,

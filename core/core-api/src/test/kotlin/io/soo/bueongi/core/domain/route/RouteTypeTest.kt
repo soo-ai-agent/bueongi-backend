@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.RouteType
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

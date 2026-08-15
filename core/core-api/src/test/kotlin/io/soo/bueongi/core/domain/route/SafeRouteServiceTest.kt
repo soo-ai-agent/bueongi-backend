@@ -1,5 +1,8 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.RouteType
+
 import io.soo.bueongi.core.domain.facility.FakeFacilitySource
 
 import io.soo.bueongi.core.enums.SafetyPreference

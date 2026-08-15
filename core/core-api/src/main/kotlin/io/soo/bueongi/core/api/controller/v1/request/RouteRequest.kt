@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.api.controller.v1.request
 
 import io.soo.bueongi.core.domain.route.RouteQuery
-import io.soo.bueongi.core.domain.route.RouteType
+import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.core.api.controller.v1.request.LatLng
 import io.soo.bueongi.core.api.controller.v1.request.NamedLatLng

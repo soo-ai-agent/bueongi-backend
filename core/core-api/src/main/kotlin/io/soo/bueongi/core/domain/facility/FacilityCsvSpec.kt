@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.facility
 
+import io.soo.bueongi.core.enums.FacilityCoordSystem
+
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 import io.soo.bueongi.core.enums.FacilityType

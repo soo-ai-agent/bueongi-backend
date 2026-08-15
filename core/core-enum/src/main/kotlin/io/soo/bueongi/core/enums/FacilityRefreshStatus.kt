@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.domain.admin
+package io.soo.bueongi.core.enums
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue

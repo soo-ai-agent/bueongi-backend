@@ -1,5 +1,10 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.RouteTag
+import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.enums.RouteType
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.storage.db.core.facility.GeoPoint

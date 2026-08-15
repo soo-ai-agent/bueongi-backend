@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.FacilityPoiType
+
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.enums.FacilityType

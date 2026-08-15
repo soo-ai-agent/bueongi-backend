@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.api.auth
 
+import io.soo.bueongi.core.enums.AdminTokenKind
+
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException

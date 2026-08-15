@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.RouteType
+
 import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute

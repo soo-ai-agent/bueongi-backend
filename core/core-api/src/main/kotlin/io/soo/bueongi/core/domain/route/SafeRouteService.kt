@@ -1,5 +1,9 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.RouteTag
+import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.enums.RouteType
+
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.client.tmap.NavStep

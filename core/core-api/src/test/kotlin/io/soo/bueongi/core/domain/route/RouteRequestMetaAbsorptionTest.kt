@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.RouteType
+
 import io.soo.bueongi.core.api.controller.v1.request.toValidatedQuery
 
 import io.soo.bueongi.core.api.controller.v1.request.RouteRequest

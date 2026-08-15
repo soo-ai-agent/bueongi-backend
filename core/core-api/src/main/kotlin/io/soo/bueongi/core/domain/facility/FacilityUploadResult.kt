@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.facility
 
+import io.soo.bueongi.core.enums.FacilityCoordSystem
+
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
 import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore

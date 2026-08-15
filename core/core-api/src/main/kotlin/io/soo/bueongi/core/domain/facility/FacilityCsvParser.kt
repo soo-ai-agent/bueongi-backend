@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.domain.facility
 
+import io.soo.bueongi.core.enums.FacilityCoordSystem
+
 import io.soo.bueongi.core.domain.facility.coord.Epsg5174
 import io.soo.bueongi.core.domain.facility.coord.Epsg5179
 import io.soo.bueongi.core.domain.facility.coord.Wgs84Point

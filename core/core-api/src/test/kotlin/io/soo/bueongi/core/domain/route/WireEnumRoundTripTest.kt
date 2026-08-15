@@ -1,11 +1,15 @@
 package io.soo.bueongi.core.domain.route
 
+import io.soo.bueongi.core.enums.FacilityPoiType
+import io.soo.bueongi.core.enums.RouteTagVariant
+import io.soo.bueongi.core.enums.RouteType
+
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.domain.admin.FacilityRefreshStatus
-import io.soo.bueongi.core.domain.facility.FacilityCoordSystem
+import io.soo.bueongi.core.enums.FacilityRefreshStatus
+import io.soo.bueongi.core.enums.FacilityCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
