@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
+import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
+import io.soo.bueongi.core.share.domain.model.LocationReport
 
 @RestController
 @RequestMapping("/share")
@@ -36,8 +39,11 @@ class ShareController(
     fun updateLocation(
         @PathVariable token: String,
         @Valid @RequestBody request: UpdateLocationRequest,
-    ): UpdateLocationResponse =
-        UpdateLocationResponse.from(service.updateLocation(token, request.ownerSecret, request.toReport()))
+    ): UpdateLocationResponse {
+        val report: LocationReport = request.toReport()
+        val updated: ShareLocationUpdated = service.updateLocation(token, request.ownerSecret, report)
+        return UpdateLocationResponse.from(updated)
+    }
 
     @GetMapping("/{token}/location")
     fun getLocation(@PathVariable token: String): LocationView =
@@ -47,8 +53,11 @@ class ShareController(
     fun saveRoute(
         @PathVariable token: String,
         @Valid @RequestBody request: SaveRouteRequest,
-    ): UpdateLocationResponse =
-        UpdateLocationResponse.from(service.saveRoute(token, request.ownerSecret, request.toStoredRoute()))
+    ): UpdateLocationResponse {
+        val route: StoredRoute = request.toStoredRoute()
+        val saved: ShareLocationUpdated = service.saveRoute(token, request.ownerSecret, route)
+        return UpdateLocationResponse.from(saved)
+    }
 
     @GetMapping("/{token}/route")
     fun getRoute(@PathVariable token: String): RouteView =

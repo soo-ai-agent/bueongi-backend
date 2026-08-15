@@ -10,6 +10,7 @@ import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
 import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
+import io.soo.bueongi.storage.db.core.facility.store.GridSpatialIndex
 
 /**
  * 경로 주변 안심시설을 지도 마커로 만든다.
@@ -38,9 +39,10 @@ class RouteMarkerBuilder(
         raw.add(FacilityPoi(type = FacilityPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
         for ((markerType, facilityType) in MARKER_TYPES) {
-            val facilities: List<FacilityPoint> =
-                facilities.index(facilityType).withinCorridor(path, corridor).take(MAX_MARKERS_PER_TYPE)
-            for (facility in facilities) {
+            val typeIndex: GridSpatialIndex = facilities.index(facilityType)
+            val alongPath: List<FacilityPoint> = typeIndex.withinCorridor(path, corridor)
+            val shown: List<FacilityPoint> = alongPath.take(MAX_MARKERS_PER_TYPE)
+            for (facility in shown) {
                 raw.add(
                     FacilityPoi(
                         type = markerType,
@@ -84,7 +86,9 @@ class RouteMarkerBuilder(
         if (span == 0.0) {
             return MINI_MAP_CENTER
         }
-        return (MARKER_PADDING + offset / span * drawableRange).roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
+        val ratio: Double = offset / span
+        val percent: Double = MARKER_PADDING + ratio * drawableRange
+        return percent.roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
     }
 
     private fun alertIfIndexEmpty() {

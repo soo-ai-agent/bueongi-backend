@@ -58,7 +58,10 @@ class SafeDetourPlanner(
             )
         }
         // 시설이 많이 몰린 셀부터. 같은 수면 좌표 순으로 갈라 결과를 고정한다.
-        anchors.sortWith(compareByDescending<SafeAnchor> { it.weight }.thenBy { it.center.lat }.thenBy { it.center.lng })
+        val byDensityThenPosition: Comparator<SafeAnchor> = compareByDescending<SafeAnchor> { it.weight }
+            .thenBy { it.center.lat }
+            .thenBy { it.center.lng }
+        anchors.sortWith(byDensityThenPosition)
         if (anchors.size <= MAX_ANCHORS) {
             return anchors
         }
@@ -100,10 +103,18 @@ class SafeDetourPlanner(
         )
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet<List<GeoPoint>>()
-        byWeight.take(SINGLE_ANCHOR_COMBOS).forEach { combos.add(listOf(it.anchor.center)) }
+        val singles: List<Placed> = byWeight.take(SINGLE_ANCHOR_COMBOS)
+        for (single in singles) {
+            combos.add(listOf(single.anchor.center))
+        }
         if (byWeight.size >= 2) {
             // 2개 경유 조합은 경로 진행 순으로 정렬해야 왔던 길을 되돌아가지 않는다.
-            val pair: List<GeoPoint> = byWeight.take(2).sortedBy { it.progress }.map { it.anchor.center }
+            val topTwo: List<Placed> = byWeight.take(2)
+            val inTravelOrder: List<Placed> = topTwo.sortedBy { it.progress }
+            val pair: ArrayList<GeoPoint> = ArrayList<GeoPoint>()
+            for (placedAnchor in inTravelOrder) {
+                pair.add(placedAnchor.anchor.center)
+            }
             combos.add(pair)
         }
         return combos.toList()
