@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:core-place"))
     implementation(project(":core:core-route"))
     implementation(project(":core:core-admin"))
+    implementation(project(":core:core-auth"))
     implementation(project(":storage:db-core"))
     implementation(project(":clients:client-tmap"))
     implementation(project(":clients:client-kakao"))

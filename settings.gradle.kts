@@ -8,6 +8,7 @@ include(
     "core:core-place",
     "core:core-route",
     "core:core-admin",
+    "core:core-auth",
     "api",
     "storage:db-core",
     "clients:client-tmap",

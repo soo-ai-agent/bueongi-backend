@@ -4,7 +4,6 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.admin.domain.adstats.AdStatsService
 import io.soo.bueongi.core.admin.domain.adstats.AdStatsSummary
-import io.soo.bueongi.core.admin.api.response.AdminIdentityResponse
 import io.soo.bueongi.core.admin.api.response.AlertsResponse
 import io.soo.bueongi.core.admin.api.response.ApiCallLogResponse
 import io.soo.bueongi.core.admin.domain.apistatus.ApiStatusService
@@ -25,7 +24,6 @@ import io.soo.bueongi.core.admin.api.request.SlackConfigUpdateRequest
 import io.soo.bueongi.core.share.domain.LocationView
 import io.soo.bueongi.core.share.domain.ShareService
 import jakarta.validation.Valid
-import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -48,8 +46,6 @@ class AdminController(
     private val slackConfigService: SlackConfigService,
 ) {
 
-    @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentityResponse = AdminIdentityResponse.from(authentication)
 
     @GetMapping("/api-logs")
     fun apiLogs(

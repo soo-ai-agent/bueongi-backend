@@ -158,7 +158,8 @@ backend/
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
 │   ├── core-facility/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환
 │   ├── core-place/              # 장소 검색(Kakao + 시드 폴백)
-│   ├── core-admin/              # 관리자 통계 + 인증 일체(JWT·SecurityConfig)
+│   ├── core-admin/              # 관리자 통계(인증은 core-auth 가 소유)
+│   ├── core-auth/               # 인증 일체 — 로그인·토큰·JWT·SecurityConfig·/me
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외·공용 요청 DTO
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
@@ -172,6 +173,7 @@ backend/
 - **한 도메인 = 한 모듈.** 그 안에서 `api/`(컨트롤러·DTO) → `domain/`(서비스·모델) 로 나눈다.
 - **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
 - 도메인 모듈 간 참조는 최소로 유지한다(현재 `route → facility`, `admin → share` 둘뿐, 순환 없음).
+- `core-auth` 는 다른 도메인 모듈을 전혀 참조하지 않는다. 관리자 화면 보호는 `SecurityConfig` 의 **경로 문자열**로만 이어진다.
 - **`@WebMvcTest`·`@SpringBootTest` 는 `api` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
   도메인 단위 테스트는 각 도메인 모듈에 둔다. 모듈을 넘나드는 테스트 헬퍼는 `java-test-fixtures` 로 노출한다.
 
