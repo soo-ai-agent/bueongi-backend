@@ -40,14 +40,10 @@ class ApiControllerAdvice(
             }
         }
 
-    /** 경로변수·쿼리 변환 실패. Converter 가 [ApiException] 을 던졌다면 그 응답을 그대로 쓴다. */
+    /** 경로변수·쿼리 값이 선언 타입으로 안 바뀔 때(`?lat=abc`). 핸들러가 없으면 500 으로 샌다. */
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
-    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail {
-        val declared: ApiException? = generateSequence(ex.cause) { it.cause }.filterIsInstance<ApiException>().firstOrNull()
-        if (declared != null) {
-            return handleApi(declared)
-        }
-        return ProblemDetail.forStatusAndDetail(
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
             "요청 값의 형식이 올바르지 않습니다.",
         ).apply {
@@ -58,7 +54,6 @@ class ApiControllerAdvice(
                 listOf(ApiFieldError(field = ex.name, message = "형식이 올바르지 않습니다.", rejectedValue = ex.value)),
             )
         }
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {

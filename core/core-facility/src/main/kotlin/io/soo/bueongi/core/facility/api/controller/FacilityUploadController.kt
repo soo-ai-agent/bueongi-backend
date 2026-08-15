@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.facility.api.controller
 
+import io.soo.bueongi.core.common.error.UnknownFacilityTypeException
 import io.soo.bueongi.core.facility.api.response.FacilityUploadResponse
 
 import io.soo.bueongi.core.enums.FacilityType
@@ -21,10 +22,20 @@ class FacilityUploadController(
 
     @PostMapping("/{type}/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
-        @PathVariable type: FacilityType,
+        @PathVariable type: String,
         @RequestParam("file") file: MultipartFile,
     ): FacilityUploadResponse {
-        val result: FacilityUploadResult = uploadService.upload(type, file.bytes)
+        val facilityType: FacilityType = findFacilityType(type)
+        val result: FacilityUploadResult = uploadService.upload(facilityType, file.bytes)
         return FacilityUploadResponse.from(result)
+    }
+
+    /** 경로의 "cctv" 같은 문자열을 시설 종류로 바꾼다. 모르는 값이면 400 으로 돌린다. */
+    private fun findFacilityType(cdnType: String): FacilityType {
+        val found: FacilityType? = FacilityType.ofCdnTypeOrNull(cdnType)
+        if (found == null) {
+            throw UnknownFacilityTypeException(cdnType, FacilityType.CDN_TYPES)
+        }
+        return found
     }
 }
