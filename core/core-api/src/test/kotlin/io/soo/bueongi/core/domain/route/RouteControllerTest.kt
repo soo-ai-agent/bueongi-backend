@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.post
     RouteService::class,
     RouteFacilityService::class,
     SafeRouteService::class,
+    RouteCandidateCollector::class,
+    RouteOptionAssembler::class,
     RouteMarkerBuilder::class,
     RouteCandidateMerger::class,
     SafetyScorer::class,

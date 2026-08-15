@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.api.controller.v1
 
+import io.soo.bueongi.core.domain.route.RouteCandidateCollector
+import io.soo.bueongi.core.domain.route.RouteOptionAssembler
 import io.soo.bueongi.core.api.controller.ApiControllerAdvice
 
 import io.soo.bueongi.storage.db.core.facility.FacilityRepository
@@ -31,6 +33,8 @@ import org.springframework.test.web.servlet.post
     RouteFacilityService::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,
+    RouteCandidateCollector::class,
+    RouteOptionAssembler::class,
     RouteMarkerBuilder::class,
     RouteCandidateMerger::class,
     SafetyScorer::class,

@@ -62,16 +62,19 @@ class SafeRouteServiceTest {
         steps = emptyList(),
     )
 
-    private fun service(tmap: TmapRouteClient) =
-        SafeRouteService(
-            routeService,
-            tmap,
-            scorer,
-            detourPlanner,
-            source,
-            RouteMarkerBuilder(source),
-            RouteCandidateMerger(),
-        )
+    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, detourPlanner, source)
+
+    private fun safeRouteService(
+        tmap: TmapRouteClient,
+        scorer: SafetyScorer,
+        detourPlanner: SafeDetourPlanner,
+        source: FakeFacilitySource,
+    ) = SafeRouteService(
+        routeService = routeService,
+        collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+        scorer = scorer,
+        assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
+    )
 
     @Test
     fun `Tmap 키 미설정이면 compare 폴백(3개, 점수 없음)`() {
@@ -140,18 +143,15 @@ class SafeRouteServiceTest {
     fun `회랑에 실 지구대가 있으면 추정으로 중복 채우지 않는다`() {
         val police = listOf(FacilityPoint(FacilityType.POLICE, 37.5, 127.005, name = "역삼지구대"))
         val richSource = FakeFacilitySource(mapOf(FacilityType.CCTV to cctv, FacilityType.POLICE to police))
-        val svc = SafeRouteService(
-            routeService,
-            mock<TmapRouteClient>().also {
+        val svc = safeRouteService(
+            tmap = mock<TmapRouteClient>().also {
                 whenever(it.isEnabled).thenReturn(true)
                 whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
                 whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
             },
-            SafetyScorer(richSource),
-            SafeDetourPlanner(richSource),
-            richSource,
-            RouteMarkerBuilder(richSource),
-            RouteCandidateMerger(),
+            scorer = SafetyScorer(richSource),
+            detourPlanner = SafeDetourPlanner(richSource),
+            source = richSource,
         )
 
         val safe = svc.safeCompare(request).first { it.type == RouteType.SAFE }
@@ -162,15 +162,38 @@ class SafeRouteServiceTest {
 
     @Test
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
-        val tmap = mock<TmapRouteClient>()
-        whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA))
-        val longDetour = routeA.copy(searchOption = "0", distanceM = 2000.0, timeS = 1500)
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(longDetour)
+        // 기준 880m · SAFE 선호(예산 +35%) → 상한 1188m. 병합에 먹히지 않도록 경로를 멀리 둔다.
+        val overBudget = detourAt(lat = 37.53, distanceM = 2000.0)
 
-        val result = service(tmap).safeCompare(request)
+        val result = service(tmapReturning(detour = overBudget)).safeCompare(request)
+
         assertThat(result).hasSize(1)
-        assertThat(result.first().dist).isNotEqualTo("2.0km")
+        assertThat(result.map { it.dist }).doesNotContain("2.0km")
+    }
+
+    @Test
+    fun `거리 예산 안에 드는 우회 후보는 채택된다`() {
+        val withinBudget = detourAt(lat = 37.53, distanceM = 1000.0)
+
+        val result = service(tmapReturning(detour = withinBudget)).safeCompare(request)
+
+        assertThat(result).hasSize(2)
+        assertThat(result.map { it.dist }).contains("1.0km")
+    }
+
+    private fun detourAt(lat: Double, distanceM: Double): TmapRoute =
+        TmapRoute(
+            searchOption = "2",
+            path = listOf(TmapCoord(lat, 127.0), TmapCoord(lat, 127.01)),
+            distanceM = distanceM,
+            timeS = 1500,
+            steps = emptyList(),
+        )
+
+    private fun tmapReturning(detour: TmapRoute): TmapRouteClient = mock<TmapRouteClient>().also {
+        whenever(it.isEnabled).thenReturn(true)
+        whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA))
+        whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(detour)
     }
 
     @Test
@@ -197,13 +220,10 @@ class SafeRouteServiceTest {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
         val svc = SafeRouteService(
-            RouteService(recording),
-            tmap,
-            scorer,
-            detourPlanner,
-            source,
-            RouteMarkerBuilder(source),
-            RouteCandidateMerger(),
+            routeService = RouteService(recording),
+            collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+            scorer = scorer,
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
             routeStatsStore = recording,
         )
 
@@ -220,13 +240,10 @@ class SafeRouteServiceTest {
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
         val svc = SafeRouteService(
-            RouteService(recording),
-            tmap,
-            scorer,
-            detourPlanner,
-            source,
-            RouteMarkerBuilder(source),
-            RouteCandidateMerger(),
+            routeService = RouteService(recording),
+            collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+            scorer = scorer,
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source),
             routeStatsStore = recording,
         )
 
