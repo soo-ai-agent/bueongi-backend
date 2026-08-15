@@ -7,6 +7,7 @@ import io.soo.bueongi.core.domain.admin.Percentiles
 import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_CAP
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
+import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -21,7 +22,7 @@ class ApiStatusService(
 ) {
 
     fun listRecentCalls(provider: String?, limit: Int): List<ApiCallLog> =
-        apiCallLogStore.findRecent(provider = provider, limit = limit)
+        apiCallLogStore.findRecent(provider = provider, limit = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT))
 
     fun summarize(): ApiStatusSummary {
         val now: Long = System.currentTimeMillis()

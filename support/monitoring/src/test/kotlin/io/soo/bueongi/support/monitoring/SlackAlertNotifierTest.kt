@@ -174,4 +174,17 @@ class SlackAlertNotifierTest {
 
         server.verify()
     }
+
+    @Test
+    fun `이력 조회 limit 은 상한으로 절삭되고 0 이하는 최소 1 이 된다`() {
+        val (notifier, server) = bind()
+        server.expect(ExpectedCount.manyTimes(), requestTo(webhook)).andRespond(withSuccess())
+        repeat(3) { index ->
+            now += 60L * 60L * 1000L
+            notifier.notify(key = "k$index", title = "t$index", detail = "d")
+        }
+
+        assertThat(notifier.findRecentAlerts(ALERT_HISTORY_MAX_LIMIT + 10_000)).hasSize(3)
+        assertThat(notifier.findRecentAlerts(0)).hasSize(1)
+    }
 }

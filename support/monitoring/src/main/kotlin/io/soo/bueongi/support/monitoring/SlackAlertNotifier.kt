@@ -75,7 +75,7 @@ class SlackAlertNotifier internal constructor(
 
     override fun findRecentAlerts(limit: Int): List<AlertRecord> {
         val snapshot: List<AlertRecord> = synchronized(recentAlerts) { recentAlerts.toList() }
-        return snapshot.asReversed().take(limit)
+        return snapshot.asReversed().take(limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT))
     }
 
     override fun sendTest(): Boolean {

@@ -1,9 +1,6 @@
 package io.soo.bueongi.core.api.controller.v1
 
 import io.soo.bueongi.core.api.controller.v1.request.CreateShareRequest
-import io.soo.bueongi.core.domain.share.ShareCreated
-import io.soo.bueongi.core.domain.share.ShareLocationUpdated
-import io.soo.bueongi.core.domain.share.ShareWatchStatus
 import io.soo.bueongi.core.api.controller.v1.response.CreateShareResponse
 import io.soo.bueongi.core.api.controller.v1.request.EndShareRequest
 import io.soo.bueongi.core.domain.share.LocationView
@@ -16,7 +13,6 @@ import io.soo.bueongi.core.api.controller.v1.request.WatchRequest
 import io.soo.bueongi.core.api.controller.v1.response.WatchResponse
 
 import jakarta.validation.Valid
-import org.springframework.core.io.ClassPathResource
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -29,10 +25,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/share")
 class ShareController(
     private val service: ShareService,
+    private val guardianPage: GuardianPage,
 ) {
-    private val guardianHtmlTemplate: String by lazy {
-        ClassPathResource("share/guardian.html").inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
-    }
 
     @PostMapping("/create")
     fun create(@Valid @RequestBody(required = false) request: CreateShareRequest?): CreateShareResponse =
@@ -71,16 +65,6 @@ class ShareController(
     ): WatchResponse = WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
-    fun page(@PathVariable token: String): String =
-        guardianHtmlTemplate.replace(TOKEN_PLACEHOLDER, escapeJs(token))
-
-    private fun escapeJs(value: String): String =
-        value.replace("\\", "\\\\").replace("\"", "\\\"").replace("<", "\\u003c").replace(">", "\\u003e")
-
-    private companion object {
-        const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"
-    }
-
-
+    fun page(@PathVariable token: String): String = guardianPage.render(token)
 
 }

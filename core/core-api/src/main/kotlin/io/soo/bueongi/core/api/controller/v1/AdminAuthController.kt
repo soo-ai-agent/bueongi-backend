@@ -20,8 +20,10 @@ class AdminAuthController(
     private val authService: AdminAuthService,
 ) {
     @PostMapping("/admin/login")
-    fun login(@Valid @RequestBody request: AdminLoginRequest): AdminLoginResponse = authService.login(request)
+    fun login(@Valid @RequestBody request: AdminLoginRequest):
+            AdminLoginResponse = authService.login(request)
 
     @PostMapping("/local/token/refresh")
-    fun refresh(@Valid @RequestBody request: AdminRefreshRequest): AdminRefreshResponse = authService.refresh(request)
+    fun refresh(@Valid @RequestBody request: AdminRefreshRequest):
+            AdminRefreshResponse = authService.refresh(request)
 }

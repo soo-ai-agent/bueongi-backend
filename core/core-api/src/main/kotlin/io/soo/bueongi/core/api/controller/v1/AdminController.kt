@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.api.controller.v1
 
-import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.domain.admin.adstats.AdStatsService
@@ -25,8 +24,6 @@ import io.soo.bueongi.core.domain.admin.traffic.TrafficSummary
 import io.soo.bueongi.core.api.controller.v1.request.SlackConfigUpdateRequest
 import io.soo.bueongi.core.domain.share.LocationView
 import io.soo.bueongi.core.domain.share.ShareService
-import io.soo.bueongi.storage.db.core.apilog.API_CALL_LOG_MAX_LIMIT
-import io.soo.bueongi.storage.db.core.apilog.ApiCallLog
 import jakarta.validation.Valid
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
@@ -58,10 +55,8 @@ class AdminController(
     fun apiLogs(
         @RequestParam(required = false) provider: String?,
         @RequestParam(required = false, defaultValue = "100") limit: Int,
-    ): List<ApiCallLogResponse> {
-        val bounded: Int = limit.coerceIn(1, API_CALL_LOG_MAX_LIMIT)
-        return apiStatusService.listRecentCalls(provider, bounded).map { ApiCallLogResponse.from(it) }
-    }
+    ): List<ApiCallLogResponse> =
+        apiStatusService.listRecentCalls(provider, limit).map { ApiCallLogResponse.from(it) }
 
     @GetMapping("/api-status")
     fun apiStatus(): ApiStatusSummary = apiStatusService.summarize()
@@ -91,10 +86,7 @@ class AdminController(
     @GetMapping("/alerts")
     fun alerts(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
-    ): AlertsResponse {
-        val bounded: Int = limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT)
-        return AlertsResponse(alerts = alertNotifier.findRecentAlerts(bounded))
-    }
+    ): AlertsResponse = AlertsResponse(alerts = alertNotifier.findRecentAlerts(limit))
 
     @GetMapping("/slack-config")
     fun slackConfig(): SlackConfigSummary = slackConfigService.view()

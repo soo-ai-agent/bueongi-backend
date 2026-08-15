@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.domain.share
 
+import io.soo.bueongi.core.api.controller.v1.GuardianPage
 import io.soo.bueongi.core.api.controller.v1.ShareController
 
 import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
@@ -17,7 +18,7 @@ import org.springframework.test.web.servlet.post
 
 @WebMvcTest(ShareController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ShareControllerTestSupport.ShareTestConfig::class)
+@Import(ShareControllerTestSupport.ShareTestConfig::class, GuardianPage::class)
 @ActiveProfiles("test")
 abstract class ShareControllerTestSupport {
 
