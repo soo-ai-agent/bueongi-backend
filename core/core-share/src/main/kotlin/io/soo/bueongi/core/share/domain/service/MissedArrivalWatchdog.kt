@@ -2,8 +2,8 @@ package io.soo.bueongi.core.share.domain.service
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
-import io.soo.bueongi.storage.db.core.share.ShareSession
-import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled

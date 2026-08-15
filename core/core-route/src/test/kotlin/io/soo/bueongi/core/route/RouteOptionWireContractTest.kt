@@ -11,7 +11,7 @@ import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.tmap.NavStep
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

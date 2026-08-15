@@ -3,13 +3,13 @@ package io.soo.bueongi.core.route.marker
 import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.enums.FacilityPoiType
 
-import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

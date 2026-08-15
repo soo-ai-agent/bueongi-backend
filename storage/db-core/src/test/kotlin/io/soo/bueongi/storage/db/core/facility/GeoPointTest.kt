@@ -1,5 +1,8 @@
 package io.soo.bueongi.storage.db.core.facility
 
+import io.soo.bueongi.storage.db.core.facility.model.overlapMetersWith
+import io.soo.bueongi.storage.db.core.facility.model.pathLengthMeters
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test

@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.facility.domain.csv.service.FacilityCsvParser
 import io.soo.bueongi.core.facility.domain.csv.service.FacilityUploadService
-import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityLiveStore
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc

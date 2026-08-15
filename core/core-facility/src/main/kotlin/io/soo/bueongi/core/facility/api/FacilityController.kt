@@ -4,7 +4,7 @@ import io.soo.bueongi.core.facility.domain.service.NearestPoliceFinder
 import io.soo.bueongi.core.facility.api.response.NearestPoliceResponse
 import io.soo.bueongi.core.facility.api.request.toValidatedGeoPoint
 
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam

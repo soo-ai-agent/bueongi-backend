@@ -4,7 +4,7 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
-import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
+import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

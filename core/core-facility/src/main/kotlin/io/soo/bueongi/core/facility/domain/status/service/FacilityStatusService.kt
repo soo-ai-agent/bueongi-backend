@@ -5,10 +5,10 @@ import io.soo.bueongi.core.facility.domain.status.model.FacilityStatusSummary
 import io.soo.bueongi.core.enums.FacilityRefreshStatus
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
-import io.soo.bueongi.storage.db.core.facility.FacilityRefreshRecord
-import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.model.FacilityFreshness
+import io.soo.bueongi.storage.db.core.facility.model.FacilityRefreshRecord
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
 import org.springframework.stereotype.Service
 
 /**

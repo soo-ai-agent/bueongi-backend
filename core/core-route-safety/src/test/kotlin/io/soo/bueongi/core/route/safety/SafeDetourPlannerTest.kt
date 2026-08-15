@@ -2,10 +2,10 @@ package io.soo.bueongi.core.route.safety
 
 import io.soo.bueongi.core.route.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
-import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

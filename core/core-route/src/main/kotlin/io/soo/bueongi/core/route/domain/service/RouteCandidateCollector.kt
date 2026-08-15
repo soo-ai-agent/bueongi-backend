@@ -10,7 +10,7 @@ import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.enums.ApiProvider
 import io.soo.bueongi.storage.db.core.apilog.ApiCallLogStore
 import io.soo.bueongi.storage.db.core.apilog.measure
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.stereotype.Component
 
 /** Tmap 에서 경로 후보를 모은다 — 기본 후보 + 안심 거점 경유 후보, 중복 제거까지. */

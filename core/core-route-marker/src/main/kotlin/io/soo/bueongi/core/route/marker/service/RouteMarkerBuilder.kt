@@ -7,9 +7,9 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 

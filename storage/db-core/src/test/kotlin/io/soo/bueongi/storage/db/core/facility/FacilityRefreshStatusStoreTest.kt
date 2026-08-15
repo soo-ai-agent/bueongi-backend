@@ -1,5 +1,7 @@
 package io.soo.bueongi.storage.db.core.facility
 
+import io.soo.bueongi.storage.db.core.facility.model.FacilityRefreshRecord
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
 import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -5,7 +5,7 @@ import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

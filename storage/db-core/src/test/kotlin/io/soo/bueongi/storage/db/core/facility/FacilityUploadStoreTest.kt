@@ -1,5 +1,7 @@
 package io.soo.bueongi.storage.db.core.facility
 
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType
 import org.assertj.core.api.Assertions.assertThat

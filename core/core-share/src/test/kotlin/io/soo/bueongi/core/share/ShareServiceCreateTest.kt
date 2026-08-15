@@ -2,7 +2,7 @@ package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
-import io.soo.bueongi.storage.db.core.share.ShareSession
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull

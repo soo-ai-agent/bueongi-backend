@@ -6,7 +6,7 @@ import io.soo.bueongi.core.share.domain.route.model.RouteDestination
 import io.soo.bueongi.core.share.domain.route.model.RouteMarker
 import io.soo.bueongi.core.share.domain.route.model.RoutePoint
 
-import io.soo.bueongi.storage.db.core.share.StoredRoute
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 
 const val MIN_EXPIRES_HOURS: Int = 1
 

@@ -9,10 +9,10 @@ import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.common.error.InvalidRouteMetaException
-import io.soo.bueongi.storage.db.core.share.StoredCoord
-import io.soo.bueongi.storage.db.core.share.StoredMarker
-import io.soo.bueongi.storage.db.core.share.StoredRoute
-import io.soo.bueongi.storage.db.core.share.StoredRouteDestination
+import io.soo.bueongi.storage.db.core.share.model.StoredCoord
+import io.soo.bueongi.storage.db.core.share.model.StoredMarker
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
+import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull

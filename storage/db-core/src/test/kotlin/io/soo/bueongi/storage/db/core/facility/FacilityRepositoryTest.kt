@@ -1,4 +1,8 @@
 package io.soo.bueongi.storage.db.core.facility
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRepository
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import io.soo.bueongi.core.enums.FacilityType
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -97,7 +101,7 @@ class FacilityRepositoryTest {
     }
 
     @Test
-    fun `CCTV CSV(CP949)를 JSON CCTV 와 합쳐 적재`(@TempDir tmp: Path) {
+    fun `CP949 CSV 를 JSON CCTV 와 합쳐 적재`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
         val csv: File = File(dir, "CCTV정보.csv")

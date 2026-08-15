@@ -2,11 +2,11 @@ package io.soo.bueongi.core.route.safety.service
 import io.soo.bueongi.core.route.safety.model.FacilityCounts
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.route.safety.model.SafetyScore
-import io.soo.bueongi.storage.db.core.facility.overlapMetersWith
-import io.soo.bueongi.storage.db.core.facility.pathLengthMeters
+import io.soo.bueongi.storage.db.core.facility.model.overlapMetersWith
+import io.soo.bueongi.storage.db.core.facility.model.pathLengthMeters
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
 import org.springframework.stereotype.Component
 import kotlin.math.max

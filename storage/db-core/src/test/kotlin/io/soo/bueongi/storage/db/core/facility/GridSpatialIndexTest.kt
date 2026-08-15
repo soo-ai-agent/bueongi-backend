@@ -1,4 +1,7 @@
 package io.soo.bueongi.storage.db.core.facility
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.store.GridSpatialIndex
 import io.soo.bueongi.core.enums.FacilityType
 
 import org.assertj.core.api.Assertions.assertThat

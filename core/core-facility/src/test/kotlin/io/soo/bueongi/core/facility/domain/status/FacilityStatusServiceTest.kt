@@ -5,12 +5,12 @@ import io.soo.bueongi.core.facility.domain.status.service.FacilityStatusService
 import io.soo.bueongi.core.enums.FacilityRefreshStatus
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityFreshness
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.facility.SafePath
+import io.soo.bueongi.storage.db.core.facility.model.FacilityFreshness
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.facility.model.SafePath
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

@@ -6,7 +6,7 @@ import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import io.soo.bueongi.core.common.error.OriginRequiredException
 import io.soo.bueongi.core.common.error.SameOriginDestinationException
 import io.soo.bueongi.core.common.error.TripTooFarException

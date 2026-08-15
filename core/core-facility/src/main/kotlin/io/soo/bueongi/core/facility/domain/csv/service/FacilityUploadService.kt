@@ -4,9 +4,9 @@ import io.soo.bueongi.core.facility.domain.csv.model.FacilityCsvParseResult
 import io.soo.bueongi.core.facility.domain.csv.model.FacilityCsvSpec
 import io.soo.bueongi.core.facility.domain.csv.model.FacilityUploadResult
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
-import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
-import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityLiveStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import io.soo.bueongi.core.common.error.EmptyFacilityUploadException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -10,8 +10,8 @@ import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.core.route.api.RouteController
 import io.soo.bueongi.client.tmap.TmapRouteClient
 
-import io.soo.bueongi.storage.db.core.facility.FacilityRepository
-import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRepository
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import org.junit.jupiter.api.Test

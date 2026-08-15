@@ -1,13 +1,13 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.facility.domain.service.NearestPoliceFinder
-import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
 import io.soo.bueongi.core.facility.api.FacilityController
 
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
 
 import io.soo.bueongi.api.ApiControllerAdvice
 import org.junit.jupiter.api.Test

@@ -6,12 +6,12 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.enums.FacilityPoiType
 import io.soo.bueongi.core.enums.RouteType
 
-import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
 import io.soo.bueongi.core.enums.FacilityType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

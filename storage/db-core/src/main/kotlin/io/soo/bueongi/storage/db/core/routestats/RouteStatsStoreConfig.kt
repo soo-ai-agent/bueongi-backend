@@ -1,7 +1,7 @@
 package io.soo.bueongi.storage.db.core.routestats
 
-import io.soo.bueongi.storage.db.core.share.RedisConfigured
-import io.soo.bueongi.storage.db.core.share.RedisNotConfigured
+import io.soo.bueongi.storage.db.core.share.store.RedisConfigured
+import io.soo.bueongi.storage.db.core.share.store.RedisNotConfigured
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration

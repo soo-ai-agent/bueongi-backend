@@ -7,10 +7,10 @@ import io.soo.bueongi.core.enums.FacilityCoordSystem
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.FacilityLiveStore
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.FacilityRefreshStatusStore
-import io.soo.bueongi.storage.db.core.facility.FacilityUploadStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityLiveStore
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilityRefreshStatusStore
+import io.soo.bueongi.storage.db.core.facility.store.FacilityUploadStore
 import io.soo.bueongi.core.common.error.EmptyFacilityUploadException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

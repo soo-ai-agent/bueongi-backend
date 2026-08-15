@@ -4,7 +4,7 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 
 import io.soo.bueongi.api.ApiControllerAdvice
 
-import io.soo.bueongi.storage.db.core.share.LocationStoreUnavailableException
+import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test

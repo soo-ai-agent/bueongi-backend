@@ -2,7 +2,7 @@ package io.soo.bueongi.core.facility.domain.csv.model
 
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
 
 data class FacilityCsvParseResult(
     val coordSystem: FacilityCoordSystem,

@@ -6,9 +6,9 @@ import io.soo.bueongi.core.facility.domain.csv.model.FacilityCsvSpec
 import io.soo.bueongi.core.enums.FacilityCoordSystem
 
 import io.soo.bueongi.support.util.Wgs84Point
-import io.soo.bueongi.storage.db.core.facility.CCTV_SECURITY_PURPOSES
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.store.CCTV_SECURITY_PURPOSES
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction

@@ -7,7 +7,7 @@ import io.soo.bueongi.core.enums.RouteType
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.soo.bueongi.client.tmap.NavStep
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RouteOption(

@@ -5,8 +5,8 @@ import io.soo.bueongi.api.HealthController
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.share.LocationStore
-import io.soo.bueongi.storage.db.core.share.ShareSession
+import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import java.time.Clock
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

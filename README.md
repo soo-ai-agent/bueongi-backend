@@ -167,6 +167,9 @@ backend/
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외·공용 요청 DTO
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
+│   ├── facility/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
+│   ├── share/{store,model}          #   13파일이라 역할로 나눔
+│   └── apilog · routestats · requestmetric · adevent   # 각 4~5파일이라 그대로 둔다
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   └── client-tmap/ · client-kakao/
 └── support/ (logging · monitoring · util)
@@ -178,6 +181,8 @@ backend/
   `domain/` 안은 다시 **역할별**로 나눈다: `service/`(일하는 것) · `model/`(값) ·
   필요하면 `config/`(설정·필터) · `error/`(도메인 예외). 관심사 하위폴더가 먼저 있으면
   그 **안에서** 나눈다(예: `domain/csv/service`, `domain/slack/model`).
+- **역할 분리는 파일이 10개를 넘을 때부터** 한다. 4~5파일을 3폴더로 쪼개면 폴더당 1~2개라
+  탐색이 오히려 늘어난다(clients·support·core-enum·apilog 계열은 그대로 둔 이유).
 - **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
 - **도메인 모듈끼리는 참조하지 않는다(현재 0건).** 공유가 필요하면 `core-common`(공용 타입)이나
   `storage:db-core`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,

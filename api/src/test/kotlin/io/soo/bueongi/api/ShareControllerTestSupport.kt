@@ -5,8 +5,8 @@ import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.core.share.api.GuardianPage
 import io.soo.bueongi.core.share.api.ShareController
 
-import io.soo.bueongi.storage.db.core.share.InMemoryLocationStore
-import io.soo.bueongi.storage.db.core.share.LocationStore
+import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
+import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest

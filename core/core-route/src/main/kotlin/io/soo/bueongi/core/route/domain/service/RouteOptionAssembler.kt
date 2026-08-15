@@ -8,8 +8,8 @@ import io.soo.bueongi.core.route.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteTagVariant
-import io.soo.bueongi.storage.db.core.facility.FacilitySpatialSource
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.store.FacilitySpatialSource
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import io.soo.bueongi.support.util.DistanceFormat
 import org.springframework.stereotype.Component
 import kotlin.math.max

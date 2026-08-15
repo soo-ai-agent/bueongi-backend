@@ -3,9 +3,9 @@ package io.soo.bueongi.core.share
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
 import io.soo.bueongi.support.monitoring.AlertNotifier
 
-import io.soo.bueongi.storage.db.core.share.LocationStore
-import io.soo.bueongi.storage.db.core.share.ShareSession
-import io.soo.bueongi.storage.db.core.share.StoredLocation
+import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.storage.db.core.share.model.StoredLocation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Clock

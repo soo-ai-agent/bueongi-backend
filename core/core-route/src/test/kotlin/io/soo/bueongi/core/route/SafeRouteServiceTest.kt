@@ -12,16 +12,16 @@ import io.soo.bueongi.core.enums.RouteTag
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.RouteTagVariant
 
-import io.soo.bueongi.storage.db.core.facility.FakeFacilitySource
+import io.soo.bueongi.storage.db.core.facility.store.FakeFacilitySource
 
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 
-import io.soo.bueongi.storage.db.core.facility.FacilityPoint
+import io.soo.bueongi.storage.db.core.facility.model.FacilityPoint
 import io.soo.bueongi.core.enums.FacilityType
-import io.soo.bueongi.storage.db.core.facility.GeoPoint
+import io.soo.bueongi.storage.db.core.facility.model.GeoPoint
 import io.soo.bueongi.core.route.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog

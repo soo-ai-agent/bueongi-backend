@@ -1,5 +1,7 @@
 package io.soo.bueongi.storage.db.core.share
 
+import io.soo.bueongi.storage.db.core.share.store.RedisConfigured
+import io.soo.bueongi.storage.db.core.share.store.RedisNotConfigured
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

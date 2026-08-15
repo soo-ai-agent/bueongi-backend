@@ -1,5 +1,8 @@
 package io.soo.bueongi.storage.db.core.share
 
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.storage.db.core.share.model.StoredLocation
+import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
