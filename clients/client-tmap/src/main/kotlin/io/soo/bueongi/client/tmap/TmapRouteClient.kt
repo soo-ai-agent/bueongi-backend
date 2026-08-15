@@ -144,7 +144,10 @@ class TmapRouteClient(
         }
         return body
     }
-}
 
-/** 원인 사슬 로깅 깊이 상한 — 순환·과다 로그 방지. */
-private const val MAX_CAUSE_DEPTH: Int = 5
+    companion object {
+
+        /** 원인 사슬 로깅 깊이 상한 — 순환·과다 로그 방지. */
+        private const val MAX_CAUSE_DEPTH: Int = 5
+    }
+}
