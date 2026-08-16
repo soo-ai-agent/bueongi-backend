@@ -12,6 +12,7 @@ import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
+import java.util.EnumMap
 
 @Service
 class RouteStatsService(
@@ -19,7 +20,6 @@ class RouteStatsService(
 ) {
 
     fun summarize(): RouteStatsSummary {
-        // 최근 것만 상한까지 읽 어 그 자리에서 집계한다(누적 집계를 따로 저장하지 않는다).
         val logs: List<RouteRecommendationLog> = routeStatsStore.findRecent(ROUTE_STATS_CAP)
         return RouteStatsSummary(
             total = logs.size,
@@ -46,11 +46,11 @@ class RouteStatsService(
 
     /** [byEndpoint] 와 같은 규칙 — 안심강도 전 종류를 enum 순서로 내고 없는 값은 0. */
     private fun byPreference(logs: List<RouteRecommendationLog>): List<PreferenceCount> {
-        val counts: MutableMap<SafetyPreference, Int> = HashMap<SafetyPreference, Int>()
+        val counts: MutableMap<SafetyPreference, Int> = EnumMap(SafetyPreference::class.java)
         for (log in logs) {
             counts[log.preference] = (counts[log.preference] ?: 0) + 1
         }
-        val rows: ArrayList<PreferenceCount> = ArrayList<PreferenceCount>()
+        val rows = ArrayList<PreferenceCount>()
         for (preference in SafetyPreference.entries) {
             rows.add(PreferenceCount(preference = preference, count = counts[preference] ?: 0))
         }
@@ -59,7 +59,7 @@ class RouteStatsService(
 
     /** 이름 없는 목적지(좌표만 찍은 경우)는 셀 수 없으니 뺀다. */
     private fun topDestinations(logs: List<RouteRecommendationLog>): List<DestinationCount> {
-        val counts: MutableMap<String, Int> = HashMap<String, Int>()
+        val counts = HashMap<String, Int>()
         for (log in logs) {
             val name: String = log.destinationName?.trim().orEmpty()
             if (name.isEmpty()) {
@@ -67,7 +67,7 @@ class RouteStatsService(
             }
             counts[name] = (counts[name] ?: 0) + 1
         }
-        val rows: ArrayList<DestinationCount> = ArrayList<DestinationCount>()
+        val rows = ArrayList<DestinationCount>()
         for (entry in counts.entries) {
             rows.add(DestinationCount(name = entry.key, count = entry.value))
         }
@@ -79,7 +79,7 @@ class RouteStatsService(
     }
 
     private fun hourlyTrend(logs: List<RouteRecommendationLog>): List<HourlyBucket> {
-        val timestamps: ArrayList<Long> = ArrayList<Long>()
+        val timestamps = ArrayList<Long>()
         for (log in logs) {
             timestamps.add(log.atEpochMs)
         }

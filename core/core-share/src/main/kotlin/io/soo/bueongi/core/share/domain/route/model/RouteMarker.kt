@@ -11,7 +11,7 @@ data class RouteMarker(
     val y: Double? = null,
     val name: String? = null,
     val purpose: String? = null,
-    @JsonProperty("camera_count")
+    @param:JsonProperty("camera_count")
     val cameraCount: Int? = null,
     val address: String? = null,
     val phone: String? = null,

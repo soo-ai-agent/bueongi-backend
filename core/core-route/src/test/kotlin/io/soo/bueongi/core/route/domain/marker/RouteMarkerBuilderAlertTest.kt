@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route.marker
+package io.soo.bueongi.core.route.domain.marker
 
 import io.soo.bueongi.core.route.domain.marker.service.MarkerEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent

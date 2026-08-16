@@ -11,7 +11,7 @@ data class SafetySpotSummary(
      * 편의점 수. 이 레포의 다른 `…Store` 는 전부 저장소라 헷갈리기 쉬워 이름을 풀어 썼다.
      * 와이어 필드명은 프론트 계약이라 `store` 로 고정한다.
      */
-    @JsonProperty("store")
+    @param:JsonProperty("store")
     val convenienceStore: Int,
     val police: Int,
     /** 여성안심지킴이집 수 — [convenienceStore] 와 다른 시설이다. */

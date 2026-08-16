@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption
 @Component
 class SafetySpotUploadStore(
     objectMapper: ObjectMapper,
-    @Value("\${bueongi.facility.upload-dir:./data/facility-uploads}") private val uploadDir: String,
+    @param:Value("\${bueongi.facility.upload-dir:./data/facility-uploads}") private val uploadDir: String,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadStore::class.java)
 

@@ -1,7 +1,6 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ads.api.controller.AdController
-import io.soo.bueongi.api.ApiControllerAdvice
 import io.soo.bueongi.core.ads.domain.service.AdStatsService
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
@@ -22,7 +21,7 @@ import org.springframework.test.web.servlet.post
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdStatsService::class, ApiControllerAdvice::class, AdControllerTest.CapturingStoreConfig::class)
 class AdControllerTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
 
     @BeforeEach

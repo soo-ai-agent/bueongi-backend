@@ -1,6 +1,5 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.api.HealthController
 
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
@@ -26,7 +25,7 @@ class HealthControllerTest {
     @Import(HealthControllerSeedTest.DisabledRemoteConfig::class)
     @ActiveProfiles("test")
     class HealthControllerSeedTest(
-        @Autowired private val mockMvc: MockMvc,
+        @param:Autowired private val mockMvc: MockMvc,
     ) {
         @Test
         fun `키 미설정이면 200 과 status UP, placeSource seed, locationStore memory`() {
@@ -60,7 +59,7 @@ class HealthControllerTest {
     @Import(HealthControllerLiveTest.EnabledRemoteConfig::class)
     @ActiveProfiles("test")
     class HealthControllerLiveTest(
-        @Autowired private val mockMvc: MockMvc,
+        @param:Autowired private val mockMvc: MockMvc,
     ) {
         @Test
         fun `키 설정이면 placeSource live 이고 키 값은 응답에 노출되지 않는다`() {

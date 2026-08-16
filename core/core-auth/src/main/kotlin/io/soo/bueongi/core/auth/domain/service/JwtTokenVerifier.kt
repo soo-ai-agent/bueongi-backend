@@ -16,8 +16,8 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
 class JwtTokenVerifier(
-    private val key: RSAPublicKey,
-    private val issuer: String,
+    key: RSAPublicKey,
+    issuer: String,
 ) {
 
     private val tokenParser: JwtParser = Jwts.parser()
@@ -54,7 +54,7 @@ class JwtTokenVerifier(
             ?: throw InvalidTokenException("missing or non-numeric sub claim")
 
         val roles: List<String> = (claims["roles"] as? List<*>)
-            ?.mapNotNull { it as? String }
+            ?.filterIsInstance<String>()
             ?: emptyList()
 
         if (claims["tokenKind"] != AdminTokenKind.ACCESS.name) {

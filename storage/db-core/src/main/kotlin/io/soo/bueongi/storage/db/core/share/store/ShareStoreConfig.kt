@@ -17,7 +17,7 @@ class ShareStoreConfig {
     @Configuration
     @Conditional(RedisConfigured::class)
     class RedisShareStore(
-        @Value("\${bueongi.share.redis-url}") private val redisUrl: String,
+        @param:Value("\${bueongi.share.redis-url}") private val redisUrl: String,
     ) {
         @Bean(destroyMethod = "destroy")
         fun shareRedisConnectionFactory(): LettuceConnectionFactory {

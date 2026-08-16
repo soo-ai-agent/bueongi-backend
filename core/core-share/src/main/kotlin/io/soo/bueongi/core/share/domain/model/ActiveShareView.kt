@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.share.domain.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * 어드민 응답 계약은 camelCase — 보호자용 snake_case 결과들과 달리 @JsonProperty 를 붙이지 않는다.

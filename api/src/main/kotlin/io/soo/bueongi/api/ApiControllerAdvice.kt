@@ -77,7 +77,7 @@ class ApiControllerAdvice(
     }
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadable(@Suppress("UNUSED_PARAMETER") ex: HttpMessageNotReadableException): ProblemDetail =
+    fun handleUnreadable(ex: HttpMessageNotReadableException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
             "요청 본문을 읽을 수 없습니다(JSON 형식 또는 본문 누락을 확인하세요).",
@@ -121,7 +121,7 @@ class ApiControllerAdvice(
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
-    fun handleUnsupportedMediaType(@Suppress("UNUSED_PARAMETER") ex: HttpMediaTypeNotSupportedException): ProblemDetail =
+    fun handleUnsupportedMediaType(ex: HttpMediaTypeNotSupportedException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.UNSUPPORTED_MEDIA_TYPE,
             "지원하지 않는 본문 형식입니다. Content-Type 을 application/json 으로 보내주세요.",
@@ -131,7 +131,7 @@ class ApiControllerAdvice(
         }
 
     @ExceptionHandler(NoResourceFoundException::class)
-    fun handleNotFound(@Suppress("UNUSED_PARAMETER") ex: NoResourceFoundException): ProblemDetail =
+    fun handleNotFound(ex: NoResourceFoundException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.NOT_FOUND,
             "요청하신 경로를 찾을 수 없습니다.",

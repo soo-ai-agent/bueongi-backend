@@ -22,7 +22,7 @@ import java.net.InetSocketAddress
 )
 @ActiveProfiles("test")
 class HttpClientTimeoutTest(
-    @Autowired private val restClientBuilder: RestClient.Builder,
+    @param:Autowired private val restClientBuilder: RestClient.Builder,
 ) {
 
     private val serverSleepMillis: Long = 3_000L

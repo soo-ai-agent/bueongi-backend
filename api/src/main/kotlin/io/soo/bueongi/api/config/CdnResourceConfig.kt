@@ -10,7 +10,7 @@ import java.time.Duration
 
 @Configuration
 class CdnResourceConfig(
-    @Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String,
+    @param:Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String,
 ) : WebMvcConfigurer {
 
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {

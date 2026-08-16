@@ -20,10 +20,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Component
 class SafetySpotRepository(
-    @Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
+    @param:Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
     private val uploadStore: SafetySpotUploadStore,
-    @Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
+    @param:Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
 ) : SafetySpotSpatialSource, SafetySpotLiveStore {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRepository::class.java)
 

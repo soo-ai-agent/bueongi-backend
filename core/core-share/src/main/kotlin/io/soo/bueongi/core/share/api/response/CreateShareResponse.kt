@@ -6,21 +6,21 @@ import java.time.Instant
 
 data class CreateShareResponse(
     val token: String,
-    @JsonProperty("owner_secret")
+    @param:JsonProperty("owner_secret")
     val ownerSecret: String,
-    @JsonProperty("share_url")
+    @param:JsonProperty("share_url")
     val shareUrl: String,
-    @JsonProperty("expires_at")
+    @param:JsonProperty("expires_at")
     val expiresAt: Instant,
 ) {
     companion object {
 
         fun from(created: ShareCreated): CreateShareResponse =
             CreateShareResponse(
-            token = created.token,
-            ownerSecret = created.ownerSecret,
-            shareUrl = created.shareUrl,
-            expiresAt = created.expiresAt,
-        )
+                token = created.token,
+                ownerSecret = created.ownerSecret,
+                shareUrl = created.shareUrl,
+                expiresAt = created.expiresAt,
+            )
     }
 }

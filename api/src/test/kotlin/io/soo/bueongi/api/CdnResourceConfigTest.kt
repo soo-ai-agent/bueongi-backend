@@ -16,7 +16,7 @@ import java.nio.file.Path
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class CdnResourceConfigTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
 
     companion object {

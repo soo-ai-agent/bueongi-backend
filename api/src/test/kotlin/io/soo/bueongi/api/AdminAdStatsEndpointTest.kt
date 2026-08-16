@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 class AdminAdStatsEndpointTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
     fun `ad-stats 는 총계 오늘 지면별 카운트 시간대 트렌드를 반환한다`() {

@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route.safety
+package io.soo.bueongi.core.route.domain.safety
 
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource

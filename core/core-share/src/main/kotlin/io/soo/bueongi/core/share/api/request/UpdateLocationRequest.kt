@@ -17,13 +17,13 @@ data class UpdateLocationRequest(
     @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
     val lng: Double?,
     @field:NotBlank
-    @JsonProperty("owner_secret")
+    @param:JsonProperty("owner_secret")
     val ownerSecret: String? = null,
     @field:DecimalMin("0.0")
-    @JsonProperty("remaining_m")
+    @param:JsonProperty("remaining_m")
     val remainingM: Double? = null,
     @field:DecimalMin("0.0")
-    @JsonProperty("remaining_s")
+    @param:JsonProperty("remaining_s")
     val remainingS: Double? = null,
 ) {
     fun toReport(): LocationReport =

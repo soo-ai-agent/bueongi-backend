@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 class AdminAlertEndpointTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
     fun `alerts 는 최근 장애 이력을 배열로 반환한다`() {

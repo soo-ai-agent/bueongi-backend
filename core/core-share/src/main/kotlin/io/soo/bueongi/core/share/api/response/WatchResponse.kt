@@ -9,12 +9,12 @@ data class WatchResponse(
     val watching: Boolean,
     val lat: Double? = null,
     val lng: Double? = null,
-    @JsonProperty("updated_at")
+    @param:JsonProperty("updated_at")
     val updatedAt: Instant? = null,
     val expired: Boolean = false,
-    @JsonProperty("remaining_m")
+    @param:JsonProperty("remaining_m")
     val remainingM: Double? = null,
-    @JsonProperty("remaining_s")
+    @param:JsonProperty("remaining_s")
     val remainingS: Double? = null,
 ) {
     companion object {

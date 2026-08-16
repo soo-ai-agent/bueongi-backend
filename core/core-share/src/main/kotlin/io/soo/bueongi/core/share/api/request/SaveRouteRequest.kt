@@ -20,7 +20,7 @@ import jakarta.validation.constraints.Size
 
 /** 빠진 값도 받아야 어느 필드가 틀렸는지 응답에 담긴다. 나머지는 선택 항목이다. */
 data class SaveRouteRequest(
-    @JsonProperty("owner_secret")
+    @param:JsonProperty("owner_secret")
     val ownerSecret: String? = null,
     @field:NotNull @field:Valid
     val destination: NamedLatLng?,
@@ -31,10 +31,10 @@ data class SaveRouteRequest(
     @field:Size(max = MAX_ROUTE_MARKERS)
     val markers: List<@Valid RouteMarkerRequest>? = null,
     @field:Min(0)
-    @JsonProperty("total_distance_m")
+    @param:JsonProperty("total_distance_m")
     val totalDistanceM: Int? = null,
     @field:Min(0)
-    @JsonProperty("total_time_s")
+    @param:JsonProperty("total_time_s")
     val totalTimeS: Int? = null,
     val type: String? = null,
     val provenance: String? = null,

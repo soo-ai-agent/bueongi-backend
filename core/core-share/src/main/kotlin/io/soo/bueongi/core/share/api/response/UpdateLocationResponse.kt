@@ -5,9 +5,9 @@ import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
 import java.time.Instant
 
 data class UpdateLocationResponse(
-    @JsonProperty("updated_at")
+    @param:JsonProperty("updated_at")
     val updatedAt: Instant,
-    @JsonProperty("expires_at")
+    @param:JsonProperty("expires_at")
     val expiresAt: Instant,
 ) {
     companion object {

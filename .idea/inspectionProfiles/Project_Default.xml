@@ -1,0 +1,15 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+
+    <!-- 이 레포는 한국어로 쓴다(테스트 이름·주석·문구). 비ASCII 경고는 규칙 위반이 아니다. -->
+    <inspection_tool class="NonAsciiCharacters" enabled="false" level="WARNING" enabled_by_default="false" />
+
+    <!-- docs/coding-style.md 가 명확한 타입 선언을 요구한다. "중복 타입"은 이 레포에서 의도한 것이다. -->
+    <inspection_tool class="RedundantExplicitType" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="RemoveExplicitTypeArguments" enabled="false" level="WARNING" enabled_by_default="false" />
+
+    <!-- 조건부 빈(RedisConfigured/RedisNotConfigured 등)이 후보를 여럿으로 보이게 해 오탐이 난다. -->
+    <inspection_tool class="SpringJavaInjectionPointsAutowiringInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+  </profile>
+</component>

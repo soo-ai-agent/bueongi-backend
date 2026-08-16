@@ -24,7 +24,7 @@ class SafetySpotStatusService(
 
     fun summarize(): SafetySpotStatusSummary {
         val freshness: SafetySpotFreshness? = safetySpotSource.freshness
-        val safetySpots: ArrayList<SafetySpotStatus> = ArrayList<SafetySpotStatus>()
+        val safetySpots = ArrayList<SafetySpotStatus>()
         for (type in SafetySpotType.entries) {
             val record: SafetySpotRefreshRecord? = refreshStatusStore.findByType(type)
             safetySpots.add(

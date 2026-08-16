@@ -13,9 +13,9 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
 class BueongiContextLoadTest(
-    @Autowired private val placeSearchService: PlaceSearchService,
-    @Autowired private val seedProvider: SeedPlaceProvider,
-    @Autowired private val remoteProvider: RemotePlaceProvider,
+    @param:Autowired private val placeSearchService: PlaceSearchService,
+    @param:Autowired private val seedProvider: SeedPlaceProvider,
+    @param:Autowired private val remoteProvider: RemotePlaceProvider,
 ) {
 
     @Test

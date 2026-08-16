@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route
+package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.enums.RouteType

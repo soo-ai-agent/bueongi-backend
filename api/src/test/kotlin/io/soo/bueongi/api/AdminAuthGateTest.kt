@@ -19,8 +19,8 @@ import java.util.Date
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AdminAuthGateTest(
-    @Autowired private val restTemplate: TestRestTemplate,
-    @LocalServerPort private val port: Int,
+    @param:Autowired private val restTemplate: TestRestTemplate,
+    @param:LocalServerPort private val port: Int,
 ) {
 
     private fun url(path: String) = "http://localhost:$port$path"

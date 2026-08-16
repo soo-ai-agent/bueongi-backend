@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.share.domain.model
 
-import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.share.domain.route.model.RouteContext
 import io.soo.bueongi.core.share.domain.route.model.RouteDestination
 import io.soo.bueongi.core.share.domain.route.model.RouteMarker

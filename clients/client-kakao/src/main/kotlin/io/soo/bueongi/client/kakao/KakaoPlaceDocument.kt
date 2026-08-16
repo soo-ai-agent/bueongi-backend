@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class KakaoPlaceDocument(
-    @JsonProperty("place_name") val placeName: String? = null,
-    @JsonProperty("road_address_name") val roadAddressName: String? = null,
-    @JsonProperty("address_name") val addressName: String? = null,
-    @JsonProperty("x") val lng: String? = null,
-    @JsonProperty("y") val lat: String? = null,
+    @param:JsonProperty("place_name") val placeName: String? = null,
+    @param:JsonProperty("road_address_name") val roadAddressName: String? = null,
+    @param:JsonProperty("address_name") val addressName: String? = null,
+    @param:JsonProperty("x") val lng: String? = null,
+    @param:JsonProperty("y") val lat: String? = null,
 ) {
     fun toKakaoPlace(): KakaoPlace? {
         val name: String = placeName?.takeIf { it.isNotBlank() } ?: return null

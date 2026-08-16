@@ -1,6 +1,5 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.api.ApiControllerAdvice
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class)
 class UncaughtExceptionHandlerTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
 
     @Test

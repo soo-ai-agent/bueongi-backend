@@ -1,6 +1,7 @@
 package io.soo.bueongi.client.tmap
 
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
 
 class TmapRouteCache(
     private val ttlMillis: Long = DEFAULT_TTL_MILLIS,
@@ -41,7 +42,7 @@ class TmapRouteCache(
     }
 
     private fun round5(v: Double): Double =
-        Math.round(v * 1e5) / 1e5
+        (v * 1e5).roundToInt() / 1e5
 
     companion object {
         const val DEFAULT_TTL_MILLIS: Long = 10 * 60 * 1000L

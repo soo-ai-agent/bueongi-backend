@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route.safety
+package io.soo.bueongi.core.route.domain.safety
 
 import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner

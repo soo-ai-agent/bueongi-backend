@@ -29,7 +29,7 @@ import java.util.Base64
 class ShareService(
     private val store: LocationStore,
     private val clock: Clock,
-    @Value("\${bueongi.share.base-url}") private val baseUrl: String,
+    @param:Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
     private val random: SecureRandom = SecureRandom()
     private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()

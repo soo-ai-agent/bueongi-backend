@@ -25,7 +25,7 @@ import java.nio.file.Files
 @AutoConfigureMockMvc(addFilters = false)
 @Import(SafetySpotUploadControllerTest.TestConfig::class)
 class SafetySpotUploadControllerTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
 
     private fun csvFile(content: String) =

@@ -1,7 +1,6 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.share.api.controller.ShareAdminController
-import io.soo.bueongi.core.share.domain.model.LocationView
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -14,7 +13,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 class AdminShareEndpointTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
     fun `share-status 는 활성 세션 수를 반환한다`() {

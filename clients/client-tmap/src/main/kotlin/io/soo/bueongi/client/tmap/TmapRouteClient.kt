@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 
 @Component
 class TmapRouteClient(
@@ -76,7 +77,7 @@ class TmapRouteClient(
                 .accept(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
-                .body(String::class.java)
+                .body<String>()
             val json: JsonNode? = if (raw == null) {
                 null
             } else {

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 
 @Component
 class KakaoPlaceClient(
@@ -31,7 +32,7 @@ class KakaoPlaceClient(
                     .build()
             }
             .retrieve()
-            .body(KakaoKeywordResponse::class.java)
+            .body<KakaoKeywordResponse>()
         return response?.documents.orEmpty().mapNotNull { it.toKakaoPlace() }
     }
 }

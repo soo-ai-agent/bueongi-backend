@@ -9,3 +9,9 @@
 
 # 대용량 공공데이터 CSV (전국 CCTV 78MB 등 — 커밋 금지)
 *.csv
+
+# 검사 프로파일과 사전은 팀이 공유한다(나머지 IDE 설정은 개인 것이라 계속 무시).
+!.idea/
+.idea/*
+!.idea/inspectionProfiles/
+!.idea/dictionaries/

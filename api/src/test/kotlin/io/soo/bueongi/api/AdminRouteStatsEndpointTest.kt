@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 class AdminRouteStatsEndpointTest(
-    @Autowired private val mockMvc: MockMvc,
+    @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
     fun `route-stats 는 엔드포인트 2종과 창 크기를 반환한다`() {

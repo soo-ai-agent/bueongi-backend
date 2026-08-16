@@ -12,6 +12,6 @@ data class NearestPolice(
     val tel: String?,
     val lat: Double,
     val lng: Double,
-    @JsonProperty("distance_m")
+    @param:JsonProperty("distance_m")
     val distanceM: Int,
 )
