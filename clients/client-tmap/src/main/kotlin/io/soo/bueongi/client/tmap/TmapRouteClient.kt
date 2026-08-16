@@ -37,7 +37,7 @@ class TmapRouteClient(
         }
         val routes: ArrayList<TmapRoute> = ArrayList()
         val seen: HashSet<Long> = HashSet()
-        for (option in TmapApiSpec.DEFAULT_SEARCH_OPTIONS) {
+        for (option in DEFAULT_SEARCH_OPTIONS) {
             val route: TmapRoute = call(origin, dest, destName, option, passList = null) ?: continue
             if (!seen.add(route.identityKey)) {
                 continue
@@ -56,7 +56,7 @@ class TmapRouteClient(
         if (!isEnabled) {
             return null
         }
-        return call(origin, dest, destName, TmapApiSpec.VIA_SEARCH_OPTION, passList.ifEmpty { null })
+        return call(origin, dest, destName, VIA_SEARCH_OPTION, passList.ifEmpty { null })
     }
 
     private fun call(
@@ -71,7 +71,7 @@ class TmapRouteClient(
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
             // Tmap 응답에는 NUL 이 섞여 오므로 문자열로 받아 다듬은 뒤 파싱한다(sanitizeTmapJson 주석 참고).
             val raw: String? = restClient.post()
-                .uri(TmapApiSpec.PEDESTRIAN_ENDPOINT)
+                .uri(PEDESTRIAN_ENDPOINT)
                 .header("appKey", appKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
@@ -87,7 +87,7 @@ class TmapRouteClient(
             if (json == null) {
                 route = null
             } else {
-                route = TmapGeoJson.parse(json, searchOption)
+                route = parseTmapGeoJson(json, searchOption)
             }
             if (route != null) {
                 cache.put(origin, dest, searchOption, passList, route)
@@ -147,6 +147,14 @@ class TmapRouteClient(
     }
 
     companion object {
+
+        private const val PEDESTRIAN_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
+
+        /** Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10. 세 갈래를 비교 후보로 쓴다. */
+        private val DEFAULT_SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
+
+        /** 경유지 경로는 추천(0) 하나만 쓴다 — 경유지가 이미 경로를 규정한다. */
+        private const val VIA_SEARCH_OPTION: String = "0"
 
         /** 원인 사슬 로깅 깊이 상한 — 순환·과다 로그 방지. */
         private const val MAX_CAUSE_DEPTH: Int = 5

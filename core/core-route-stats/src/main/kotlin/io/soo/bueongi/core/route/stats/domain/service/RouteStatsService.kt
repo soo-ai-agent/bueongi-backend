@@ -6,7 +6,8 @@ import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
 import io.soo.bueongi.core.common.stats.EndpointCount
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HourlyBuckets
+import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
+import io.soo.bueongi.support.util.countByHour
 
 import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -83,7 +84,7 @@ class RouteStatsService(
         for (log in logs) {
             timestamps.add(log.atEpochMs)
         }
-        return HourlyBuckets.countOf(timestamps)
+        return countByHour(timestamps)
     }
 
     companion object {

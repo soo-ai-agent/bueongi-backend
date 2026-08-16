@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.controller
 
-import io.soo.bueongi.support.util.JsEscape
+import io.soo.bueongi.support.util.escapeForJs
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ class GuardianPage {
     }
 
     fun render(token: String): String {
-        val escapedToken: String = JsEscape.escape(token)
+        val escapedToken: String = escapeForJs(token)
         return template.replace(TOKEN_PLACEHOLDER, escapedToken)
     }
 

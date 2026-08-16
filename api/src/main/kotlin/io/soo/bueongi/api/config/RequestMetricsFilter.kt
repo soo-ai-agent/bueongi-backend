@@ -44,7 +44,7 @@ class RequestMetricsFilter(
                 RequestMetric(
                     atEpochMs = startedAt,
                     method = request.method,
-                    endpoint = RequestPathNormalizer.normalize(request.requestURI),
+                    endpoint = normalizeRequestPath(request.requestURI),
                     clientId = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() },
                     status = response.status,
                     durationMs = System.currentTimeMillis() - startedAt,

@@ -3,7 +3,8 @@ package io.soo.bueongi.core.ads.domain.service
 import io.soo.bueongi.support.util.todayStartMs
 import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
 import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HourlyBuckets
+import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
+import io.soo.bueongi.support.util.countByHour
 
 import io.soo.bueongi.storage.db.core.adevent.AD_EVENT_CAP
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
@@ -57,7 +58,7 @@ class AdStatsService(
         for (event in events) {
             timestamps.add(event.atEpochMs)
         }
-        return HourlyBuckets.countOf(timestamps)
+        return countByHour(timestamps)
     }
 
     companion object {

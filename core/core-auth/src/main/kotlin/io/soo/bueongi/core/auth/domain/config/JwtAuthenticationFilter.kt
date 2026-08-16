@@ -2,7 +2,7 @@ package io.soo.bueongi.core.auth.domain.config
 
 import io.soo.bueongi.core.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
-import io.soo.bueongi.core.auth.domain.service.AuthProblemWriter
+import io.soo.bueongi.core.auth.domain.service.writeAuthProblem
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.FilterChain
@@ -51,7 +51,7 @@ class JwtAuthenticationFilter(
     }
 
     private fun writeUnauthorized(response: HttpServletResponse, detail: String) {
-        AuthProblemWriter.write(
+        writeAuthProblem(
             response = response,
             objectMapper = objectMapper,
             status = HttpStatus.UNAUTHORIZED,

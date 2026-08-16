@@ -10,7 +10,8 @@ import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.support.util.DistanceFormat
+import io.soo.bueongi.support.util.formatDistance
+import io.soo.bueongi.support.util.walkMinutes
 import org.springframework.stereotype.Component
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -34,7 +35,7 @@ class RouteOptionAssembler(
                     id = "tmap-${candidate.searchOption}-$index",
                     name = routeTypeCatalog.displayOf(scoredRoute.type).scoredName,
                     time = "${max(1, (candidate.timeS / 60.0).roundToInt())}분",
-                    dist = DistanceFormat.formatDistance(candidate.distanceM),
+                    dist = formatDistance(candidate.distanceM),
                     desc = "안전 점수 ${scoredRoute.score.score}점 · CCTV ${breakdown.cctvDensity}/km",
                     tags = buildTags(scoredRoute),
                     type = scoredRoute.type,

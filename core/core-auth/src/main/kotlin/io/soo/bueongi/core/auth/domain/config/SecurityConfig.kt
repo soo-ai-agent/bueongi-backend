@@ -3,8 +3,8 @@ package io.soo.bueongi.core.auth.domain.config
 import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
 import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.auth.domain.service.AdminTokenService
-import io.soo.bueongi.core.auth.domain.service.AuthProblemWriter
-import io.soo.bueongi.core.auth.domain.service.JwtKeyMaterialFactory
+import io.soo.bueongi.core.auth.domain.service.writeAuthProblem
+import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -32,7 +32,7 @@ class SecurityConfig(
     @Bean
     fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
         val isLocalProfile: Boolean = environment.activeProfiles.contains("local")
-        return JwtKeyMaterialFactory.create(props, isLocalProfile)
+        return createJwtKeyMaterial(props, isLocalProfile)
     }
 
     @Bean
@@ -79,7 +79,7 @@ class SecurityConfig(
 
     private fun unauthorizedEntryPoint() =
         AuthenticationEntryPoint { _, response, _ ->
-        AuthProblemWriter.write(
+        writeAuthProblem(
             response = response,
             objectMapper = objectMapper,
             status = HttpStatus.UNAUTHORIZED,
@@ -91,7 +91,7 @@ class SecurityConfig(
 
     private fun forbiddenHandler() =
         AccessDeniedHandler { _, response, _ ->
-        AuthProblemWriter.write(
+        writeAuthProblem(
             response = response,
             objectMapper = objectMapper,
             status = HttpStatus.FORBIDDEN,

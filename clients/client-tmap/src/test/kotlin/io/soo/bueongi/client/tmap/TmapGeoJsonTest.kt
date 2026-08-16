@@ -8,7 +8,7 @@ class TmapGeoJsonTest {
 
     private val mapper: ObjectMapper = ObjectMapper()
 
-    private fun parse(json: String): TmapRoute? = TmapGeoJson.parse(mapper.readTree(json), "0")
+    private fun parse(json: String): TmapRoute? = parseTmapGeoJson(mapper.readTree(json), "0")
 
     @Test
     fun `Point 의 totalDistance 시간과 LineString 좌표를 추출`() {

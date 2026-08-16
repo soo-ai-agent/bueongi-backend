@@ -7,9 +7,10 @@ import io.soo.bueongi.core.ops.domain.traffic.model.EndpointTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.EstimatedUsers
 import io.soo.bueongi.core.ops.domain.traffic.model.TrafficSummary
 import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HourlyBuckets
+import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
+import io.soo.bueongi.support.util.countByHour
 import io.soo.bueongi.core.ops.domain.traffic.model.LatencyPercentiles
-import io.soo.bueongi.support.util.Percentiles
+import io.soo.bueongi.support.util.nearestRankPercentile
 
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
@@ -33,7 +34,7 @@ class RequestMetricsService(
             byEndpoint = byEndpoint(metrics),
             estimatedUsers = estimatedUsers(metrics),
             latency = latency(metrics),
-            hourlyCalls = HourlyBuckets.countOf(metrics.map { it.atEpochMs }),
+            hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
             hourlyErrors = hourlyErrors(metrics),
             dailyActiveUsers = dailyActiveUsers(metrics),
         )
@@ -42,9 +43,9 @@ class RequestMetricsService(
     private fun latency(metrics: List<RequestMetric>): LatencyPercentiles {
         val sortedDurations: List<Long> = metrics.map { it.durationMs }.sorted()
         return LatencyPercentiles(
-            p50Ms = Percentiles.nearestRank(sortedDurations, 50),
-            p95Ms = Percentiles.nearestRank(sortedDurations, 95),
-            p99Ms = Percentiles.nearestRank(sortedDurations, 99),
+            p50Ms = nearestRankPercentile(sortedDurations, 50),
+            p95Ms = nearestRankPercentile(sortedDurations, 95),
+            p99Ms = nearestRankPercentile(sortedDurations, 99),
         )
     }
 
@@ -58,7 +59,7 @@ class RequestMetricsService(
         val successCount: Int = group.count { it.status in SUCCESS_STATUS_RANGE }
         val successRate: Double = successCount.toDouble() / count
         val avgDurationMs: Long = (group.sumOf { it.durationMs }.toDouble() / count).roundToLong()
-        val p95DurationMs: Long = Percentiles.nearestRank(group.map { it.durationMs }.sorted(), 95)
+        val p95DurationMs: Long = nearestRankPercentile(group.map { it.durationMs }.sorted(), 95)
         return EndpointTraffic(
             method = key.method,
             endpoint = key.endpoint,
@@ -120,7 +121,7 @@ class RequestMetricsService(
         val errorTimestampsMs: List<Long> = metrics
             .filter { it.status !in SUCCESS_STATUS_RANGE }
             .map { it.atEpochMs }
-        return HourlyBuckets.countOf(errorTimestampsMs)
+        return countByHour(errorTimestampsMs)
     }
 
     private fun dailyActiveUsers(metrics: List<RequestMetric>): List<DailyActive> {

@@ -3,7 +3,8 @@ package io.soo.bueongi.core.route.domain.service
 import io.soo.bueongi.core.route.domain.model.RouteTypeDisplay
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.RouteQuery
-import io.soo.bueongi.support.util.DistanceFormat
+import io.soo.bueongi.support.util.formatDistance
+import io.soo.bueongi.support.util.walkMinutes
 import io.soo.bueongi.core.enums.RouteType
 
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -33,8 +34,8 @@ class RouteService(
                 RouteOption(
                     id = display.id,
                     name = display.name,
-                    time = "${DistanceFormat.walkMinutes(meters)}분",
-                    dist = DistanceFormat.formatDistance(meters),
+                    time = "${walkMinutes(meters)}분",
+                    dist = formatDistance(meters),
                     desc = display.desc,
                     tags = display.tags,
                     type = type,

@@ -6,7 +6,7 @@ import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import io.soo.bueongi.core.auth.api.request.AdminLoginRequest
 import io.soo.bueongi.core.auth.domain.service.AdminTokenService
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
-import io.soo.bueongi.core.auth.domain.service.JwtKeyMaterialFactory
+import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
 import io.soo.bueongi.core.auth.domain.config.JwtProperties
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
 import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
@@ -31,7 +31,7 @@ class AdminAuthServiceTest {
         loginId = "admin",
         passwordHash = BCryptPasswordEncoder().encode("password"),
     )
-    private val keys = JwtKeyMaterialFactory.create(jwt, false)
+    private val keys = createJwtKeyMaterial(jwt, false)
     private val tokens = AdminTokenService(keys, auth)
     private val service = AdminAuthService(auth, tokens)
 

@@ -54,7 +54,7 @@ object Epsg5174 {
 
         val latDeg: Double = Math.toDegrees(wgsGeodetic.latRad)
         val lngDeg: Double = Math.toDegrees(wgsGeodetic.lngRad)
-        return if (KoreaBounds.contains(latDeg, lngDeg)) {
+        return if (isInKorea(latDeg, lngDeg)) {
             Wgs84Point(latDeg, lngDeg)
         } else {
             null
