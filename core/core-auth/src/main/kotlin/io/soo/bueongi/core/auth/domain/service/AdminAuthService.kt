@@ -17,7 +17,10 @@ class AdminAuthService(
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
 
     fun login(request: AdminLoginRequest): AdminLoginResponse {
-        if (request.loginId != properties.loginId || !passwordEncoder.matches(request.password, properties.passwordHash)) {
+        val loginIdMatches: Boolean = request.loginId == properties.loginId
+        // 아이디가 틀려도 비밀번호 대조를 건너뛰지 않는다 — 응답 시간 차이로 아이디를 알아낼 수 있다.
+        val passwordMatches: Boolean = passwordEncoder.matches(request.password, properties.passwordHash)
+        if (!loginIdMatches || !passwordMatches) {
             throw AdminAuthenticationException()
         }
         return AdminLoginResponse(

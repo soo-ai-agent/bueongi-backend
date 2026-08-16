@@ -50,6 +50,12 @@ class AdminAuthServiceTest {
     }
 
     @Test
+    fun `잘못된 아이디는 비밀번호가 맞아도 인증에 실패한다`() {
+        assertThatThrownBy { service.login(AdminLoginRequest("wrong", "password")) }
+            .isInstanceOf(AdminAuthenticationException::class.java)
+    }
+
+    @Test
     fun `리프레시 토큰은 관리자 API access token으로 사용할 수 없다`() {
         val bundle = tokens.issue()
 
