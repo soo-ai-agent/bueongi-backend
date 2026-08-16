@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.soo.bueongi.core.share.domain.model.ActiveShareView
 
 /** 관리자용 공유 조회. 경로가 /api/admin 아래인 것은 프론트 계약이다. */
 @RestController
@@ -17,12 +18,16 @@ class ShareAdminController(
 ) {
 
     @GetMapping("/share-status")
-    fun shareStatus(): ShareStatusResponse =
-        ShareStatusResponse(activeSessions = shareService.countActiveSessions())
+    fun shareStatus(): ShareStatusResponse {
+        val activeSessions: Int = shareService.countActiveSessions()
+        return ShareStatusResponse(activeSessions = activeSessions)
+    }
 
     @GetMapping("/share-sessions")
-    fun shareSessions(): ShareSessionsResponse =
-        ShareSessionsResponse(sessions = shareService.listActiveSessions())
+    fun shareSessions(): ShareSessionsResponse {
+        val sessions: List<ActiveShareView> = shareService.listActiveSessions()
+        return ShareSessionsResponse(sessions = sessions)
+    }
 
     @GetMapping("/share-sessions/{token}/location")
     fun shareSessionLocation(@PathVariable token: String): LocationView =

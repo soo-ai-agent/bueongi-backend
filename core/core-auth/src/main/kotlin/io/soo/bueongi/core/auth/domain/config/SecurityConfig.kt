@@ -30,8 +30,10 @@ class SecurityConfig(
 ) {
 
     @Bean
-    fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial =
-        JwtKeyMaterialFactory.create(props, environment.activeProfiles.contains("local"))
+    fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
+        val isLocalProfile: Boolean = environment.activeProfiles.contains("local")
+        return JwtKeyMaterialFactory.create(props, isLocalProfile)
+    }
 
     @Bean
     fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier =

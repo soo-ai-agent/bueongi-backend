@@ -16,8 +16,8 @@ data class SlackConfigUpdateRequest(
 ) {
     fun toUpdate(): SlackConfigUpdate =
         SlackConfigUpdate(
-        enabled = requireNotNull(enabled) { "enabled 는 @NotNull 검증을 통과했어야 한다" },
-        throttleMinutes = requireNotNull(throttleMinutes) { "throttleMinutes 는 @NotNull 검증을 통과했어야 한다" },
-        mutedCategories = mutedCategories.orEmpty().toSet(),
-    )
+            enabled = requireNotNull(enabled) { "enabled 는 @NotNull 검증을 통과했어야 한다" },
+            throttleMinutes = requireNotNull(throttleMinutes) { "throttleMinutes 는 @NotNull 검증을 통과했어야 한다" },
+            mutedCategories = mutedCategories.orEmpty().toSet(),
+        )
 }

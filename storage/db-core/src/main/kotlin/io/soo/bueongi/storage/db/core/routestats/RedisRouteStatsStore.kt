@@ -22,6 +22,8 @@ class RedisRouteStatsStore(
     override fun record(log: RouteRecommendationLog) =
         entries.push(log)
 
-    override fun findRecent(limit: Int): List<RouteRecommendationLog> =
-        entries.readRecent().take(limit.coerceAtLeast(0))
+    override fun findRecent(limit: Int): List<RouteRecommendationLog> {
+        val safeLimit: Int = limit.coerceAtLeast(0)
+        return entries.readRecent().take(safeLimit)
+    }
 }

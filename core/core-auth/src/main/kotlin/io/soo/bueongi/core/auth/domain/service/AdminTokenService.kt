@@ -27,12 +27,12 @@ class AdminTokenService(
 
     fun issue(): AdminTokenBundle =
         AdminTokenBundle(
-        accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
-        tokenType = "Bearer",
-        expiresIn = authProperties.accessTokenSeconds,
-        refreshToken = createToken(AdminTokenKind.REFRESH, authProperties.refreshTokenSeconds),
-        refreshExpiresIn = authProperties.refreshTokenSeconds,
-    )
+            accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
+            tokenType = "Bearer",
+            expiresIn = authProperties.accessTokenSeconds,
+            refreshToken = createToken(AdminTokenKind.REFRESH, authProperties.refreshTokenSeconds),
+            refreshExpiresIn = authProperties.refreshTokenSeconds,
+        )
 
     fun refresh(refreshToken: String): AdminTokenBundle {
         val claims: Claims = try {

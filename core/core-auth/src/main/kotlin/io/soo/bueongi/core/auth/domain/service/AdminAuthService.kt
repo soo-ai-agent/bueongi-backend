@@ -9,6 +9,7 @@ import io.soo.bueongi.core.auth.api.response.AdminRefreshResponse
 import io.soo.bueongi.core.auth.api.response.AdminUserResponse
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import io.soo.bueongi.core.auth.domain.model.AdminTokenBundle
 
 class AdminAuthService(
     private val properties: AdminAuthProperties,
@@ -18,7 +19,6 @@ class AdminAuthService(
 
     fun login(request: AdminLoginRequest): AdminLoginResponse {
         val loginIdMatches: Boolean = request.loginId == properties.loginId
-        // 아이디가 틀려도 비밀번호 대조를 건너뛰지 않는다 — 응답 시간 차이로 아이디를 알아낼 수 있다.
         val passwordMatches: Boolean = passwordEncoder.matches(request.password, properties.passwordHash)
         if (!loginIdMatches || !passwordMatches) {
             throw AdminAuthenticationException()
@@ -34,6 +34,8 @@ class AdminAuthService(
         )
     }
 
-    fun refresh(request: AdminRefreshRequest): AdminRefreshResponse =
-        AdminRefreshResponse(tokenService.refresh(request.refreshToken))
+    fun refresh(request: AdminRefreshRequest): AdminRefreshResponse {
+        val reissued: AdminTokenBundle = tokenService.refresh(request.refreshToken)
+        return AdminRefreshResponse(reissued)
+    }
 }

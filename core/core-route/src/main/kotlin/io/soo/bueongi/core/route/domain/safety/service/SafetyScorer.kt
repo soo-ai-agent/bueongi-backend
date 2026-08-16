@@ -49,12 +49,12 @@ class SafetyScorer(
 
     private fun countNearby(path: List<GeoPoint>): SafetySpotCounts =
         SafetySpotCounts(
-        cctv = countWithinCorridor(SafetySpotType.CCTV, path),
-        lamp = countWithinCorridor(SafetySpotType.LAMP, path),
-        bell = countWithinCorridor(SafetySpotType.BELL, path),
-        safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),
-        police = countWithinCorridor(SafetySpotType.POLICE, path),
-    )
+            cctv = countWithinCorridor(SafetySpotType.CCTV, path),
+            lamp = countWithinCorridor(SafetySpotType.LAMP, path),
+            bell = countWithinCorridor(SafetySpotType.BELL, path),
+            safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),
+            police = countWithinCorridor(SafetySpotType.POLICE, path),
+        )
 
     private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
         safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size

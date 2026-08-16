@@ -42,10 +42,6 @@ object Epsg5174 {
 
     private const val BOWRING_ITERATIONS: Int = 5
 
-    /** 파이프라인 KOREA_BOUNDS 와 동일 값. */
-    fun inKoreaBounds(lat: Double, lng: Double): Boolean =
-        lat.isFinite() && lng.isFinite() && lat in 33.0..39.0 && lng in 124.0..132.0
-
     /** x=동(easting), y=북(northing). */
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
         if (!x.isFinite() || !y.isFinite()) {
@@ -58,7 +54,7 @@ object Epsg5174 {
 
         val latDeg: Double = Math.toDegrees(wgsGeodetic.latRad)
         val lngDeg: Double = Math.toDegrees(wgsGeodetic.lngRad)
-        return if (inKoreaBounds(latDeg, lngDeg)) {
+        return if (KoreaBounds.contains(latDeg, lngDeg)) {
             Wgs84Point(latDeg, lngDeg)
         } else {
             null

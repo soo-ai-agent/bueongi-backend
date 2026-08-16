@@ -22,6 +22,8 @@ class RedisRequestMetricStore(
     override fun record(metric: RequestMetric) =
         entries.push(metric)
 
-    override fun findRecent(limit: Int): List<RequestMetric> =
-        entries.readRecent().take(limit.coerceAtLeast(0))
+    override fun findRecent(limit: Int): List<RequestMetric> {
+        val safeLimit: Int = limit.coerceAtLeast(0)
+        return entries.readRecent().take(safeLimit)
+    }
 }

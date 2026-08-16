@@ -21,10 +21,6 @@ object Epsg5179 {
     private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
     private val M0: Double = meridianArc(LAT0)
 
-    /** 파이프라인 KOREA_BOUNDS 와 동일 값. */
-    fun inKoreaBounds(lat: Double, lng: Double): Boolean =
-        lat.isFinite() && lng.isFinite() && lat in 33.0..39.0 && lng in 124.0..132.0
-
     /** x=동(easting), y=북(northing). */
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
         if (!x.isFinite() || !y.isFinite()) {
@@ -60,7 +56,7 @@ object Epsg5179 {
 
         val latDeg: Double = Math.toDegrees(lat)
         val lngDeg: Double = Math.toDegrees(lon)
-        return if (inKoreaBounds(latDeg, lngDeg)) {
+        return if (KoreaBounds.contains(latDeg, lngDeg)) {
             Wgs84Point(latDeg, lngDeg)
         } else {
             null

@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import io.soo.bueongi.support.monitoring.AlertRecord
+import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
 
 /** 운영 알림 — 이력 조회와 Slack 설정. 경로가 /api/admin 아래인 것은 프론트 계약이다. */
 @RestController
@@ -26,15 +28,20 @@ class AlertController(
     @GetMapping("/alerts")
     fun alerts(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
-    ): AlertsResponse = AlertsResponse(alerts = alertNotifier.findRecentAlerts(limit))
+    ): AlertsResponse {
+        val alerts: List<AlertRecord> = alertNotifier.findRecentAlerts(limit)
+        return AlertsResponse(alerts = alerts)
+    }
 
     @GetMapping("/slack-config")
     fun slackConfig(): SlackConfigSummary =
         slackConfigService.view()
 
     @PutMapping("/slack-config")
-    fun updateSlackConfig(@Valid @RequestBody request: SlackConfigUpdateRequest): SlackConfigSummary =
-        slackConfigService.update(request.toUpdate())
+    fun updateSlackConfig(@Valid @RequestBody request: SlackConfigUpdateRequest): SlackConfigSummary {
+        val update: SlackConfigUpdate = request.toUpdate()
+        return slackConfigService.update(update)
+    }
 
     @PostMapping("/slack-config/test")
     fun testSlackConfig(): SlackTestResult =
