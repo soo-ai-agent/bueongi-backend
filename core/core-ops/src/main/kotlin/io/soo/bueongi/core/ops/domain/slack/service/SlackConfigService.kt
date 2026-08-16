@@ -31,7 +31,13 @@ class SlackConfigService(
     }
 
     fun update(update: SlackConfigUpdate): SlackConfigSummary {
-        rejectUnknownCategories(update.mutedCategories)
+        val unknown: Set<String> = update.mutedCategories - KNOWN_CATEGORIES.keys
+        if (unknown.isNotEmpty()) {
+            throw InvalidSlackCategoryException(
+                rejectedValue = unknown.sorted(),
+                knownKeys = KNOWN_CATEGORIES.keys.toList(),
+            )
+        }
         slackAlertConfig.update(
             enabled = update.enabled,
             throttleMinutes = update.throttleMinutes,
@@ -45,15 +51,6 @@ class SlackConfigService(
         return SlackTestResult(sent = sent, enabled = slackAlertConfig.sendEnabled())
     }
 
-    private fun rejectUnknownCategories(categories: Set<String>) {
-        val unknown: Set<String> = categories - KNOWN_CATEGORIES.keys
-        if (unknown.isNotEmpty()) {
-            throw InvalidSlackCategoryException(
-                rejectedValue = unknown.sorted(),
-                knownKeys = KNOWN_CATEGORIES.keys.toList(),
-            )
-        }
-    }
 
     companion object {
         val KNOWN_CATEGORIES: Map<String, String> = linkedMapOf(

@@ -61,7 +61,7 @@ class ShareService(
 
     fun listActiveSessions(): List<ActiveShareView> {
         val now: Instant = clock.instant()
-        val views: ArrayList<ActiveShareView> = ArrayList<ActiveShareView>()
+        val views: ArrayList<ActiveShareView> = ArrayList()
         for (session in store.findActiveSessions()) {
             views.add(toActiveShareView(session, now))
         }

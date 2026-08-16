@@ -29,7 +29,7 @@ class SafetySpotCsvParser {
         val columns: CsvColumns = spec.locateColumns(buildHeaderIndex(records[headerPos]))
         val dataRows: List<List<String>> = collectDataRows(records, headerPos)
 
-        val points: ArrayList<SafetySpotPoint> = ArrayList<SafetySpotPoint>()
+        val points: ArrayList<SafetySpotPoint> = ArrayList()
         for (row in dataRows) {
             val point: SafetySpotPoint = toSafetySpotPoint(row, columns, spec) ?: continue
             points.add(point)
@@ -48,7 +48,7 @@ class SafetySpotCsvParser {
     }
 
     private fun collectDataRows(records: List<List<String>>, headerPos: Int): List<List<String>> {
-        val rows: ArrayList<List<String>> = ArrayList<List<String>>()
+        val rows: ArrayList<List<String>> = ArrayList()
         for (index in headerPos + 1 until records.size) {
             if (hasContent(records[index])) {
                 rows.add(records[index])
@@ -119,7 +119,7 @@ class SafetySpotCsvParser {
     }
 
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
-        val map: LinkedHashMap<String, Int> = LinkedHashMap<String, Int>()
+        val map: LinkedHashMap<String, Int> = LinkedHashMap()
         header.forEachIndexed { index, raw ->
             val key: String = raw.trim()
             if (key.isNotEmpty() && !map.containsKey(key)) {
@@ -156,8 +156,8 @@ class SafetySpotCsvParser {
      * 처리 규칙: `"` 안에서는 콤마·줄바꿈이 글자로 취급되고, `""` 는 따옴표 한 글자다.
      */
     private fun tokenizeCsv(text: String): List<List<String>> {
-        val records: ArrayList<List<String>> = ArrayList<List<String>>()
-        var record: ArrayList<String> = ArrayList<String>()
+        val records: ArrayList<List<String>> = ArrayList()
+        var record: ArrayList<String> = ArrayList()
         val field: StringBuilder = StringBuilder()
         var inQuotes: Boolean = false
         var cursor: Int = 0

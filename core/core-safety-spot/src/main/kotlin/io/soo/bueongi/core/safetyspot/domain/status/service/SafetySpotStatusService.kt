@@ -24,7 +24,7 @@ class SafetySpotStatusService(
 
     fun summarize(): SafetySpotStatusSummary {
         val freshness: SafetySpotFreshness? = safetySpotSource.freshness
-        val safetySpots = ArrayList<SafetySpotStatus>()
+        val safetySpots: ArrayList<SafetySpotStatus> = ArrayList()
         for (type in SafetySpotType.entries) {
             val record: SafetySpotRefreshRecord? = refreshStatusStore.findByType(type)
             safetySpots.add(
@@ -33,22 +33,12 @@ class SafetySpotStatusService(
                     loadedCount = safetySpotSource.index(type).size,
                     lastRefreshAtMs = record?.atEpochMs,
                     lastRefreshCount = record?.replacedCount,
-                    lastRefreshStatus = statusOf(record),
+                    lastRefreshStatus = record?.status() ?: SafetySpotRefreshStatus.SKIPPED,
                     cdnGeneratedAt = freshness?.generatedAt,
                     cdnVersion = freshness?.version,
                 ),
             )
         }
         return SafetySpotStatusSummary(safetySpots = safetySpots)
-    }
-
-    private fun statusOf(record: SafetySpotRefreshRecord?): SafetySpotRefreshStatus {
-        if (record == null) {
-            return SafetySpotRefreshStatus.SKIPPED
-        }
-        if (record.replacedCount != null) {
-            return SafetySpotRefreshStatus.REPLACED
-        }
-        return SafetySpotRefreshStatus.KEPT
     }
 }

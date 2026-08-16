@@ -37,7 +37,7 @@ class RedisJsonLog<T : Any>(
             log.warn("{} 조회 실패: {}", label, e.message)
             return emptyList()
         }
-        val parsed: ArrayList<T> = ArrayList<T>()
+        val parsed: ArrayList<T> = ArrayList()
         for (json in raw) {
             try {
                 parsed.add(objectMapper.readValue(json, type))

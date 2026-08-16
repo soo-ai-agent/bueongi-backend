@@ -41,11 +41,11 @@ class AdStatsService(
     }
 
     private fun byPlacement(events: List<AdEvent>): Map<String, Int> {
-        val counts: MutableMap<String, Int> = HashMap<String, Int>()
+        val counts: MutableMap<String, Int> = HashMap()
         for (event in events) {
             counts[event.placement] = (counts[event.placement] ?: 0) + 1
         }
-        val rows: LinkedHashMap<String, Int> = LinkedHashMap<String, Int>()
+        val rows: LinkedHashMap<String, Int> = LinkedHashMap()
         for (placement in TRACKED_PLACEMENTS) {
             rows[placement] = counts[placement] ?: 0
         }
@@ -53,7 +53,7 @@ class AdStatsService(
     }
 
     private fun hourlyTrend(events: List<AdEvent>): List<HourlyBucket> {
-        val timestamps: ArrayList<Long> = ArrayList<Long>()
+        val timestamps: ArrayList<Long> = ArrayList()
         for (event in events) {
             timestamps.add(event.atEpochMs)
         }

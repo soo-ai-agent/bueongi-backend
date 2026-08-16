@@ -35,8 +35,8 @@ class TmapRouteClient(
         if (!isEnabled) {
             return emptyList()
         }
-        val routes: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
-        val seen: HashSet<Long> = HashSet<Long>()
+        val routes: ArrayList<TmapRoute> = ArrayList()
+        val seen: HashSet<Long> = HashSet()
         for (option in TmapApiSpec.DEFAULT_SEARCH_OPTIONS) {
             val route: TmapRoute = call(origin, dest, destName, option, passList = null) ?: continue
             if (!seen.add(route.identityKey)) {

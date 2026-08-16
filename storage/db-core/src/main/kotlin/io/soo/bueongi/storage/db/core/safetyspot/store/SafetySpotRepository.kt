@@ -57,8 +57,8 @@ class SafetySpotRepository(
 
     @PostConstruct
     fun load() {
-        val byType: LinkedHashMap<SafetySpotType, MutableList<SafetySpotPoint>> = LinkedHashMap<SafetySpotType, MutableList<SafetySpotPoint>>()
-        val paths: ArrayList<SafePath> = ArrayList<SafePath>()
+        val byType: LinkedHashMap<SafetySpotType, MutableList<SafetySpotPoint>> = LinkedHashMap()
+        val paths: ArrayList<SafePath> = ArrayList()
         var fileCount: Int = 0
 
         val dir: File? = resolveDataDir()

@@ -2,7 +2,7 @@ package io.soo.bueongi.core.safetyspot.api.controller
 
 import io.soo.bueongi.core.safetyspot.domain.service.NearestPoliceFinder
 import io.soo.bueongi.core.safetyspot.api.response.NearestPoliceResponse
-import io.soo.bueongi.core.safetyspot.api.request.toValidatedGeoPoint
+import io.soo.bueongi.core.safetyspot.domain.error.InvalidCoordinateException
 
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,7 +23,7 @@ class SafetySpotController(
         @RequestParam(name = "radius_m", required = false) radiusM: Double?,
         @RequestParam(required = false) limit: Int?,
     ): NearestPoliceResponse {
-        val origin: GeoPoint = toValidatedGeoPoint(lat, lng)
+        val origin: GeoPoint = GeoPoint.orNull(lat, lng) ?: throw InvalidCoordinateException(lat, lng)
         return NearestPoliceResponse(nearestPoliceFinder.findNearest(origin, radiusM, limit))
     }
 }

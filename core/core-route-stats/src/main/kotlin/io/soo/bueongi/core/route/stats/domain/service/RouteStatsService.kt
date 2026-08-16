@@ -33,11 +33,11 @@ class RouteStatsService(
 
     /** 추적 대상 엔드포인트를 고정 순서로 모두 낸다 — 0건도 대시보드에 자리를 지킨다. */
     private fun byEndpoint(logs: List<RouteRecommendationLog>): List<EndpointCount> {
-        val counts: MutableMap<String, Int> = HashMap<String, Int>()
+        val counts: MutableMap<String, Int> = HashMap()
         for (log in logs) {
             counts[log.endpoint] = (counts[log.endpoint] ?: 0) + 1
         }
-        val rows: ArrayList<EndpointCount> = ArrayList<EndpointCount>()
+        val rows: ArrayList<EndpointCount> = ArrayList()
         for (endpoint in TRACKED_ENDPOINTS) {
             rows.add(EndpointCount(endpoint = endpoint, count = counts[endpoint] ?: 0))
         }
@@ -50,7 +50,7 @@ class RouteStatsService(
         for (log in logs) {
             counts[log.preference] = (counts[log.preference] ?: 0) + 1
         }
-        val rows = ArrayList<PreferenceCount>()
+        val rows: ArrayList<PreferenceCount> = ArrayList()
         for (preference in SafetyPreference.entries) {
             rows.add(PreferenceCount(preference = preference, count = counts[preference] ?: 0))
         }
@@ -59,7 +59,7 @@ class RouteStatsService(
 
     /** 이름 없는 목적지(좌표만 찍은 경우)는 셀 수 없으니 뺀다. */
     private fun topDestinations(logs: List<RouteRecommendationLog>): List<DestinationCount> {
-        val counts = HashMap<String, Int>()
+        val counts: HashMap<String, Int> = HashMap()
         for (log in logs) {
             val name: String = log.destinationName?.trim().orEmpty()
             if (name.isEmpty()) {
@@ -67,7 +67,7 @@ class RouteStatsService(
             }
             counts[name] = (counts[name] ?: 0) + 1
         }
-        val rows = ArrayList<DestinationCount>()
+        val rows: ArrayList<DestinationCount> = ArrayList()
         for (entry in counts.entries) {
             rows.add(DestinationCount(name = entry.key, count = entry.value))
         }
@@ -79,7 +79,7 @@ class RouteStatsService(
     }
 
     private fun hourlyTrend(logs: List<RouteRecommendationLog>): List<HourlyBucket> {
-        val timestamps = ArrayList<Long>()
+        val timestamps: ArrayList<Long> = ArrayList()
         for (log in logs) {
             timestamps.add(log.atEpochMs)
         }

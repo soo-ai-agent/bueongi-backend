@@ -10,7 +10,7 @@ object HourlyBuckets {
         val currentHour: ZonedDateTime = Instant.ofEpochMilli(System.currentTimeMillis())
             .atZone(SERVICE_ZONE)
             .truncatedTo(ChronoUnit.HOURS)
-        val buckets: ArrayList<HourlyBucket> = ArrayList<HourlyBucket>()
+        val buckets: ArrayList<HourlyBucket> = ArrayList()
         for (hoursAgo in BUCKET_COUNT - 1 downTo 0) {
             val bucketStart: ZonedDateTime = currentHour.minusHours(hoursAgo.toLong())
             val startMs: Long = bucketStart.toInstant().toEpochMilli()

@@ -41,7 +41,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         if (path.size < 2) {
             return path
         }
-        val out: ArrayList<GeoPoint> = ArrayList<GeoPoint>()
+        val out: ArrayList<GeoPoint> = ArrayList()
         out.add(path[0])
         for (i in 1 until path.size) {
             val a: GeoPoint = path[i - 1]
@@ -63,8 +63,8 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         }
         val cellSpanMinM: Double = CELL_DEG * MIN_LNG_DEG_METERS
         val ring: Int = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
-        val seenCells: HashSet<Long> = HashSet<Long>()
-        val result: ArrayList<SafetySpotPoint> = ArrayList<SafetySpotPoint>()
+        val seenCells: HashSet<Long> = HashSet()
+        val result: ArrayList<SafetySpotPoint> = ArrayList()
         for (anchor in anchors) {
             val latCell: Int = cellIndex(anchor.lat, CELL_DEG)
             val lngCell: Int = cellIndex(anchor.lng, CELL_DEG)

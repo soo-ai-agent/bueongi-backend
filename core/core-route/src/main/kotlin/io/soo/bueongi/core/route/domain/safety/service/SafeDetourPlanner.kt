@@ -28,7 +28,7 @@ class SafeDetourPlanner(
         }
 
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var safetySpotCount: Int = 0)
-        val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap<Long, ClusterAccumulator>()
+        val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap()
         for (safetySpot in nearby) {
             val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
             val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
@@ -39,7 +39,7 @@ class SafeDetourPlanner(
             cluster.safetySpotCount += 1
         }
 
-        val anchors: ArrayList<SafeAnchor> = ArrayList<SafeAnchor>()
+        val anchors: ArrayList<SafeAnchor> = ArrayList()
         for (cluster in clusters.values) {
             anchors.add(
                 SafeAnchor(
@@ -89,7 +89,7 @@ class SafeDetourPlanner(
             compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
         )
 
-        val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet<List<GeoPoint>>()
+        val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
         val singles: List<Placed> = byWeight.take(SINGLE_ANCHOR_COMBOS)
         for (single in singles) {
             combos.add(listOf(single.anchor.center))
@@ -98,7 +98,7 @@ class SafeDetourPlanner(
             // 2개 경유 조합은 경로 진행 순으로 정렬해야 왔던 길을 되돌아가지 않는다.
             val topTwo: List<Placed> = byWeight.take(2)
             val inTravelOrder: List<Placed> = topTwo.sortedBy { it.progress }
-            val pair: ArrayList<GeoPoint> = ArrayList<GeoPoint>()
+            val pair: ArrayList<GeoPoint> = ArrayList()
             for (placedAnchor in inTravelOrder) {
                 pair.add(placedAnchor.anchor.center)
             }

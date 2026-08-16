@@ -51,7 +51,7 @@ class SafeRouteService(
         val mainIdx: Int? = scored.indices.filter { it !in used }
             .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
 
-        val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap<Int, RouteType>()
+        val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap()
         picks[safeIdx] = RouteType.SAFE
         if (fastIdx != null) {
             picks[fastIdx] = RouteType.FAST
@@ -59,7 +59,7 @@ class SafeRouteService(
         if (mainIdx != null) {
             picks[mainIdx] = RouteType.MAIN
         }
-        val assigned: ArrayList<ScoredRoute> = ArrayList<ScoredRoute>()
+        val assigned: ArrayList<ScoredRoute> = ArrayList()
         for (pick in picks) {
             val candidate: ScoredCandidate = scored[pick.key]
             assigned.add(ScoredRoute(candidate.candidate, candidate.score, pick.value))

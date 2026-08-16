@@ -46,7 +46,7 @@ class RouteCandidateCollector(
 
         val budget: Double = DETOUR_BUDGETS.getValue(query.safetyPreference)
         val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + budget)
-        val detours: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
+        val detours: ArrayList<TmapRoute> = ArrayList()
         // 조합 하나가 Tmap 호출 한 번이라, 받아 본 뒤에야 예산 초과를 안다.
         for (waypoints in waypointCombos) {
             val route: TmapRoute = tmapClient.fetchRouteVia(
@@ -63,7 +63,7 @@ class RouteCandidateCollector(
     }
 
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
-        val seen: HashSet<Long> = HashSet<Long>()
+        val seen: HashSet<Long> = HashSet()
         return routes.filter { seen.add(it.identityKey) }
     }
 

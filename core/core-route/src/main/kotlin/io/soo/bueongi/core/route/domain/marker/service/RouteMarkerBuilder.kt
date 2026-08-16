@@ -34,7 +34,7 @@ class RouteMarkerBuilder(
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         // x·y 는 전체 마커 범위를 알아야 정해지므로 여기서는 0 으로 두고 마지막에 한 번에 채운다.
-        val raw: ArrayList<SafetySpotPoi> = ArrayList<SafetySpotPoi>()
+        val raw: ArrayList<SafetySpotPoi> = ArrayList()
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
@@ -72,7 +72,7 @@ class RouteMarkerBuilder(
         val spanLat: Double = maxLat - minLat
         val spanLng: Double = maxLng - minLng
         val drawableRange: Double = MINI_MAP_MAX - 2 * MARKER_PADDING
-        val placed: ArrayList<SafetySpotPoi> = ArrayList<SafetySpotPoi>()
+        val placed: ArrayList<SafetySpotPoi> = ArrayList()
         for (marker in this) {
             // 화면 y 는 아래로 증가하므로 위도는 뒤집어 넣는다(북쪽이 위).
             val x: Int = percentOrCenter(marker.lng - minLng, spanLng, drawableRange)

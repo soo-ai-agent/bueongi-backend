@@ -11,7 +11,7 @@ class RouteCandidateMerger {
 
     /** 먼저 온 후보를 남긴다 — Tmap 이 더 추천한 쪽이다. */
     fun mergeNearDuplicates(candidates: List<RouteCandidate>): List<RouteCandidate> {
-        val kept: ArrayList<RouteCandidate> = ArrayList<RouteCandidate>()
+        val kept: ArrayList<RouteCandidate> = ArrayList()
         for (candidate in candidates) {
             if (kept.none { isNearDuplicate(it, candidate) }) {
                 kept.add(candidate)

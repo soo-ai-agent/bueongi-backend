@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 class SeedPlaceProvider {
     fun search(keyword: String): List<PlaceItem> {
         val needle: String = keyword.lowercase()
-        val found: ArrayList<PlaceItem> = ArrayList<PlaceItem>()
+        val found: ArrayList<PlaceItem> = ArrayList()
         for (place in SEED_PLACE_CATALOG) {
             val inName: Boolean = place.name.lowercase().contains(needle)
             val inAddress: Boolean = place.address.lowercase().contains(needle)

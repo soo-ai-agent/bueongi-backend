@@ -56,7 +56,7 @@ class ApiControllerAdvice(
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
-        val errors: ArrayList<ApiFieldError> = ArrayList<ApiFieldError>()
+        val errors: ArrayList<ApiFieldError> = ArrayList()
         for (fieldError in ex.bindingResult.fieldErrors) {
             errors.add(
                 ApiFieldError(

@@ -21,14 +21,14 @@ class NearestPoliceFinder(
         val policeIndex: GridSpatialIndex = safetySpots.index(SafetySpotType.POLICE)
         val nearbyPolice: List<SafetySpotPoint> = policeIndex.withinRadius(center, radius)
 
-        val withDistance: ArrayList<SafetySpotWithDistance> = ArrayList<SafetySpotWithDistance>()
+        val withDistance: ArrayList<SafetySpotWithDistance> = ArrayList()
         for (police in nearbyPolice) {
             val distanceMeters: Double = center.distanceMetersTo(police.toGeoPoint())
             withDistance.add(SafetySpotWithDistance(police, distanceMeters))
         }
         withDistance.sortBy { it.distanceMeters }
 
-        val nearest: ArrayList<NearestPolice> = ArrayList<NearestPolice>()
+        val nearest: ArrayList<NearestPolice> = ArrayList()
         for (found in withDistance) {
             if (nearest.size >= maxResults) {
                 break

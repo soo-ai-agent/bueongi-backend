@@ -25,7 +25,7 @@ class RouteService(
 
     fun buildStraightLineRoutes(query: RouteQuery): List<RouteOption> {
         val straightMeters: Double = query.origin.distanceMetersTo(query.destination)
-        val options: ArrayList<RouteOption> = ArrayList<RouteOption>()
+        val options: ArrayList<RouteOption> = ArrayList()
         for (type in RouteType.entries) {
             val display: RouteTypeDisplay = routeTypeCatalog.displayOf(type)
             val meters: Double = straightMeters * display.distanceFactor

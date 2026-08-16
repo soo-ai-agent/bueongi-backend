@@ -14,7 +14,7 @@ fun toValidatedSafetySpotType(cdnType: String): SafetySpotType {
 }
 
 private fun allowedCdnTypes(): List<String> {
-    val allowed: ArrayList<String> = ArrayList<String>()
+    val allowed: ArrayList<String> = ArrayList()
     for (type in SafetySpotType.entries) {
         allowed.add(type.cdnType)
     }

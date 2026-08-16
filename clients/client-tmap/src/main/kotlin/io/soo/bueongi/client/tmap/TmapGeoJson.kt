@@ -15,8 +15,8 @@ object TmapGeoJson {
             return null
         }
 
-        val path: ArrayList<TmapCoord> = ArrayList<TmapCoord>()
-        val steps: ArrayList<NavStep> = ArrayList<NavStep>()
+        val path: ArrayList<TmapCoord> = ArrayList()
+        val steps: ArrayList<NavStep> = ArrayList()
         var distanceM: Double = 0.0
         var timeS: Int = 0
 
