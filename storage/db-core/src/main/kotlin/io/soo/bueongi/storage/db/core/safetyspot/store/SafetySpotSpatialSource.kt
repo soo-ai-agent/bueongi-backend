@@ -9,6 +9,7 @@ interface SafetySpotSpatialSource {
 
     val safePaths: List<SafePath>
 
+    // manifest 가 없는 원천은 기준일을 모른다.
     val freshness: SafetySpotFreshness?
         get() = null
 }

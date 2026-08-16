@@ -37,7 +37,7 @@ class SafetySpotCsvParser {
         return SafetySpotCsvParseResult(columns.coordSystem, received = dataRows.size, points = points)
     }
 
-    /** 첫 비어 있지 않은 행이 헤더다. 없으면 -1. */
+    /** 헤더가 없으면 -1. */
     private fun findHeaderRow(records: List<List<String>>): Int {
         for (index in records.indices) {
             if (hasContent(records[index])) {
@@ -66,7 +66,7 @@ class SafetySpotCsvParser {
         return false
     }
 
-    /** 좌표가 없거나 방범 목적이 아닌 행은 버린다(null). */
+    /** 좌표가 없거나 방범 목적이 아니면 null. */
     private fun toSafetySpotPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): SafetySpotPoint? {
         val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
         val purpose: String? = columns.purpose(row)
@@ -107,7 +107,7 @@ class SafetySpotCsvParser {
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
     }
 
-    /** 원천 좌표계의 평면 좌표를 위경도로 옮긴다. WGS84 는 이미 위경도라 변환이 없다(null). */
+    /** WGS84 는 이미 위경도라 변환이 없다 — null 을 돌린다. */
     private fun toWgs84(coordSystem: SafetySpotCoordSystem, x: Double, y: Double): Wgs84Point? {
         if (coordSystem == SafetySpotCoordSystem.EPSG5179) {
             return Epsg5179.toWgs84(x, y)

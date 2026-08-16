@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 
+/** 선택 항목은 클라이언트가 보내지 않을 수 있다. */
 data class SlackConfigUpdateRequest(
     @field:NotNull
     val enabled: Boolean?,

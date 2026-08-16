@@ -2,7 +2,10 @@ package io.soo.bueongi.storage.db.core.share.model
 
 import java.time.Instant
 
-/** PII(계정·전화번호 등)는 저장하지 않는다 — 비식별 토큰 URL 공유 모델. */
+/**
+ * PII(계정·전화번호 등)는 저장하지 않는다 — 비식별 토큰 URL 공유 모델.
+ * 도착 예정 시각은 사용자가 ETA 를 넣었을 때만 있다.
+ */
 data class ShareSession(
     val token: String,
     /** 쓰기/종료 권한 비밀(앱만 보유) — 공유 URL·조회 응답에 절대 포함 금지(읽기/쓰기 분리). */

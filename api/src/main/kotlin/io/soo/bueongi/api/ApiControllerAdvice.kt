@@ -22,6 +22,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class ApiControllerAdvice(
+    // 알림 없이도 예외 응답은 나가야 해서 선택 주입이다.
     private val apiEvents: ApiEventPublisher? = null,
 ) {
 

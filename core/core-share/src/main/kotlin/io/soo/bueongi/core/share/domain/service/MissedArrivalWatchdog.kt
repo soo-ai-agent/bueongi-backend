@@ -14,6 +14,7 @@ import java.time.Instant
 class MissedArrivalWatchdog(
     private val store: LocationStore,
     private val clock: Clock,
+    // 알림 없이도 감시는 돌아야 해서 선택 주입이다.
     private val shareEvents: ShareEventPublisher? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(MissedArrivalWatchdog::class.java)

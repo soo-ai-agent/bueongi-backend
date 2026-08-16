@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.share.domain.model.ShareWatchStatus
 import java.time.Instant
 
+/** 아직 보고가 없으면 위치·시각이 비어 있다. */
 data class WatchResponse(
     val watching: Boolean,
     val lat: Double? = null,

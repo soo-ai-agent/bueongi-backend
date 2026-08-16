@@ -82,7 +82,7 @@ class RouteServiceTest {
         assertThat(recording.records.first().destinationName).isEqualTo("홍대입구역")
 
         recording.records.clear()
-        recordingService.buildRoutes(request())
+        recordingService.buildStraightLineRoutes(request())
         assertThat(recording.records).isEmpty()
     }
 }

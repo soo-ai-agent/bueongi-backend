@@ -38,6 +38,7 @@ class SafetySpotRepository(
     private var _safePaths: List<SafePath> = emptyList()
 
     @Volatile
+    // 적재 전이거나 manifest 가 없는 원천은 기준일을 모른다.
     private var _freshness: SafetySpotFreshness? = null
 
     override val safePaths: List<SafePath> get() = _safePaths

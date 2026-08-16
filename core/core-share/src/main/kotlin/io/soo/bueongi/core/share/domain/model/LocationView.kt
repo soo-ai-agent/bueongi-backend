@@ -3,6 +3,7 @@ package io.soo.bueongi.core.share.domain.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
+/** 아직 보고가 없거나 만료됐음을 null 로 알린다. */
 data class LocationView(
     val lat: Double?,
     val lng: Double?,

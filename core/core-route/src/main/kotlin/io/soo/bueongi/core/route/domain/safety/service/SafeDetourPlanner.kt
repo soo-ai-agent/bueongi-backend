@@ -10,21 +10,12 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SegmentProjection
 import org.springframework.stereotype.Component
 import kotlin.math.floor
 
-/**
- * 최단 경로 옆으로 살짝 돌아 "안심시설이 몰린 곳"을 지나가는 경유지를 고른다.
- *
- * 개별 시설 하나하나를 경유지로 쓰면 Tmap 호출이 폭발하므로, 시설을 격자로 뭉쳐
- * **거점(anchor)** 몇 개로 줄인 뒤 그중 경로에 어울리는 것만 고른다.
- */
+/** 시설 하나하나를 경유지로 쓰면 Tmap 호출이 폭발한다 — 격자로 뭉친 거점 몇 개로 줄여 쓴다. */
 @Component
 class SafeDetourPlanner(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
 
-    /**
-     * 경로 회랑 안 시설을 격자로 뭉쳐 거점 목록을 만든다. 거점 = 셀 안 시설들의 무게중심, 가중치 = 시설 수.
-     * 시설이 많이 몰린 셀일수록 앞에 온다.
-     */
     fun extractSafeAnchors(directPath: List<GeoPoint>): List<SafeAnchor> {
         if (directPath.size < 2) {
             return emptyList()
@@ -57,7 +48,7 @@ class SafeDetourPlanner(
                 ),
             )
         }
-        // 시설이 많이 몰린 셀부터. 같은 수면 좌표 순으로 갈라 결과를 고정한다.
+        // 같은 수면 좌표 순으로 갈라 같은 입력에 같은 결과가 나오게 한다.
         val byDensityThenPosition: Comparator<SafeAnchor> = compareByDescending<SafeAnchor> { it.weight }
             .thenBy { it.center.lat }
             .thenBy { it.center.lng }
@@ -68,10 +59,7 @@ class SafeDetourPlanner(
         return anchors.subList(0, MAX_ANCHORS)
     }
 
-    /**
-     * 거점 중 경유지로 쓸 만한 것을 조합해 돌려준다. 조합 하나가 Tmap 호출 한 번이라 개수를 좁게 잡는다.
-     * 반환: 거점 1개짜리 조합 최대 3개 + 거점 2개짜리 조합 1개.
-     */
+    /** 조합 하나가 Tmap 호출 한 번이라 개수를 좁게 잡는다. */
     fun pickDetourWaypoints(
         origin: GeoPoint,
         dest: GeoPoint,
@@ -82,7 +70,6 @@ class SafeDetourPlanner(
         }
         val maxLateralMeters: Double = origin.distanceMetersTo(dest) * DEFAULT_LATERAL_RATIO
 
-        // 거점을 출발지→도착지 직선 위에 투영해 "얼마나 진행한 지점인지(progress)"와 "옆으로 얼마나 벗어났는지"를 본다.
         data class Placed(val anchor: SafeAnchor, val progress: Double)
         val placed: List<Placed> = anchors.mapNotNull { anchor ->
             val projection: SegmentProjection = anchor.center.projectOnto(origin, dest)

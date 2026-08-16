@@ -2,7 +2,10 @@ package io.soo.bueongi.core.safetyspot.domain.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-/** 프론트 NearbyPolice 계약과 동형 — 필드명(tel·distance_m)은 리네임 금지. */
+/**
+ * 프론트 NearbyPolice 계약과 동형 — 필드명(tel·distance_m)은 리네임 금지.
+ * 전화·주소는 원천 데이터에 빠져 있는 지구대가 있다.
+ */
 data class NearestPolice(
     val name: String?,
     val address: String?,

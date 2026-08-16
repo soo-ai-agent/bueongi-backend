@@ -11,7 +11,6 @@ import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
-/** Tmap 에서 경로 후보를 모은다 — 기본 후보 + 안심 거점 경유 후보, 중복 제거까지. */
 @Component
 class RouteCandidateCollector(
     private val tmapClient: TmapRouteClient,
@@ -21,7 +20,7 @@ class RouteCandidateCollector(
 
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    /** 기본 경로 후보(추천·대로우선·최단). 전멸하면 빈 목록 — 호출부가 폴백을 결정한다. */
+    /** 전멸하면 빈 목록 — 폴백 여부는 호출부가 정한다. */
     fun collectBase(query: RouteQuery): List<TmapRoute> =
         tmapClient.fetchRoutes(
             query.origin.toTmapCoord(),
@@ -29,33 +28,26 @@ class RouteCandidateCollector(
             query.destinationName,
         )
 
-    /** 기본 후보에 안심 우회 후보를 더해 중복을 걷어낸 최종 후보 목록. */
     fun collectAll(query: RouteQuery, base: List<TmapRoute>): List<RouteCandidate> {
-        // 1. 안심 거점을 경유하는 후보를 추가로 받는다(기본 후보만으로는 선택지가 3개뿐이다).
         val detours: List<TmapRoute> = collectSafeDetours(query, base)
 
-        // 2. 완전히 같은 경로를 걷어내고(dedupe), 3. 거의 겹치는 경로를 하나로 합친다(merge).
-        //    Tmap 은 옵션만 다르면 사실상 같은 길을 여러 번 주므로 두 단계가 다 필요하다.
+        // Tmap 은 옵션만 다르면 사실상 같은 길을 준다 — 완전 일치와 근사 겹침을 따로 걸러야 한다.
         return candidateMerger.mergeNearDuplicates(
             dedupeByIdentity(base + detours).map { it.toCandidate() },
         )
     }
 
-    /**
-     * 안심 거점을 경유하는 우회 후보. 최단 경로 대비 우회 예산(안심 강도)을 넘는 후보는 버린다.
-     * 너무 멀리 도는 길은 안전해도 사용자가 쓰지 않기 때문이다.
-     */
+    /** 예산을 넘는 후보는 버린다 — 너무 멀리 도는 길은 안전해도 쓰지 않는다. */
     private fun collectSafeDetours(query: RouteQuery, base: List<TmapRoute>): List<TmapRoute> {
-        // 첫 후보를 기준선으로 삼아 그 주변 안심시설을 거점으로 뭉치고, 경유지 조합을 뽑는다.
         val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
         val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
         val waypointCombos: List<List<GeoPoint>> =
             detourPlanner.pickDetourWaypoints(query.origin, query.destination, anchors)
 
-        // 우회 예산 = 가장 짧은 후보 × (1 + 안심 강도). 사용자가 고른 강도만큼만 돌아간다.
-        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + detourBudgetOf(query.safetyPreference))
+        val budget: Double = DETOUR_BUDGETS.getValue(query.safetyPreference)
+        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + budget)
         val detours: ArrayList<TmapRoute> = ArrayList<TmapRoute>()
-        // 조합 하나가 Tmap 호출 한 번이다. 받아 보고 예산을 넘으면 버린다.
+        // 조합 하나가 Tmap 호출 한 번이라, 받아 본 뒤에야 예산 초과를 안다.
         for (waypoints in waypointCombos) {
             val route: TmapRoute = tmapClient.fetchRouteVia(
                 query.origin.toTmapCoord(),
@@ -69,10 +61,6 @@ class RouteCandidateCollector(
         }
         return detours
     }
-
-    /** 안심 강도별 우회 허용 비율. 높을수록 더 멀리 돌아 안심 거점을 경유한다. */
-    private fun detourBudgetOf(preference: SafetyPreference): Double =
-        DETOUR_BUDGETS.getValue(preference)
 
     private fun dedupeByIdentity(routes: List<TmapRoute>): List<TmapRoute> {
         val seen: HashSet<Long> = HashSet<Long>()

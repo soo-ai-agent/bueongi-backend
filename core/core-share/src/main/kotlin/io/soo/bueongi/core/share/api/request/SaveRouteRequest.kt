@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
+/** 빠진 값도 받아야 어느 필드가 틀렸는지 응답에 담긴다. 나머지는 선택 항목이다. */
 data class SaveRouteRequest(
     @JsonProperty("owner_secret")
     val ownerSecret: String? = null,

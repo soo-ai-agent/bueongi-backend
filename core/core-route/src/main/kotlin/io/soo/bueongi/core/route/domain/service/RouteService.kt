@@ -10,24 +10,21 @@ import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
 
-/**
- * Tmap 없이 만드는 안내용 경로. 키가 없거나 Tmap 이 전멸했을 때 [SafeRouteService] 가 부른다.
- * 실제 길이 아니라 **직선거리에 유형별 계수를 곱한 추정치**라 점수·좌표·마커를 담지 않는다.
- */
+/** 실제 길이 아니라 직선거리 추정치라 점수·좌표·마커를 담지 않는다. */
 @Service
 class RouteService(
     private val routeTypeCatalog: RouteTypeCatalog,
+    // 통계 없이도 경로 생성은 돌아야 해서 선택 주입이다.
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
     fun compare(query: RouteQuery): List<RouteOption> {
         routeStatsStore.recordRecommendation("compare", query)
-        return buildRoutes(query)
+        return buildStraightLineRoutes(query)
     }
 
-    fun buildRoutes(query: RouteQuery): List<RouteOption> {
+    fun buildStraightLineRoutes(query: RouteQuery): List<RouteOption> {
         val straightMeters: Double = query.origin.distanceMetersTo(query.destination)
-        // 유형마다 우회 계수가 다르다(안심 1.18 · 주요 1.05 · 최단 0.92) — 3개를 한 번에 만든다.
         val options: ArrayList<RouteOption> = ArrayList<RouteOption>()
         for (type in RouteType.entries) {
             val display: RouteTypeDisplay = routeTypeCatalog.displayOf(type)

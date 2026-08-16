@@ -6,11 +6,8 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 /**
- * 시설을 약 100m 격자 칸에 나눠 담아 "이 근처 시설"을 빠르게 찾는다.
- *
- * 전국 수십만 건을 매번 전부 훑을 수 없어서, 먼저 **주변 칸에 든 후보만 모으고**(candidateCells)
- * 그 후보에만 실제 거리 계산을 돌린다. 칸은 넉넉히 잡으므로 후보에는 반경 밖도 섞여 있고,
- * 정확한 걸러내기는 각 조회 메서드의 distance 비교가 한다.
+ * 전국 수십만 건을 매번 훑을 수 없어 격자 칸으로 후보를 먼저 줄인다.
+ * 칸을 넉넉히 잡으므로 후보에는 반경 밖도 섞여 있고, 정확한 걸러내기는 조회 메서드가 한다.
  */
 class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
@@ -59,7 +56,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return out
     }
 
-    /** 기준점들 주변 ring 칸 범위의 시설을 모은다(중복 칸은 한 번만). 반경 밖도 섞여 있어 호출부가 다시 거른다. */
+    /** 반경 밖도 섞여 있어 호출부가 다시 거른다. */
     private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<SafetySpotPoint> {
         if (buckets.isEmpty()) {
             return emptyList()
