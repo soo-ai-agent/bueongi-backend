@@ -8,6 +8,7 @@ import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
+import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
@@ -25,6 +26,11 @@ class AdminTokenService(
     private val publicKey: RSAPublicKey = keyMaterial.publicKey
     private val issuer: String = keyMaterial.issuer
 
+    private val tokenParser: JwtParser = Jwts.parser()
+        .verifyWith(publicKey)
+        .requireIssuer(issuer)
+        .build()
+
     fun issue(): AdminTokenBundle =
         AdminTokenBundle(
             accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
@@ -35,18 +41,23 @@ class AdminTokenService(
         )
 
     fun refresh(refreshToken: String): AdminTokenBundle {
-        val claims: Claims = try {
-            Jwts.parser().verifyWith(publicKey).requireIssuer(issuer).build().parseSignedClaims(refreshToken).payload
+        val claims: Claims = verifiedClaimsOf(refreshToken)
+        val issuedToAdmin: Boolean = claims.subject == ADMIN_ID.toString()
+        val isRefreshToken: Boolean = claims[TOKEN_KIND_CLAIM] == AdminTokenKind.REFRESH.name
+        if (!issuedToAdmin || !isRefreshToken) {
+            throw AdminAuthenticationException()
+        }
+        return issue()
+    }
+
+    private fun verifiedClaimsOf(token: String): Claims =
+        try {
+            tokenParser.parseSignedClaims(token).payload
         } catch (exception: JwtException) {
             throw AdminAuthenticationException()
         } catch (exception: IllegalArgumentException) {
             throw AdminAuthenticationException()
         }
-        if (claims.subject != ADMIN_ID.toString() || claims[TOKEN_KIND_CLAIM] != AdminTokenKind.REFRESH.name) {
-            throw AdminAuthenticationException()
-        }
-        return issue()
-    }
 
     private fun createToken(kind: AdminTokenKind, lifetimeSeconds: Long): String {
         val issuedAt: Instant = clock.instant()

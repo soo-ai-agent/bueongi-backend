@@ -8,6 +8,7 @@ import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
+import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
 import java.security.KeyFactory
 import java.security.interfaces.RSAPublicKey
@@ -18,6 +19,11 @@ class JwtTokenVerifier(
     private val key: RSAPublicKey,
     private val issuer: String,
 ) {
+
+    private val tokenParser: JwtParser = Jwts.parser()
+        .verifyWith(key)
+        .requireIssuer(issuer)
+        .build()
 
     constructor(properties: JwtProperties) : this(
         parsePemPublicKey(properties.publicKey),
@@ -35,12 +41,7 @@ class JwtTokenVerifier(
             throw InvalidTokenException("empty token")
         }
         val claims: Claims = try {
-            Jwts.parser()
-                .verifyWith(key)
-                .requireIssuer(issuer)
-                .build()
-                .parseSignedClaims(token)
-                .payload
+            tokenParser.parseSignedClaims(token).payload
         } catch (e: ExpiredJwtException) {
             throw ExpiredTokenException(e)
         } catch (e: JwtException) {

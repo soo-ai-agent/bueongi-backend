@@ -9,6 +9,9 @@ import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.auth.domain.service.JwtKeyMaterialFactory
 import io.soo.bueongi.core.auth.domain.config.JwtProperties
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
+import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -52,6 +55,30 @@ class AdminAuthServiceTest {
     @Test
     fun `잘못된 아이디는 비밀번호가 맞아도 인증에 실패한다`() {
         assertThatThrownBy { service.login(AdminLoginRequest("wrong", "password")) }
+            .isInstanceOf(AdminAuthenticationException::class.java)
+    }
+
+    @Test
+    fun `access token 으로는 재발급할 수 없다 - 토큰 종류를 확인한다`() {
+        val bundle = tokens.issue()
+
+        assertThatThrownBy { tokens.refresh(bundle.accessToken) }
+            .isInstanceOf(AdminAuthenticationException::class.java)
+    }
+
+    @Test
+    fun `발급자가 다른 토큰은 서명이 같아도 재발급할 수 없다`() {
+        val otherIssuer = AdminTokenService(
+            JwtKeyMaterial(
+                publicKey = keyPair.public as RSAPublicKey,
+                privateKey = keyPair.private as RSAPrivateKey,
+                issuer = "someone-else",
+            ),
+            auth,
+        )
+        val foreign = otherIssuer.issue()
+
+        assertThatThrownBy { tokens.refresh(foreign.refreshToken) }
             .isInstanceOf(AdminAuthenticationException::class.java)
     }
 
