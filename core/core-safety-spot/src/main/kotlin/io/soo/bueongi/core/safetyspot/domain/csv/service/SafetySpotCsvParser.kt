@@ -142,7 +142,7 @@ class SafetySpotCsvParser {
             .onUnmappableCharacter(CodingErrorAction.REPORT)
             .decode(java.nio.ByteBuffer.wrap(bytes))
             .toString()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 
@@ -158,7 +158,7 @@ class SafetySpotCsvParser {
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records: ArrayList<List<String>> = ArrayList()
         var record: ArrayList<String> = ArrayList()
-        val field: StringBuilder = StringBuilder()
+        val field = StringBuilder()
         var inQuotes: Boolean = false
         var cursor: Int = 0
         val length: Int = text.length

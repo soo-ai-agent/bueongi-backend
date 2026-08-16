@@ -31,7 +31,7 @@ class ShareService(
     private val clock: Clock,
     @param:Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
-    private val random: SecureRandom = SecureRandom()
+    private val random = SecureRandom()
     private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
     fun create(expiresInHours: Int?, etaSeconds: Int? = null): ShareCreated {
@@ -93,7 +93,7 @@ class ShareService(
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
-        val location: StoredLocation = StoredLocation(
+        val location = StoredLocation(
             lat = report.lat,
             lng = report.lng,
             updatedAt = now,
@@ -184,7 +184,7 @@ class ShareService(
     }
 
     private fun newToken(): String {
-        val bytes: ByteArray = ByteArray(TOKEN_BYTES)
+        val bytes = ByteArray(TOKEN_BYTES)
         random.nextBytes(bytes)
         return tokenEncoder.encodeToString(bytes)
     }

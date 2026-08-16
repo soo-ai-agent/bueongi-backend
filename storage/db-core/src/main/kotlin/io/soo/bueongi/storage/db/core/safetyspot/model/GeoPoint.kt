@@ -101,7 +101,7 @@ fun List<GeoPoint>.overlapMetersWith(other: List<GeoPoint>, withinMeters: Double
     for (i in 1 until size) {
         val a: GeoPoint = this[i - 1]
         val b: GeoPoint = this[i]
-        val mid: GeoPoint = GeoPoint((a.lat + b.lat) / 2, (a.lng + b.lng) / 2)
+        val mid = GeoPoint((a.lat + b.lat) / 2, (a.lng + b.lng) / 2)
         if (mid.distanceMetersToPath(other) <= withinMeters) {
             overlap += a.distanceMetersTo(b)
         }

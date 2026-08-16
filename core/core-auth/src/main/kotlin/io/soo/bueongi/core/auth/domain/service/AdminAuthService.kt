@@ -15,7 +15,7 @@ class AdminAuthService(
     private val properties: AdminAuthProperties,
     private val tokenService: AdminTokenService,
 ) {
-    private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
+    private val passwordEncoder = BCryptPasswordEncoder()
 
     fun login(request: AdminLoginRequest): AdminLoginResponse {
         val loginIdMatches: Boolean = request.loginId == properties.loginId

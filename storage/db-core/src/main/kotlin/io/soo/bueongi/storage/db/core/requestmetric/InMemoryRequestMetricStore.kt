@@ -7,7 +7,7 @@ class InMemoryRequestMetricStore : RequestMetricStore {
 
     private val logger: Logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
     private val metrics: ArrayDeque<RequestMetric> = ArrayDeque<RequestMetric>()
-    private val lock: Any = Any()
+    private val lock = Any()
 
     override fun record(metric: RequestMetric) {
         try {

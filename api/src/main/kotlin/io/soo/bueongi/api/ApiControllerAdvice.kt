@@ -115,7 +115,7 @@ class ApiControllerAdvice(
             title = "Method Not Allowed"
             setProperty("code", "METHOD_NOT_ALLOWED")
         }
-        val headers: HttpHeaders = HttpHeaders()
+        val headers = HttpHeaders()
         ex.supportedHttpMethods?.let { headers.allow = it }
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers).body(body)
     }

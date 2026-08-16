@@ -24,7 +24,7 @@ class KakaoPlaceClientHttpTest {
     private fun bind(): Pair<KakaoPlaceClient, MockRestServiceServer> {
         val builder: RestClient.Builder = RestClient.builder()
         val server: MockRestServiceServer = MockRestServiceServer.bindTo(builder).build()
-        val provider: KakaoPlaceClient = KakaoPlaceClient(apiKey = apiKey, restClientBuilder = builder)
+        val provider = KakaoPlaceClient(apiKey = apiKey, restClientBuilder = builder)
         return provider to server
     }
 

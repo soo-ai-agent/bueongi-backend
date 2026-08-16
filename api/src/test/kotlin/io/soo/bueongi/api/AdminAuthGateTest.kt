@@ -26,7 +26,7 @@ class AdminAuthGateTest(
     private fun url(path: String) = "http://localhost:$port$path"
 
     private fun get(path: String, token: String? = null): org.springframework.http.ResponseEntity<String> {
-        val headers: HttpHeaders = HttpHeaders()
+        val headers = HttpHeaders()
         if (token != null) {
             headers.setBearerAuth(token)
         }

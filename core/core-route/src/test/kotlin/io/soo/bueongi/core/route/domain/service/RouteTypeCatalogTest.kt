@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class RouteTypeCatalogTest {
 
-    private val catalog: RouteTypeCatalog = RouteTypeCatalog()
+    private val catalog = RouteTypeCatalog()
 
     @Test
     fun `apiType 으로 매핑`() {

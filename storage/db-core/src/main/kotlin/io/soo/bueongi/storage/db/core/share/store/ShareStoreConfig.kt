@@ -21,13 +21,13 @@ class ShareStoreConfig {
     ) {
         @Bean(destroyMethod = "destroy")
         fun shareRedisConnectionFactory(): LettuceConnectionFactory {
-            val uri: URI = URI(redisUrl)
+            val uri = URI(redisUrl)
             val port: Int = if (uri.port > 0) {
                 uri.port
             } else {
                 DEFAULT_REDIS_PORT
             }
-            val config: RedisStandaloneConfiguration = RedisStandaloneConfiguration(uri.host ?: "localhost", port)
+            val config = RedisStandaloneConfiguration(uri.host ?: "localhost", port)
             val password: String = uri.userInfo?.substringAfter(':', "").orEmpty()
             if (password.isNotEmpty()) {
                 config.setPassword(password)

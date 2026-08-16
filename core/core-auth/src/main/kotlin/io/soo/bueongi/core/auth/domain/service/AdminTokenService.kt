@@ -43,9 +43,9 @@ class AdminTokenService(
     fun refresh(refreshToken: String): AdminTokenBundle {
         val claims: Claims = try {
             tokenParser.parseSignedClaims(refreshToken).payload
-        } catch (exception: JwtException) {
+        } catch (_: JwtException) {
             throw AdminAuthenticationException()
-        } catch (exception: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             throw AdminAuthenticationException()
         }
         val issuedToAdmin: Boolean = claims.subject == ADMIN_ID.toString()

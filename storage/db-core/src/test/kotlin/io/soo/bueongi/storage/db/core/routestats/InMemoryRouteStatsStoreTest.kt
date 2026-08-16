@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class InMemoryRouteStatsStoreTest {
 
-    private val store: InMemoryRouteStatsStore = InMemoryRouteStatsStore()
+    private val store = InMemoryRouteStatsStore()
 
     private fun log(at: Long, endpoint: String = "compare", preference: SafetyPreference = SafetyPreference.SAFE) =
         RouteRecommendationLog(atEpochMs = at, endpoint = endpoint, destinationName = "목적지", preference = preference)

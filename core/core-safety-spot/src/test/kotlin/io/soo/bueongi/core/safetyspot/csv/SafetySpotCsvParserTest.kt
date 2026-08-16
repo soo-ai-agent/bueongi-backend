@@ -14,7 +14,7 @@ import java.nio.charset.Charset
 
 class SafetySpotCsvParserTest {
 
-    private val parser: SafetySpotCsvParser = SafetySpotCsvParser()
+    private val parser = SafetySpotCsvParser()
 
     private fun bytes(text: String, charset: Charset = Charsets.UTF_8): ByteArray = text.toByteArray(charset)
 

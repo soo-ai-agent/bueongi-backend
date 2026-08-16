@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit
 
 class SafetySpotRepositoryTest {
 
-    private val mapper: ObjectMapper = ObjectMapper()
+    private val mapper = ObjectMapper()
 
     private fun write(dir: File, rel: String, json: String) {
-        val file: File = File(dir, rel)
+        val file = File(dir, rel)
         file.parentFile.mkdirs()
         file.writeText(json)
     }
@@ -104,7 +104,7 @@ class SafetySpotRepositoryTest {
     fun `CP949 CSV 를 JSON CCTV 와 합쳐 적재`(@TempDir tmp: Path) {
         val dir = tmp.toFile()
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
-        val csv: File = File(dir, "CCTV정보.csv")
+        val csv = File(dir, "CCTV정보.csv")
         fun row(id: String, lat: String, purpose: String) =
             "3000000,$id,서울 종로구청,종로 $id,,$purpose,2,200,360도 전방면,30,202005," +
                 "02-0000-0000,$lat,126.97,2026-05-18,,갱신,수정"
@@ -183,7 +183,7 @@ class SafetySpotRepositoryTest {
             ),
         )
 
-        val repo: SafetySpotRepository = SafetySpotRepository(dir.absolutePath, mapper, store, "")
+        val repo = SafetySpotRepository(dir.absolutePath, mapper, store, "")
         repo.load()
 
         assertThat(repo.index(SafetySpotType.CCTV).size).isEqualTo(3)
@@ -211,8 +211,8 @@ class SafetySpotRepositoryTest {
         repeat(TRIALS) {
             val repo = SafetySpotRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
             repo.load()
-            val start: CountDownLatch = CountDownLatch(1)
-            val done: CountDownLatch = CountDownLatch(types.size)
+            val start = CountDownLatch(1)
+            val done = CountDownLatch(types.size)
 
             types.forEachIndexed { index, type ->
                 pool.execute {

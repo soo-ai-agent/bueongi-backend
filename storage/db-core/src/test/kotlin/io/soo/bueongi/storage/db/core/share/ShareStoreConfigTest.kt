@@ -13,12 +13,12 @@ import org.springframework.mock.env.MockEnvironment
 
 class ShareStoreConfigTest {
 
-    private val redisConfigured: RedisConfigured = RedisConfigured()
-    private val redisNotConfigured: RedisNotConfigured = RedisNotConfigured()
+    private val redisConfigured = RedisConfigured()
+    private val redisNotConfigured = RedisNotConfigured()
     private val metadata = mock<AnnotatedTypeMetadata>()
 
     private fun contextWith(redisUrl: String?): ConditionContext {
-        val env: MockEnvironment = MockEnvironment()
+        val env = MockEnvironment()
         if (redisUrl != null) {
             env.setProperty("bueongi.share.redis-url", redisUrl)
         }

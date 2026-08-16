@@ -26,7 +26,7 @@ class SlackConfigServiceTest {
         throttleMinutes: Int = 10,
         sendTestResult: Boolean = false,
     ): Pair<SlackConfigService, SlackAlertConfig> {
-        val config: SlackAlertConfig = SlackAlertConfig(webhookUrl = url, throttleMinutes = throttleMinutes)
+        val config = SlackAlertConfig(webhookUrl = url, throttleMinutes = throttleMinutes)
         return SlackConfigService(config, notifier(sendTestResult)) to config
     }
 

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 class RouteOptionWireContractTest {
 
-    private val mapper: ObjectMapper = ObjectMapper()
+    private val mapper = ObjectMapper()
 
     private fun richOption() = RouteOption(
         id = "tmap-0-0",

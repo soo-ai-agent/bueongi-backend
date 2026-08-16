@@ -23,7 +23,7 @@ class SafetySpotRefreshStatusStore {
     }
 
     fun recordUpload(type: SafetySpotType, replacedCount: Int, atEpochMs: Long) {
-        val recorded: SafetySpotRefreshRecord = SafetySpotRefreshRecord(atEpochMs = atEpochMs, replacedCount = replacedCount)
+        val recorded = SafetySpotRefreshRecord(atEpochMs = atEpochMs, replacedCount = replacedCount)
         records.updateAndGet { current -> current + (type to recorded) }
     }
 

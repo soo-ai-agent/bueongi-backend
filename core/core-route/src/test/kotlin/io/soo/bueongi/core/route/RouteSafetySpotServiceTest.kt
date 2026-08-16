@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test
 
 class RouteSafetySpotServiceTest {
 
-    private val origin: GeoPoint = GeoPoint(37.5, 127.000)
-    private val destination: GeoPoint = GeoPoint(37.5, 127.020)
+    private val origin = GeoPoint(37.5, 127.000)
+    private val destination = GeoPoint(37.5, 127.020)
 
     private fun request(routeType: String?, source: FakeSafetySpotSource) =
         RouteSafetySpotService(RouteMarkerBuilder(source)).alongRoute(

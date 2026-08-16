@@ -26,10 +26,10 @@ class SafetySpotUploadStore(
     private val writeMapper: ObjectMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     fun save(type: SafetySpotType, points: List<SafetySpotPoint>) {
-        val dir: File = File(uploadDir)
+        val dir = File(uploadDir)
         Files.createDirectories(dir.toPath())
-        val target: File = File(dir, "${type.cdnType}.json")
-        val collection: SafetySpotCollectionDto = SafetySpotCollectionDto(
+        val target = File(dir, "${type.cdnType}.json")
+        val collection = SafetySpotCollectionDto(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
         )
@@ -49,7 +49,7 @@ class SafetySpotUploadStore(
     }
 
     fun findByType(type: SafetySpotType): List<SafetySpotPoint>? {
-        val file: File = File(uploadDir, "${type.cdnType}.json")
+        val file = File(uploadDir, "${type.cdnType}.json")
         if (!file.isFile) {
             return null
         }

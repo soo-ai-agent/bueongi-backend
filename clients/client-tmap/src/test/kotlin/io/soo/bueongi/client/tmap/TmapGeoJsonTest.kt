@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class TmapGeoJsonTest {
 
-    private val mapper: ObjectMapper = ObjectMapper()
+    private val mapper = ObjectMapper()
 
     private fun parse(json: String): TmapRoute? = parseTmapGeoJson(mapper.readTree(json), "0")
 

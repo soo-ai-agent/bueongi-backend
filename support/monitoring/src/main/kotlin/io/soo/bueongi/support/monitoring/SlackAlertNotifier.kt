@@ -97,7 +97,7 @@ class SlackAlertNotifier internal constructor(
     }
 
     private fun recordAlert(key: String, title: String, detail: String) {
-        val record: AlertRecord = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
+        val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
         synchronized(recentAlerts) {
             recentAlerts.addLast(record)
             while (recentAlerts.size > ALERT_HISTORY_CAP) {

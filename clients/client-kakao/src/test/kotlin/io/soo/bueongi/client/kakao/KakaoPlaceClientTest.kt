@@ -29,7 +29,7 @@ class KakaoPlaceClientTest {
 
     @Test
     fun `문서 매핑 - 도로명주소 우선`() {
-        val doc: KakaoPlaceDocument = KakaoPlaceDocument(
+        val doc = KakaoPlaceDocument(
             placeName = "강남역",
             roadAddressName = "서울 강남구 강남대로 396",
             addressName = "서울 강남구 역삼동 858",
@@ -42,7 +42,7 @@ class KakaoPlaceClientTest {
 
     @Test
     fun `문서 매핑 - 도로명주소 없으면 지번주소로 폴백`() {
-        val doc: KakaoPlaceDocument = KakaoPlaceDocument(
+        val doc = KakaoPlaceDocument(
             placeName = "어떤장소",
             roadAddressName = "",
             addressName = "서울 강남구 역삼동 858",

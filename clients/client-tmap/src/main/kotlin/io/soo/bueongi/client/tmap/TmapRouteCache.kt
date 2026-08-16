@@ -33,7 +33,7 @@ class TmapRouteCache(
         entries.size
 
     private fun key(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?): String {
-        val sb: StringBuilder = StringBuilder()
+        val sb = StringBuilder()
             .append(round5(origin.lat)).append(',').append(round5(origin.lng)).append('>')
             .append(round5(dest.lat)).append(',').append(round5(dest.lng)).append('#')
             .append(searchOption)

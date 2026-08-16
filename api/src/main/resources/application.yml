@@ -34,7 +34,7 @@ bueongi:
   admin-auth:
     login-id: ${BUEONGI_ADMIN_LOGIN_ID:}
     password-hash: ${BUEONGI_ADMIN_PASSWORD_HASH:}
-    email: ${BUEONGI_ADMIN_EMAIL:admin@bueongi.local}
+    email: ${BUEONGI_ADMIN_EMAIL:}
     access-token-seconds: ${BUEONGI_ADMIN_ACCESS_TOKEN_SECONDS:900}
     refresh-token-seconds: ${BUEONGI_ADMIN_REFRESH_TOKEN_SECONDS:604800}
   cors:

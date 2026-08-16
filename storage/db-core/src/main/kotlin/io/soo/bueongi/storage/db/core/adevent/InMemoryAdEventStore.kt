@@ -7,7 +7,7 @@ class InMemoryAdEventStore : AdEventStore {
 
     private val logger: Logger = LoggerFactory.getLogger(InMemoryAdEventStore::class.java)
     private val events: ArrayDeque<AdEvent> = ArrayDeque<AdEvent>()
-    private val lock: Any = Any()
+    private val lock = Any()
 
     override fun record(event: AdEvent) {
         try {

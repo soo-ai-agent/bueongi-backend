@@ -49,7 +49,7 @@ class SafetySpotRepository(
         indexByType.get()[type] ?: EMPTY_INDEX
 
     override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
-        val replaced: GridSpatialIndex = GridSpatialIndex(points)
+        val replaced = GridSpatialIndex(points)
         indexByType.updateAndGet { current -> current + (type to replaced) }
         log.info("안심시설 라이브 교체: type={}, count={}", type, points.size)
         return points.size
@@ -88,7 +88,7 @@ class SafetySpotRepository(
     private fun readSafetySpotFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var fileCount: Int = 0
         for (type in SafetySpotType.entries) {
-            val typeDir: File = File(dir, type.cdnType)
+            val typeDir = File(dir, type.cdnType)
             if (!typeDir.isDirectory) {
                 continue
             }
@@ -107,7 +107,7 @@ class SafetySpotRepository(
 
     /** 안심귀갓길(safepath) 파일을 읽어 [paths] 에 누적한다. 반환 = 읽은 파일 수. */
     private fun readSafePathFiles(dir: File, paths: MutableList<SafePath>): Int {
-        val safePathDir: File = File(dir, "safepath")
+        val safePathDir = File(dir, "safepath")
         if (!safePathDir.isDirectory) {
             return 0
         }
@@ -125,7 +125,7 @@ class SafetySpotRepository(
 
     /** manifest.json 의 생성 시각·버전. 없거나 깨졌으면 신선도 표기를 생략한다. */
     private fun readFreshness(dir: File): SafetySpotFreshness? {
-        val manifest: File = File(dir, "manifest.json")
+        val manifest = File(dir, "manifest.json")
         if (!manifest.isFile) {
             return null
         }
@@ -229,7 +229,7 @@ class SafetySpotRepository(
         listFiles { f -> f.isFile && f.name.endsWith(".json") }?.sortedBy { it.name } ?: emptyList()
 
     private companion object {
-        val EMPTY_INDEX: GridSpatialIndex = GridSpatialIndex(emptyList())
+        val EMPTY_INDEX = GridSpatialIndex(emptyList())
     }
 }
 

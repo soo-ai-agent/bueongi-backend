@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class InMemoryRequestMetricStoreTest {
 
-    private val store: InMemoryRequestMetricStore = InMemoryRequestMetricStore()
+    private val store = InMemoryRequestMetricStore()
 
     private fun metric(at: Long, endpoint: String = "/api/places/search", clientId: String? = "anon-1") =
         RequestMetric(

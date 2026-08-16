@@ -14,7 +14,7 @@ fun sanitizeTmapJson(body: String): String {
     if (!body.contains(NUL)) {
         return body
     }
-    val out: StringBuilder = StringBuilder(body.length)
+    val out = StringBuilder(body.length)
     var start: Int = 0
     while (true) {
         val at: Int = body.indexOf(NUL, start)

@@ -87,7 +87,7 @@ class AdminEndpointFixtures {
         @Bean
         fun safetySpotStatusService(): SafetySpotStatusService {
             val source = object : SafetySpotSpatialSource {
-                private val cctv: GridSpatialIndex = GridSpatialIndex(
+                private val cctv = GridSpatialIndex(
                     List(2) { SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.5, lng = 127.0) },
                 )
                 override fun index(type: SafetySpotType): GridSpatialIndex =
@@ -97,9 +97,9 @@ class AdminEndpointFixtures {
                         GridSpatialIndex(emptyList())
                     }
                 override val safePaths: List<SafePath> = emptyList()
-                override val freshness: SafetySpotFreshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
+                override val freshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }
-            val holder: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore().apply {
+            val holder = SafetySpotRefreshStatusStore().apply {
                 record(mapOf(SafetySpotType.CCTV to 2), atEpochMs = 1L)
             }
             return SafetySpotStatusService(source, holder)

@@ -23,9 +23,9 @@ class TmapRouteClient(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    private val cache: TmapRouteCache = TmapRouteCache()
+    private val cache = TmapRouteCache()
 
-    private val objectMapper: ObjectMapper = ObjectMapper()
+    private val objectMapper = ObjectMapper()
 
     fun fetchRoutes(
         origin: TmapCoord,
@@ -105,7 +105,7 @@ class TmapRouteClient(
      * "Error while extracting response" 뒤에 가려 오래 안 보였다(NUL 사건, 2026-08-15).
      */
     private fun causeChainOf(e: Throwable): String {
-        val chain: StringBuilder = StringBuilder()
+        val chain = StringBuilder()
         var current: Throwable? = e
         var depth: Int = 0
         while (current != null && depth < MAX_CAUSE_DEPTH) {

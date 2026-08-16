@@ -27,10 +27,10 @@ class RequestMetricsFilterTest {
 
     @Test
     fun `체인 실행 후 메서드 정규화경로 clientId status 를 기록한다`() {
-        val store: CapturingStore = CapturingStore()
-        val request: MockHttpServletRequest = MockHttpServletRequest("POST", "/share/abc123/location")
+        val store = CapturingStore()
+        val request = MockHttpServletRequest("POST", "/share/abc123/location")
         request.addHeader("X-Client-Id", "anon-42")
-        val response: MockHttpServletResponse = MockHttpServletResponse()
+        val response = MockHttpServletResponse()
 
         RequestMetricsFilter(store).doFilter(request, response, chainSetting(200))
 
@@ -44,9 +44,9 @@ class RequestMetricsFilterTest {
 
     @Test
     fun `X-Client-Id 가 없거나 공백이면 clientId 는 null 이다`() {
-        val store: CapturingStore = CapturingStore()
-        val missing: MockHttpServletRequest = MockHttpServletRequest("GET", "/api/places/search")
-        val blank: MockHttpServletRequest = MockHttpServletRequest("GET", "/api/places/search").apply { addHeader("X-Client-Id", "   ") }
+        val store = CapturingStore()
+        val missing = MockHttpServletRequest("GET", "/api/places/search")
+        val blank = MockHttpServletRequest("GET", "/api/places/search").apply { addHeader("X-Client-Id", "   ") }
 
         RequestMetricsFilter(store).doFilter(missing, MockHttpServletResponse(), chainSetting(200))
         RequestMetricsFilter(store).doFilter(blank, MockHttpServletResponse(), chainSetting(200))
@@ -56,8 +56,8 @@ class RequestMetricsFilterTest {
 
     @Test
     fun `실패 status 도 그대로 기록한다`() {
-        val store: CapturingStore = CapturingStore()
-        val request: MockHttpServletRequest = MockHttpServletRequest("GET", "/api/places/search")
+        val store = CapturingStore()
+        val request = MockHttpServletRequest("GET", "/api/places/search")
         request.addHeader("X-Client-Id", "anon-1")
 
         RequestMetricsFilter(store).doFilter(request, MockHttpServletResponse(), chainSetting(500))
@@ -67,8 +67,8 @@ class RequestMetricsFilterTest {
 
     @Test
     fun `관리자와 운영 경로는 계측하지 않는다`() {
-        val store: CapturingStore = CapturingStore()
-        val filter: RequestMetricsFilter = RequestMetricsFilter(store)
+        val store = CapturingStore()
+        val filter = RequestMetricsFilter(store)
         val excluded: List<String> = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/safetySpots.json")
 
         excluded.forEach { path ->

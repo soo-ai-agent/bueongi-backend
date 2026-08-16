@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test
 
 class RouteMarkerBuilderAlertTest {
 
-    private val origin: GeoPoint = GeoPoint(37.5, 127.000)
-    private val destination: GeoPoint = GeoPoint(37.5, 127.020)
+    private val origin = GeoPoint(37.5, 127.000)
+    private val destination = GeoPoint(37.5, 127.020)
 
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
@@ -32,7 +32,7 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `장애 - 시설 인덱스가 통째로 비면(총 적재 0) 데이터 제공 실패로 알린다`() {
-        val notifier: RecordingPublisher = RecordingPublisher()
+        val notifier = RecordingPublisher()
 
         val markers = build(FakeSafetySpotSource(), MarkerEventPublisher(notifier))
 
@@ -43,7 +43,7 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `정상 - 시설이 적재됐고 회랑에만 없으면(적재량 GT 0, 회랑 0) 알리지 않는다`() {
-        val notifier: RecordingPublisher = RecordingPublisher()
+        val notifier = RecordingPublisher()
         val farAway = FakeSafetySpotSource(
             mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 38.0, 128.0))),
         )
@@ -56,8 +56,8 @@ class RouteMarkerBuilderAlertTest {
 
     @Test
     fun `스로틀 - 빈 인덱스로 반복 호출해도 항상 같은 상수 key 를 써서 폭주가 억제된다`() {
-        val notifier: RecordingPublisher = RecordingPublisher()
-        val source: FakeSafetySpotSource = FakeSafetySpotSource()
+        val notifier = RecordingPublisher()
+        val source = FakeSafetySpotSource()
 
         repeat(3) { build(source, MarkerEventPublisher(notifier)) }
 

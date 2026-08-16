@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class InMemoryAdEventStoreTest {
 
-    private val store: InMemoryAdEventStore = InMemoryAdEventStore()
+    private val store = InMemoryAdEventStore()
 
     private fun event(at: Long, placement: String = "interstitial") =
         AdEvent(atEpochMs = at, placement = placement)

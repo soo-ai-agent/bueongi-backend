@@ -7,7 +7,7 @@ class InMemoryRouteStatsStore : RouteStatsStore {
 
     private val logger: Logger = LoggerFactory.getLogger(InMemoryRouteStatsStore::class.java)
     private val logs: ArrayDeque<RouteRecommendationLog> = ArrayDeque<RouteRecommendationLog>()
-    private val lock: Any = Any()
+    private val lock = Any()
 
     override fun record(log: RouteRecommendationLog) {
         try {

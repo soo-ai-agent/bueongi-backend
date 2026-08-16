@@ -2,16 +2,12 @@
   <profile version="1.0">
     <option name="myName" value="Project Default" />
 
-    <!-- 이 레포는 한국어로 쓴다(테스트 이름·주석·문구). 비ASCII 경고는 규칙 위반이 아니다. -->
-    <inspection_tool class="NonAsciiCharacters" enabled="false" level="WARNING" enabled_by_default="false" />
-
     <!--
-      좌변 타입 선언은 docs/coding-style.md 가 요구하는 것이라 이 검사만 끈다.
-      우변 타입 인수(ArrayList<T>() 의 <T>)는 좌변이 이미 말하므로 중복이다 — 그 검사는 켜 두고 코드를 고쳤다.
-    -->
-    <inspection_tool class="RedundantExplicitType" enabled="false" level="WARNING" enabled_by_default="false" />
+      끄는 검사는 이 하나뿐이다. 나머지 경고는 규칙보다 우선해 코드를 고친다.
 
-    <!-- 조건부 빈(RedisConfigured/RedisNotConfigured 등)이 후보를 여럿으로 보이게 해 오탐이 난다. -->
-    <inspection_tool class="SpringJavaInjectionPointsAutowiringInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+      이 레포는 한국어로 쓴다(테스트 이름·주석·사용자 문구). 이 검사를 켜면 3,700건이
+      뜨는데, 따르려면 한국어를 지워야 해서 "쉬운 낱말로 쓴다"는 목적 자체와 어긋난다.
+    -->
+    <inspection_tool class="NonAsciiCharacters" enabled="false" level="WARNING" enabled_by_default="false" />
   </profile>
 </component>

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 
 class RouteServiceTest {
 
-    private val service: RouteService = RouteService(RouteTypeCatalog())
+    private val service = RouteService(RouteTypeCatalog())
 
     private fun request() = RouteQuery(
         origin = GeoPoint(37.4979, 127.0276),
@@ -73,8 +73,8 @@ class RouteServiceTest {
 
     @Test
     fun `compare 는 추천 요청을 compare 로 1회 집계하고 buildRoutes 는 집계하지 않는다`() {
-        val recording: RecordingRouteStatsStore = RecordingRouteStatsStore()
-        val recordingService: RouteService = RouteService(RouteTypeCatalog(), recording)
+        val recording = RecordingRouteStatsStore()
+        val recordingService = RouteService(RouteTypeCatalog(), recording)
 
         recordingService.compare(request())
         assertThat(recording.records.map { it.endpoint }).containsExactly("compare")

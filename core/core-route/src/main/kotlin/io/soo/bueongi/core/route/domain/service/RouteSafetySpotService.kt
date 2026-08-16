@@ -27,7 +27,7 @@ class RouteSafetySpotService(
         val pois: List<SafetySpotPoi> = markerBuilder.buildMarkers(origin, destination, listOf(origin, destination))
 
         // 요약은 마커를 다시 세어 만든다 — 지도에 찍힌 것과 숫자가 어긋나지 않게.
-        val summary: SafetySpotSummary = SafetySpotSummary(
+        val summary = SafetySpotSummary(
             cctv = pois.count { it.type == SafetySpotPoiType.CCTV },
             bell = pois.count { it.type == SafetySpotPoiType.BELL },
             convenienceStore = pois.count { it.type == SafetySpotPoiType.STORE },

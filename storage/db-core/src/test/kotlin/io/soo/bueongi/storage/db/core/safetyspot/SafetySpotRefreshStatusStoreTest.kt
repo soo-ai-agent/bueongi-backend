@@ -14,14 +14,14 @@ class SafetySpotRefreshStatusStoreTest {
 
     @Test
     fun `기록 전에는 어떤 종류도 null 이다`() {
-        val store: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val store = SafetySpotRefreshStatusStore()
 
         assertThat(store.findByType(SafetySpotType.CCTV)).isNull()
     }
 
     @Test
     fun `기록한 결과를 종류별로 되돌려주고 미포함 종류는 null 이다`() {
-        val store: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val store = SafetySpotRefreshStatusStore()
 
         store.record(
             mapOf(
@@ -40,7 +40,7 @@ class SafetySpotRefreshStatusStoreTest {
 
     @Test
     fun `다시 기록하면 같은 종류는 갱신되고 이번에 없던 종류는 남는다`() {
-        val store: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val store = SafetySpotRefreshStatusStore()
 
         store.record(mapOf(SafetySpotType.CCTV to 100), atEpochMs = 1L)
         store.record(mapOf(SafetySpotType.CCTV to 120, SafetySpotType.BELL to 5), atEpochMs = 2L)
@@ -53,7 +53,7 @@ class SafetySpotRefreshStatusStoreTest {
 
     @Test
     fun `업로드 기록은 이번 갱신 대상이 아니면 이후 정기 갱신에도 남는다`() {
-        val store: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val store = SafetySpotRefreshStatusStore()
 
         store.recordUpload(SafetySpotType.CCTV, replacedCount = 315_459, atEpochMs = 1L)
         store.record(mapOf(SafetySpotType.BELL to 88_621), atEpochMs = 2L)
@@ -66,10 +66,10 @@ class SafetySpotRefreshStatusStoreTest {
 
     @Test
     fun `갱신과 업로드가 동시에 기록해도 어느 쪽도 유실되지 않는다`() {
-        val store: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val store = SafetySpotRefreshStatusStore()
         val rounds: Int = 200
-        val start: CountDownLatch = CountDownLatch(1)
-        val done: CountDownLatch = CountDownLatch(2)
+        val start = CountDownLatch(1)
+        val done = CountDownLatch(2)
         val pool: ExecutorService = Executors.newFixedThreadPool(2)
 
         pool.execute {

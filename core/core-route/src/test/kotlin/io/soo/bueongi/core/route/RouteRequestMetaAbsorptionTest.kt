@@ -19,8 +19,8 @@ class RouteRequestMetaAbsorptionTest {
 
     private val mapper = jacksonObjectMapper()
 
-    private val origin: LatLng = LatLng(37.4979, 127.0276)
-    private val destination: NamedLatLng = NamedLatLng(37.5572, 126.9245, name = "집")
+    private val origin = LatLng(37.4979, 127.0276)
+    private val destination = NamedLatLng(37.5572, 126.9245, name = "집")
 
     @Test
     fun `미상 문자열 routeType safetyPreference 는 안전 우선 기본으로 흡수된다`() {

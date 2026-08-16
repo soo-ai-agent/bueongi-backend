@@ -32,10 +32,10 @@ class JwtAuthenticationFilter(
 
         val verified: JwtTokenVerifier.VerifiedToken = try {
             verifier.verify(header.removePrefix("Bearer ").trim())
-        } catch (e: ExpiredTokenException) {
+        } catch (_: ExpiredTokenException) {
             writeUnauthorized(response, "인증 토큰이 만료되었습니다.")
             return
-        } catch (e: InvalidTokenException) {
+        } catch (_: InvalidTokenException) {
             writeUnauthorized(response, "유효하지 않은 인증 토큰입니다.")
             return
         }

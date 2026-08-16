@@ -21,7 +21,7 @@ import java.nio.file.Path
 
 class SafetySpotUploadServiceTest {
 
-    private val mapper: ObjectMapper = ObjectMapper()
+    private val mapper = ObjectMapper()
 
     private class FakeLiveStore : SafetySpotLiveStore {
         var lastType: SafetySpotType? = null
@@ -43,8 +43,8 @@ class SafetySpotUploadServiceTest {
 
     @Test
     fun `업로드는 파일 저장 + 라이브 교체 + 상태 기록을 하고 집계를 반환한다`(@TempDir tmp: Path) {
-        val liveStore: FakeLiveStore = FakeLiveStore()
-        val statusStore: SafetySpotRefreshStatusStore = SafetySpotRefreshStatusStore()
+        val liveStore = FakeLiveStore()
+        val statusStore = SafetySpotRefreshStatusStore()
         val csv = """
             위도,경도,관리기관명,소재지지번주소,설치목적구분,카메라대수
             37.5,127.0,종로구청,서울 종로구 1,생활방범,4
@@ -69,7 +69,7 @@ class SafetySpotUploadServiceTest {
 
     @Test
     fun `유효 0건이면 교체하지 않고 EmptySafetySpotUploadException`(@TempDir tmp: Path) {
-        val liveStore: FakeLiveStore = FakeLiveStore()
+        val liveStore = FakeLiveStore()
         val csv = """
             관서명,소재지도로명주소,전화번호
             종로파출소,서울 종로구 대로 8,02-100
