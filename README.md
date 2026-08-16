@@ -242,6 +242,16 @@ backend/
 17. 최상위 `class`·`data class`·`enum class`·`interface`·`object`는 이름이 같은 개별 `.kt` 파일에 둔다.
     구현 세부인 중첩 타입만 소유 클래스 파일 안에 둔다. 여러 DTO나 예외를 하나의 묶음 파일에 모으지 않는다.
 
+### URL
+18. **경로는 자원을 가리키고, 행위는 HTTP 동사가 말한다.** 자원은 복수형 명사·하이픈 표기
+    (`/api/safety-spots`), 단건은 경로 식별자(`/api/places/1`), 걸러 보기는 질의 문자열
+    (`/api/places?keyword=x`), 중첩은 한 겹까지. 경로에 `create`·`end`·`search` 같은 동사를 넣지 않는다
+    (`POST /api/shares` · `DELETE /api/shares/{token}`). 생성 201, 본문 없는 삭제 204, 그 외 성공 200.
+    현행 5개 경로가 이 규칙 이전에 만들어져 어긋나 있다 — 목록과 대체 경로는
+    `.claude/skills/backend-spring-kotlin` 의 "URL 은 자원을 가리킨다" 절에 있고,
+    **클라이언트가 이미 부르고 있어 웹·모바일과 한 변경에 묶어 사람 승인 후에만 바꾼다.**
+    새 엔드포인트는 처음부터 이 규칙대로 만든다.
+
 ## API 계약
 
 엔드포인트·요청/응답 shape·에러 code(10종)·도메인 상수는 **[`docs/API.md`](docs/API.md)** 가 단일 레퍼런스다(코드에서 파생한 현재 스냅샷, 계약 변경 시 코드와 함께 갱신). 위치 공유 설계/배경은 [`docs/LOCATION_SHARING_DESIGN.md`](docs/LOCATION_SHARING_DESIGN.md).
