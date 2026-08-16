@@ -37,14 +37,14 @@ class RedisJsonLog<T : Any>(
             log.warn("{} 조회 실패: {}", label, e.message)
             return emptyList()
         }
-        return raw.mapNotNull { parseOrNull(it) }
-    }
-
-    private fun parseOrNull(json: String): T? =
-        try {
-            objectMapper.readValue(json, type)
-        } catch (e: Exception) {
-            log.warn("{} 역직렬화 실패(건너뜀): {}", label, e.message)
-            null
+        val parsed: ArrayList<T> = ArrayList<T>()
+        for (json in raw) {
+            try {
+                parsed.add(objectMapper.readValue(json, type))
+            } catch (e: Exception) {
+                log.warn("{} 역직렬화 실패(건너뜀): {}", label, e.message)
+            }
         }
+        return parsed
+    }
 }

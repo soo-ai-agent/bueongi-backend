@@ -19,7 +19,7 @@ class RouteTypeCatalog {
      * 안심 앱에서 종류를 못 알아들었다고 길 안내를 막는 것보다 안전한 길을 주는 편이 낫다.
      */
     fun typeOf(value: String?): RouteType {
-        val normalized: String = normalize(value)
+        val normalized: String = value?.trim()?.lowercase().orEmpty()
         for (type in RouteType.entries) {
             if (type.apiType == normalized || displayOf(type).id == normalized) {
                 return type
@@ -28,12 +28,6 @@ class RouteTypeCatalog {
         return RouteType.SAFE
     }
 
-    private fun normalize(value: String?): String {
-        if (value == null) {
-            return ""
-        }
-        return value.trim().lowercase()
-    }
 
     private companion object {
 

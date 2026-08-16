@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.auth.api.response
 
-import io.soo.bueongi.core.auth.domain.config.JwtAuthenticationFilter
 import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import org.springframework.security.core.Authentication
 

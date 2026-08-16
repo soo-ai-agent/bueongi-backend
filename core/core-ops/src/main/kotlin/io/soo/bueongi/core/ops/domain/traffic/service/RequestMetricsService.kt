@@ -33,7 +33,7 @@ class RequestMetricsService(
             byEndpoint = byEndpoint(metrics),
             estimatedUsers = estimatedUsers(metrics),
             latency = latency(metrics),
-            hourlyCalls = hourlyCalls(metrics),
+            hourlyCalls = HourlyBuckets.countOf(metrics.map { it.atEpochMs }),
             hourlyErrors = hourlyErrors(metrics),
             dailyActiveUsers = dailyActiveUsers(metrics),
         )
@@ -115,8 +115,6 @@ class RequestMetricsService(
     private fun distinctClients(metrics: List<RequestMetric>): Int =
         metrics.mapNotNull { it.clientId }.distinct().size
 
-    private fun hourlyCalls(metrics: List<RequestMetric>): List<HourlyBucket> =
-        HourlyBuckets.countOf(metrics.map { it.atEpochMs })
 
     private fun hourlyErrors(metrics: List<RequestMetric>): List<HourlyBucket> {
         val errorTimestampsMs: List<Long> = metrics

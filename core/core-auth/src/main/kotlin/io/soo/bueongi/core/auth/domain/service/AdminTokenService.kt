@@ -41,7 +41,13 @@ class AdminTokenService(
         )
 
     fun refresh(refreshToken: String): AdminTokenBundle {
-        val claims: Claims = verifiedClaimsOf(refreshToken)
+        val claims: Claims = try {
+            tokenParser.parseSignedClaims(refreshToken).payload
+        } catch (exception: JwtException) {
+            throw AdminAuthenticationException()
+        } catch (exception: IllegalArgumentException) {
+            throw AdminAuthenticationException()
+        }
         val issuedToAdmin: Boolean = claims.subject == ADMIN_ID.toString()
         val isRefreshToken: Boolean = claims[TOKEN_KIND_CLAIM] == AdminTokenKind.REFRESH.name
         if (!issuedToAdmin || !isRefreshToken) {
@@ -49,15 +55,6 @@ class AdminTokenService(
         }
         return issue()
     }
-
-    private fun verifiedClaimsOf(token: String): Claims =
-        try {
-            tokenParser.parseSignedClaims(token).payload
-        } catch (exception: JwtException) {
-            throw AdminAuthenticationException()
-        } catch (exception: IllegalArgumentException) {
-            throw AdminAuthenticationException()
-        }
 
     private fun createToken(kind: AdminTokenKind, lifetimeSeconds: Long): String {
         val issuedAt: Instant = clock.instant()
