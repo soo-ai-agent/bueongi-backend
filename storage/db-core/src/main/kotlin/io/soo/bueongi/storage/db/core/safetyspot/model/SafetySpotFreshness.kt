@@ -1,7 +1,8 @@
 package io.soo.bueongi.storage.db.core.safetyspot.model
 
-/** manifest 가 없는 원천은 기준일을 모른다. */
 data class SafetySpotFreshness(
+    // manifest 에 없는 원천은 null 이 가능함
     val generatedAt: String? = null,
+    // manifest 에 없는 원천은 null 이 가능함
     val version: String? = null,
 )

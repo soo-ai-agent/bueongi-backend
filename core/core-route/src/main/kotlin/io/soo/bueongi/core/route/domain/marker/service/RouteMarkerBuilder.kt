@@ -22,6 +22,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
 @Component
 class RouteMarkerBuilder(
     private val safetySpots: SafetySpotSpatialSource,
+    // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val markerEvents: MarkerEventPublisher? = null,
 ) {
 

@@ -43,6 +43,7 @@ class SafetySpotRepository(
 
     override val safePaths: List<SafePath> get() = _safePaths
 
+    // 적재 전이거나 manifest 가 없으면 null 이 가능함
     override val freshness: SafetySpotFreshness? get() = _freshness
 
     override fun index(type: SafetySpotType): GridSpatialIndex =
@@ -250,7 +251,9 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
         lat = parts[parts.size - 6].trim().toDoubleOrNull(),
         lng = parts[parts.size - 5].trim().toDoubleOrNull(),
     ) ?: return null
+    // 원천에 값이 없으면 null 이 가능함
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
+    // CCTV 가 아닌 시설은 null 이 가능함
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     return SafetySpotPoint(
         type = SafetySpotType.CCTV,

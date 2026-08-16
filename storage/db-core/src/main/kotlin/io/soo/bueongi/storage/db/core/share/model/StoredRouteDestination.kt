@@ -1,7 +1,7 @@
 package io.soo.bueongi.storage.db.core.share.model
 
-/** 목적지 이름은 사용자가 지정하지 않을 수 있다. */
 data class StoredRouteDestination(
+    // 목적지 이름을 정하지 않으면 null 이 가능함
     val name: String?,
     val lat: Double,
     val lng: Double,

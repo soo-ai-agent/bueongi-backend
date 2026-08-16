@@ -13,12 +13,13 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
 
-/** 빠진 값도 받아야 어느 필드가 틀렸는지 응답에 담긴다. */
 data class RouteRequest(
     /** origin 은 의도적으로 @NotNull 미적용 — 누락은 400 이 아니라 [toValidatedQuery] 의 422 ORIGIN_REQUIRED. */
     @field:Valid val origin: LatLng?,
     @field:Valid @field:NotNull val destination: NamedLatLng?,
+    // 고르지 않으면 null 이 가능함 — 기본 종류로 읽는다
     val routeType: String? = null,
+    // 고르지 않으면 null 이 가능함 — 가장 안전한 쪽으로 읽는다
     val safetyPreference: String? = null,
 )
 

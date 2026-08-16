@@ -4,7 +4,6 @@ import java.time.Instant
 
 /**
  * PII(계정·전화번호 등)는 저장하지 않는다 — 비식별 토큰 URL 공유 모델.
- * 도착 예정 시각은 사용자가 ETA 를 넣었을 때만 있다.
  */
 data class ShareSession(
     val token: String,
@@ -12,8 +11,11 @@ data class ShareSession(
     val ownerSecret: String,
     val createdAt: Instant,
     val expiresAt: Instant,
+    // 첫 위치 보고 전에는 null 이 가능함
     val location: StoredLocation? = null,
+    // 경로를 저장하기 전에는 null 이 가능함
     val route: StoredRoute? = null,
+    // 도착 예정을 넣지 않으면 null 이 가능함
     val expectedArrivalAt: Instant? = null,
 ) {
     fun withLocation(location: StoredLocation): ShareSession =

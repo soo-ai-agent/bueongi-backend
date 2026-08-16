@@ -5,13 +5,15 @@ import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 
-/** 선택 항목은 클라이언트가 보내지 않을 수 있다. */
 data class SlackConfigUpdateRequest(
     @field:NotNull
+    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
     val enabled: Boolean?,
     @field:NotNull
     @field:Min(1) @field:Max(1440)
+    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
     val throttleMinutes: Int?,
+    // 끌 항목이 없으면 null 이 가능함
     val mutedCategories: List<String>? = null,
 ) {
     fun toUpdate(): SlackConfigUpdate =

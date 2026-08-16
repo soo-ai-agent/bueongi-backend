@@ -5,19 +5,27 @@ import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 /**
  * CSV 헤더에서 찾아 둔 컬럼 위치. 행마다 헤더를 다시 뒤지지 않으려고 한 번만 계산한다.
  * 인덱스는 밖으로 내보내지 않는다 — 행에서 값을 꺼내는 것까지 이 클래스가 한다.
- * 그 컬럼이 파일에 없을 수 있어 인덱스가 nullable 이다.
  */
 class CsvColumns(
     val useWgs84: Boolean,
     val coordSystem: SafetySpotCoordSystem,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val latIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val lngIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val xIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val yIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val nameIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val addressIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val purposeIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val cameraCountIndex: Int?,
+    // 이 컬럼이 없는 파일은 null 이 가능함
     private val phoneIndex: Int?,
 ) {
     fun name(row: List<String>): String? =

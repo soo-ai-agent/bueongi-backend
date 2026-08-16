@@ -6,7 +6,6 @@ import io.soo.bueongi.core.enums.SafetySpotType
 
 /**
  * 헤더 후보·좌표계 값은 pipeline sources.yaml 의 keyColumns 와 일치시킨다 — 위도/경도 헤더가 있으면 WGS84 우선.
- * 그 컬럼이 파일에 없을 수 있어 인덱스가 nullable 이다.
  */
 data class SafetySpotCsvSpec(
     val type: SafetySpotType,

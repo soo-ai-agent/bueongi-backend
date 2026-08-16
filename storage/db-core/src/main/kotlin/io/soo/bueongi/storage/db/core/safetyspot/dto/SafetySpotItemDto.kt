@@ -6,16 +6,23 @@ import io.soo.bueongi.core.enums.SafetySpotType
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-/** 원천마다 채우는 필드가 달라 전부 비어 있을 수 있다. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SafetySpotItemDto(
+    // 원천에 값이 없으면 null 이 가능함
     val name: String? = null,
+    // 원천 행에 좌표가 없으면 null 이 가능함
     val lat: Double? = null,
+    // 원천 행에 좌표가 없으면 null 이 가능함
     val lng: Double? = null,
+    // 원천에 값이 없으면 null 이 가능함
     val sigunguCode: String? = null,
+    // 점 하나짜리 원천은 null 이 가능함
     val coords: List<CoordDto>? = null,
+    // 지구대가 아닌 시설은 null 이 가능함
     val address: String? = null,
+    // 지구대가 아닌 시설은 null 이 가능함
     val phone: String? = null,
+    // 부가 정보를 주지 않는 원천은 null 이 가능함
     val properties: SafetySpotItemPropertiesDto? = null,
 ) {
     fun toSafetySpotPoint(type: SafetySpotType): SafetySpotPoint? {

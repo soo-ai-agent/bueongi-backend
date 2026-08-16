@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
-/** 폴백 경로는 점수·좌표·마커가 없다 — NON_NULL 이라 응답에서 빠진다. */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RouteOption(
     val id: String,
@@ -18,10 +17,16 @@ data class RouteOption(
     val desc: String,
     val tags: List<RouteTag>,
     val type: RouteType,
+    // 폴백 경로는 null 이 가능함
     val path: List<GeoPoint>? = null,
+    // 폴백 경로는 null 이 가능함
     val steps: List<NavStep>? = null,
+    // 폴백 경로는 null 이 가능함
     val score: Int? = null,
+    // 폴백 경로는 null 이 가능함
     val markers: List<SafetySpotPoi>? = null,
+    // 폴백 경로는 null 이 가능함
     val breakdown: SafetyBreakdown? = null,
+    // 폴백 경로는 null 이 가능함
     val provenance: DataProvenance? = null,
 )

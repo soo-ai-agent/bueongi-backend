@@ -3,10 +3,10 @@ package io.soo.bueongi.core.ads.api.request
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
-/** 선택 항목은 클라이언트가 보내지 않을 수 있다. */
 data class AdImpressionRequest(
     @field:NotBlank
     @field:Pattern(regexp = "interstitial|native", message = "placement 는 interstitial 또는 native 여야 합니다.")
+    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
     val placement: String?,
 )
 

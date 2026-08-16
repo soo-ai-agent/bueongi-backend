@@ -19,6 +19,7 @@ class SafeRouteService(
     private val assembler: RouteOptionAssembler,
     // Tmap·통계가 없는 조립에서도 경로 비교는 돌아야 해서 선택 주입이다.
     private val routeEvents: RouteEventPublisher? = null,
+    // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 

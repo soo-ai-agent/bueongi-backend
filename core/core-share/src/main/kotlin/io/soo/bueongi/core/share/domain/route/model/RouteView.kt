@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.share.domain.route.model
 
-/** 보호자 화면은 경로가 저장되기 전에도 열린다. */
 data class RouteView(
     val expired: Boolean,
+    // 경로를 저장하기 전에는 null 이 가능함
     val route: RouteContext?,
 ) {
     companion object {

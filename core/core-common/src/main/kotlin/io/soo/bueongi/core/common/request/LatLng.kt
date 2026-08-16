@@ -4,15 +4,13 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 
-/**
- * 검증 대상을 non-null 로 두면 값이 빠졌을 때 Jackson 이 0.0 을 채워 넣는다 —
- * 적도 좌표로 계산돼 "거리가 너무 멉니다"라는 엉뚱한 오류가 나간다(2026-08-16 실측).
- */
 data class LatLng(
     @field:NotNull
     @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
+    // non-null 이면 안 보낸 값에 0.0 이 채워져 적도 좌표가 되므로 null 이 가능함
     val lat: Double?,
     @field:NotNull
     @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
+    // non-null 이면 안 보낸 값에 0.0 이 채워져 적도 좌표가 되므로 null 이 가능함
     val lng: Double?,
 )
