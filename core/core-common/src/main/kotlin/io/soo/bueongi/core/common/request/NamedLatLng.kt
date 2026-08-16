@@ -4,7 +4,11 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 
-/** 빠진 값도 받아야 어느 필드가 틀렸는지 응답에 담긴다. 이름은 선택이다. */
+/**
+ * 검증 대상을 non-null 로 두면 값이 빠졌을 때 Jackson 이 0.0 을 채워 넣는다 —
+ * 적도 좌표로 계산돼 "거리가 너무 멉니다"라는 엉뚱한 오류가 나간다(2026-08-16 실측).
+ * 이름은 선택이라 없을 수 있다.
+ */
 data class NamedLatLng(
     @field:NotNull
     @field:DecimalMin("-90.0") @field:DecimalMax("90.0")

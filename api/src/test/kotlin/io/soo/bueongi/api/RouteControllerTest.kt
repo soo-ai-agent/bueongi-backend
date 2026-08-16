@@ -53,6 +53,22 @@ class RouteControllerTest(
          "destination":{"lat":37.5572,"lng":126.9245,"name":"홍대입구역"}}
     """.trimIndent()
 
+    /**
+     * 좌표를 non-null 로 선언하면 Jackson 이 빠진 값에 0.0 을 채워 넣어, 적도 좌표로 계산된
+     * 엉뚱한 오류(TRIP_TOO_FAR)가 나간다. nullable + @NotNull 조합이 그 자리를 막는다.
+     */
+    @Test
+    fun `좌표가 빠지면 그 필드를 짚어 400 을 낸다 - 0으로 채워 계산하지 않는다`() {
+        mockMvc.post("/api/routes/safe-compare") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"origin":{"lng":127.0276},"destination":{"lat":37.504,"lng":127.025}}"""
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.errors[0].field") { value("origin.lat") }
+        }
+    }
+
     @Test
     fun `compare 정상 요청은 200 과 safe main fast 3개 경로`() {
         mockMvc.post("/api/routes/compare") {
