@@ -80,11 +80,11 @@ CDN 파일로만 들어온다. CLAUDE.md 이력에 남은 라이브 갱신 서�
 
 ```bash
 curl -s localhost:8119/api/health
-# {"status":"UP","service":"bueongi-backend","placeSource":"live|seed","locationStore":"redis|in-memory"}
+# {"status":"UP","service":"bueongi-backend","placeSource":"live|seed","locationStore":"redis|memory"}
 ```
 
 - `placeSource: live` = Kakao 키가 주입돼 실검색 / `seed` = 내장 카탈로그.
-- `locationStore: redis` = Redis 연결됨 / `in-memory` = 폴백.
+- `locationStore: redis` = Redis 연결됨 / `memory` = 인메모리 폴백.
 
 ## 5. 요약 표
 

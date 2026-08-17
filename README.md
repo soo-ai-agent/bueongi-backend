@@ -77,14 +77,10 @@ curl http://localhost:8119/api/health
 | `JWT_PRIVATE_KEY` | 없음 | 관리자 JWT 발급용 PKCS#8 RSA 개인키. **서버에만 보관하며 Git에 커밋하지 않는다.** |
 | `BUEONGI_ADMIN_LOGIN_ID` | 없음 | 관리자 로그인 아이디. |
 | `BUEONGI_ADMIN_PASSWORD_HASH` | 없음 | 관리자 비밀번호의 bcrypt 해시. 원문 비밀번호는 저장하지 않는다. |
-| `BUEONGI_ADMIN_EMAIL` | `admin@bueongi.local` | 로그인 응답에 표시할 관리자 이메일. |
+| `BUEONGI_ADMIN_EMAIL` | (빈 값) | 로그인 응답에 표시할 관리자 이메일. |
 | `KAKAO_REST_API_KEY` | (빈 값) | Kakao Local REST 키. **미설정이면 내장 시드 카탈로그**로 장소 검색. 주입 시 실연동을 시도하되 실패하면 시드로 폴백(안심앱: 검색 불능보다 근사 결과가 안전). |
-| `DATA_GO_KR_SERVICE_KEY` | (빈 값) | 공공데이터포털(행안부 조회서비스) Encoding 키. **미설정이면 시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 CCTV·안전비상벨·여성안심지킴이집·전국보안등을 기동 직후 1회 + `BUEONGI_FACILITY_REFRESH_CRON`(기본 매월 1일 04:00 KST) 주기로 재수집해 인덱스를 무중단 교체. 수집 실패/0건이면 교체하지 않는다. |
-| `SAFEMAP_SERVICE_KEY` | (빈 값) | 생활안전지도(safemap.go.kr) 인증키. **미설정이면 치안시설 라이브 갱신 비활성**(파일 적재분 유지). 주입 시 전국 지역경찰관서(지구대·파출소·치안센터)를 같은 스케줄로 재수집 — 좌표는 EPSG:5179/WGS84 자동판별 후 WGS84 로 변환·검증. |
-| `SAFETYDATA_SERVICE_KEY` | (빈 값) | 재난안전데이터 공유 플랫폼(safetydata.go.kr) 인증키. 주입 시 공통POI 가로등(DSSP-IF-00084)을 같은 스케줄로 재수집 — 좌표(XMAP_CRTS/YMAP_CRTS)는 실응답 EPSG:3857과 EPSG:5179/WGS84를 자동판별한 뒤 WGS84로 변환·검증. **가로등(LAMP) 인덱스는 이 키와 `DATA_GO_KR_SERVICE_KEY`(전국보안등 표준데이터)의 수집분을 합쳐 만든다** — 좌표 5자리(≈1.1m)로 중복 제거하며, 활성 원천 중 하나라도 실패하면 교체하지 않는다(부분 교체는 커버리지를 되레 줄인다). 두 키 모두 없으면 가로등 라이브 갱신 비활성(파일 적재분 유지). |
-| `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 라이브 갱신 실패/0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백)를 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
+| `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 적재 0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백) ⑤도착 미확인을 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
 | `SLACK_ALERT_THROTTLE_MINUTES` | `10` | 같은 알림 key 의 재발송 억제 창(분) — 장애 중 알림 폭주 방지. |
-| `BUEONGI_FACILITY_REFRESH_CRON` | `0 0 4 1 * *` | 시설 라이브 갱신 cron(Asia/Seoul). 위 두 키 중 하나라도 있을 때만 동작. |
 | `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**`에 허용할 CORS origin(콤마 구분). 운영 도메인은 여기에 덧붙인다. 허용 메서드는 GET/POST/OPTIONS 고정. |
 | `BUEONGI_REDIS_URL` | (빈 값) | 위치 공유 저장 Redis(예 `redis://localhost:6379`). **미설정이면 인메모리 폴백**(단일 인스턴스, 재시작 시 휘발). 운영 다중 인스턴스·내구성이 필요하면 주입. |
 | `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | 공유 URL(`share_url`)의 base. 운영은 보호자가 접근 가능한 공개 도메인으로 덮어쓴다. |
