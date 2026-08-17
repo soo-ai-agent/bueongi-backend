@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.safetyspot.domain.region.service
 
+import io.soo.bueongi.core.safetyspot.domain.streetlight.service.StreetlightFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component
 class RegionFillTrigger(
     private val locator: RegionLocator,
     private val fillService: RegionLampFillService,
+    private val streetlightFill: StreetlightFillService,
 ) {
     private val log: Logger = LoggerFactory.getLogger(RegionFillTrigger::class.java)
 
@@ -46,6 +48,8 @@ class RegionFillTrigger(
     }
 
     private fun fillRegionsOf(points: List<GeoPoint>) {
+        // 가로등 원천은 지역 조건을 받지 않아 전국을 한 번에 받는다 — 좌표와 무관하다.
+        streetlightFill.fill()
         val regions: MutableSet<String> = LinkedHashSet()
         for (point in points) {
             val code: String? = locator.regionCodeAt(point)

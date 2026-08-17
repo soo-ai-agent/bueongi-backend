@@ -1,16 +1,10 @@
 package io.soo.bueongi.client.safetydata
 
-import com.fasterxml.jackson.databind.JsonNode
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClient
-import java.net.URI
-
 data class SafetydataStreetlight(
     val lat: Double,
     val lng: Double,
+    // 원천이 주소를 비워 보내는 행이 많음
     val address: String? = null,
+    // 원천이 시군구 코드를 비워 보내는 행이 많음
     val sigungu: String? = null,
 )
