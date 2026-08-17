@@ -18,6 +18,42 @@
 사건이 날 때   Slack(운영 알림)
 ```
 
+### 전체 구조도
+
+```mermaid
+flowchart LR
+    subgraph 사용자
+        FE[웹·모바일 앱]
+    end
+    subgraph 백엔드["백엔드 (8119)"]
+        RC[route 도메인]
+        PC[place 도메인]
+        SH[share 도메인]
+        OPS[ops 도메인<br/>사건 리스너]
+        TM[client-tmap]
+        KK[client-kakao]
+        SN[SlackAlertNotifier]
+    end
+    subgraph 외부
+        TMAP[Tmap API]
+        KAKAO[Kakao Local]
+        SLACK[Slack 웹훅]
+        REDIS[(Redis<br/>선택)]
+    end
+    CDN[/CDN 파일<br/>로컬 디스크/]
+
+    FE -->|경로 요청| RC --> TM -->|POST| TMAP
+    FE -->|장소 검색| PC --> KK -->|GET| KAKAO
+    FE -->|위치 공유| SH --> REDIS
+    RC -. 폴백 사건 .-> OPS
+    PC -. 폴백 사건 .-> OPS
+    OPS --> SN -->|비동기 POST| SLACK
+    CDN -->|켜질 때 1회 적재| 백엔드
+```
+
+- **실선** = 요청이 있을 때만 흐르는 호출 · **점선** = 실패했을 때만 나는 사건.
+- 켜질 때 바깥으로 나가는 것은 Redis 연결(선택)뿐이고, CDN 파일은 로컬 디스크다.
+
 ## 1. 켜질 때 — 기동 타임라인
 
 ```
@@ -96,6 +132,34 @@ CDN 파일로만 들어온다. CLAUDE.md 이력에 남은 라이브 갱신 서�
 
 사용자가 경로 비교를 누르면:
 
+```mermaid
+sequenceDiagram
+    participant S as RouteService
+    participant C as TmapRouteClient
+    participant Cache as 캐시(10분)
+    participant T as Tmap API
+
+    S->>C: fetchRoutes(출발, 도착)
+    loop 옵션 3종 (추천·큰길·최단)
+        C->>Cache: 같은 요청 있었나?
+        alt 캐시 적중
+            Cache-->>C: TmapRoute (네트워크 생략)
+        else 미적중
+            C->>T: POST /routes/pedestrian (appKey)
+            T-->>C: JSON (NUL 섞일 수 있음)
+            C->>C: 문자열로 받아 NUL 제거 후 파싱·번역
+            C->>Cache: 저장
+        end
+    end
+    alt 하나라도 성공
+        C-->>S: List<TmapRoute>
+    else 전부 실패
+        C-->>S: 빈 목록 (예외 안 던짐)
+        S->>S: 직선 폴백 경로 생성 + 사건 발행 → Slack
+    end
+```
+
+
 ```
 RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
                   │  옵션 3종("추천 0"·"큰길 4"·"최단 10")을 하나씩 → 최대 3회 POST
@@ -131,6 +195,24 @@ PlaceSearchService.search(키워드)
 폴백을 두는 이유: 안심 앱에서 "검색 불능"보다 "근사 결과"가 안전하다는 설계 결정이다.
 
 ### Slack 알림 — 도메인은 Slack 을 모른다
+
+```mermaid
+sequenceDiagram
+    participant D as route 도메인
+    participant P as RouteEventPublisher
+    participant E as 스프링 이벤트 버스
+    participant O as core-ops 리스너
+    participant N as SlackAlertNotifier
+    participant W as Slack 웹훅
+
+    D->>P: safeRouteFellBack("...")  (Slack 이란 말이 없다)
+    P->>E: OperationEvent(key, title, detail)
+    E->>O: @EventListener 수신
+    O->>N: notify(key, title, detail)
+    N->>N: 이력 기록 → 활성·뮤트 확인 → 스로틀(10분 1회)
+    N--)W: 비동기 POST (전용 스레드)
+    Note over N,W: 실패해도 로그만 — 앱 무영향
+```
 
 ```
 도메인 코드          route 도메인: routeEvents.safeRouteFellBack("…")     ← Slack 이란 말이 없다
