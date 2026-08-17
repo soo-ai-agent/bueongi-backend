@@ -15,6 +15,7 @@ include(
     "storage:db-core",
     "clients:client-tmap",
     "clients:client-kakao",
+    "clients:client-slack",
     "support:logging",
     "support:monitoring",
     "support:util",

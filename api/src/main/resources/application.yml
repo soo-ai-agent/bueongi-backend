@@ -21,6 +21,7 @@ spring:
     import:
       - logging.yml
       - monitoring.yml
+      - client-slack.yml
       - db-core.yml
       - client-tmap.yml
       - client-kakao.yml

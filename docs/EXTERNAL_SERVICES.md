@@ -99,7 +99,7 @@ CDN 파일로만 들어온다. CLAUDE.md 이력에 남은 라이브 갱신 서�
   내장 시드 카탈로그로 검색한다.
 - **안 되면**: 시드 폴백으로 응답 + Slack 사건. 검색 불능보다 근사 결과가 안전하다는 설계다.
 
-### Slack (운영 알림) — `support:monitoring`
+### Slack (운영 알림) — `clients:client-slack`
 
 - **언제**: 사건이 났을 때만. 도메인은 Slack 을 모른다 — 사건(`OperationEvent`)을 발행하면
   `core-ops` 리스너가 받아 `SlackAlertNotifier` 로 보낸다.

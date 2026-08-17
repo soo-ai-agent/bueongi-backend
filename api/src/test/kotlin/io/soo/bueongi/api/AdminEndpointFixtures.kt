@@ -7,7 +7,7 @@ import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
-import io.soo.bueongi.support.monitoring.SlackAlertConfig
+import io.soo.bueongi.client.slack.SlackAlertConfig
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
