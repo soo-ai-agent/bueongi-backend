@@ -5,3 +5,8 @@ spring:
       # 위 파일의 따옴표 값('$해시')이 properties 로는 그대로 읽혀 깨진다 — 셸용 원본은 두고,
       # 따옴표 벗긴 쌍둥이(.env.local.properties, gitignore)가 나중에 읽혀 이긴다. IDE 실행용.
       - optional:file:.env.local.properties
+
+# local 은 항상 8119 — 프론트(vite) 프록시가 이 포트를 바라본다.
+# SERVER_PORT 환경변수를 주면 그쪽이 이긴다(서브에이전트의 격리 포트 기동은 그대로 동작).
+server:
+  port: 8119
