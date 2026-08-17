@@ -11,6 +11,7 @@ import java.nio.file.StandardCopyOption
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -38,6 +39,13 @@ class SafetySpotRegionCache(
     private val readMapper: ObjectMapper = objectMapper
 
     /**
+     * 파일에서 한 번 읽은 저장 시각을 기억한다.
+     * 이 값은 우리가 [save] 할 때만 바뀌므로, 매번 파일을 다시 파싱할 이유가 없다 —
+     * 지연 적재는 요청마다 만료를 확인하는데 파일이 수 MB 라 그 비용이 그대로 요청에 실렸다.
+     */
+    private val savedAtByFile: ConcurrentHashMap<String, Instant> = ConcurrentHashMap()
+
+    /**
      * 이미 받아 뒀고 아직 안 낡았는지. 낡았으면 false 라 다시 받는다.
      *
      * 만료를 두는 이유는 지자체가 나중에 좌표를 채워 넣어도 우리가 모르기 때문이다 —
@@ -50,13 +58,21 @@ class SafetySpotRegionCache(
 
     /** 저장 시각. 파일이 없거나 시각을 못 읽으면 null — 그때는 안 받은 것으로 본다. */
     fun savedAtOf(type: SafetySpotType, regionCode: String): Instant? {
+        val remembered: Instant? = savedAtByFile[cacheKey(type, regionCode)]
+        if (remembered != null) {
+            return remembered
+        }
         val file: File = fileOf(type, regionCode)
         if (!file.isFile) {
             return null
         }
         return try {
             val collection: SafetySpotCollectionDto = readMapper.readValue(file, SafetySpotCollectionDto::class.java)
-            collection.savedAt?.let { Instant.parse(it) }
+            val savedAt: Instant? = collection.savedAt?.let { Instant.parse(it) }
+            if (savedAt != null) {
+                savedAtByFile[cacheKey(type, regionCode)] = savedAt
+            }
+            savedAt
         } catch (e: Exception) {
             log.warn("지역 캐시 저장 시각을 읽지 못했습니다(다시 받음): {} ({})", file.path, e.message)
             null
@@ -66,10 +82,11 @@ class SafetySpotRegionCache(
     fun save(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
         val target: File = fileOf(type, regionCode)
         Files.createDirectories(target.parentFile.toPath())
+        val savedAt: Instant = clock.instant()
         val collection = SafetySpotCollectionDto(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
-            savedAt = clock.instant().toString(),
+            savedAt = savedAt.toString(),
         )
         val temp: File = File.createTempFile("$regionCode-", ".json.tmp", target.parentFile)
         try {
@@ -80,6 +97,7 @@ class SafetySpotRegionCache(
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
+            savedAtByFile[cacheKey(type, regionCode)] = savedAt
             log.info("지역 캐시 저장: type={}, region={}, count={}", type, regionCode, points.size)
         } finally {
             temp.delete()
@@ -111,6 +129,9 @@ class SafetySpotRegionCache(
             ?.map { it.name.removeSuffix(".json") }
             ?.toSet()
             .orEmpty()
+
+    private fun cacheKey(type: SafetySpotType, regionCode: String): String =
+        "${type.cdnType}/$regionCode"
 
     private fun fileOf(type: SafetySpotType, regionCode: String): File =
         File(File(regionDir, type.cdnType), "$regionCode.json")

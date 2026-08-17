@@ -31,6 +31,12 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
     /** 병합용 원본(중복 제거된 것) — 지역 데이터를 더할 때 기존 것과 합치려면 필요하다. */
     val all: List<SafetySpotPoint> = distinct
 
+    /**
+     * 이미 데이터를 가진 자치단체 코드.
+     * 지역 지연 적재가 "이 지역을 또 받아야 하나"를 외부 호출 없이 여기서 판단한다.
+     */
+    val regions: Set<String> = distinct.mapNotNullTo(HashSet()) { it.sigungu }
+
     fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {
             return emptyList()

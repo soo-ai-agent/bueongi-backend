@@ -44,8 +44,8 @@ class RouteSafetySpotServiceTest {
             SafetySpotType.BELL to listOf(
                 SafetySpotPoint(SafetySpotType.BELL, 37.5, 127.012),
             ),
-            SafetySpotType.LAMP to listOf(
-                SafetySpotPoint(SafetySpotType.LAMP, 37.5, 127.014, name = "가로등-1"),
+            SafetySpotType.STREETLIGHT to listOf(
+                SafetySpotPoint(SafetySpotType.STREETLIGHT, 37.5, 127.014, name = "가로등-1"),
             ),
             SafetySpotType.PEDESTRIAN_SIGNAL to listOf(
                 SafetySpotPoint(SafetySpotType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
@@ -71,7 +71,7 @@ class RouteSafetySpotServiceTest {
         assertThat(res.summary.convenienceStore).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.STORE })
         assertThat(res.summary.police).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.POLICE })
         assertThat(res.summary.safehouse).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.SAFEHOUSE })
-        assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.LAMP })
+        assertThat(res.summary.lamp).isEqualTo(res.pois.count { it.type == SafetySpotPoiType.STREETLIGHT })
         assertThat(res.summary.pedestrianSignal)
             .isEqualTo(res.pois.count { it.type == SafetySpotPoiType.PEDESTRIAN_SIGNAL })
     }

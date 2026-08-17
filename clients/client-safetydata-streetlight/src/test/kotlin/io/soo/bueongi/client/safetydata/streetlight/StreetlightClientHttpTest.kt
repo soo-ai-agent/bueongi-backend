@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safetydata
+package io.soo.bueongi.client.safetydata.streetlight
 
 import io.soo.bueongi.support.util.Epsg5179
 
@@ -14,14 +14,14 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-class SafetydataStreetlightClientHttpTest {
+class StreetlightClientHttpTest {
 
     private val serviceKey: String = "safetydata%2Fkey"
 
-    private fun bind(key: String = serviceKey): Pair<SafetydataStreetlightClient, MockRestServiceServer> {
+    private fun bind(key: String = serviceKey): Pair<StreetlightClient, MockRestServiceServer> {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
-        return SafetydataStreetlightClient(serviceKey = key, restClientBuilder = builder) to server
+        return StreetlightClient(serviceKey = key, restClientBuilder = builder) to server
     }
 
     @Test
@@ -34,13 +34,13 @@ class SafetydataStreetlightClientHttpTest {
                       "ROAD_NM_ADDR":"서울 강남구 테헤란로 1","STDG_SGG_CD":"11680",
                       "XMAP_CRTS":"$x","YMAP_CRTS":"$y"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString("${SafetydataApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
+        server.expect(requestTo(containsString("${StreetlightApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetlights: List<SafetydataStreetlight>? = client.fetchStreetlights()
+        val streetlights: List<StreetlightPoint>? = client.fetchStreetlights()
 
         assertThat(streetlights).hasSize(1)
-        val s: SafetydataStreetlight = streetlights!![0]
+        val s: StreetlightPoint = streetlights!![0]
         assertThat(s.lat).isCloseTo(37.4981, within(1e-6))
         assertThat(s.lng).isCloseTo(127.0276, within(1e-6))
         assertThat(s.address).isEqualTo("서울 강남구 테헤란로 1")
@@ -56,10 +56,10 @@ class SafetydataStreetlightClientHttpTest {
              "body":[{"SN":"1","XMAP_CRTS":"127.03","YMAP_CRTS":"37.50","ADDR":"지번주소만"},
                      {"SN":"2","XMAP_CRTS":"","YMAP_CRTS":"abc","ADDR":"좌표불량"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetlights: List<SafetydataStreetlight>? = client.fetchStreetlights()
+        val streetlights: List<StreetlightPoint>? = client.fetchStreetlights()
 
         assertThat(streetlights).hasSize(1)
         assertThat(streetlights!![0].lat).isCloseTo(37.50, within(1e-9))
@@ -69,7 +69,7 @@ class SafetydataStreetlightClientHttpTest {
     @Test
     fun `실패 - HTTP 오류면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
             .andRespond(withServerError())
 
         assertThat(client.fetchStreetlights()).isNull()
@@ -79,7 +79,7 @@ class SafetydataStreetlightClientHttpTest {
     fun `실패 - resultCode 비정상이면 null`() {
         val (client, server) = bind()
         val body: String = """{"resultCode":"03","resultMsg":"NODATA_ERROR","body":[]}"""
-        server.expect(requestTo(containsString(SafetydataApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
         assertThat(client.fetchStreetlights()).isNull()

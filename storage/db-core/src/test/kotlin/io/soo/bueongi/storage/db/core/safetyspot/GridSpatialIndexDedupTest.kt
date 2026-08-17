@@ -47,5 +47,5 @@ class GridSpatialIndexDedupTest {
     }
 
     private fun lamp(name: String, lat: Double, lng: Double): SafetySpotPoint =
-        SafetySpotPoint(type = SafetySpotType.LAMP, lat = lat, lng = lng, name = name)
+        SafetySpotPoint(type = SafetySpotType.STREETLIGHT, lat = lat, lng = lng, name = name)
 }

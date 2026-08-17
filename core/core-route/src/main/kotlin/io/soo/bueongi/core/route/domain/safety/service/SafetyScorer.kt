@@ -51,7 +51,7 @@ class SafetyScorer(
         SafetySpotCounts(
             cctv = countWithinCorridor(SafetySpotType.CCTV, path),
             // 가로등과 보안등은 관리 주체만 다른 같은 조명이다 — 밝기 점수는 합쳐서 센다.
-            lamp = countWithinCorridor(SafetySpotType.LAMP, path) +
+            lamp = countWithinCorridor(SafetySpotType.STREETLIGHT, path) +
                 countWithinCorridor(SafetySpotType.SECURITY_LAMP, path),
             bell = countWithinCorridor(SafetySpotType.BELL, path),
             safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),

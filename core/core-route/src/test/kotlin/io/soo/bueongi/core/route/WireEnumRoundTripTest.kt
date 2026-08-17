@@ -47,7 +47,7 @@ class WireEnumRoundTripTest {
         roundTrip(SafetySpotPoiType.STORE, "store")
         roundTrip(SafetySpotPoiType.POLICE, "police")
         roundTrip(SafetySpotPoiType.SAFEHOUSE, "safehouse")
-        roundTrip(SafetySpotPoiType.LAMP, "lamp")
+        roundTrip(SafetySpotPoiType.STREETLIGHT, "lamp")
     }
 
     @Test
@@ -67,7 +67,7 @@ class WireEnumRoundTripTest {
     @Test
     fun `SafetySpotType cdnType`() {
         roundTrip(SafetySpotType.CCTV, "cctv")
-        roundTrip(SafetySpotType.LAMP, "lamp")
+        roundTrip(SafetySpotType.STREETLIGHT, "lamp")
         roundTrip(SafetySpotType.BELL, "emergency_bell")
         roundTrip(SafetySpotType.SAFEHOUSE, "safehouse")
         roundTrip(SafetySpotType.POLICE, "police")

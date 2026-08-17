@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safetydata
+package io.soo.bueongi.client.safetydata.streetlight
 
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
@@ -13,14 +13,14 @@ import java.net.URI
 
 /** safetydata DSSP-IF-00084: 인증키는 URL-인코딩분 그대로(재인코딩 금지), XMAP_CRTS/YMAP_CRTS 좌표계는 문서 미명시라 값 범위로 자동판별한다. */
 @Component
-class SafetydataStreetlightClient(
+class StreetlightClient(
     @Value("\${bueongi.safetydata.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
-    @Value("\${bueongi.safetydata.base-url:${SafetydataApiSpec.DEFAULT_BASE_URL}}") baseUrl: String = SafetydataApiSpec.DEFAULT_BASE_URL,
+    @Value("\${bueongi.safetydata.base-url:${StreetlightApiSpec.DEFAULT_BASE_URL}}") baseUrl: String = StreetlightApiSpec.DEFAULT_BASE_URL,
 ) {
-    private val log: Logger = LoggerFactory.getLogger(SafetydataStreetlightClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(StreetlightClient::class.java)
     private val serviceKey: String = serviceKey.trim()
-    private val endpoint: String = "${baseUrl.trimEnd('/')}${SafetydataApiSpec.PATH}"
+    private val endpoint: String = "${baseUrl.trimEnd('/')}${StreetlightApiSpec.PATH}"
 
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
@@ -28,17 +28,17 @@ class SafetydataStreetlightClient(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /** 서버가 numOfRows 보다 적게 돌려줘도 totalCount 도달까지 페이지를 넘긴다(페이지 상한이 낮은 서비스 방어). */
-    fun fetchStreetlights(): List<SafetydataStreetlight>? {
+    fun fetchStreetlights(): List<StreetlightPoint>? {
         check(isEnabled) { "재난안전데이터(safetydata) 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
-        val streetlights: ArrayList<SafetydataStreetlight> = ArrayList<SafetydataStreetlight>()
+        val streetlights: ArrayList<StreetlightPoint> = ArrayList<StreetlightPoint>()
         var pageNo: Int = 1
         var received: Long = 0L
         var totalCount: Long? = null
 
-        while (pageNo <= SafetydataApiSpec.MAX_PAGES) {
+        while (pageNo <= StreetlightApiSpec.MAX_PAGES) {
             val body: JsonNode? = try {
                 restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${SafetydataApiSpec.PAGE_SIZE}&returnType=json"))
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${StreetlightApiSpec.PAGE_SIZE}&returnType=json"))
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
@@ -71,13 +71,13 @@ class SafetydataStreetlightClient(
             when {
                 rows.isEmpty() -> break
                 total != null && received >= total -> break
-                total == null && rows.size < SafetydataApiSpec.PAGE_SIZE -> break
+                total == null && rows.size < StreetlightApiSpec.PAGE_SIZE -> break
             }
             pageNo += 1
         }
         val finalTotal: Long? = totalCount
         if (finalTotal != null && received < finalTotal) {
-            log.warn("safetydata 가로등 페이지 상한(SafetydataApiSpec.MAX_PAGES={}) 도달 — {}/{}건만 수집", SafetydataApiSpec.MAX_PAGES, received, finalTotal)
+            log.warn("safetydata 가로등 페이지 상한(StreetlightApiSpec.MAX_PAGES={}) 도달 — {}/{}건만 수집", StreetlightApiSpec.MAX_PAGES, received, finalTotal)
         }
         return streetlights
     }
@@ -108,9 +108,9 @@ class SafetydataStreetlightClient(
         return emptyList()
     }
 
-    private fun JsonNode.toStreetlight(): SafetydataStreetlight? {
+    private fun JsonNode.toStreetlight(): StreetlightPoint? {
         val point: Wgs84Point = resolveKoreanWgs84OrNull(text("XMAP_CRTS"), text("YMAP_CRTS")) ?: return null
-        return SafetydataStreetlight(
+        return StreetlightPoint(
             lat = point.lat,
             lng = point.lng,
             address = text("ROAD_NM_ADDR") ?: text("ADDR"),

@@ -1,15 +1,15 @@
-package io.soo.bueongi.core.safetyspot.domain.region.service
+package io.soo.bueongi.core.safetyspot.domain.securitylamp.service
 
 import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
 /**
- * 지역 채우기가 밖에 알릴 일.
+ * 보안등 지역 채우기가 밖에 알릴 일.
  * 사건을 발행만 한다 — 누가 받아 무엇을 하는지(알림·집계 등)는 여기서 정하지 않는다.
  */
 @Component
-class RegionFillEventPublisher(
+class SecurityLampFillEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
 
@@ -37,9 +37,9 @@ class RegionFillEventPublisher(
 
     companion object {
 
-        private const val FETCH_FAILED_KEY: String = "lamp-region-fetch-failed"
+        private const val FETCH_FAILED_KEY: String = "security-lamp-region-fetch-failed"
         private const val FETCH_FAILED_TITLE: String = "보안등 지역 수집 실패"
-        private const val NO_COORDINATES_KEY: String = "lamp-region-no-coordinates"
+        private const val NO_COORDINATES_KEY: String = "security-lamp-region-no-coordinates"
         private const val NO_COORDINATES_TITLE: String = "보안등 지역 좌표 없음"
     }
 }

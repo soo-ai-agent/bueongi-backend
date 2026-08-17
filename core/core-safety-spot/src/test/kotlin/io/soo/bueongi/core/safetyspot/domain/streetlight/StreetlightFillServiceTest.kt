@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.safetyspot.domain.streetlight
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.client.safetydata.SafetydataStreetlight
-import io.soo.bueongi.client.safetydata.SafetydataStreetlightClient
+import io.soo.bueongi.client.safetydata.streetlight.StreetlightPoint
+import io.soo.bueongi.client.safetydata.streetlight.StreetlightClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.streetlight.service.StreetlightFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.streetlight.service.StreetlightFillService
@@ -38,7 +38,7 @@ class StreetlightFillServiceTest {
 
     @Test
     fun `키가 없으면 외부 호출을 하지 않는다`(@TempDir dir: Path) {
-        val client: SafetydataStreetlightClient = mock()
+        val client: StreetlightClient = mock()
         whenever(client.isEnabled).thenReturn(false)
         val liveStore = FakeLiveStore()
 
@@ -51,12 +51,12 @@ class StreetlightFillServiceTest {
 
     @Test
     fun `받은 가로등을 인덱스에 더하고 다시 받지 않는다`(@TempDir dir: Path) {
-        val client: SafetydataStreetlightClient = mock()
+        val client: StreetlightClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetlights()).thenReturn(
             listOf(
-                SafetydataStreetlight(lat = 37.4979, lng = 127.0276, address = "역삼동", sigungu = "11680"),
-                SafetydataStreetlight(lat = 37.4988, lng = 127.0301),
+                StreetlightPoint(lat = 37.4979, lng = 127.0276, address = "역삼동", sigungu = "11680"),
+                StreetlightPoint(lat = 37.4988, lng = 127.0301),
             ),
         )
         val liveStore = FakeLiveStore()
@@ -64,7 +64,7 @@ class StreetlightFillServiceTest {
 
         assertThat(service.fill()).isEqualTo(2)
         assertThat(liveStore.appended).hasSize(2)
-        assertThat(liveStore.appended.first().type).isEqualTo(SafetySpotType.LAMP)
+        assertThat(liveStore.appended.first().type).isEqualTo(SafetySpotType.STREETLIGHT)
         assertThat(liveStore.appended.first().address).isEqualTo("역삼동")
 
         // 두 번째 호출은 캐시가 막는다 — 같은 데이터를 두 번 받지 않는다.
@@ -75,7 +75,7 @@ class StreetlightFillServiceTest {
 
     @Test
     fun `수집이 실패하면 알리고 기존 데이터를 유지한다`(@TempDir dir: Path) {
-        val client: SafetydataStreetlightClient = mock()
+        val client: StreetlightClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetlights()).thenReturn(null)
         val liveStore = FakeLiveStore()
@@ -92,7 +92,7 @@ class StreetlightFillServiceTest {
 
     private fun service(
         dir: Path,
-        client: SafetydataStreetlightClient,
+        client: StreetlightClient,
         liveStore: SafetySpotLiveStore,
         events: StreetlightFillEventPublisher = mock(),
     ): StreetlightFillService =

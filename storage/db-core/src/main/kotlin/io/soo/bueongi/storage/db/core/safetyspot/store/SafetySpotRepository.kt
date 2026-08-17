@@ -212,7 +212,7 @@ class SafetySpotRepository(
             cachedRegions,
             loaded[SafetySpotType.CCTV]?.size ?: 0,
             csvCctvCount,
-            loaded[SafetySpotType.LAMP]?.size ?: 0,
+            loaded[SafetySpotType.STREETLIGHT]?.size ?: 0,
             loaded[SafetySpotType.SECURITY_LAMP]?.size ?: 0,
             csvLampCount,
             loaded[SafetySpotType.BELL]?.size ?: 0,
@@ -393,6 +393,7 @@ private class LampCsvColumns(
     private val nameAt: Int,
     private val latAt: Int,
     private val lngAt: Int,
+    private val sigunguAt: Int,
 ) {
     fun parse(row: String): SafetySpotPoint? {
         val parts: List<String> = row.split(',')
@@ -405,7 +406,21 @@ private class LampCsvColumns(
         ) ?: return null
         // 원천에 위치명이 없는 행이 있어 null 이 가능함
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
-        return SafetySpotPoint(type = SafetySpotType.SECURITY_LAMP, lat = point.lat, lng = point.lng, name = name)
+        return SafetySpotPoint(
+            type = SafetySpotType.SECURITY_LAMP,
+            lat = point.lat,
+            lng = point.lng,
+            name = name,
+            sigungu = valueAt(parts, sigunguAt),
+        )
+    }
+
+    /** 지자체 개별 CSV 처럼 그 컬럼이 없는 원천이 있어 null 이 가능함. */
+    private fun valueAt(parts: List<String>, at: Int): String? {
+        if (at < 0 || at >= parts.size) {
+            return null
+        }
+        return parts[at].trim().takeIf { it.isNotEmpty() }
     }
 
     companion object {
@@ -416,7 +431,13 @@ private class LampCsvColumns(
             if (latAt < 0 || lngAt < 0) {
                 return null
             }
-            return LampCsvColumns(nameAt = columns.indexOf("보안등위치명").coerceAtLeast(0), latAt = latAt, lngAt = lngAt)
+            return LampCsvColumns(
+                nameAt = columns.indexOf("보안등위치명").coerceAtLeast(0),
+                latAt = latAt,
+                lngAt = lngAt,
+                // 이 코드가 곧 API 의 instt_code 다 — 이미 CSV 로 가진 자치단체를 다시 받지 않으려면 꼭 남겨야 한다.
+                sigunguAt = columns.indexOf("제공기관코드"),
+            )
         }
     }
 }

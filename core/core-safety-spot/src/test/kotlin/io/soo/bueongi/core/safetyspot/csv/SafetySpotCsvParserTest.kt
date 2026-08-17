@@ -63,7 +63,7 @@ class SafetySpotCsvParserTest {
             37.5,127.0,L-001,서울 종로구 5
         """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvSpec.forType(SafetySpotType.LAMP))
+        val result = parser.parse(bytes(csv), SafetySpotCsvSpec.forType(SafetySpotType.STREETLIGHT))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("L-001")

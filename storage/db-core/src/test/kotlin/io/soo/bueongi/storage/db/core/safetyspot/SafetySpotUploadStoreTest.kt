@@ -43,9 +43,9 @@ class SafetySpotUploadStoreTest {
     @Test
     fun `save 는 없는 디렉터리를 만들고 재저장 시 덮어쓴다`(@TempDir tmp: Path) {
         val store = SafetySpotUploadStore(mapper, File(tmp.toFile(), "made/here").absolutePath)
-        store.save(SafetySpotType.LAMP, listOf(SafetySpotPoint(SafetySpotType.LAMP, 37.5, 127.0)))
-        store.save(SafetySpotType.LAMP, listOf(SafetySpotPoint(SafetySpotType.LAMP, 37.6, 127.1), SafetySpotPoint(SafetySpotType.LAMP, 37.7, 127.2)))
+        store.save(SafetySpotType.STREETLIGHT, listOf(SafetySpotPoint(SafetySpotType.STREETLIGHT, 37.5, 127.0)))
+        store.save(SafetySpotType.STREETLIGHT, listOf(SafetySpotPoint(SafetySpotType.STREETLIGHT, 37.6, 127.1), SafetySpotPoint(SafetySpotType.STREETLIGHT, 37.7, 127.2)))
 
-        assertThat(store.findByType(SafetySpotType.LAMP)).hasSize(2)
+        assertThat(store.findByType(SafetySpotType.STREETLIGHT)).hasSize(2)
     }
 }

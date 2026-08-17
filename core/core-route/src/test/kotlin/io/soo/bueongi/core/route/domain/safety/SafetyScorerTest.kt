@@ -22,7 +22,7 @@ class SafetyScorerTest {
     @Test
     fun `종류별 가중치가 점수에 그대로 실린다`() {
         assertThat(scoreWithSaturated(SafetySpotType.CCTV)).isEqualTo(30)
-        assertThat(scoreWithSaturated(SafetySpotType.LAMP)).isEqualTo(20)
+        assertThat(scoreWithSaturated(SafetySpotType.STREETLIGHT)).isEqualTo(20)
         assertThat(scoreWithSaturated(SafetySpotType.BELL)).isEqualTo(18)
         assertThat(scoreWithSaturated(SafetySpotType.POLICE)).isEqualTo(10)
         assertThat(scoreWithSaturated(SafetySpotType.SAFEHOUSE)).isEqualTo(7)
@@ -76,7 +76,7 @@ class SafetyScorerTest {
     private fun saturatingSpots(type: SafetySpotType): List<GeoPoint> {
         val needed: Int = when (type) {
             SafetySpotType.CCTV -> 20
-            SafetySpotType.LAMP -> 40
+            SafetySpotType.STREETLIGHT -> 40
             SafetySpotType.BELL -> 5
             SafetySpotType.POLICE -> 2
             SafetySpotType.SAFEHOUSE -> 3
@@ -119,7 +119,7 @@ class SafetyScorerTest {
     @Test
     fun `회랑 안 가로등이 점수와 밀도에 기여한다`() {
         val lamps = (1..12).map { GeoPoint(37.5, 127.0 + it * 0.0007) }
-        val result = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.LAMP, lamps)).score(path)
+        val result = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.STREETLIGHT, lamps)).score(path)
         assertThat(result.breakdown.lampDensity).isGreaterThan(0.0)
         assertThat(result.score).isGreaterThan(0)
     }
@@ -157,7 +157,7 @@ class SafetyScorerTest {
     private companion object {
 
         val WEIGHTED_TYPES: List<SafetySpotType> = listOf(
-            SafetySpotType.CCTV, SafetySpotType.LAMP, SafetySpotType.BELL,
+            SafetySpotType.CCTV, SafetySpotType.STREETLIGHT, SafetySpotType.BELL,
             SafetySpotType.POLICE, SafetySpotType.SAFEHOUSE,
         )
     }

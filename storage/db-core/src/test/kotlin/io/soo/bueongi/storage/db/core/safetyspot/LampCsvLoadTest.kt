@@ -35,6 +35,28 @@ class LampCsvLoadTest {
     }
 
     @Test
+    fun `제공기관코드를 남긴다 - 이미 가진 자치단체를 API 로 다시 받지 않으려면 필요하다`(@TempDir tmp: File) {
+        val csvDir = csvDirOf(
+            tmp,
+            header,
+            "창녕3219,1,,경남 창녕군,35.5443,128.4923,,,055-000,창녕군청,2026-06-26,5410000,경상남도 창녕군",
+        )
+
+        val points = loadLamp(tmp, csvDir)
+
+        assertThat(points.single().sigungu).isEqualTo("5410000")
+    }
+
+    @Test
+    fun `제공기관코드 컬럼이 없는 지자체 파일도 적재된다`(@TempDir tmp: File) {
+        val csvDir = csvDirOf(tmp, "경도,위도,보안등위치명", "128.4923,35.5443,고성1")
+
+        val points = loadLamp(tmp, csvDir)
+
+        assertThat(points.single().sigungu).isNull()
+    }
+
+    @Test
     fun `헤더 순서가 바뀌어도 컬럼 이름으로 찾는다`(@TempDir tmp: File) {
         val csvDir = csvDirOf(tmp, "경도,위도,보안등위치명", "128.4923,35.5443,창녕3219")
 

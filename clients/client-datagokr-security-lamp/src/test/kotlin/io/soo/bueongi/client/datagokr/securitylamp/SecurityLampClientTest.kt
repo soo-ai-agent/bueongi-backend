@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.datagokr.lamp
+package io.soo.bueongi.client.datagokr.securitylamp
 
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.bindFetcher
