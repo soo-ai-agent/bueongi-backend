@@ -29,7 +29,11 @@ class DataGoKrPagedFetcher(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /** 계약: null = 수집 실패(부분 실패 포함) — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
-    fun fetchAll(endpoint: String, fields: DataGoKrFieldNames): List<DataGoKrPoint>? {
+    fun fetchAll(
+        endpoint: String,
+        fields: DataGoKrFieldNames,
+        query: DataGoKrQuery = DataGoKrQuery(),
+    ): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
         var pageNo: Int = 1
@@ -37,7 +41,7 @@ class DataGoKrPagedFetcher(
         var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= DataGoKrApiSpec.MAX_PAGES && received < totalCount) {
-            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo) ?: return null
+            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, query) ?: return null
             val response: DataGoKrResponse = envelope.payload()
             val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
@@ -78,12 +82,12 @@ class DataGoKrPagedFetcher(
      *
      * 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 사실상 성공하지 못한다.
      */
-    private fun fetchPage(endpoint: String, pageNo: Int): DataGoKrEnvelope? {
+    private fun fetchPage(endpoint: String, pageNo: Int, query: DataGoKrQuery): DataGoKrEnvelope? {
         var attempt: Int = 1
         while (true) {
             try {
                 return restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${DataGoKrApiSpec.PAGE_SIZE}&type=json"))
+                    .uri(URI.create(pageUrl(endpoint, pageNo, query)))
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
@@ -111,6 +115,16 @@ class DataGoKrPagedFetcher(
             }
         }
     }
+
+    /**
+     * 응답 타입 파라미터를 둘 다 보낸다 — 공식 문서는 `returnType` 인데 기존 호출은 `type` 으로 동작해 왔다.
+     * 이 원천은 미지 파라미터를 무시함이 확인돼 있어(카탈로그 2절) 둘 다 보내는 편이 안전하다.
+     */
+    private fun pageUrl(endpoint: String, pageNo: Int, query: DataGoKrQuery): String =
+        "$endpoint?serviceKey=$serviceKey" +
+            "&pageNo=$pageNo&numOfRows=${DataGoKrApiSpec.PAGE_SIZE}" +
+            "&returnType=json&type=json" +
+            query.toQueryParams()
 
     private fun extractItems(items: JsonNode?): List<JsonNode> = when {
         items == null -> emptyList()

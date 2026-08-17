@@ -32,7 +32,7 @@ class DataGoKrPagedFetcherHttpTest {
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑`() {
         val (fetcher, server) = bindFetcher()
         server.expect(requestTo(containsString("$endpoint?serviceKey=$TEST_SERVICE_KEY")))
-            .andExpect(requestTo(containsString("pageNo=1&numOfRows=100&type=json")))
+            .andExpect(requestTo(containsString("pageNo=1&numOfRows=100&returnType=json&type=json")))
             .andRespond(withSuccess(envelope(item(), 1), MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = fetcher.fetchAll(endpoint, fields)
