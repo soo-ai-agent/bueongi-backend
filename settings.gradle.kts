@@ -16,6 +16,8 @@ include(
     "clients:client-tmap",
     "clients:client-kakao",
     "clients:client-slack",
+    "clients:client-datagokr",
+    "clients:client-safemap",
     "support:logging",
     "support:monitoring",
     "support:util",
