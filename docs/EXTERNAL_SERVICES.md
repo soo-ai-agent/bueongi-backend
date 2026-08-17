@@ -76,7 +76,89 @@ CDN 파일로만 들어온다. CLAUDE.md 이력에 남은 라이브 갱신 서�
 - **안 되면**: 미설정 시 인메모리 폴백 — 단일 인스턴스·재시작 시 휘발이지만 계약은 동일.
 - 외부 "API" 라기보다 우리 인프라다. 여기 적는 이유는 켜질 때 바깥에 접속하는 유일한 것이라서다.
 
-## 4. 지금 상태를 확인하는 법
+## 4. 한 호출의 해부 — 코드가 실제로 하는 일
+
+### 공통 기반 — 모든 외부 호출이 딛고 서는 것
+
+```
+스프링 자동구성 RestClient.Builder ──┬─→ TmapRouteClient   (clone().build())
+   ↑ 전역 타임아웃이 여기 걸린다      ├─→ KakaoPlaceClient  (clone().build())
+                                     └─→ SlackAlertNotifier (clone().build())
+```
+
+- **타임아웃은 yml 한 곳에서 전부 적용된다** (`application.yml`): 연결 3초, 응답 10초.
+  미설정이면 무한대라, 외부가 느려지는 "슬로우 장애"에서 우리 스레드가 전부 잡혀 전체 장애로 번진다.
+- **키는 생성자에서 주입**받고(`@Value`), 키가 비어 있으면 `isEnabled = false` — **호출 자체를 안 한다.**
+- **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.** 클라이언트가 우리 말(`TmapRoute`·`KakaoPlace`)로
+  번역해서 내보낸다. 외부 규격이 바뀌어도 고칠 곳은 그 모듈 하나다.
+
+### Tmap 경로 — 요청 한 번의 여정
+
+사용자가 경로 비교를 누르면:
+
+```
+RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
+                  │  옵션 3종("추천 0"·"큰길 4"·"최단 10")을 하나씩 → 최대 3회 POST
+                  ▼
+    ① 캐시 확인      같은 출발·도착·옵션이 10분 안에 있으면 네트워크 생략
+    ② POST 요청      https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1
+                     헤더 appKey — 로그·예외에는 절대 안 실림
+    ③ 문자열로 수신   ★ 바로 객체로 안 받는다. Tmap 이 본문에 NUL(0x00)을 섞어 보내는
+                     실측 사례가 있어, sanitizeTmapJson 으로 다듬은 뒤 파싱한다
+    ④ 번역           GeoJSON → TmapRoute (거리·시간·좌표열·안내점)
+    ⑤ 실패하면       예외를 위로 안 던진다 — null 반환 + 원인 사슬 로그
+                     ("A: msg <- B: msg" — 겉 메시지만 남기면 진짜 원인이 사라진 사건의 교훈)
+```
+
+세 옵션이 **전부** null 이면 route 도메인이 **직선 기반 폴백 경로**를 만들어 응답하고
+(안전 점수·마커 없음), 사건 `tmap-route-fallback` 을 발행한다 → Slack 알림.
+**사용자 응답은 어떤 경우에도 나간다** — 외부 장애가 우리 장애가 되지 않게.
+
+### Kakao 장소 검색 — 게이트 → 호출 → 폴백
+
+```
+PlaceSearchService.search(키워드)
+    │
+    ├─ 키 없음(isEnabled=false)  ─→ 내장 시드 카탈로그 검색   ← 호출 자체가 없다
+    │
+    └─ 키 있음 ─→ GET dapi.kakao.com/v2/local/search/keyword.json?query=…&size=15
+                   헤더 Authorization: KakaoAK <키>
+                   │
+                   ├─ 성공 → 응답 문서를 KakaoPlace 로 번역해 반환
+                   └─ 예외 → catch → 시드 폴백 + 사건 kakao-place-fallback → Slack
+```
+
+폴백을 두는 이유: 안심 앱에서 "검색 불능"보다 "근사 결과"가 안전하다는 설계 결정이다.
+
+### Slack 알림 — 도메인은 Slack 을 모른다
+
+```
+도메인 코드          route 도메인: routeEvents.safeRouteFellBack("…")     ← Slack 이란 말이 없다
+    │                (도메인마다 발행 전용 서비스 XxxEventPublisher)
+    ▼
+스프링 이벤트        OperationEvent(key, title, detail) 발행
+    ▼
+core-ops 리스너      받아서 AlertNotifier.notify(key, …) 호출
+    ▼
+SlackAlertNotifier   ① 이력 기록(발송 여부와 무관하게 남김)
+                     ② 웹훅 미설정·뮤트 카테고리면 여기서 끝(무해)
+                     ③ 같은 key 는 10분에 1번만(스로틀) — 장애 중 알림 폭주 방지
+                     ④ 전용 단일 스레드로 비동기 발송 — 사용자 요청 스레드를 안 막는다
+                     ⑤ 발송 실패해도 로그만 남기고 앱은 무영향
+```
+
+### 설계 원칙 한 줄 요약
+
+| 원칙 | 코드에서 |
+|---|---|
+| 키 없으면 안 부른다 | `isEnabled` 게이트 |
+| 실패를 위로 안 던진다 | null/폴백 + 사건 발행 |
+| 느린 외부에 안 끌려간다 | 전역 타임아웃 3s/10s |
+| 통신 모양은 모듈 안에 | 클라이언트가 우리 말로 번역 |
+| 원인을 잃지 않는다 | cause 사슬 로그 |
+| 시크릿은 어디에도 | appKey·웹훅 URL 비로그 |
+
+## 5. 지금 상태를 확인하는 법
 
 ```bash
 curl -s localhost:8119/api/health
@@ -86,7 +168,7 @@ curl -s localhost:8119/api/health
 - `placeSource: live` = Kakao 키가 주입돼 실검색 / `seed` = 내장 카탈로그.
 - `locationStore: redis` = Redis 연결됨 / `memory` = 인메모리 폴백.
 
-## 5. 요약 표
+## 6. 요약 표
 
 | 서비스 | 켜질 때 | 부르는 조건 | 실패 시 |
 |---|---|---|---|
