@@ -18,6 +18,7 @@ include(
     "clients:client-slack",
     "clients:client-datagokr",
     "clients:client-safemap",
+    "clients:client-safetydata",
     "support:logging",
     "support:monitoring",
     "support:util",

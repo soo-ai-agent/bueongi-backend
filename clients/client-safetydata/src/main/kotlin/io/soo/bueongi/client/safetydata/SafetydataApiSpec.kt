@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safemap
+package io.soo.bueongi.client.safetydata
 
 /**
  * 재난안전데이터 공유플랫폼(safetydata) 가로등 API(DSSP-IF-00084) 호출 규격.

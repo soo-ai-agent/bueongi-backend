@@ -190,7 +190,7 @@ backend/
 │   └── apilog · routestats · requestmetric · adevent   # 각 4~5파일이라 그대로 둔다
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   ├── client-tmap/ · client-kakao/ · client-slack/(운영 알림 발송·스로틀)
-│   └── client-datagokr/ · client-safemap/   # 시설 공공 API 어댑터(소비자 미배선 — 카탈로그 5절)
+│   └── client-datagokr/ · client-safemap/ · client-safetydata/   # 시설 공공 API 어댑터(소비자 미배선 — 카탈로그 5절)
 └── support/ (logging · monitoring · util)
     └── util/                    # 도메인 지식 없는 범용 함수만 — 좌표변환(EPSG)·통계·시간버킷·포맷·JS이스케이프·PEM파싱
                                  #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다

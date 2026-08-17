@@ -1,6 +1,7 @@
-package io.soo.bueongi.client.safemap
+package io.soo.bueongi.client.safetydata
 
 import io.soo.bueongi.support.util.Wgs84Point
+import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger

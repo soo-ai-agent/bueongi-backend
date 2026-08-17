@@ -1,0 +1,6 @@
+# clients:client-safetydata 소유 설정 — 재난안전데이터 공유 플랫폼(safetydata.go.kr) 인증키.
+bueongi:
+  safetydata:
+    # 미설정(빈 값)이면 가로등 라이브 갱신 비활성(파일 적재분 유지).
+    # 공통POI 가로등(DSSP-IF-00084) 활용신청 승인 키를 그대로 넣는다.
+    service-key: ${SAFETYDATA_SERVICE_KEY:}

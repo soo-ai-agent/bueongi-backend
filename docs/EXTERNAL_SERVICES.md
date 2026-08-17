@@ -75,7 +75,7 @@ main() 시작
 
 과거에는 기동 1회 + 매월 cron 으로 공공데이터(data.go.kr·safemap)를 라이브 갱신했지만,
 **지금도 자동으로는 안 한다.** 시설 데이터는 파이프라인이 만든 CDN 파일로 들어온다.
-어댑터(client-datagokr·client-safemap)는 2026-08-17 복원됐지만 **아무도 부르지 않는다** —
+어댑터(client-datagokr·client-safemap·client-safetydata)는 2026-08-17 복원됐지만 **아무도 부르지 않는다** —
 스케줄·갱신 서비스를 붙이는 것은 쿼터 결정(카탈로그 참고)이 필요한 별도 작업이다. CLAUDE.md 이력에 남은 라이브 갱신 서술은 과거 기록이다.
 
 ## 2. 켜진 뒤 — 백그라운드

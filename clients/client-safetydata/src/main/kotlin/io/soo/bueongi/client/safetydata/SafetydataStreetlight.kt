@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safemap
+package io.soo.bueongi.client.safetydata
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
