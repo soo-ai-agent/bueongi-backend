@@ -7,4 +7,5 @@ data class DataGoKrFieldNames(
     val name: List<String>,
     val address: List<String>,
     val sigungu: List<String>,
+    val phone: List<String> = emptyList(),
 )

@@ -175,6 +175,7 @@ private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {
         name = text(fields.name),
         address = text(fields.address),
         sigungu = text(fields.sigungu),
+        phone = text(fields.phone),
     )
 }
 

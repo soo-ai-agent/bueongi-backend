@@ -86,6 +86,7 @@ class RegionLampFillService(
                     name = row.name,
                     sigungu = row.sigungu,
                     address = row.address,
+                    phone = row.phone,
                 ),
             )
         }

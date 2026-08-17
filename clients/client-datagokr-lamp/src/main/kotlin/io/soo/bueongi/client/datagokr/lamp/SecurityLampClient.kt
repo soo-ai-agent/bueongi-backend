@@ -34,6 +34,8 @@ class SecurityLampClient(
         name = listOf("lmpLcNm", "보안등위치명", "관리번호"),
         address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
         sigungu = listOf("insttCode", "sggCd", "시군구코드", "제공기관코드"),
+        // 고장 신고에 쓸 수 있게 관리기관 전화를 함께 내려보낸다.
+        phone = listOf("phoneNumber", "관리기관전화번호"),
         )
     }
 }

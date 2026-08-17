@@ -8,4 +8,6 @@ data class DataGoKrPoint(
     val name: String? = null,
     val address: String? = null,
     val sigungu: String? = null,
+    // 원천이 관리기관 전화를 주지 않는 종류가 있어 null 이 가능함
+    val phone: String? = null,
 )
