@@ -25,9 +25,9 @@ class SafetySpotRepository(
     @param:Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
     private val uploadStore: SafetySpotUploadStore,
-    @param:Value("\${bueongi.facility.cctv-csv:data/source/CCTV정보.csv}") private val cctvCsvPath: String = DEFAULT_CCTV_CSV,
-    @param:Value("\${bueongi.facility.lamp-csv:data/source/전국보안등정보표준데이터.csv}")
-    private val lampCsvPath: String = DEFAULT_LAMP_CSV,
+    @param:Value("\${bueongi.facility.cctv-csv:data/source/cctv/CCTV정보.csv}") private val cctvCsvPath: String = DEFAULT_CCTV_CSV,
+    @param:Value("\${bueongi.facility.lamp-csv-dir:data/source/lamp}")
+    private val lampCsvDir: String = DEFAULT_LAMP_CSV_DIR,
 ) : SafetySpotSpatialSource, SafetySpotLiveStore {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRepository::class.java)
 
@@ -212,7 +212,15 @@ class SafetySpotRepository(
      * 이 자리가 아니라 요청이 온 지역에 대해 따로 한다.
      */
     private fun loadLampCsv(): List<SafetySpotPoint> {
-        val file: File = resolveCsv(lampCsvPath, DEFAULT_LAMP_CSV) ?: return emptyList()
+        val dir: File = resolveCsvDir(lampCsvDir, DEFAULT_LAMP_CSV_DIR) ?: return emptyList()
+        val points: ArrayList<SafetySpotPoint> = ArrayList()
+        for (file in dir.listCsvFiles()) {
+            points.addAll(loadLampCsvFile(file))
+        }
+        return points
+    }
+
+    private fun loadLampCsvFile(file: File): List<SafetySpotPoint> {
         return try {
             openCsv(file).useLines { lines ->
                 val rows: Iterator<String> = lines.iterator()
@@ -313,9 +321,22 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
 }
 
 // 자립 계층 원칙상 support:util 을 참조하지 않는 의도적 중복(clients 의 EARTH_RADIUS_M 와 같은 이유).
-private const val DEFAULT_CCTV_CSV: String = "data/source/CCTV정보.csv"
+private const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
 
-private const val DEFAULT_LAMP_CSV: String = "data/source/전국보안등정보표준데이터.csv"
+private const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
+
+/** 여러 지자체 파일을 한 폴더에 모아 두고 통째로 읽는다 — 파일이 늘어도 코드를 안 고친다. */
+private fun resolveCsvDir(configured: String, default: String): File? {
+    if (configured.isBlank()) {
+        return null
+    }
+    return listOf(configured, default).map { File(it) }.firstOrNull { it.isDirectory }
+}
+
+private fun File.listCsvFiles(): List<File> =
+    listFiles()?.filter { it.isFile && (it.name.endsWith(".csv") || it.name.endsWith(".csv.gz")) }
+        ?.sortedBy { it.name }
+        .orEmpty()
 
 /** 설정 경로 → 같은 경로의 .gz → 기본 경로 → 기본 경로의 .gz 순으로 찾는다. */
 private fun resolveCsv(configured: String, default: String): File? {
@@ -364,10 +385,33 @@ private class LampCsvColumns(
 
 /** 원본 CSV 는 수십 MB 라 저장소에 gzip 으로 둔다 — 확장자로 갈라 투명하게 읽는다. */
 private fun openCsv(file: File): BufferedReader {
+    val charset: Charset = detectCharset(file)
     if (file.name.endsWith(".gz")) {
-        return GZIPInputStream(file.inputStream()).bufferedReader(CP949)
+        return GZIPInputStream(file.inputStream()).bufferedReader(charset)
     }
-    return file.bufferedReader(CP949)
+    return file.bufferedReader(charset)
 }
+
+/**
+ * 원천마다 인코딩이 다르다 — 전국 표준데이터는 CP949, 지자체 개별 파일은 UTF-8(BOM) 이었다.
+ * 앞부분을 UTF-8 로 읽어 보고 깨지면 CP949 로 본다. BOM 은 reader 가 걷어낸다.
+ */
+private fun detectCharset(file: File): Charset {
+    val head: ByteArray = try {
+        val stream = if (file.name.endsWith(".gz")) GZIPInputStream(file.inputStream()) else file.inputStream()
+        stream.use { it.readNBytes(HEAD_PROBE_BYTES) }
+    } catch (e: Exception) {
+        return CP949
+    }
+    val decoder = Charsets.UTF_8.newDecoder()
+    return try {
+        decoder.decode(java.nio.ByteBuffer.wrap(head.dropLastWhile { it.toInt() and 0x80 != 0 }.toByteArray()))
+        Charsets.UTF_8
+    } catch (e: Exception) {
+        CP949
+    }
+}
+
+private const val HEAD_PROBE_BYTES: Int = 4096
 
 private val CP949: Charset = Charset.forName("MS949")
