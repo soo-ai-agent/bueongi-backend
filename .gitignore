@@ -10,6 +10,8 @@
 
 # 대용량 공공데이터 CSV (전국 CCTV 78MB 등 — 커밋 금지)
 *.csv
+# 원천 CSV 는 압축본만 추적한다(원본은 8배 커서 히스토리에 영구히 남는다) — data/source/README.md
+!data/source/*.csv.gz
 
 # 검사 프로파일과 사전은 팀이 공유한다(나머지 IDE 설정은 개인 것이라 계속 무시).
 !.idea/

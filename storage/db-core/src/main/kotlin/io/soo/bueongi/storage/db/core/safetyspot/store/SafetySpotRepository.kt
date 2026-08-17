@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
 import java.io.IOException
+import java.io.BufferedReader
 import java.nio.charset.Charset
+import java.util.zip.GZIPInputStream
 import java.util.concurrent.atomic.AtomicReference
 
 @Component
@@ -23,7 +25,7 @@ class SafetySpotRepository(
     @param:Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
     private val uploadStore: SafetySpotUploadStore,
-    @param:Value("\${bueongi.facility.cctv-csv:CCTV정보.csv}") private val cctvCsvPath: String = "CCTV정보.csv",
+    @param:Value("\${bueongi.facility.cctv-csv:data/source/CCTV정보.csv}") private val cctvCsvPath: String = DEFAULT_CCTV_CSV,
 ) : SafetySpotSpatialSource, SafetySpotLiveStore {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRepository::class.java)
 
@@ -179,7 +181,7 @@ class SafetySpotRepository(
             return emptyList()
         }
         return try {
-            file.bufferedReader(CP949).useLines { lines ->
+            openCsv(file).useLines { lines ->
                 lines.drop(1)
                     .mapNotNull { parseCctvCsvLine(it) }
                     .toList()
@@ -196,9 +198,11 @@ class SafetySpotRepository(
         }
         val candidates: List<String> = buildList {
             add(cctvCsvPath)
-            add("CCTV정보.csv")
-            add("../backend/CCTV정보.csv")
-            add("backend/CCTV정보.csv")
+            add("$cctvCsvPath.gz")
+            add(DEFAULT_CCTV_CSV)
+            add("$DEFAULT_CCTV_CSV.gz")
+            add("../backend/$DEFAULT_CCTV_CSV")
+            add("backend/$DEFAULT_CCTV_CSV")
         }
         return candidates
             .map { File(it) }
@@ -266,4 +270,14 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
 }
 
 // 자립 계층 원칙상 support:util 을 참조하지 않는 의도적 중복(clients 의 EARTH_RADIUS_M 와 같은 이유).
+private const val DEFAULT_CCTV_CSV: String = "data/source/CCTV정보.csv"
+
+/** 원본 CSV 는 수십 MB 라 저장소에 gzip 으로 둔다 — 확장자로 갈라 투명하게 읽는다. */
+private fun openCsv(file: File): BufferedReader {
+    if (file.name.endsWith(".gz")) {
+        return GZIPInputStream(file.inputStream()).bufferedReader(CP949)
+    }
+    return file.bufferedReader(CP949)
+}
+
 private val CP949: Charset = Charset.forName("MS949")
