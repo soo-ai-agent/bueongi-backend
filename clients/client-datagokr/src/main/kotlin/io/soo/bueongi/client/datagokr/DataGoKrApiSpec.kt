@@ -1,18 +1,14 @@
 package io.soo.bueongi.client.datagokr
 
 /**
- * data.go.kr 공공데이터 API 호출 규격 — 엔드포인트·페이징·재시도·쿼터를 한곳에 모은다.
- * 값이 바뀌면(엔드포인트 이전, 쿼터 상향) 이 파일만 고친다.
+ * data.go.kr 공통 호출 규격 — 페이징·재시도·쿼터. 엔드포인트는 자원별 클라이언트 모듈이 갖는다.
+ * 값이 바뀌면(쿼터 상향 등) 이 파일만 고친다.
  */
 object DataGoKrApiSpec {
 
-    const val CCTV_ENDPOINT: String = "https://apis.data.go.kr/1741000/cctv_info/info"
 
-    const val BELL_ENDPOINT: String = "https://apis.data.go.kr/1741000/emergency_call_box_info/info"
 
-    const val SAFEHOUSE_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
-    const val SECURITY_LAMP_ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"
 
     /** 페이지당 최대 건수. numOfRows 를 더 크게 줘도 서버가 100 으로 고정한다(실측). */
     const val PAGE_SIZE: Int = 100

@@ -1,6 +1,5 @@
 package io.soo.bueongi.client.datagokr
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -10,13 +9,18 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import java.net.URI
 
-/** data.go.kr 인증키는 Encoding(URL-인코딩) 형태 그대로 사용 — 재인코딩하면 키가 거부돼 URI 를 문자열로 조립한다. */
+/**
+ * data.go.kr 공통 전송 — 페이징·재시도·봉투 해석을 한곳에서 맡는다.
+ * 자원별 클라이언트(cctv·bell·safehouse·lamp)는 엔드포인트와 필드 매핑만 갖고 이것을 부른다.
+ *
+ * 인증키는 Encoding(URL-인코딩) 형태 그대로 사용 — 재인코딩하면 키가 거부돼 URI 를 문자열로 조립한다.
+ */
 @Component
-class DataGoKrSafetySpotClient(
+class DataGoKrPagedFetcher(
     @Value("\${bueongi.datagokr.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
 ) {
-    private val log: Logger = LoggerFactory.getLogger(DataGoKrSafetySpotClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(DataGoKrPagedFetcher::class.java)
     private val serviceKey: String = serviceKey.trim().removeSurrounding("'").removeSurrounding("\"")
 
     val isEnabled: Boolean
@@ -24,16 +28,8 @@ class DataGoKrSafetySpotClient(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    /** 아래 fetch 4종 공통 계약: null = 수집 실패(부분 실패 포함) — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
-    fun fetchCctv(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.CCTV_ENDPOINT, CCTV_FIELDS)
-
-    fun fetchEmergencyBells(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.BELL_ENDPOINT, BELL_FIELDS)
-
-    fun fetchSafehouses(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.SAFEHOUSE_ENDPOINT, SAFEHOUSE_FIELDS)
-
-    fun fetchSecurityLamps(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.SECURITY_LAMP_ENDPOINT, SECURITY_LAMP_FIELDS)
-
-    private fun fetchAll(endpoint: String, fields: FieldNames): List<DataGoKrPoint>? {
+    /** 계약: null = 수집 실패(부분 실패 포함) — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
+    fun fetchAll(endpoint: String, fields: DataGoKrFieldNames): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
         var pageNo: Int = 1
@@ -132,43 +128,9 @@ class DataGoKrSafetySpotClient(
 
     private fun sanitize(message: String?): String =
         (message ?: "원인 미상").replace(serviceKey, "***")
-
-    companion object {
-        private val CCTV_FIELDS: FieldNames = FieldNames(
-            lat = listOf("WGS84_LAT", "latitude"),
-            lng = listOf("WGS84_LOT", "longitude"),
-            name = listOf("MNG_INST_NM", "institutionNm"),
-            address = listOf("LCTN_ROAD_NM_ADDR", "LCTN_LOTNO_ADDR", "rdnmadr"),
-            sigungu = emptyList(),
-        )
-        private val BELL_FIELDS: FieldNames = FieldNames(
-            lat = listOf("WGS84_LAT", "lat"),
-            lng = listOf("WGS84_LOT", "lon"),
-            name = listOf("INSTL_PSTN", "MNG_INST_NM", "mng_inst"),
-            address = listOf("LCTN_ROAD_NM_ADDR", "LCTN_LOTNO_ADDR", "rn_adres"),
-            sigungu = listOf("sgg_cd"),
-        )
-
-        /** 표준데이터 영문 공통 규격(latitude/longitude/rdnmadr) 1순위 + 한글 컬럼 응답 폴백. */
-        private val SAFEHOUSE_FIELDS: FieldNames = FieldNames(
-            lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
-            name = listOf("storNm", "institutionNm", "업소명", "점포명"),
-            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"), sigungu = emptyList(),
-        )
-
-        /** 보안등도 같은 표준데이터 규격 — 영문 1순위 + 한글 폴백(안심지킴이집과 동일 전략). */
-        private val SECURITY_LAMP_FIELDS: FieldNames = FieldNames(
-            lat = listOf("latitude", "위도"), lng = listOf("longitude", "경도"),
-            name = listOf("scrtyLmpLctnNm", "institutionNm", "보안등위치명", "관리번호"),
-            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
-            sigungu = listOf("sggCd", "시군구코드"),
-        )
-    }
 }
 
-
-
-private fun JsonNode.toPoint(fields: FieldNames): DataGoKrPoint? {
+private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {
     val lat: Double = text(fields.lat)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     val lng: Double = text(fields.lng)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     return DataGoKrPoint(
