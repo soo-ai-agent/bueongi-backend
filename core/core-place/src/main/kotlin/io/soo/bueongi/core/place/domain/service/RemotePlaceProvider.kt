@@ -8,5 +8,14 @@ import io.soo.bueongi.core.place.domain.model.PlaceItem
  */
 interface RemotePlaceProvider {
     val isEnabled: Boolean
+
+    /** 응답 와이어 라벨 — 실연동이면 "live", 시드 폴백이면 "seed". 키 값은 담지 않는다. */
+    val sourceLabel: String
+        get() = if (isEnabled) {
+            "live"
+        } else {
+            "seed"
+        }
+
     fun search(keyword: String): List<PlaceItem>
 }

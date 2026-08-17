@@ -1,12 +1,8 @@
 package io.soo.bueongi.api
 
 
-import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import java.time.Clock
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -43,11 +39,7 @@ class HealthControllerTest {
         @TestConfiguration
         class DisabledRemoteConfig {
             @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-                override val isEnabled: Boolean = false
-                override fun search(keyword: String): List<PlaceItem> =
-                    throw AssertionError("health 는 search 를 호출하지 않는다")
-            }
+            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = false)
 
             @Bean
             fun shareService(): ShareService = stubShareService()
@@ -75,11 +67,7 @@ class HealthControllerTest {
         @TestConfiguration
         class EnabledRemoteConfig {
             @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-                override val isEnabled: Boolean = true
-                override fun search(keyword: String): List<PlaceItem> =
-                    throw AssertionError("health 는 search 를 호출하지 않는다")
-            }
+            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = true)
 
             @Bean
             fun shareService(): ShareService = stubShareService()
@@ -89,17 +77,4 @@ class HealthControllerTest {
             const val SECRET_KEY: String = "super-secret-kakao-key-value"
         }
     }
-}
-
-private fun stubShareService(): ShareService =
-    ShareService(StubLocationStore("memory"), Clock.systemUTC(), "http://localhost:3619")
-
-private class StubLocationStore(override val backend: String) : LocationStore {
-    override fun save(session: ShareSession) = throw AssertionError("health 는 save 를 호출하지 않는다")
-    override fun findByToken(token: String): ShareSession? = throw AssertionError("health 는 findByToken 을 호출하지 않는다")
-    override fun deleteByToken(token: String) = throw AssertionError("health 는 delete 를 호출하지 않는다")
-    override fun markViewed(token: String) = throw AssertionError("health 는 markViewed 를 호출하지 않는다")
-    override fun isWatched(token: String): Boolean = throw AssertionError("health 는 isWatched 를 호출하지 않는다")
-    override fun countActiveSessions(): Int = throw AssertionError("health 는 countActiveSessions 를 호출하지 않는다")
-    override fun findActiveSessions(): List<ShareSession> = throw AssertionError("health 는 findActiveSessions 를 호출하지 않는다")
 }

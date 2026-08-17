@@ -18,22 +18,15 @@ class HealthController(
 
     @GetMapping
     fun health(): HealthStatus {
-        val placeSource: String = if (remoteProvider.isEnabled) {
-            PLACE_SOURCE_LIVE
-        } else {
-            PLACE_SOURCE_SEED
-        }
         return HealthStatus(
             status = STATUS_UP,
             service = serviceName,
-            placeSource = placeSource,
+            placeSource = remoteProvider.sourceLabel,
             locationStore = shareService.storeBackendLabel(),
         )
     }
 
     private companion object {
         const val STATUS_UP: String = "UP"
-        const val PLACE_SOURCE_LIVE: String = "live"
-        const val PLACE_SOURCE_SEED: String = "seed"
     }
 }
