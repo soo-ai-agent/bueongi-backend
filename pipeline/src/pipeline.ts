@@ -120,7 +120,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ---- C-3 서울 보행등(보행자 신호등): WGS84, pedestrian_signal/seoul.json ----
+  // ---- C-3 서울 보행등(보행신호등): WGS84, pedestrian_signal/seoul.json ----
   {
     const raw = await F.fetchC3(ctx);
     const { items, stat } = convertWgs84(raw, "C-3");

@@ -10,6 +10,6 @@ enum class SafetySpotType(@get:JsonValue val cdnType: String) {
     SAFEHOUSE("safehouse"),
     POLICE("police"),
 
-    /** 보행자 신호등 — 조명이 아니라 교통시설이라 LAMP 와 분리한다(조명 밀도 점수에 섞이면 안 된다). */
+    /** 보행신호등(법정 명칭) — 조명이 아니라 교통시설이라 LAMP 와 분리한다(조명 밀도 점수에 섞이면 안 된다). 원천 데이터명 '보행등'은 조명을 뜻하는 말이라 쓰지 않는다. */
     PEDESTRIAN_SIGNAL("pedestrian_signal"),
 }

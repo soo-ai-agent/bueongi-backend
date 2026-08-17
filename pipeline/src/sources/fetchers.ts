@@ -257,7 +257,7 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     },
   },
   // C-3: 서울 보행등 (WGS84) — 열린데이터광장 OA-22354.
-  //  이름이 '보행등'이지만 조명이 아니라 **보행자 신호등**이다(항목: 자치구·신호등 종류·위도·경도·주소).
+  //  이름이 '보행등'이지만 조명이 아니라 **보행신호등**이다(항목: 자치구·신호등 종류·위도·경도·주소).
   //  조명 밀도 점수에 섞이면 안 되므로 lamp 가 아닌 별도 자산으로 낸다.
   //  C-1 과 같이 열린데이터광장은 파일 전용이라 라이브는 포털 미러(15124273) odcloud 자동변환을 쓴다.
   "C-3": {
@@ -322,7 +322,7 @@ export const fetchB4 = (ctx: FetchContext) => collect("B-4", ctx, liveFor("B-4")
 export const fetchC1 = (ctx: FetchContext) => collect("C-1", ctx, liveFor("C-1"));
 // C-2: 전국 보안등 (WGS84) — catalogId 15017320
 export const fetchC2 = (ctx: FetchContext) => collect("C-2", ctx, liveFor("C-2"));
-// C-3: 서울 보행등=보행자 신호등 (WGS84) — OA-22354 / 포털 미러 15124273
+// C-3: 서울 보행등=보행신호등 (WGS84) — OA-22354 / 포털 미러 15124273
 export const fetchC3 = (ctx: FetchContext) => collect("C-3", ctx, liveFor("C-3"));
 // D-1: 전국 비상벨 (EPSG:5174) — catalogId 15028206
 export const fetchD1 = (ctx: FetchContext) => collect("D-1", ctx, liveFor("D-1"));
