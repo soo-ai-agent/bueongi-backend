@@ -8,6 +8,9 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -24,6 +27,9 @@ class SafetySpotRegionCache(
     objectMapper: ObjectMapper,
     @param:Value("\${bueongi.facility.region-cache-dir:./data/region-cache}")
     private val regionDir: String,
+    @param:Value("\${bueongi.facility.region-cache-ttl-days:90}")
+    private val ttlDays: Long = DEFAULT_TTL_DAYS,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRegionCache::class.java)
 
@@ -31,13 +37,40 @@ class SafetySpotRegionCache(
 
     private val readMapper: ObjectMapper = objectMapper
 
-    fun isCached(type: SafetySpotType, regionCode: String): Boolean =
-        fileOf(type, regionCode).isFile
+    /**
+     * 이미 받아 뒀고 아직 안 낡았는지. 낡았으면 false 라 다시 받는다.
+     *
+     * 만료를 두는 이유는 지자체가 나중에 좌표를 채워 넣어도 우리가 모르기 때문이다 —
+     * 좌표 0% 라 빈 파일로 남긴 지역이 특히 그렇다.
+     */
+    fun isCached(type: SafetySpotType, regionCode: String): Boolean {
+        val savedAt: Instant = savedAtOf(type, regionCode) ?: return false
+        return Duration.between(savedAt, clock.instant()) < Duration.ofDays(ttlDays)
+    }
+
+    /** 저장 시각. 파일이 없거나 시각을 못 읽으면 null — 그때는 안 받은 것으로 본다. */
+    fun savedAtOf(type: SafetySpotType, regionCode: String): Instant? {
+        val file: File = fileOf(type, regionCode)
+        if (!file.isFile) {
+            return null
+        }
+        return try {
+            val collection: SafetySpotCollectionDto = readMapper.readValue(file, SafetySpotCollectionDto::class.java)
+            collection.savedAt?.let { Instant.parse(it) }
+        } catch (e: Exception) {
+            log.warn("지역 캐시 저장 시각을 읽지 못했습니다(다시 받음): {} ({})", file.path, e.message)
+            null
+        }
+    }
 
     fun save(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
         val target: File = fileOf(type, regionCode)
         Files.createDirectories(target.parentFile.toPath())
-        val collection = SafetySpotCollectionDto(type = type.cdnType, items = points.map { it.toItemDto() })
+        val collection = SafetySpotCollectionDto(
+            type = type.cdnType,
+            items = points.map { it.toItemDto() },
+            savedAt = clock.instant().toString(),
+        )
         val temp: File = File.createTempFile("$regionCode-", ".json.tmp", target.parentFile)
         try {
             writeMapper.writeValue(temp, collection)
@@ -81,4 +114,9 @@ class SafetySpotRegionCache(
 
     private fun fileOf(type: SafetySpotType, regionCode: String): File =
         File(File(regionDir, type.cdnType), "$regionCode.json")
+
+    private companion object {
+        /** 보안등 원천은 갱신이 드물지만, 지자체가 좌표를 채워 넣는 일이 있어 분기마다 한 번은 다시 본다. */
+        const val DEFAULT_TTL_DAYS: Long = 90
+    }
 }

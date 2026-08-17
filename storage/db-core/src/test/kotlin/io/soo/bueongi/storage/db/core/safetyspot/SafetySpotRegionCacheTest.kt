@@ -5,6 +5,10 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import java.io.File
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -39,9 +43,47 @@ class SafetySpotRegionCacheTest {
         assertThat(cache.isCached(SafetySpotType.LAMP, "3210000")).isTrue()
     }
 
-    private fun cacheOf(tmp: File): SafetySpotRegionCache =
-        SafetySpotRegionCache(ObjectMapper(), File(tmp, "region").absolutePath)
+    private fun cacheOf(tmp: File, clock: Clock = Clock.systemUTC()): SafetySpotRegionCache =
+        SafetySpotRegionCache(ObjectMapper(), File(tmp, "region").absolutePath, TTL_DAYS, clock)
+
+    @Test
+    fun `저장 시각을 함께 남긴다`(@TempDir tmp: File) {
+        val saved = Instant.parse("2026-08-17T00:00:00Z")
+        val cache = cacheOf(tmp, Clock.fixed(saved, ZoneOffset.UTC))
+
+        cache.save(SafetySpotType.LAMP, "3210000", listOf(lamp("서초1", 37.48, 127.01)))
+
+        assertThat(cache.savedAtOf(SafetySpotType.LAMP, "3210000")).isEqualTo(saved)
+    }
+
+    @Test
+    fun `만료 기간이 지나면 다시 받아야 하는 것으로 본다`(@TempDir tmp: File) {
+        val saved = Instant.parse("2026-08-17T00:00:00Z")
+        cacheOf(tmp, Clock.fixed(saved, ZoneOffset.UTC))
+            .save(SafetySpotType.LAMP, "3210000", listOf(lamp("서초1", 37.48, 127.01)))
+
+        val justBefore = Clock.fixed(saved.plus(Duration.ofDays(TTL_DAYS - 1)), ZoneOffset.UTC)
+        val justAfter = Clock.fixed(saved.plus(Duration.ofDays(TTL_DAYS + 1)), ZoneOffset.UTC)
+
+        assertThat(cacheOf(tmp, justBefore).isCached(SafetySpotType.LAMP, "3210000")).isTrue()
+        assertThat(cacheOf(tmp, justAfter).isCached(SafetySpotType.LAMP, "3210000")).isFalse()
+    }
+
+    @Test
+    fun `만료돼도 저장된 데이터는 계속 읽힌다`(@TempDir tmp: File) {
+        val saved = Instant.parse("2026-08-17T00:00:00Z")
+        cacheOf(tmp, Clock.fixed(saved, ZoneOffset.UTC))
+            .save(SafetySpotType.LAMP, "3210000", listOf(lamp("서초1", 37.48, 127.01)))
+        val expired = cacheOf(tmp, Clock.fixed(saved.plus(Duration.ofDays(TTL_DAYS + 1)), ZoneOffset.UTC))
+
+        // 낡았다고 지우지 않는다 — 새로 받기 전까지는 있는 데이터로 답하는 편이 낫다.
+        assertThat(expired.loadAll(SafetySpotType.LAMP)).hasSize(1)
+    }
 
     private fun lamp(name: String, lat: Double, lng: Double): SafetySpotPoint =
         SafetySpotPoint(type = SafetySpotType.LAMP, lat = lat, lng = lng, name = name)
+
+    private companion object {
+        const val TTL_DAYS: Long = 90
+    }
 }

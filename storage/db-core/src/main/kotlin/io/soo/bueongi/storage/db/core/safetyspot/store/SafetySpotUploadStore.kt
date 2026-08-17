@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
 import java.nio.file.Files
+import java.time.Clock
 import java.nio.file.StandardCopyOption
 
 /** 저장 계약: `{uploadDir}/{cdnType}.json` — CDN 컬렉션과 동형 JSON 이 재기동을 넘어 되읽히므로 DTO 필드 리네임 금지. */
@@ -20,6 +21,7 @@ import java.nio.file.StandardCopyOption
 class SafetySpotUploadStore(
     objectMapper: ObjectMapper,
     @param:Value("\${bueongi.facility.upload-dir:./data/facility-uploads}") private val uploadDir: String,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadStore::class.java)
 
@@ -32,6 +34,7 @@ class SafetySpotUploadStore(
         val collection = SafetySpotCollectionDto(
             type = type.cdnType,
             items = points.map { it.toItemDto() },
+            savedAt = clock.instant().toString(),
         )
         val temp: File = File.createTempFile("${type.cdnType}-", ".json.tmp", dir)
         try {
