@@ -47,8 +47,8 @@
       "sha256": "9112ce60f6005f52b73ddde93c567dffe081c68dfdd3ae2158010d08cfa956c5"
     },
     {
-      "path": "lamp/11680.json",
-      "type": "lamp",
+      "path": "security_lamp/11680.json",
+      "type": "security_lamp",
       "scope": "11680",
       "sigunguCode": "11680",
       "count": 1,
@@ -56,8 +56,8 @@
       "sha256": "d0dcb69114e8a1e0a4a586f0776306ec72760451784d6646fa3c60ba6057a70d"
     },
     {
-      "path": "lamp/26110.json",
-      "type": "lamp",
+      "path": "security_lamp/26110.json",
+      "type": "security_lamp",
       "scope": "26110",
       "sigunguCode": "26110",
       "count": 1,
