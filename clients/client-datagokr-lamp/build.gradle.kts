@@ -1,4 +1,6 @@
 dependencies {
+    implementation(project(":core:core-enum"))
+
     implementation(project(":clients:client-datagokr"))
 
     testImplementation(testFixtures(project(":clients:client-datagokr")))

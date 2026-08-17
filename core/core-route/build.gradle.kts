@@ -1,4 +1,6 @@
 dependencies {
+    implementation(project(":core:core-safety-spot"))
+
     implementation(project(":core:core-enum"))
     implementation(project(":core:core-common"))
     implementation(project(":clients:client-tmap"))

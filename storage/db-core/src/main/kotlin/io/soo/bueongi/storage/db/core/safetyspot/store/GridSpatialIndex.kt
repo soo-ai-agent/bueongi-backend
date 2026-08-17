@@ -16,6 +16,9 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
     val size: Int = points.size
 
+    /** 병합용 원본 — 지역 데이터를 더할 때 기존 것과 합치려면 필요하다. */
+    val all: List<SafetySpotPoint> = points
+
     fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {
             return emptyList()

@@ -13,6 +13,9 @@ object DataGoKrApiSpec {
     /** 페이지당 최대 건수. numOfRows 를 더 크게 줘도 서버가 100 으로 고정한다(실측). */
     const val PAGE_SIZE: Int = 100
 
+    /** 표준데이터 계열(tn_pubr) 상한. 2000 이상은 `resultCode 10` 으로 거부된다(실측). */
+    const val STANDARD_PAGE_SIZE: Int = 1000
+
     /** 전량 수집 페이지 상한 — 무한 루프 방지용 안전장치. */
     const val MAX_PAGES: Int = 5000
 

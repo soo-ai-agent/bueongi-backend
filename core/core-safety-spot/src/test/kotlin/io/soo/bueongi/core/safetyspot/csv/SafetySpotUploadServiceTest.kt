@@ -26,6 +26,8 @@ class SafetySpotUploadServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
         var lastType: SafetySpotType? = null
         var lastPoints: List<SafetySpotPoint>? = null
+        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
+
         override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
             lastType = type
             lastPoints = points

@@ -63,7 +63,7 @@ class SafetySpotUploadStore(
     }
 }
 
-private fun SafetySpotPoint.toItemDto(): SafetySpotItemDto = SafetySpotItemDto(
+internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto = SafetySpotItemDto(
     name = name,
     lat = lat,
     lng = lng,

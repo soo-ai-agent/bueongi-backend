@@ -28,6 +28,8 @@ class SafetySpotRepository(
     @param:Value("\${bueongi.facility.cctv-csv:data/source/cctv/CCTV정보.csv}") private val cctvCsvPath: String = DEFAULT_CCTV_CSV,
     @param:Value("\${bueongi.facility.lamp-csv-dir:data/source/lamp}")
     private val lampCsvDir: String = DEFAULT_LAMP_CSV_DIR,
+    // 지역 채우기를 안 쓰는 구성(테스트 등)에서 null 이 가능함
+    private val regionCache: SafetySpotRegionCache? = null,
 ) : SafetySpotSpatialSource, SafetySpotLiveStore {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRepository::class.java)
 
@@ -52,6 +54,20 @@ class SafetySpotRepository(
 
     override fun index(type: SafetySpotType): GridSpatialIndex =
         indexByType.get()[type] ?: EMPTY_INDEX
+
+    override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        if (points.isEmpty()) {
+            return index(type).size
+        }
+        var total: Int = 0
+        indexByType.updateAndGet { current ->
+            val merged: List<SafetySpotPoint> = current[type].pointsOrEmpty() + points
+            total = merged.size
+            current + (type to GridSpatialIndex(merged))
+        }
+        log.info("안심시설 지역 추가: type={}, added={}, total={}", type, points.size, total)
+        return total
+    }
 
     override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
         val replaced = GridSpatialIndex(points)
@@ -86,11 +102,27 @@ class SafetySpotRepository(
         if (csvLamp.isNotEmpty()) {
             byType.getOrPut(SafetySpotType.LAMP) { ArrayList() }.addAll(csvLamp)
         }
+        val cachedRegions: Int = addRegionCache(byType)
         val uploadedTypes: Int = overwriteWithUploads(byType)
 
         indexByType.set(byType.mapValues { (_, pts) -> GridSpatialIndex(pts) })
         _safePaths = paths
-        logLoaded(dir, fileCount, uploadedTypes, csvCctv.size, csvLamp.size, paths.size)
+        logLoaded(dir, fileCount, uploadedTypes, csvCctv.size, csvLamp.size, cachedRegions, paths.size)
+    }
+
+    /** 요청 때 받아 저장해 둔 지역 데이터를 되읽는다. 반환 = 되읽은 지역 수. */
+    private fun addRegionCache(byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
+        var regions: Int = 0
+        val cache: SafetySpotRegionCache = regionCache ?: return 0
+        for (type in SafetySpotType.entries) {
+            val cached: List<SafetySpotPoint> = cache.loadAll(type)
+            if (cached.isEmpty()) {
+                continue
+            }
+            byType.getOrPut(type) { ArrayList() }.addAll(cached)
+            regions += cache.cachedRegions(type).size
+        }
+        return regions
     }
 
     /** 종류별 CDN 컬렉션 파일을 읽어 [byType] 에 누적한다. 반환 = 읽은 파일 수. */
@@ -167,15 +199,17 @@ class SafetySpotRepository(
         uploadedTypes: Int,
         csvCctvCount: Int,
         csvLampCount: Int,
+        cachedRegions: Int,
         safePathCount: Int,
     ) {
         val loaded: Map<SafetySpotType, GridSpatialIndex> = indexByType.get()
         log.info(
-            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, cctv={}(csv={}), lamp={}(csv={}), bell={}, " +
+            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, regions={}, cctv={}(csv={}), lamp={}(csv={}), bell={}, " +
                 "safehouse={}, police={}, pedestrianSignal={}, safepaths={}",
             dir?.path ?: "(없음)",
             fileCount,
             uploadedTypes,
+            cachedRegions,
             loaded[SafetySpotType.CCTV]?.size ?: 0,
             csvCctvCount,
             loaded[SafetySpotType.LAMP]?.size ?: 0,
@@ -310,11 +344,14 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     // CCTV 가 아닌 시설은 null 이 가능함
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
+    // 첫 컬럼이 개방자치단체코드다 — 좌표로 자치단체를 되찾는 데 쓰인다(지역 단위 수집).
+    val sigungu: String? = parts.firstOrNull()?.trim()?.trim('"')?.takeIf { it.isNotEmpty() }
     return SafetySpotPoint(
         type = SafetySpotType.CCTV,
         lat = point.lat,
         lng = point.lng,
         name = name,
+        sigungu = sigungu,
         purpose = purpose,
         cameraCount = cameraCount,
     )
@@ -415,3 +452,6 @@ private fun detectCharset(file: File): Charset {
 private const val HEAD_PROBE_BYTES: Int = 4096
 
 private val CP949: Charset = Charset.forName("MS949")
+
+private fun GridSpatialIndex?.pointsOrEmpty(): List<SafetySpotPoint> =
+    this?.all.orEmpty()

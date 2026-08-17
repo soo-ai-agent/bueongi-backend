@@ -1,5 +1,7 @@
 package io.soo.bueongi.client.datagokr
 
+import io.soo.bueongi.core.enums.DataGoKrQueryDialect
+
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,6 +35,7 @@ class DataGoKrPagedFetcher(
         endpoint: String,
         fields: DataGoKrFieldNames,
         query: DataGoKrQuery = DataGoKrQuery(),
+        dialect: DataGoKrQueryDialect = DataGoKrQueryDialect.CONDITION,
     ): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
@@ -41,7 +44,7 @@ class DataGoKrPagedFetcher(
         var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= DataGoKrApiSpec.MAX_PAGES && received < totalCount) {
-            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, query) ?: return null
+            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, query, dialect) ?: return null
             val response: DataGoKrResponse = envelope.payload()
             val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
@@ -58,7 +61,7 @@ class DataGoKrPagedFetcher(
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
-            if (rows.isEmpty() || rows.size < DataGoKrApiSpec.PAGE_SIZE) {
+            if (rows.isEmpty() || rows.size < pageSizeOf(dialect)) {
                 if (totalCount == Long.MAX_VALUE) {
                     totalCount = received
                 }
@@ -82,12 +85,17 @@ class DataGoKrPagedFetcher(
      *
      * 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 사실상 성공하지 못한다.
      */
-    private fun fetchPage(endpoint: String, pageNo: Int, query: DataGoKrQuery): DataGoKrEnvelope? {
+    private fun fetchPage(
+        endpoint: String,
+        pageNo: Int,
+        query: DataGoKrQuery,
+        dialect: DataGoKrQueryDialect,
+    ): DataGoKrEnvelope? {
         var attempt: Int = 1
         while (true) {
             try {
                 return restClient.get()
-                    .uri(URI.create(pageUrl(endpoint, pageNo, query)))
+                    .uri(URI.create(pageUrl(endpoint, pageNo, query, dialect)))
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
@@ -117,14 +125,28 @@ class DataGoKrPagedFetcher(
     }
 
     /**
-     * 응답 타입 파라미터를 둘 다 보낸다 — 공식 문서는 `returnType` 인데 기존 호출은 `type` 으로 동작해 왔다.
-     * 이 원천은 미지 파라미터를 무시함이 확인돼 있어(카탈로그 2절) 둘 다 보내는 편이 안전하다.
+     * 응답 타입 파라미터 이름이 계열마다 다르다 — 1741000 은 `returnType`(과 `type`)을 받고,
+     * 표준데이터는 `type` 만 받으며 `returnType` 을 주면 `resultCode 10` 으로 거부한다(실측).
      */
-    private fun pageUrl(endpoint: String, pageNo: Int, query: DataGoKrQuery): String =
-        "$endpoint?serviceKey=$serviceKey" +
-            "&pageNo=$pageNo&numOfRows=${DataGoKrApiSpec.PAGE_SIZE}" +
-            "&returnType=json&type=json" +
-            query.toQueryParams()
+    private fun pageUrl(endpoint: String, pageNo: Int, query: DataGoKrQuery, dialect: DataGoKrQueryDialect): String {
+        val responseType: String = if (dialect == DataGoKrQueryDialect.CONDITION) {
+            "&returnType=json&type=json"
+        } else {
+            "&type=json"
+        }
+        return "$endpoint?serviceKey=$serviceKey" +
+            "&pageNo=$pageNo&numOfRows=${pageSizeOf(dialect)}" +
+            responseType +
+            query.toQueryParams(dialect)
+    }
+
+    /** 표준데이터 계열은 한 번에 1,000건까지 준다 — 100 으로 부르면 호출이 10배가 된다(실측). */
+    private fun pageSizeOf(dialect: DataGoKrQueryDialect): Int =
+        if (dialect == DataGoKrQueryDialect.CONDITION) {
+            DataGoKrApiSpec.PAGE_SIZE
+        } else {
+            DataGoKrApiSpec.STANDARD_PAGE_SIZE
+        }
 
     private fun extractItems(items: JsonNode?): List<JsonNode> = when {
         items == null -> emptyList()

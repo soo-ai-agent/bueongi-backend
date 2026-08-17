@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":core:core-enum"))
+
     testFixturesImplementation("org.springframework:spring-test")
     testFixturesImplementation("org.springframework:spring-web")
 

@@ -6,7 +6,6 @@ import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
 import io.soo.bueongi.core.common.stats.EndpointCount
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
 import io.soo.bueongi.support.util.countByHour
 
 import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
@@ -89,7 +88,6 @@ class RouteStatsService(
 
     companion object {
         val TRACKED_ENDPOINTS: List<String> = listOf("compare", "safe-compare")
-
         const val TOP_DESTINATIONS_LIMIT: Int = 10
     }
 }
