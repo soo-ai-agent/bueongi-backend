@@ -212,7 +212,7 @@ class SafetySpotRepository(
             cachedRegions,
             loaded[SafetySpotType.CCTV]?.size ?: 0,
             csvCctvCount,
-            loaded[SafetySpotType.STREETLIGHT]?.size ?: 0,
+            loaded[SafetySpotType.STREET_LAMP]?.size ?: 0,
             loaded[SafetySpotType.SECURITY_LAMP]?.size ?: 0,
             csvLampCount,
             loaded[SafetySpotType.BELL]?.size ?: 0,

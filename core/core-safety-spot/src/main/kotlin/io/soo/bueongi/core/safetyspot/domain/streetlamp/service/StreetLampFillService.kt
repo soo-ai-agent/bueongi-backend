@@ -1,7 +1,7 @@
-package io.soo.bueongi.core.safetyspot.domain.streetlight.service
+package io.soo.bueongi.core.safetyspot.domain.streetlamp.service
 
-import io.soo.bueongi.client.safetydata.streetlight.StreetlightPoint
-import io.soo.bueongi.client.safetydata.streetlight.StreetlightClient
+import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
+import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
@@ -27,19 +27,19 @@ import org.springframework.stereotype.Service
  * 기동 때 받지 않는 이유는 부팅을 외부 API 지연에 묶지 않기 위해서다.
  */
 @Service
-class StreetlightFillService(
-    private val client: StreetlightClient,
+class StreetLampFillService(
+    private val client: StreetLampClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
-    private val events: StreetlightFillEventPublisher,
+    private val events: StreetLampFillEventPublisher,
 ) {
-    private val log: Logger = LoggerFactory.getLogger(StreetlightFillService::class.java)
+    private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
 
     /** 동시에 두 번 받지 않게 막는다. */
     private val inFlight: AtomicBoolean = AtomicBoolean(false)
 
     fun isFilled(): Boolean =
-        cache.isCached(SafetySpotType.STREETLIGHT, NATIONWIDE)
+        cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)
 
     /** 아직 안 받았으면 받아서 저장하고 인덱스에 더한다. 반환 = 이번에 더한 건수. */
     fun fill(): Int {
@@ -60,29 +60,29 @@ class StreetlightFillService(
     }
 
     private fun fetchAndStore(): Int {
-        val fetched: List<StreetlightPoint>? = client.fetchStreetlights()
+        val fetched: List<StreetLampPoint>? = client.fetchStreetLamps()
         if (fetched == null) {
             events.fetchFailed()
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         if (points.isEmpty()) {
-            cache.save(SafetySpotType.STREETLIGHT, NATIONWIDE, points)
+            cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
             events.hadNoCoordinates(fetched.size)
             return 0
         }
-        cache.save(SafetySpotType.STREETLIGHT, NATIONWIDE, points)
-        liveStore.append(SafetySpotType.STREETLIGHT, points)
+        cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
+        liveStore.append(SafetySpotType.STREET_LAMP, points)
         log.info("가로등 채움: 받은={}, 좌표있음={}", fetched.size, points.size)
         return points.size
     }
 
-    private fun toSafetySpots(fetched: List<StreetlightPoint>): List<SafetySpotPoint> {
+    private fun toSafetySpots(fetched: List<StreetLampPoint>): List<SafetySpotPoint> {
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
                 SafetySpotPoint(
-                    type = SafetySpotType.STREETLIGHT,
+                    type = SafetySpotType.STREET_LAMP,
                     lat = row.lat,
                     lng = row.lng,
                     sigungu = row.sigungu,

@@ -1,7 +1,7 @@
 dependencies {
     implementation(project(":clients:client-datagokr-security-lamp"))
     implementation(project(":clients:client-datagokr"))
-    implementation(project(":clients:client-safetydata-streetlight"))
+    implementation(project(":clients:client-safetydata-street-lamp"))
 
     implementation(project(":core:core-enum"))
     implementation(project(":core:core-common"))

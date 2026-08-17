@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.safetyspot.domain.streetlight.service
+package io.soo.bueongi.core.safetyspot.domain.streetlamp.service
 
 import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
  * 사건을 발행만 한다 — 누가 받아 무엇을 하는지(알림·집계 등)는 여기서 정하지 않는다.
  */
 @Component
-class StreetlightFillEventPublisher(
+class StreetLampFillEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
 
@@ -37,9 +37,9 @@ class StreetlightFillEventPublisher(
 
     companion object {
 
-        private const val FETCH_FAILED_KEY: String = "streetlight-fetch-failed"
+        private const val FETCH_FAILED_KEY: String = "street-lamp-fetch-failed"
         private const val FETCH_FAILED_TITLE: String = "가로등 수집 실패"
-        private const val NO_COORDINATES_KEY: String = "streetlight-no-coordinates"
+        private const val NO_COORDINATES_KEY: String = "street-lamp-no-coordinates"
         private const val NO_COORDINATES_TITLE: String = "가로등 좌표 없음"
     }
 }

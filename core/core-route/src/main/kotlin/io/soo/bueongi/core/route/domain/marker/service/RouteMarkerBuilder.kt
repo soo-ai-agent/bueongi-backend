@@ -115,7 +115,7 @@ class RouteMarkerBuilder(
             SafetySpotPoiType.SAFEHOUSE to SafetySpotType.SAFEHOUSE,
             SafetySpotPoiType.BELL to SafetySpotType.BELL,
             SafetySpotPoiType.POLICE to SafetySpotType.POLICE,
-            SafetySpotPoiType.STREETLIGHT to SafetySpotType.STREETLIGHT,
+            SafetySpotPoiType.STREET_LAMP to SafetySpotType.STREET_LAMP,
             SafetySpotPoiType.SECURITY_LAMP to SafetySpotType.SECURITY_LAMP,
             SafetySpotPoiType.PEDESTRIAN_SIGNAL to SafetySpotType.PEDESTRIAN_SIGNAL,
         )

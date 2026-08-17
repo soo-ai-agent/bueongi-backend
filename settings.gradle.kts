@@ -22,7 +22,7 @@ include(
     "clients:client-datagokr-safehouse",
     "clients:client-datagokr-security-lamp",
     "clients:client-safemap",
-    "clients:client-safetydata-streetlight",
+    "clients:client-safetydata-street-lamp",
     "support:logging",
     "support:monitoring",
     "support:util",

@@ -26,7 +26,7 @@ spring:
       - db-core.yml
       - client-tmap.yml
       - client-kakao.yml
-      - client-safetydata-streetlight.yml
+      - client-safetydata-street-lamp.yml
 
 # 안심 귀가 도메인 설정(부팅 모듈 소유분 — API 계층·공유 URL).
 bueongi:

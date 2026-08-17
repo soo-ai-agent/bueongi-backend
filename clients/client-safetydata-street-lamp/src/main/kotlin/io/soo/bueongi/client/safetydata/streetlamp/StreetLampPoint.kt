@@ -1,6 +1,6 @@
-package io.soo.bueongi.client.safetydata.streetlight
+package io.soo.bueongi.client.safetydata.streetlamp
 
-data class StreetlightPoint(
+data class StreetLampPoint(
     val lat: Double,
     val lng: Double,
     // 원천이 주소를 비워 보내는 행이 많음

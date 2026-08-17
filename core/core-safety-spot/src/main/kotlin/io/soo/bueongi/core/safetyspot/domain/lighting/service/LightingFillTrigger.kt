@@ -2,7 +2,7 @@ package io.soo.bueongi.core.safetyspot.domain.lighting.service
 
 import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
-import io.soo.bueongi.core.safetyspot.domain.streetlight.service.StreetlightFillService
+import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
  * 사용자가 닿은 곳의 조명 데이터를 뒤에서 채운다.
  *
  * 조명은 두 종류이고 **받는 방식이 서로 다르다**:
- * - 가로등([StreetlightFillService]) — 원천이 지역 조건을 받지 않아 전국을 한 번에. 좌표와 무관하다.
+ * - 가로등([StreetLampFillService]) — 원천이 지역 조건을 받지 않아 전국을 한 번에. 좌표와 무관하다.
  * - 보안등([SecurityLampFillService]) — 좌표가 속한 자치단체 단위로. 전국을 미리 받으면 쿼터를 넘는다.
  *
  * **요청 스레드를 절대 막지 않는다.** 채우기는 수십 회의 외부 호출이라 수 초가 걸리고,
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component
 class LightingFillTrigger(
     private val locator: RegionLocator,
     private val securityLampFill: SecurityLampFillService,
-    private val streetlightFill: StreetlightFillService,
+    private val streetLampFill: StreetLampFillService,
 ) {
     private val log: Logger = LoggerFactory.getLogger(LightingFillTrigger::class.java)
 
@@ -45,7 +45,7 @@ class LightingFillTrigger(
         }
         executor.execute {
             try {
-                fillStreetlights()
+                fillStreetLamps()
                 fillSecurityLampsOf(points)
             } catch (e: Exception) {
                 // 채우기 실패가 사용자 요청에 영향을 주면 안 된다 — 로그만 남긴다.
@@ -54,8 +54,8 @@ class LightingFillTrigger(
         }
     }
 
-    private fun fillStreetlights() {
-        streetlightFill.fill()
+    private fun fillStreetLamps() {
+        streetLampFill.fill()
     }
 
     private fun fillSecurityLampsOf(points: List<GeoPoint>) {

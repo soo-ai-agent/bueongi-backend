@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonValue
 enum class SafetySpotType(@get:JsonValue val cdnType: String) {
     CCTV("cctv"),
     /** 가로등 — 간선도로·차도를 비추는 도로 조명(도로과 관리). 원천은 재난안전데이터 DSSP-IF-00084. */
-    STREETLIGHT("lamp"),
+    STREET_LAMP("lamp"),
 
-    /** 보안등 — 골목·이면도로를 비추는 방범 조명(안전 부서 관리). 원천은 data.go.kr 표준데이터. 조명이라는 점은 같아 안전 점수는 [STREETLIGHT] 와 함께 센다. */
+    /** 보안등 — 골목·이면도로를 비추는 방범 조명(안전 부서 관리). 원천은 data.go.kr 표준데이터. 조명이라는 점은 같아 안전 점수는 [STREET_LAMP] 와 함께 센다. */
     SECURITY_LAMP("security_lamp"),
     BELL("emergency_bell"),
     SAFEHOUSE("safehouse"),

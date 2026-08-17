@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 
 /**
  * **보안등**(골목·이면도로 방범 조명)을 자치단체 단위로 받아 저장한다.
- * 가로등은 원천도 받는 방식도 달라 [io.soo.bueongi.core.safetyspot.domain.streetlight.service.StreetlightFillService] 가 따로 맡는다.
+ * 가로등은 원천도 받는 방식도 달라 [io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService] 가 따로 맡는다.
  *
  * | | |
  * |---|---|

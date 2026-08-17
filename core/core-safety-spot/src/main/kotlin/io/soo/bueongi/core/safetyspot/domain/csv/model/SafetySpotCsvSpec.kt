@@ -61,7 +61,7 @@ data class SafetySpotCsvSpec(
                 nameHeaders = listOf("업소명"),
                 addressHeaders = listOf("소재지도로명주소"),
             )
-            SafetySpotType.STREETLIGHT, SafetySpotType.SECURITY_LAMP -> SafetySpotCsvSpec(
+            SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP -> SafetySpotCsvSpec(
                 type = type,
                 coordSystem = SafetySpotCoordSystem.WGS84,
                 nameHeaders = listOf("관리번호"),

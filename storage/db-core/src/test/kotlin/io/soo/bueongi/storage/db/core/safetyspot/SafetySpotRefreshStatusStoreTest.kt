@@ -35,7 +35,7 @@ class SafetySpotRefreshStatusStoreTest {
             .isEqualTo(SafetySpotRefreshRecord(atEpochMs = 1_700_000_000_000L, replacedCount = 372))
         assertThat(store.findByType(SafetySpotType.POLICE))
             .isEqualTo(SafetySpotRefreshRecord(atEpochMs = 1_700_000_000_000L, replacedCount = null))
-        assertThat(store.findByType(SafetySpotType.STREETLIGHT)).isNull()
+        assertThat(store.findByType(SafetySpotType.STREET_LAMP)).isNull()
     }
 
     @Test

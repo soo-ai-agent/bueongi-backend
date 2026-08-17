@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safetydata.streetlight
+package io.soo.bueongi.client.safetydata.streetlamp
 
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
@@ -13,14 +13,14 @@ import java.net.URI
 
 /** safetydata DSSP-IF-00084: 인증키는 URL-인코딩분 그대로(재인코딩 금지), XMAP_CRTS/YMAP_CRTS 좌표계는 문서 미명시라 값 범위로 자동판별한다. */
 @Component
-class StreetlightClient(
+class StreetLampClient(
     @Value("\${bueongi.safetydata.service-key:}") serviceKey: String,
     restClientBuilder: RestClient.Builder,
-    @Value("\${bueongi.safetydata.base-url:${StreetlightApiSpec.DEFAULT_BASE_URL}}") baseUrl: String = StreetlightApiSpec.DEFAULT_BASE_URL,
+    @Value("\${bueongi.safetydata.base-url:${StreetLampApiSpec.DEFAULT_BASE_URL}}") baseUrl: String = StreetLampApiSpec.DEFAULT_BASE_URL,
 ) {
-    private val log: Logger = LoggerFactory.getLogger(StreetlightClient::class.java)
+    private val log: Logger = LoggerFactory.getLogger(StreetLampClient::class.java)
     private val serviceKey: String = serviceKey.trim()
-    private val endpoint: String = "${baseUrl.trimEnd('/')}${StreetlightApiSpec.PATH}"
+    private val endpoint: String = "${baseUrl.trimEnd('/')}${StreetLampApiSpec.PATH}"
 
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
@@ -28,17 +28,17 @@ class StreetlightClient(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     /** 서버가 numOfRows 보다 적게 돌려줘도 totalCount 도달까지 페이지를 넘긴다(페이지 상한이 낮은 서비스 방어). */
-    fun fetchStreetlights(): List<StreetlightPoint>? {
+    fun fetchStreetLamps(): List<StreetLampPoint>? {
         check(isEnabled) { "재난안전데이터(safetydata) 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
-        val streetlights: ArrayList<StreetlightPoint> = ArrayList<StreetlightPoint>()
+        val streetLamps: ArrayList<StreetLampPoint> = ArrayList<StreetLampPoint>()
         var pageNo: Int = 1
         var received: Long = 0L
         var totalCount: Long? = null
 
-        while (pageNo <= StreetlightApiSpec.MAX_PAGES) {
+        while (pageNo <= StreetLampApiSpec.MAX_PAGES) {
             val body: JsonNode? = try {
                 restClient.get()
-                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${StreetlightApiSpec.PAGE_SIZE}&returnType=json"))
+                    .uri(URI.create("$endpoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=${StreetLampApiSpec.PAGE_SIZE}&returnType=json"))
                     .retrieve()
                     .body(JsonNode::class.java)
             } catch (e: Exception) {
@@ -59,38 +59,38 @@ class StreetlightClient(
                 return null
             }
 
-            val rows: List<JsonNode> = findStreetlightRows(body)
+            val rows: List<JsonNode> = findStreetLampRows(body)
             val parsedTotalCount: Long? = body.findValue("totalCount")?.asLong()
             if (parsedTotalCount != null && parsedTotalCount >= 0) {
                 totalCount = parsedTotalCount
             }
             received += rows.size
-            rows.mapNotNullTo(streetlights) { it.toStreetlight() }
+            rows.mapNotNullTo(streetLamps) { it.toStreetLamp() }
 
             val total: Long? = totalCount
             when {
                 rows.isEmpty() -> break
                 total != null && received >= total -> break
-                total == null && rows.size < StreetlightApiSpec.PAGE_SIZE -> break
+                total == null && rows.size < StreetLampApiSpec.PAGE_SIZE -> break
             }
             pageNo += 1
         }
         val finalTotal: Long? = totalCount
         if (finalTotal != null && received < finalTotal) {
-            log.warn("safetydata 가로등 페이지 상한(StreetlightApiSpec.MAX_PAGES={}) 도달 — {}/{}건만 수집", StreetlightApiSpec.MAX_PAGES, received, finalTotal)
+            log.warn("safetydata 가로등 페이지 상한(StreetLampApiSpec.MAX_PAGES={}) 도달 — {}/{}건만 수집", StreetLampApiSpec.MAX_PAGES, received, finalTotal)
         }
-        return streetlights
+        return streetLamps
     }
 
     // 응답 envelope 구조가 문서에 미확정이라 좌표 필드를 가진 객체 배열을 재귀 탐색한다
-    private fun findStreetlightRows(node: JsonNode): List<JsonNode> {
+    private fun findStreetLampRows(node: JsonNode): List<JsonNode> {
         if (node.isArray) {
             val objects: List<JsonNode> = node.filter { it.isObject }
             if (objects.isNotEmpty() && objects.any { it.has("XMAP_CRTS") && it.has("YMAP_CRTS") }) {
                 return objects
             }
             for (child in node) {
-                val found: List<JsonNode> = findStreetlightRows(child)
+                val found: List<JsonNode> = findStreetLampRows(child)
                 if (found.isNotEmpty()) {
                     return found
                 }
@@ -99,7 +99,7 @@ class StreetlightClient(
         }
         if (node.isObject) {
             for (child in node) {
-                val found: List<JsonNode> = findStreetlightRows(child)
+                val found: List<JsonNode> = findStreetLampRows(child)
                 if (found.isNotEmpty()) {
                     return found
                 }
@@ -108,9 +108,9 @@ class StreetlightClient(
         return emptyList()
     }
 
-    private fun JsonNode.toStreetlight(): StreetlightPoint? {
+    private fun JsonNode.toStreetLamp(): StreetLampPoint? {
         val point: Wgs84Point = resolveKoreanWgs84OrNull(text("XMAP_CRTS"), text("YMAP_CRTS")) ?: return null
-        return StreetlightPoint(
+        return StreetLampPoint(
             lat = point.lat,
             lng = point.lng,
             address = text("ROAD_NM_ADDR") ?: text("ADDR"),

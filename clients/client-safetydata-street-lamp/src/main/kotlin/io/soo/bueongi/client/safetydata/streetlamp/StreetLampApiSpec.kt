@@ -1,10 +1,10 @@
-package io.soo.bueongi.client.safetydata.streetlight
+package io.soo.bueongi.client.safetydata.streetlamp
 
 /**
  * 재난안전데이터 공유플랫폼(safetydata) 가로등 API(DSSP-IF-00084) 호출 규격.
  * data.go.kr 과 다른 키·쿼터를 쓰므로 상수도 분리해 둔다.
  */
-object StreetlightApiSpec {
+object StreetLampApiSpec {
 
     const val DEFAULT_BASE_URL: String = "https://www.safetydata.go.kr"
 

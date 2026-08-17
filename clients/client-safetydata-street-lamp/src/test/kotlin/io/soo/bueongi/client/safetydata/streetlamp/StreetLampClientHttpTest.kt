@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safetydata.streetlight
+package io.soo.bueongi.client.safetydata.streetlamp
 
 import io.soo.bueongi.support.util.Epsg5179
 
@@ -14,14 +14,14 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-class StreetlightClientHttpTest {
+class StreetLampClientHttpTest {
 
     private val serviceKey: String = "safetydata%2Fkey"
 
-    private fun bind(key: String = serviceKey): Pair<StreetlightClient, MockRestServiceServer> {
+    private fun bind(key: String = serviceKey): Pair<StreetLampClient, MockRestServiceServer> {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
-        return StreetlightClient(serviceKey = key, restClientBuilder = builder) to server
+        return StreetLampClient(serviceKey = key, restClientBuilder = builder) to server
     }
 
     @Test
@@ -34,13 +34,13 @@ class StreetlightClientHttpTest {
                       "ROAD_NM_ADDR":"서울 강남구 테헤란로 1","STDG_SGG_CD":"11680",
                       "XMAP_CRTS":"$x","YMAP_CRTS":"$y"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString("${StreetlightApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
+        server.expect(requestTo(containsString("${StreetLampApiSpec.ENDPOINT}?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetlights: List<StreetlightPoint>? = client.fetchStreetlights()
+        val streetLamps: List<StreetLampPoint>? = client.fetchStreetLamps()
 
-        assertThat(streetlights).hasSize(1)
-        val s: StreetlightPoint = streetlights!![0]
+        assertThat(streetLamps).hasSize(1)
+        val s: StreetLampPoint = streetLamps!![0]
         assertThat(s.lat).isCloseTo(37.4981, within(1e-6))
         assertThat(s.lng).isCloseTo(127.0276, within(1e-6))
         assertThat(s.address).isEqualTo("서울 강남구 테헤란로 1")
@@ -56,39 +56,39 @@ class StreetlightClientHttpTest {
              "body":[{"SN":"1","XMAP_CRTS":"127.03","YMAP_CRTS":"37.50","ADDR":"지번주소만"},
                      {"SN":"2","XMAP_CRTS":"","YMAP_CRTS":"abc","ADDR":"좌표불량"}]}
         """.trimIndent()
-        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetLampApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetlights: List<StreetlightPoint>? = client.fetchStreetlights()
+        val streetLamps: List<StreetLampPoint>? = client.fetchStreetLamps()
 
-        assertThat(streetlights).hasSize(1)
-        assertThat(streetlights!![0].lat).isCloseTo(37.50, within(1e-9))
-        assertThat(streetlights[0].address).isEqualTo("지번주소만")
+        assertThat(streetLamps).hasSize(1)
+        assertThat(streetLamps!![0].lat).isCloseTo(37.50, within(1e-9))
+        assertThat(streetLamps[0].address).isEqualTo("지번주소만")
     }
 
     @Test
     fun `실패 - HTTP 오류면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetLampApiSpec.ENDPOINT)))
             .andRespond(withServerError())
 
-        assertThat(client.fetchStreetlights()).isNull()
+        assertThat(client.fetchStreetLamps()).isNull()
     }
 
     @Test
     fun `실패 - resultCode 비정상이면 null`() {
         val (client, server) = bind()
         val body: String = """{"resultCode":"03","resultMsg":"NODATA_ERROR","body":[]}"""
-        server.expect(requestTo(containsString(StreetlightApiSpec.ENDPOINT)))
+        server.expect(requestTo(containsString(StreetLampApiSpec.ENDPOINT)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        assertThat(client.fetchStreetlights()).isNull()
+        assertThat(client.fetchStreetLamps()).isNull()
     }
 
     @Test
     fun `게이트 - 키 미설정이면 호출 전 차단(isEnabled=false)`() {
         val (client, _) = bind(key = "")
         assertThat(client.isEnabled).isFalse()
-        assertThatThrownBy { client.fetchStreetlights() }.isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy { client.fetchStreetLamps() }.isInstanceOf(IllegalStateException::class.java)
     }
 }

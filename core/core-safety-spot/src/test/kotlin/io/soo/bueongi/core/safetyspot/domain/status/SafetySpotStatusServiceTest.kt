@@ -31,7 +31,7 @@ class SafetySpotStatusServiceTest {
     @Test
     fun `종류별 적재건수 갱신3상태 CDN신선도를 집계한다`() {
         val source = FakeSource(
-            counts = mapOf(SafetySpotType.CCTV to 372, SafetySpotType.STREETLIGHT to 10, SafetySpotType.POLICE to 8),
+            counts = mapOf(SafetySpotType.CCTV to 372, SafetySpotType.STREET_LAMP to 10, SafetySpotType.POLICE to 8),
             freshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19"),
         )
         val holder = SafetySpotRefreshStatusStore().apply {
@@ -48,7 +48,7 @@ class SafetySpotStatusServiceTest {
 
         assertThat(summary.safetySpots.map { it.type })
             .containsExactly(
-                SafetySpotType.CCTV, SafetySpotType.STREETLIGHT, SafetySpotType.SECURITY_LAMP, SafetySpotType.BELL,
+                SafetySpotType.CCTV, SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP, SafetySpotType.BELL,
                 SafetySpotType.SAFEHOUSE, SafetySpotType.POLICE, SafetySpotType.PEDESTRIAN_SIGNAL,
             )
 
@@ -66,7 +66,7 @@ class SafetySpotStatusServiceTest {
         assertThat(safehouse.lastRefreshCount).isNull()
         assertThat(safehouse.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
 
-        val lamp = summary.safetySpots.first { it.type == SafetySpotType.STREETLIGHT }
+        val lamp = summary.safetySpots.first { it.type == SafetySpotType.STREET_LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
         assertThat(lamp.lastRefreshStatus).isEqualTo(SafetySpotRefreshStatus.SKIPPED)
         assertThat(lamp.lastRefreshAtMs).isNull()
