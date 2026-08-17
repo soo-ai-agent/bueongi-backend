@@ -101,6 +101,7 @@ curl http://localhost:8119/api/health
 | `BUEONGI_ADMIN_LOGIN_ID` | 없음 | 관리자 로그인 아이디. |
 | `BUEONGI_ADMIN_PASSWORD_HASH` | 없음 | 관리자 비밀번호의 bcrypt 해시. 원문 비밀번호는 저장하지 않는다. |
 | `BUEONGI_ADMIN_EMAIL` | (빈 값) | 로그인 응답에 표시할 관리자 이메일. |
+| `BUEONGI_FRONTEND_VERSION` | (빈 값) | 스플래시 `GET /api/app-info` 가 내려줄 배포된 프론트 버전. 배포 파이프라인이 프론트 배포 시 채운다. 미설정이면 빈 문자열. |
 | `KAKAO_REST_API_KEY` | (빈 값) | Kakao Local REST 키. **미설정이면 내장 시드 카탈로그**로 장소 검색. 주입 시 실연동을 시도하되 실패하면 시드로 폴백(안심앱: 검색 불능보다 근사 결과가 안전). |
 | `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 적재 0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백) ⑤도착 미확인을 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
 | `SLACK_ALERT_THROTTLE_MINUTES` | `10` | 같은 알림 key 의 재발송 억제 창(분) — 장애 중 알림 폭주 방지. |

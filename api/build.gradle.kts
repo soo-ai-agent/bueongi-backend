@@ -36,3 +36,7 @@ dependencies {
     testImplementation(testFixtures(project(":storage:db-core")))
     testImplementation(testFixtures(project(":core:core-share")))
 }
+
+springBoot {
+    buildInfo()
+}

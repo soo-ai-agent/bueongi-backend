@@ -78,6 +78,32 @@
 
 ---
 
+## `GET /api/app-info` — 스플래시용 앱·서버 정보
+
+프론트 스플래시 화면이 **한 번 호출**로 버전·상태를 얻는다. 출처: `api/AppInfoController.kt`.
+
+**요청**: 없음.
+
+**200 응답** (`AppInfoResponse`):
+
+```json
+{
+  "serverVersion": "0.0.1-SNAPSHOT",
+  "serverBuiltAt": "2026-08-17T05:45:04.284Z",
+  "serverStatus": "UP",
+  "frontendVersion": "1.4.0",
+  "placeSource": "live",
+  "locationStore": "memory"
+}
+```
+
+- `serverVersion` / `serverBuiltAt`: 빌드 정보(`build-info.properties`)에서. 빌드 정보 없는 실행(IDE 클래스 빌드)이면 빈 문자열.
+- `serverStatus`: 항상 `"UP"`(요청 처리 가능하면 도달).
+- `frontendVersion`: **배포 파이프라인이 프론트 배포 시 `BUEONGI_FRONTEND_VERSION` 으로 채우는 값.** 서버는 프론트 버전을 스스로 알 수 없다. 미설정이면 빈 문자열 — 프론트는 빈 값을 "확인 불가"로 다룬다.
+- `placeSource` / `locationStore`: `/api/health` 와 동일 라벨(시크릿 비노출).
+
+---
+
 ## `GET /api/places/search` — 장소 검색
 
 이름/주소 부분일치 검색. 출처: `places/PlaceController.kt`, `places/PlaceSearchService.kt`, `places/PlaceDtos.kt`.
