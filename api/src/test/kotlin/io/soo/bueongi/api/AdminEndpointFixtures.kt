@@ -88,7 +88,8 @@ class AdminEndpointFixtures {
         fun safetySpotStatusService(): SafetySpotStatusService {
             val source = object : SafetySpotSpatialSource {
                 private val cctv = GridSpatialIndex(
-                    List(2) { SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.5, lng = 127.0) },
+                    // 인덱스가 같은 좌표를 하나로 세므로 지점을 달리한다.
+                    List(2) { i -> SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.5 + i * 0.001, lng = 127.0) },
                 )
                 override fun index(type: SafetySpotType): GridSpatialIndex =
                     if (type == SafetySpotType.CCTV) {

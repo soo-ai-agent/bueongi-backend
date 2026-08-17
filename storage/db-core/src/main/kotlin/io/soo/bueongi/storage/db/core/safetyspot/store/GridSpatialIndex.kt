@@ -11,13 +11,25 @@ import kotlin.math.floor
  */
 class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
+    /**
+     * 같은 지점을 한 번만 센다.
+     *
+     * 원천은 한 지점에 시설이 여러 개면(CCTV 카메라 여러 대, 보안등 여러 등) 행을 나눠 준다.
+     * 그대로 두면 지도에 마커가 겹쳐 찍히고 **밀도 점수가 시설 대수만큼 부풀어** 안전 점수가 틀어진다.
+     * 안전 점수가 재는 것은 "이 길에 조명이 몇 군데 있나"이지 "전구가 몇 개인가"가 아니다.
+     *
+     * 좌표 5자리(≈1.1m)로 같음을 판정한다 — 원천 좌표 정밀도가 그 아래로는 의미가 없다.
+     */
+    private val distinct: List<SafetySpotPoint> =
+        points.distinctBy { Pair(roundCoord(it.lat), roundCoord(it.lng)) }
+
     private val buckets: Map<Long, List<SafetySpotPoint>> =
-        points.groupBy { cellKey(cellIndex(it.lat, CELL_DEG), cellIndex(it.lng, CELL_DEG)) }
+        distinct.groupBy { cellKey(cellIndex(it.lat, CELL_DEG), cellIndex(it.lng, CELL_DEG)) }
 
-    val size: Int = points.size
+    val size: Int = distinct.size
 
-    /** 병합용 원본 — 지역 데이터를 더할 때 기존 것과 합치려면 필요하다. */
-    val all: List<SafetySpotPoint> = points
+    /** 병합용 원본(중복 제거된 것) — 지역 데이터를 더할 때 기존 것과 합치려면 필요하다. */
+    val all: List<SafetySpotPoint> = distinct
 
     fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {
@@ -98,3 +110,9 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
             (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
 }
+
+/** 좌표 5자리 ≈ 1.1m. 이보다 가까운 두 점은 같은 지점으로 본다. */
+private fun roundCoord(value: Double): Long =
+    Math.round(value * COORD_SCALE)
+
+private const val COORD_SCALE: Double = 100_000.0

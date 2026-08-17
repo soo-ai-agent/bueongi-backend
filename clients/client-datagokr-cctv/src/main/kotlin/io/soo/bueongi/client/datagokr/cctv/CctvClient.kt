@@ -6,6 +6,7 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import org.springframework.stereotype.Component
 
+// https://www.data.go.kr/data/15155042/openapi.do
 /** 전국 CCTV(행안부 조회서비스). 전송(페이징·재시도)은 [DataGoKrPagedFetcher] 가 맡고 여기는 규격만 갖는다. */
 @Component
 class CctvClient(

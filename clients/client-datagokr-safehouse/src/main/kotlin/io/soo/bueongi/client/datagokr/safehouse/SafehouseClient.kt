@@ -28,7 +28,8 @@ class SafehouseClient(
         val FIELDS: DataGoKrFieldNames = DataGoKrFieldNames(
         lat = listOf("latitude", "위도"),
         lng = listOf("longitude", "경도"),
-        name = listOf("storNm", "institutionNm", "업소명", "점포명"),
+        // institutionNm 은 관리 부서라 이름으로 쓰지 않는다(보안등에서 겪은 것과 같은 함정).
+        name = listOf("storNm", "업소명", "점포명"),
         address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"),
         sigungu = emptyList(),
         )

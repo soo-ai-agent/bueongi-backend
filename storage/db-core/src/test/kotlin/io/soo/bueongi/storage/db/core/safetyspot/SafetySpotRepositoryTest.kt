@@ -217,7 +217,8 @@ class SafetySpotRepositoryTest {
             types.forEachIndexed { index, type ->
                 pool.execute {
                     start.await()
-                    repo.replace(type, List(index + 1) { point(type) })
+                    // 인덱스가 같은 좌표를 하나로 세므로, 개수를 확인하려면 좌표를 달리해야 한다.
+                    repo.replace(type, List(index + 1) { offset -> point(type, offset) })
                     done.countDown()
                 }
             }
@@ -233,8 +234,8 @@ class SafetySpotRepositoryTest {
         pool.shutdown()
     }
 
-    private fun point(type: SafetySpotType): SafetySpotPoint =
-        SafetySpotPoint(type = type, lat = 37.5, lng = 127.0)
+    private fun point(type: SafetySpotType, offset: Int = 0): SafetySpotPoint =
+        SafetySpotPoint(type = type, lat = 37.5 + offset * 0.001, lng = 127.0)
 
     private companion object {
         const val TRIALS: Int = 300

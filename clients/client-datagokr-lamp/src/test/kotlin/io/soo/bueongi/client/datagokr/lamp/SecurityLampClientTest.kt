@@ -15,13 +15,13 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 class SecurityLampClientTest {
 
     @Test
-    fun `표준 영문 필드(scrtyLmpLctnNm·latitude·sggCd)를 매핑한다`() {
+    fun `표준 영문 필드(lmpLcNm·latitude·insttCode)를 매핑한다`() {
         val (fetcher, server) = bindFetcher()
         server.expect(requestTo(containsString("tn_pubr_public_scrty_lmp_api")))
             .andRespond(
                 withSuccess(
                     standardEnvelope(
-                        """{"scrtyLmpLctnNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359","rdnmadr":"테헤란로 1","sggCd":"11680"}""",
+                        """{"lmpLcNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359","rdnmadr":"테헤란로 1","insttCode":"3210000","institutionNm":"서울특별시 서초구청"}""",
                     ),
                     MediaType.APPLICATION_JSON,
                 ),
@@ -32,7 +32,7 @@ class SecurityLampClientTest {
         assertThat(points).hasSize(1)
         assertThat(points!![0].name).isEqualTo("역삼동 골목 보안등")
         assertThat(points[0].lat).isEqualTo(37.5008)
-        assertThat(points[0].sigungu).isEqualTo("11680")
+        assertThat(points[0].sigungu).isEqualTo("3210000")
     }
 
     @Test
@@ -55,5 +55,24 @@ class SecurityLampClientTest {
         assertThat(points!![0].name).isEqualTo("대청동 보안등")
         assertThat(points[0].lng).isEqualTo(129.032)
         assertThat(points[0].sigungu).isEqualTo("26110")
+    }
+
+    @Test
+    fun `위치명이 없어도 관리 부서명을 이름으로 쓰지 않는다`() {
+        val (fetcher, server) = bindFetcher()
+        server.expect(requestTo(containsString("tn_pubr_public_scrty_lmp_api")))
+            .andRespond(
+                withSuccess(
+                    standardEnvelope(
+                        """{"latitude":"37.5008","longitude":"127.0359","institutionNm":"경기도 부천시 오정구 건설안전과"}""",
+                    ),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetch()
+
+        assertThat(points).hasSize(1)
+        assertThat(points!![0].name).isNull()
     }
 }

@@ -7,6 +7,9 @@ import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import io.soo.bueongi.core.enums.DataGoKrQueryDialect
 import org.springframework.stereotype.Component
 
+// https://www.data.go.kr/data/15149415/openapi.do
+// https://www.data.go.kr/data/15150668/openapi.do
+// https://www.safetydata.go.kr/disaster-data/view?dataSn=75
 /** 전국 보안등(표준데이터) — 안심지킴이집과 같은 영문 1순위 + 한글 폴백 전략. 전송(페이징·재시도)은 [DataGoKrPagedFetcher] 가 맡고 여기는 규격만 갖는다. */
 @Component
 class SecurityLampClient(
@@ -28,9 +31,9 @@ class SecurityLampClient(
         val FIELDS: DataGoKrFieldNames = DataGoKrFieldNames(
         lat = listOf("latitude", "위도"),
         lng = listOf("longitude", "경도"),
-        name = listOf("scrtyLmpLctnNm", "institutionNm", "보안등위치명", "관리번호"),
+        name = listOf("lmpLcNm", "보안등위치명", "관리번호"),
         address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
-        sigungu = listOf("sggCd", "시군구코드"),
+        sigungu = listOf("insttCode", "sggCd", "시군구코드", "제공기관코드"),
         )
     }
 }
