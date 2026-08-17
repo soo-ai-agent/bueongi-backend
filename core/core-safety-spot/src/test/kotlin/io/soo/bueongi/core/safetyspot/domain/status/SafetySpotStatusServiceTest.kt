@@ -48,7 +48,7 @@ class SafetySpotStatusServiceTest {
 
         assertThat(summary.safetySpots.map { it.type })
             .containsExactly(
-                SafetySpotType.CCTV, SafetySpotType.LAMP, SafetySpotType.BELL,
+                SafetySpotType.CCTV, SafetySpotType.LAMP, SafetySpotType.SECURITY_LAMP, SafetySpotType.BELL,
                 SafetySpotType.SAFEHOUSE, SafetySpotType.POLICE, SafetySpotType.PEDESTRIAN_SIGNAL,
             )
 

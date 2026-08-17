@@ -17,6 +17,7 @@ data class SafetySpotSummary(
     /** 여성안심지킴이집 수 — [convenienceStore] 와 다른 시설이다. */
     val safehouse: Int,
     val lamp: Int,
+    val securityLamp: Int,
     val pedestrianSignal: Int,
     val total: Int,
 )

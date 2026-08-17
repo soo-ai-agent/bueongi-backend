@@ -92,12 +92,12 @@ sources:
   - id: C-2
     name: "전국 보안등 표준데이터"
     catalogId: "15017320"
-    type: lamp
+    type: security_lamp
     coordSystem: wgs84
     cadence: monthly
     splitBy: sigungu
-    output: "lamp/{sigungu}.json"
-    keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" }
+    output: "security_lamp/{sigungu}.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "보안등위치명", address: "소재지지번주소", sigungu: "제공기관코드" }
 
   - id: C-3
     name: "서울특별시 보행등(보행신호등) 위도 경도 현황"

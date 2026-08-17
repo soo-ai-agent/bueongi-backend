@@ -34,6 +34,7 @@ class RouteSafetySpotService(
             police = pois.count { it.type == SafetySpotPoiType.POLICE },
             safehouse = pois.count { it.type == SafetySpotPoiType.SAFEHOUSE },
             lamp = pois.count { it.type == SafetySpotPoiType.LAMP },
+            securityLamp = pois.count { it.type == SafetySpotPoiType.SECURITY_LAMP },
             pedestrianSignal = pois.count { it.type == SafetySpotPoiType.PEDESTRIAN_SIGNAL },
             total = pois.count { it.type in SAFETY_TYPES },
         )
@@ -48,6 +49,7 @@ class RouteSafetySpotService(
             SafetySpotPoiType.POLICE,
             SafetySpotPoiType.SAFEHOUSE,
             SafetySpotPoiType.LAMP,
+            SafetySpotPoiType.SECURITY_LAMP,
             SafetySpotPoiType.PEDESTRIAN_SIGNAL,
         )
     }

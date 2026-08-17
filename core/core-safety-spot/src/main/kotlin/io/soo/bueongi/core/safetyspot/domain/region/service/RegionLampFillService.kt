@@ -33,7 +33,7 @@ class RegionLampFillService(
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
     fun isFilled(regionCode: String): Boolean =
-        cache.isCached(SafetySpotType.LAMP, regionCode)
+        cache.isCached(SafetySpotType.SECURITY_LAMP, regionCode)
 
     /**
      * 아직 안 받은 지역이면 받아서 저장하고 인덱스에 더한다.
@@ -65,12 +65,12 @@ class RegionLampFillService(
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         if (points.isEmpty()) {
             // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 파일로 남겨 매번 다시 받지 않게 한다.
-            cache.save(SafetySpotType.LAMP, regionCode, points)
+            cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
             events.regionHadNoCoordinates(regionCode, fetched.size)
             return 0
         }
-        cache.save(SafetySpotType.LAMP, regionCode, points)
-        liveStore.append(SafetySpotType.LAMP, points)
+        cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
+        liveStore.append(SafetySpotType.SECURITY_LAMP, points)
         log.info("보안등 지역 채움: region={}, 받은={}, 좌표있음={}", regionCode, fetched.size, points.size)
         return points.size
     }
@@ -80,7 +80,7 @@ class RegionLampFillService(
         for (row in fetched) {
             points.add(
                 SafetySpotPoint(
-                    type = SafetySpotType.LAMP,
+                    type = SafetySpotType.SECURITY_LAMP,
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,

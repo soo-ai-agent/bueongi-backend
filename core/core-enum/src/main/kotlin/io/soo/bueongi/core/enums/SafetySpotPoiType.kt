@@ -12,5 +12,6 @@ enum class SafetySpotPoiType(@get:JsonValue val wire: String) {
     POLICE("police"),
     SAFEHOUSE("safehouse"),
     LAMP("lamp"),
+    SECURITY_LAMP("security_lamp"),
     PEDESTRIAN_SIGNAL("pedestrian_signal"),
 }

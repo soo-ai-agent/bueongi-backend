@@ -2,10 +2,14 @@ package io.soo.bueongi.core.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-/** [cdnType] 이 와이어 계약([JsonValue]) — 정확히 cctv|lamp|emergency_bell|safehouse|police|pedestrian_signal 을 내야 한다. */
+/** [cdnType] 이 와이어 계약([JsonValue]) — 정확히 cctv|lamp|security_lamp|emergency_bell|safehouse|police|pedestrian_signal 을 내야 한다. */
 enum class SafetySpotType(@get:JsonValue val cdnType: String) {
     CCTV("cctv"),
+    /** 가로등 — 간선도로·차도를 비추는 도로 조명(도로과 관리). */
     LAMP("lamp"),
+
+    /** 보안등 — 골목·이면도로를 비추는 방범 조명(안전 부서 관리). 조명이라는 점은 같아 안전 점수는 함께 센다. */
+    SECURITY_LAMP("security_lamp"),
     BELL("emergency_bell"),
     SAFEHOUSE("safehouse"),
     POLICE("police"),

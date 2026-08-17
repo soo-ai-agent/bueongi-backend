@@ -100,7 +100,7 @@ class SafetySpotRepository(
         }
         val csvLamp: List<SafetySpotPoint> = loadLampCsv()
         if (csvLamp.isNotEmpty()) {
-            byType.getOrPut(SafetySpotType.LAMP) { ArrayList() }.addAll(csvLamp)
+            byType.getOrPut(SafetySpotType.SECURITY_LAMP) { ArrayList() }.addAll(csvLamp)
         }
         val cachedRegions: Int = addRegionCache(byType)
         val uploadedTypes: Int = overwriteWithUploads(byType)
@@ -204,7 +204,7 @@ class SafetySpotRepository(
     ) {
         val loaded: Map<SafetySpotType, GridSpatialIndex> = indexByType.get()
         log.info(
-            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, regions={}, cctv={}(csv={}), lamp={}(csv={}), bell={}, " +
+            "안심시설 적재 완료: dir='{}', files={}, uploadedTypes={}, regions={}, cctv={}(csv={}), lamp={}, securityLamp={}(csv={}), bell={}, " +
                 "safehouse={}, police={}, pedestrianSignal={}, safepaths={}",
             dir?.path ?: "(없음)",
             fileCount,
@@ -213,6 +213,7 @@ class SafetySpotRepository(
             loaded[SafetySpotType.CCTV]?.size ?: 0,
             csvCctvCount,
             loaded[SafetySpotType.LAMP]?.size ?: 0,
+            loaded[SafetySpotType.SECURITY_LAMP]?.size ?: 0,
             csvLampCount,
             loaded[SafetySpotType.BELL]?.size ?: 0,
             loaded[SafetySpotType.SAFEHOUSE]?.size ?: 0,
@@ -404,7 +405,7 @@ private class LampCsvColumns(
         ) ?: return null
         // 원천에 위치명이 없는 행이 있어 null 이 가능함
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
-        return SafetySpotPoint(type = SafetySpotType.LAMP, lat = point.lat, lng = point.lng, name = name)
+        return SafetySpotPoint(type = SafetySpotType.SECURITY_LAMP, lat = point.lat, lng = point.lng, name = name)
     }
 
     companion object {

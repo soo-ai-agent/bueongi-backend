@@ -20,7 +20,8 @@ class AdminSafetySpotStatusEndpointTest(
         mockMvc.get("/api/admin/safety-spot-status")
             .andExpect {
                 status { isOk() }
-                jsonPath("$.safetySpots.length()") { value(6) }
+                // 시설 종류 수 — 가로등과 보안등을 나눠 7종이다.
+                jsonPath("$.safetySpots.length()") { value(7) }
                 jsonPath("$.safetySpots[0].type") { value("cctv") }
                 jsonPath("$.safetySpots[0].loadedCount") { value(2) }
                 jsonPath("$.safetySpots[0].lastRefreshStatus") { value("replaced") }

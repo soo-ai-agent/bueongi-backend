@@ -69,7 +69,7 @@ class LampCsvLoadTest {
             csvDir.path,
         )
         repo.load()
-        return repo.index(SafetySpotType.LAMP).withinRadius(GeoPoint(35.5443, 128.4923), 2_000.0)
+        return repo.index(SafetySpotType.SECURITY_LAMP).withinRadius(GeoPoint(35.5443, 128.4923), 2_000.0)
     }
 
     private companion object {
