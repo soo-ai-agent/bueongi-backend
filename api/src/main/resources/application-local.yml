@@ -1,3 +1,7 @@
 spring:
   config:
-    import: optional:file:.env.local[.properties]
+    import:
+      - optional:file:.env.local[.properties]
+      # 위 파일의 따옴표 값('$해시')이 properties 로는 그대로 읽혀 깨진다 — 셸용 원본은 두고,
+      # 따옴표 벗긴 쌍둥이(.env.local.properties, gitignore)가 나중에 읽혀 이긴다. IDE 실행용.
+      - optional:file:.env.local.properties

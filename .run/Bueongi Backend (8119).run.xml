@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Bueongi Backend (8119)" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="io.soo.bueongi.BueongiApplicationKt" />
+    <module name="bueongi-backend.api.main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+      <env name="SERVER_PORT" value="8119" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

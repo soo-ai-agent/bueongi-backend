@@ -55,6 +55,29 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon
 서버를 재시작하면 기존 관리자 토큰은 무효화된다. 운영에서는 `JWT_PUBLIC_KEY`와
 `JWT_PRIVATE_KEY`가 모두 없으면 기동이 중단된다.
 
+### IntelliJ 에서 실행
+
+`.run/Bueongi Backend (8119).run.xml` 이 저장돼 있어 프로젝트를 열면 실행 구성
+**"Bueongi Backend (8119)"** 가 자동으로 보인다. ▶ 만 누르면 된다 — 프로파일(local)·
+포트(8119)·작업 디렉터리(backend 루트)가 들어 있다.
+
+**전제 하나**: 따옴표를 벗긴 `.env.local.properties`(gitignore) 가 있어야 한다.
+`.env.local` 의 따옴표 값(`'$해시'`)은 셸 `source` 용이라 스프링 properties 로는 그대로
+읽혀 bcrypt 검증에서 기동이 죽는다. 시크릿을 바꿨다면 한 줄로 재생성한다:
+
+```bash
+cd backend && python3 -c "
+import pathlib
+out=[]
+for l in pathlib.Path('.env.local').read_text().splitlines():
+    if '=' in l and not l.lstrip().startswith('#'):
+        k,v=l.split('=',1); v=v.strip()
+        if len(v)>=2 and v[0]==v[-1] and v[0] in ('\'','\"'): v=v[1:-1]
+        out.append(f'{k}={v}')
+    else: out.append(l)
+pathlib.Path('.env.local.properties').write_text('\n'.join(out)+'\n')"
+```
+
 서버 포트는 **8119** 고정(`application.yml`의 `server.port`). 프론트 dev 서버는 3619(strictPort).
 
 ### 가동 확인
