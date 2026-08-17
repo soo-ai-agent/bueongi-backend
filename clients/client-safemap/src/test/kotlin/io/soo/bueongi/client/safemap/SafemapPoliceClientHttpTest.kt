@@ -1,5 +1,7 @@
 package io.soo.bueongi.client.safemap
 
+import io.soo.bueongi.support.util.Epsg5179
+
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.within

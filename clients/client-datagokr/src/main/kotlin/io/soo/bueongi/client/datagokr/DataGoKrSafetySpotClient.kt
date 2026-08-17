@@ -24,6 +24,7 @@ class DataGoKrSafetySpotClient(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
+    /** 아래 fetch 4종 공통 계약: null = 수집 실패(부분 실패 포함) — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
     fun fetchCctv(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.CCTV_ENDPOINT, CCTV_FIELDS)
 
     fun fetchEmergencyBells(): List<DataGoKrPoint>? = fetchAll(DataGoKrApiSpec.BELL_ENDPOINT, BELL_FIELDS)

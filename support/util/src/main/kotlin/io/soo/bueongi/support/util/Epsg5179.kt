@@ -22,6 +22,10 @@ object Epsg5179 {
     private val M0: Double = meridianArc(LAT0)
 
     /** x=동(easting), y=북(northing). */
+    /** 경위도 값이 한반도 범위(33~39N, 124~132E)인지 — 좌표계 자동판별의 1차 관문. */
+    fun inKoreaBounds(lat: Double, lng: Double): Boolean =
+        lat.isFinite() && lng.isFinite() && lat in 33.0..39.0 && lng in 124.0..132.0
+
     fun toWgs84(x: Double, y: Double): Wgs84Point? {
         if (!x.isFinite() || !y.isFinite()) {
             return null

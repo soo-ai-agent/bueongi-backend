@@ -1,5 +1,7 @@
 package io.soo.bueongi.client.safemap
 
+import io.soo.bueongi.support.util.Wgs84Point
+
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
