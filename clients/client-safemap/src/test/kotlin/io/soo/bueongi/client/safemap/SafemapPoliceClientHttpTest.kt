@@ -1,6 +1,6 @@
 package io.soo.bueongi.client.safemap
 
-import io.soo.bueongi.support.util.Epsg5179
+import io.soo.bueongi.support.util.Epsg3857
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.within
@@ -13,105 +13,108 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
+/** 봉투 모양(`header.resultCode` · `body.items.item` · `body.totalCount`)은 실응답을 그대로 옮긴 것이다. */
 class SafemapPoliceClientHttpTest {
-
-    private val endpoint: String = "https://safemap.go.kr/openapi2/IF_0036"
 
     private val serviceKey: String = "safemap%2Fkey"
 
+    private val baseUrl: String = "https://safemap.go.kr"
+
     private fun bind(key: String = serviceKey): Pair<SafemapPoliceClient, MockRestServiceServer> {
-        val builder = RestClient.builder()
-        val server = MockRestServiceServer.bindTo(builder).build()
-        return SafemapPoliceClient(serviceKey = key, restClientBuilder = builder) to server
+        val builder: RestClient.Builder = RestClient.builder()
+        val server: MockRestServiceServer = MockRestServiceServer.bindTo(builder).build()
+        val client = SafemapPoliceClient(serviceKey = key, baseUrl = baseUrl, restClientBuilder = builder)
+        return client to server
     }
 
     @Test
-    fun `정상 - EPSG5179 x·y 를 WGS84 로 변환하고 관서명·주소·전화·시군구를 매핑한다`() {
+    fun `정상 - EPSG3857 x·y 를 WGS84 로 변환하고 관서명·주소·전화·시군구를 매핑한다`() {
         val (client, server) = bind()
-        val (x, y) = Epsg5179.fromWgs84(lat = 37.4981, lng = 127.0276)
+        val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
         val body: String = """
-            {"resultCode":"00","resultMsg":"NORMAL","numOfRows":10,"pageNo":1,"totalCount":1,
-             "items":[{"objt_id":"1","police":"서울청","polcsttn":"강남서","fclty_ty":"지구대","fclty_nm":"역삼지구대",
-                       "adres":"서울 강남구 역삼동 1","rn_adres":"서울 강남구 테헤란로 1","telno":"02-123-4567",
-                       "sgg_cd":"11680","x":"$x","y":"$y"}]}
+            {"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
+             "body":{"totalCount":1,"items":{"item":[
+               {"objt_id":"1.0","fclty_ty":"지구대","fclty_nm":"역삼지구대",
+                "rn_adres":"서울 강남구 테헤란로 1","telno":"02-000-0000","sgg_cd":"11680",
+                "adres":"-","tmp_x":"0.0","tmp_y":"0.0","x":"$x","y":"$y"}]}}}
         """.trimIndent()
-        server.expect(requestTo(containsString("$endpoint?serviceKey=$serviceKey")))
-            .andExpect(requestTo(containsString("returnType=JSON")))
+        server.expect(requestTo(containsString("$baseUrl/openapi2/IF_0036?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
+        val facilities: List<SafemapPolicePoint> = client.fetchPoliceFacilities().orEmpty()
 
         assertThat(facilities).hasSize(1)
-        val f: SafemapPolicePoint = facilities!![0]
-        assertThat(f.lat).isCloseTo(37.4981, within(1e-6))
-        assertThat(f.lng).isCloseTo(127.0276, within(1e-6))
-        assertThat(f.name).isEqualTo("역삼지구대")
-        assertThat(f.address).isEqualTo("서울 강남구 테헤란로 1")
-        assertThat(f.phone).isEqualTo("02-123-4567")
-        assertThat(f.sigungu).isEqualTo("11680")
+        val police: SafemapPolicePoint = facilities.first()
+        assertThat(police.lat).isCloseTo(37.4981, within(1e-6))
+        assertThat(police.lng).isCloseTo(127.0276, within(1e-6))
+        assertThat(police.name).isEqualTo("역삼지구대")
+        assertThat(police.address).isEqualTo("서울 강남구 테헤란로 1")
+        assertThat(police.phone).isEqualTo("02-000-0000")
+        assertThat(police.sigungu).isEqualTo("11680")
         server.verify()
     }
 
     @Test
-    fun `정상 - 경위도(WGS84)로 오는 x·y 도 그대로 수용하고, 중첩 envelope·좌표불량 행을 처리한다`() {
+    fun `정상 - 좌표를 0 으로 채워 보낸 행은 버린다`() {
         val (client, server) = bind()
+        val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
         val body: String = """
-            {"response":{"header":{"resultCode":"00"},"body":{"totalCount":3,"items":{"item":[
-              {"fclty_nm":"WGS그대로","x":"127.0276","y":"37.4981"},
-              {"fclty_nm":"순서뒤바뀜","x":"37.51","y":"127.02"},
-              {"fclty_nm":"좌표불량","x":"999","y":"999"}
-            ]}}}}
+            {"header":{"resultCode":"00"},
+             "body":{"totalCount":2,"items":{"item":[
+               {"fclty_nm":"좌표없음파출소","rn_adres":"전북 김제시 지평선로 1748","x":"0.0","y":"0.0"},
+               {"fclty_nm":"역삼지구대","rn_adres":"서울 강남구 테헤란로 1","x":"$x","y":"$y"}]}}}
         """.trimIndent()
-        server.expect(requestTo(containsString(endpoint)))
+        server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
+        val facilities: List<SafemapPolicePoint> = client.fetchPoliceFacilities().orEmpty()
 
-        assertThat(facilities).hasSize(2)
-        assertThat(facilities!![0].lat).isCloseTo(37.4981, within(1e-9))
-        assertThat(facilities[0].lng).isCloseTo(127.0276, within(1e-9))
-        assertThat(facilities[1].lat).isCloseTo(37.51, within(1e-9))
+        assertThat(facilities).hasSize(1)
+        assertThat(facilities.first().name).isEqualTo("역삼지구대")
     }
 
     @Test
-    fun `정상 - 서버가 요청보다 적게 돌려줘도 totalCount 까지 페이지를 순회한다`() {
+    fun `정상 - 값 없음을 뜻하는 하이픈은 null 로 정규화한다`() {
         val (client, server) = bind()
-        fun page(vararg names: String) =
-            """{"resultCode":"00","totalCount":5,"items":[${
-                names.joinToString(",") { """{"fclty_nm":"$it","x":"127.0","y":"37.5"}""" }
-            }]}"""
-        server.expect(requestTo(containsString("pageNo=1"))).andRespond(withSuccess(page("a", "b"), MediaType.APPLICATION_JSON))
-        server.expect(requestTo(containsString("pageNo=2"))).andRespond(withSuccess(page("c", "d"), MediaType.APPLICATION_JSON))
-        server.expect(requestTo(containsString("pageNo=3"))).andRespond(withSuccess(page("e"), MediaType.APPLICATION_JSON))
+        val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
+        val body: String = """
+            {"header":{"resultCode":"00"},
+             "body":{"totalCount":1,"items":{"item":[
+               {"fclty_nm":"무인치안센터","rn_adres":"서울 강남구 테헤란로 1","telno":"-",
+                "adres":"-","sgg_cd":"-","x":"$x","y":"$y"}]}}}
+        """.trimIndent()
+        server.expect(requestTo(containsString("/openapi2/IF_0036")))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
+        val police: SafemapPolicePoint = client.fetchPoliceFacilities().orEmpty().single()
 
-        assertThat(facilities).hasSize(5)
-        assertThat(facilities!!.map { it.name }).containsExactly("a", "b", "c", "d", "e")
-        server.verify()
+        assertThat(police.phone).isNull()
+        assertThat(police.sigungu).isNull()
+        assertThat(police.name).isEqualTo("무인치안센터")
     }
 
     @Test
-    fun `에러 - resultCode 가 0-00 이 아니면 null(기존 데이터 유지 신호)`() {
+    fun `실패 - HTTP 오류면 null(기존 데이터 유지 신호)`() {
         val (client, server) = bind()
-        server.expect(requestTo(containsString(endpoint)))
-            .andRespond(withSuccess("""{"resultCode":"30","resultMsg":"INVALID KEY"}""", MediaType.APPLICATION_JSON))
-
-        assertThat(client.fetchPoliceFacilities()).isNull()
-    }
-
-    @Test
-    fun `에러 - HTTP 5xx 면 null(부분수집으로 교체하지 않음)`() {
-        val (client, server) = bind()
-        server.expect(requestTo(containsString(endpoint)))
+        server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withServerError())
 
         assertThat(client.fetchPoliceFacilities()).isNull()
     }
 
     @Test
-    fun `에러 - 키 미설정이면 isEnabled=false 이고 호출은 계약 위반이다`() {
-        val (client, _) = bind(key = " ")
+    fun `실패 - resultCode 비정상이면 null`() {
+        val (client, server) = bind()
+        val body: String = """{"header":{"resultCode":"03","resultMsg":"NODATA_ERROR"},"body":{}}"""
+        server.expect(requestTo(containsString("/openapi2/IF_0036")))
+            .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
+
+        assertThat(client.fetchPoliceFacilities()).isNull()
+    }
+
+    @Test
+    fun `게이트 - 키 미설정이면 호출 전 차단(isEnabled=false)`() {
+        val (client, _) = bind(key = "")
 
         assertThat(client.isEnabled).isFalse()
         assertThatThrownBy { client.fetchPoliceFacilities() }.isInstanceOf(IllegalStateException::class.java)

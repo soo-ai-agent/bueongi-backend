@@ -1,6 +1,5 @@
 package io.soo.bueongi.client.safemap
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 import java.net.URI
@@ -14,10 +13,12 @@ import org.springframework.web.client.RestClient
 @Component
 class SafemapPoliceClient(
     @Value("\${bueongi.safemap.service-key:}") serviceKey: String,
+    @Value("\${bueongi.safemap.base-url:https://safemap.go.kr}") baseUrl: String,
     restClientBuilder: RestClient.Builder,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafemapPoliceClient::class.java)
     private val serviceKey: String = serviceKey.trim()
+    private val endpoint: String = "${baseUrl.trimEnd('/')}$PATH"
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     val isEnabled: Boolean
@@ -31,14 +32,13 @@ class SafemapPoliceClient(
         var totalCount: Long? = null
 
         for (pageNo in 1..MAX_PAGES) {
-            val body: JsonNode = fetchPage(pageNo) ?: return null
-            if (!isSuccess(body)) {
+            val response: SafemapResponse = fetchPage(pageNo) ?: return null
+            if (!isSuccess(response.header)) {
                 return null
             }
-            val rows: List<JsonNode> = findPoliceRows(body)
-            val pageTotal: Long? = body.findValue("totalCount")?.asLong()
-            if (pageTotal != null && pageTotal >= 0) {
-                totalCount = pageTotal
+            val rows: List<SafemapPoliceRow> = response.body?.items?.item.orEmpty()
+            if (response.body?.totalCount != null) {
+                totalCount = response.body.totalCount
             }
             received += rows.size
             addPoints(rows, points)
@@ -49,71 +49,42 @@ class SafemapPoliceClient(
         return points
     }
 
-    private fun fetchPage(pageNo: Int): JsonNode? {
-        val url: String = "$ENDPOINT?serviceKey=$serviceKey" +
+    private fun fetchPage(pageNo: Int): SafemapResponse? {
+        val url: String = "$endpoint?serviceKey=$serviceKey" +
             "&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=JSON"
-        val body: JsonNode? = try {
-            restClient.get().uri(URI.create(url)).retrieve().body(JsonNode::class.java)
+        val response: SafemapResponse? = try {
+            restClient.get().uri(URI.create(url)).retrieve().body(SafemapResponse::class.java)
         } catch (e: Exception) {
             log.warn("치안시설 호출 실패(page={}): {} — 수집 중단", pageNo, sanitize(e.message))
             return null
         }
-        if (body == null) {
+        if (response == null) {
             log.warn("치안시설 빈 응답(page={}) — 수집 중단", pageNo)
         }
-        return body
+        return response
     }
 
-    private fun isSuccess(body: JsonNode): Boolean {
-        val code: String? = body.findValue("resultCode")?.asText()?.trim()
+    private fun isSuccess(header: SafemapResponseHeader?): Boolean {
+        val code: String? = header?.resultCode
         if (code.isNullOrBlank() || code in SUCCESS_CODES) {
             return true
         }
-        val message: String = body.findValue("resultMsg")?.asText().orEmpty()
-        log.warn("치안시설 resultCode={}({}) — 수집 중단", code, message)
+        log.warn("치안시설 resultCode={}({}) — 수집 중단", code, header.resultMsg.orEmpty())
         return false
     }
 
-    /**
-     * 봉투 구조가 문서에 없고 인증키를 못 받아 실측도 못 했다 — 확정되면 응답 DTO 로 바꾼다.
-     * 그때까지는 치안시설 필드를 가진 객체 배열을 찾아 내려간다.
-     */
-    private fun findPoliceRows(node: JsonNode): List<JsonNode> {
-        if (node.isArray && isPoliceRows(node)) {
-            return node.toList()
-        }
-        for (child in node) {
-            val found: List<JsonNode> = findPoliceRows(child)
-            if (found.isNotEmpty()) {
-                return found
-            }
-        }
-        return emptyList()
-    }
-
-    private fun isPoliceRows(node: JsonNode): Boolean {
-        for (child in node) {
-            if (!child.isObject) {
-                continue
-            }
-            if (child.has("fclty_nm") || (child.has("x") && child.has("y"))) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun addPoints(rows: List<JsonNode>, into: MutableList<SafemapPolicePoint>) {
+    /** 좌표를 0 으로 채워 보내는 행은 지도에 찍을 수 없어 버린다 — 주소만 있는 시설은 지오코딩이 따로 필요하다. */
+    private fun addPoints(rows: List<SafemapPoliceRow>, into: MutableList<SafemapPolicePoint>) {
         for (row in rows) {
-            val point: Wgs84Point = row.coordinate() ?: continue
+            val point: Wgs84Point = resolveKoreanWgs84OrNull(row.x, row.y) ?: continue
             into.add(
                 SafemapPolicePoint(
                     lat = point.lat,
                     lng = point.lng,
-                    name = row.text("fclty_nm"),
-                    address = row.text("rn_adres") ?: row.text("adres"),
-                    phone = row.text("telno"),
-                    sigungu = row.text("sgg_cd"),
+                    name = row.name.valueOrNull(),
+                    address = row.roadAddress.valueOrNull(),
+                    phone = row.phone.valueOrNull(),
+                    sigungu = row.sigungu.valueOrNull(),
                 ),
             )
         }
@@ -134,26 +105,25 @@ class SafemapPoliceClient(
         (message ?: "원인 미상").replace(serviceKey, "***")
 
     private companion object {
-        const val ENDPOINT: String = "https://safemap.go.kr/openapi2/IF_0036"
+        const val PATH: String = "/openapi2/IF_0036"
 
         const val PAGE_SIZE: Int = 1000
 
-        /** 무한 루프 방지 — 전국 치안시설은 수천 건 규모다. */
-        const val MAX_PAGES: Int = 500
+        /** 무한 루프 방지 — 전국 전량이 3,064건이라 두 자리면 충분하다. */
+        const val MAX_PAGES: Int = 50
 
         val SUCCESS_CODES: Set<String> = setOf("0", "00")
     }
 }
 
-/** 좌표계가 문서에 없어(EPSG:5179 통례) 값 범위로 자동판별한다. tmp_x/tmp_y 는 원천이 쓰는 대체 컬럼명이다. */
-private fun JsonNode.coordinate(): Wgs84Point? =
-    resolveKoreanWgs84OrNull(text("x"), text("y"))
-        ?: resolveKoreanWgs84OrNull(text("tmp_x"), text("tmp_y"))
-
-private fun JsonNode.text(field: String): String? {
-    val value: String = get(field)?.asText()?.trim() ?: return null
-    if (value.isEmpty() || value == "null") {
+/**
+ * 이 원천은 값이 없을 때 빈 칸이 아니라 `-` 를 적는다(실측 2,947건 중 전화 967건).
+ * 그대로 두면 앱에 "-" 가 전화번호로 찍혀 눌러도 걸리지 않는다.
+ */
+private fun String?.valueOrNull(): String? {
+    val text: String = this?.trim() ?: return null
+    if (text.isEmpty() || text == "-" || text == "null") {
         return null
     }
-    return value
+    return text
 }

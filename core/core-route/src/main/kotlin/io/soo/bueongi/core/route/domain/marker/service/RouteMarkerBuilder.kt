@@ -5,7 +5,7 @@ import io.soo.bueongi.core.enums.SafetySpotPoiType
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.safetyspot.domain.lighting.service.LightingFillTrigger
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillTrigger
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -26,7 +26,7 @@ class RouteMarkerBuilder(
     // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val markerEvents: MarkerEventPublisher? = null,
     // 지역 채우기를 안 쓰는 구성(테스트 등)에서 null 이 가능함
-    private val regionFill: LightingFillTrigger? = null,
+    private val regionFill: SafetySpotFillTrigger? = null,
 ) {
 
     fun buildMarkers(
