@@ -9,4 +9,6 @@ data class SafetyBreakdown(
     val safehouseCount: Int,
     val policeCount: Int,
     val safePathOverlap: Double,
+    /** 점수를 깎은 우범지역 수. 점수가 낮은 이유를 화면이 설명할 수 있어야 해 함께 내보낸다. */
+    val crimeProneAreaCount: Int,
 )

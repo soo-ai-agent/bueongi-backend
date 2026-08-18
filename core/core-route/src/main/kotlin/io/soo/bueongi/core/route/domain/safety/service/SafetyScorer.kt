@@ -32,9 +32,10 @@ class SafetyScorer(
         val counts: SafetySpotCounts = countNearby(path)
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
         val normalized: Double = normalizedScore(counts, km, safePathOverlap)
+        val penalized: Double = applyRiskPenalty(normalized, counts.crimeProneArea, km)
 
         return SafetyScore(
-            score = (normalized * 100).roundToInt(),
+            score = (penalized * 100).roundToInt(),
             breakdown = SafetyBreakdown(
                 routeKm = round3(routeKm),
                 cctvDensity = round2(counts.cctv / km),
@@ -43,6 +44,7 @@ class SafetyScorer(
                 safehouseCount = counts.safehouse,
                 policeCount = counts.police,
                 safePathOverlap = round3(safePathOverlap),
+                crimeProneAreaCount = counts.crimeProneArea,
             ),
         )
     }
@@ -56,10 +58,18 @@ class SafetyScorer(
             bell = countWithinCorridor(SafetySpotType.BELL, path),
             safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),
             police = countWithinCorridor(SafetySpotType.POLICE, path),
+            crimeProneArea = countRiskNear(path),
         )
 
     private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
         safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+
+    /**
+     * 우범지역은 시설이 아니라 **구역**이라 더 넓게 본다.
+     * 원천이 구역을 대표 좌표 하나로 주기 때문에, 시설과 같은 30m 로 재면 바로 옆을 지나도 안 걸린다.
+     */
+    private fun countRiskNear(path: List<GeoPoint>): Int =
+        safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
 
     /** 가장 많이 겹치는 한 노선만 본다 — 여러 노선을 더하면 같은 구간이 중복으로 셈된다. */
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
@@ -85,6 +95,20 @@ class SafetyScorer(
             WEIGHT_SAFEHOUSE * saturate(counts.safehouse.toDouble(), SAT_SAFEHOUSE_COUNT) +
             WEIGHT_POLICE * saturate(counts.police.toDouble(), SAT_POLICE_COUNT) +
             WEIGHT_SAFE_PATH * safePathOverlap
+
+    /**
+     * 우범지역만큼 점수를 깎는다. 더하는 쪽(가중치 합 1.0)과 섞지 않고 뒤에서 빼는 이유는,
+     * 시설이 아무리 많아도 우범지역을 지나면 그만큼 위험하다는 것이 별개의 사실이기 때문이다.
+     *
+     * 0 아래로는 내려가지 않는다 — 점수는 0~100 계약이다.
+     */
+    private fun applyRiskPenalty(normalized: Double, riskCount: Int, km: Double): Double {
+        if (riskCount <= 0) {
+            return normalized
+        }
+        val penalty: Double = MAX_RISK_PENALTY * saturate(riskCount / km, SAT_RISK_PER_KM)
+        return max(0.0, normalized - penalty)
+    }
 
     /** 기준치를 넘으면 더 늘어도 1 로 본다 — CCTV 100대가 20대보다 5배 안전하진 않다. */
     private fun saturate(value: Double, saturationCeiling: Double): Double {
@@ -115,5 +139,14 @@ class SafetyScorer(
         const val WEIGHT_SAFEHOUSE: Double = 0.07
         const val WEIGHT_POLICE: Double = 0.10
         const val WEIGHT_SAFE_PATH: Double = 0.15
+
+        /** 구역을 대표 좌표 하나로 받아 시설(30m)보다 넓게 본다. */
+        const val RISK_CORRIDOR_METERS: Double = 100.0
+
+        /** km 당 이만큼 있으면 감점이 최대에 이른다. */
+        const val SAT_RISK_PER_KM: Double = 2.0
+
+        /** 감점 상한 — 조명 가중치와 같은 크기다. 우범지역이 있다고 점수를 0 으로 만들지는 않는다. */
+        const val MAX_RISK_PENALTY: Double = 0.20
     }
 }

@@ -124,6 +124,70 @@ class SafetyScorerTest {
         assertThat(result.score).isGreaterThan(0)
     }
 
+    /**
+     * 감점 쪽은 실데이터가 아직 없어(안전Dream 고유아이디 대기) 테스트가 유일한 증거다.
+     * 경로는 약 0.88km 라 우범지역 2곳이면 km 당 2.3 으로 포화(SAT_RISK_PER_KM=2.0)에 이른다.
+     */
+    @Test
+    fun `우범지역은 점수를 깎는다 - 포화 시 감점 상한만큼`() {
+        val cctv = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
+        val withoutRisk: Int = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.CCTV, cctv)).score(path).score
+
+        val risky = FakeSafetySpotSource(
+            mapOf(
+                SafetySpotType.CCTV to cctv.map { SafetySpotPoint(SafetySpotType.CCTV, it.lat, it.lng) },
+                SafetySpotType.CRIME_PRONE_AREA to listOf(
+                    SafetySpotPoint(SafetySpotType.CRIME_PRONE_AREA, 37.5, 127.002),
+                    SafetySpotPoint(SafetySpotType.CRIME_PRONE_AREA, 37.5, 127.008),
+                ),
+            ),
+        )
+        val result = SafetyScorer(risky).score(path)
+
+        assertThat(result.breakdown.crimeProneAreaCount).isEqualTo(2)
+        assertThat(result.score).isEqualTo(withoutRisk - 20)
+    }
+
+    @Test
+    fun `우범지역이 없으면 점수를 건드리지 않는다`() {
+        val cctv = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
+        val result = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.CCTV, cctv)).score(path)
+
+        assertThat(result.breakdown.crimeProneAreaCount).isZero()
+    }
+
+    @Test
+    fun `우범지역만 있으면 점수는 0 아래로 내려가지 않는다`() {
+        val risky = FakeSafetySpotSource(
+            mapOf(
+                SafetySpotType.CRIME_PRONE_AREA to listOf(
+                    SafetySpotPoint(SafetySpotType.CRIME_PRONE_AREA, 37.5, 127.002),
+                    SafetySpotPoint(SafetySpotType.CRIME_PRONE_AREA, 37.5, 127.008),
+                ),
+            ),
+        )
+
+        assertThat(SafetyScorer(risky).score(path).score).isZero()
+    }
+
+    /** 시설은 30m 회랑이지만 우범지역은 구역이라 100m 로 본다 — 50m 밖 시설은 안 세고 우범지역은 센다. */
+    @Test
+    fun `우범지역은 시설보다 넓은 회랑으로 센다`() {
+        val offCorridor = GeoPoint(37.5005, 127.005)
+        val risky = FakeSafetySpotSource(
+            mapOf(
+                SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, offCorridor.lat, offCorridor.lng)),
+                SafetySpotType.CRIME_PRONE_AREA to listOf(
+                    SafetySpotPoint(SafetySpotType.CRIME_PRONE_AREA, offCorridor.lat, offCorridor.lng),
+                ),
+            ),
+        )
+        val result = SafetyScorer(risky).score(path)
+
+        assertThat(result.breakdown.cctvDensity).isZero()
+        assertThat(result.breakdown.crimeProneAreaCount).isEqualTo(1)
+    }
+
     @Test
     fun `회랑 밖 시설은 점수에 반영되지 않는다`() {
         val offCorridor = listOf(GeoPoint(37.502, 127.005))

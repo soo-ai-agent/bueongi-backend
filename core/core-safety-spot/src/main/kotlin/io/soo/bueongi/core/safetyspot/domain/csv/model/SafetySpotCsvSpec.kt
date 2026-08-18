@@ -67,6 +67,12 @@ data class SafetySpotCsvSpec(
                 nameHeaders = listOf("관리번호"),
                 addressHeaders = listOf("설치위치", "소재지지번주소"),
             )
+            SafetySpotType.CRIME_PRONE_AREA -> SafetySpotCsvSpec(
+                type = type,
+                coordSystem = SafetySpotCoordSystem.WGS84,
+                nameHeaders = listOf("시설명", "지역명"),
+                addressHeaders = listOf("주소", "소재지지번주소"),
+            )
             SafetySpotType.POLICE -> SafetySpotCsvSpec(
                 type = type,
                 coordSystem = SafetySpotCoordSystem.EPSG5179,

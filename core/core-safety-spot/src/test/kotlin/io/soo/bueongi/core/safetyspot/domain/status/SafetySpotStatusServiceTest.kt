@@ -50,6 +50,7 @@ class SafetySpotStatusServiceTest {
             .containsExactly(
                 SafetySpotType.CCTV, SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP, SafetySpotType.BELL,
                 SafetySpotType.SAFEHOUSE, SafetySpotType.POLICE, SafetySpotType.PEDESTRIAN_SIGNAL,
+                SafetySpotType.CRIME_PRONE_AREA,
             )
 
         val cctv = summary.safetySpots.first { it.type == SafetySpotType.CCTV }
