@@ -1,11 +1,5 @@
 package io.soo.bueongi.support.util
 
-import io.soo.bueongi.support.util.Wgs84Point
-
-import io.soo.bueongi.support.util.Epsg3857
-
-import io.soo.bueongi.support.util.Epsg5179
-
 /** 좌표계 미명시 x/y 를 값 범위로 자동판별 — 경위도면 그대로(뒤바뀜 교정), UTM-K·Web Mercator 미터 범위면 역변환. 자릿수가 달라 범위가 겹치지 않는다. */
 fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
     val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null

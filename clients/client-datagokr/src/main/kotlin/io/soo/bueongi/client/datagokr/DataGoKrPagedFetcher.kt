@@ -1,7 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
 import io.soo.bueongi.core.enums.DataGoKrQueryDialect
-
 import com.fasterxml.jackson.databind.JsonNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -8,9 +8,7 @@ import io.soo.bueongi.core.enums.DataGoKrQueryDialect
 import org.springframework.stereotype.Component
 
 // https://www.data.go.kr/data/15149415/openapi.do
-// https://www.data.go.kr/data/15150668/openapi.do
-// https://www.safetydata.go.kr/disaster-data/view?dataSn=75
-/** 전국 보안등(표준데이터) — 안심지킴이집과 같은 영문 1순위 + 한글 폴백 전략. 전송(페이징·재시도)은 [DataGoKrPagedFetcher] 가 맡고 여기는 규격만 갖는다. */
+/** 전국 보안등(표준데이터). */
 @Component
 class SecurityLampClient(
     private val fetcher: DataGoKrPagedFetcher,
@@ -18,10 +16,7 @@ class SecurityLampClient(
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 
-    /**
-     * 계약: null = 수집 실패 — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다.
-     * 조건 없이 부르면 전량 수집이라 쿼터를 크게 먹는다 — 자치단체·갱신시점으로 좁혀 부른다.
-     */
+    /** 계약: null = 수집 실패(호출자는 기존 데이터 유지), 빈 목록과 다르다. 조건 없이 부르면 전량이라 쿼터를 크게 먹는다. */
     fun fetch(query: DataGoKrQuery = DataGoKrQuery()): List<DataGoKrPoint>? =
         fetcher.fetchAll(ENDPOINT, FIELDS, query, DataGoKrQueryDialect.FIELD)
 
@@ -29,13 +24,13 @@ class SecurityLampClient(
         const val ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"
 
         val FIELDS: DataGoKrFieldNames = DataGoKrFieldNames(
-        lat = listOf("latitude", "위도"),
-        lng = listOf("longitude", "경도"),
-        name = listOf("lmpLcNm", "보안등위치명", "관리번호"),
-        address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
-        sigungu = listOf("insttCode", "sggCd", "시군구코드", "제공기관코드"),
-        // 고장 신고에 쓸 수 있게 관리기관 전화를 함께 내려보낸다.
-        phone = listOf("phoneNumber", "관리기관전화번호"),
+            lat = listOf("latitude", "위도"),
+            lng = listOf("longitude", "경도"),
+            name = listOf("lmpLcNm", "보안등위치명", "관리번호"),
+            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소", "소재지지번주소"),
+            sigungu = listOf("insttCode", "sggCd", "시군구코드", "제공기관코드"),
+            // 고장 신고에 쓸 수 있게 관리기관 전화를 함께 내려보낸다.
+            phone = listOf("phoneNumber", "관리기관전화번호"),
         )
     }
 }

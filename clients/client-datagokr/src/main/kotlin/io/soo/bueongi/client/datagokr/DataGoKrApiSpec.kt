@@ -6,10 +6,6 @@ package io.soo.bueongi.client.datagokr
  */
 object DataGoKrApiSpec {
 
-
-
-
-
     /** 페이지당 최대 건수. numOfRows 를 더 크게 줘도 서버가 100 으로 고정한다(실측). */
     const val PAGE_SIZE: Int = 100
 
@@ -24,9 +20,6 @@ object DataGoKrApiSpec {
 
     /** 재시도 백오프 기본 간격 — 시도 횟수에 비례해 늘린다(1초, 2초). */
     const val RETRY_BASE_DELAY_MS: Long = 1000L
-
-    /** 일일 호출 쿼터. 어떤 종류를 라이브 갱신할지 정하는 기준이다(초과 시 503 유발). */
-    const val DAILY_QUOTA: Int = 1000
 
     /** 응답 header.resultCode 중 성공으로 보는 값. */
     val SUCCESS_CODES: Set<String> = setOf("0", "00")
