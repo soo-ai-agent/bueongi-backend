@@ -1,6 +1,8 @@
 package io.soo.bueongi.core.safetyspot.domain.fill.service
 
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
+import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
+import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFillService
 import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component
  * 종류마다 **받는 단위가 다르다** — 원천이 지역 조건을 받느냐에 따라 갈린다:
  * - 가로등([StreetLampFillService])·치안시설([PoliceFillService]) — 전국 한 덩이, 최초 1회
  * - 보안등([SecurityLampFillService]) — 좌표가 속한 자치단체 단위. 전국을 미리 받으면 쿼터를 넘는다
+ * - 아동안전지킴이집([ChildSafeHouseFillService]) — 좌표가 속한 지도 격자 칸 단위(원천이 사각 범위만 받는다)
  *
  * **요청 스레드를 절대 막지 않는다.** 채우기는 수십 회의 외부 호출이라 수 초가 걸리고,
  * 그것을 응답 경로에 넣으면 외부 지연이 곧 우리 지연이 된다. 이번 응답은 지금 있는 것으로 나가고,
@@ -28,6 +31,7 @@ class SafetySpotFillTrigger(
     private val securityLampFill: SecurityLampFillService,
     private val streetLampFill: StreetLampFillService,
     private val policeFill: PoliceFillService,
+    private val childSafeHouseFill: ChildSafeHouseFillService,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotFillTrigger::class.java)
 
@@ -49,6 +53,7 @@ class SafetySpotFillTrigger(
             try {
                 fillNationwide()
                 fillSecurityLampsOf(points)
+                fillChildSafeHousesOf(points)
             } catch (e: Exception) {
                 // 채우기 실패가 사용자 요청에 영향을 주면 안 된다 — 로그만 남긴다.
                 log.warn("안심시설 채우기 실패(무시): {}", e.message)
@@ -59,6 +64,16 @@ class SafetySpotFillTrigger(
     private fun fillNationwide() {
         streetLampFill.fill()
         policeFill.fill()
+    }
+
+    private fun fillChildSafeHousesOf(points: List<GeoPoint>) {
+        val tiles: MutableSet<MapTile> = LinkedHashSet()
+        for (point in points) {
+            tiles.add(MapTile.of(point))
+        }
+        for (tile in tiles) {
+            childSafeHouseFill.fill(tile)
+        }
     }
 
     private fun fillSecurityLampsOf(points: List<GeoPoint>) {

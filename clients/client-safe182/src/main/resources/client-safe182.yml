@@ -1,0 +1,6 @@
+# clients:client-safe182 소유 설정 — 안전Dream(safe182.go.kr) 안전지도 API.
+bueongi:
+  safe182:
+    # 둘 다 있어야 호출된다(한쪽만 있으면 result=99). 신청 승인 화면의 발급 ID·인증키를 그대로 넣는다.
+    esntl-id: ${SAFE182_ESNTL_ID:}
+    auth-key: ${SAFE182_AUTH_KEY:}
