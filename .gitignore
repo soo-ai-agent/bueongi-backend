@@ -18,3 +18,5 @@
 .idea/*
 !.idea/inspectionProfiles/
 !.idea/dictionaries/
+# 지연 적재 런타임 캐시 — 서버가 요청 때 받아 쓰는 것이라 커밋 금지
+data/region-cache/
