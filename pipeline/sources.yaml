@@ -89,6 +89,16 @@ sources:
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" }
     notes: "열린데이터광장은 파일로만 개방(openapi service 없음). 운영 입력은 data/csv/C-1.csv, 라이브는 포털 미러 15107934 의 odcloud 자동변환(uddi 확정 필요)."
 
+  - id: C-4
+    name: "전국 스마트가로등 표준데이터"
+    catalogId: "tn_pubr_public_smart_streetlight_api"
+    type: lamp
+    coordSystem: wgs84
+    cadence: monthly
+    output: "lamp/smart.json"
+    keyColumns: { lat: "위도", lng: "경도", name: "도로명", address: "소재지지번주소", sigungu: "제공기관코드" }
+    notes: "CSV 전용 투입(data/csv/C-4.csv). 좌표 100%(12,714행 실측) — 공주·서산·화순·홍성 등."
+
   - id: C-2
     name: "전국 보안등 표준데이터"
     catalogId: "15017320"

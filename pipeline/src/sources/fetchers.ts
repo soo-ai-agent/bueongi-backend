@@ -92,6 +92,11 @@ const CSV_SPEC: Partial<Record<SourceId, CsvSpec>> = {
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "신호등 종류", address: "주소" },
   },
+  "C-4": {
+    type: "lamp",
+    coordSystem: "wgs84",
+    keyColumns: { lat: "위도", lng: "경도", name: "도로명", address: "소재지지번주소", sigungu: "제공기관코드" },
+  },
   "D-1": {
     type: "emergency_bell",
     coordSystem: "epsg5174",
@@ -324,6 +329,9 @@ export const fetchC1 = (ctx: FetchContext) => collect("C-1", ctx, liveFor("C-1")
 export const fetchC2 = (ctx: FetchContext) => collect("C-2", ctx, liveFor("C-2"));
 // C-3: 서울 보행등=보행신호등 (WGS84) — OA-22354 / 포털 미러 15124273
 export const fetchC3 = (ctx: FetchContext) => collect("C-3", ctx, liveFor("C-3"));
+
+// C-4: 전국 스마트가로등 표준데이터 (WGS84) — CSV 전용 투입(라이브 스펙 미배선)
+export const fetchC4 = (ctx: FetchContext) => collect("C-4", ctx);
 // D-1: 전국 비상벨 (EPSG:5174) — catalogId 15028206
 export const fetchD1 = (ctx: FetchContext) => collect("D-1", ctx, liveFor("D-1"));
 // D-2: 자치구 비상벨 보완 (자치구별 상이) — per-district, manual 유지

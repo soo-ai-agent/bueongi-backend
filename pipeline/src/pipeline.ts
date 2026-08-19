@@ -110,6 +110,14 @@ async function main(): Promise<void> {
     files.push(buildCollection("lamp", "seoul", items, ["C-1"], NOW));
   }
 
+  // ---- C-4 전국 스마트가로등: WGS84, lamp/smart.json ----
+  {
+    const raw = await F.fetchC4(ctx);
+    const { items, stat } = convertWgs84(raw, "C-4");
+    bySource["C-4"] = stat;
+    files.push(buildCollection("lamp", "smart", items, ["C-4"], NOW));
+  }
+
   // ---- C-2 전국 보안등: WGS84, 시군구 분할 ----
   {
     const raw = await F.fetchC2(ctx);

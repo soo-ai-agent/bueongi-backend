@@ -19,6 +19,7 @@ export type SourceId =
   | "C-1"
   | "C-2"
   | "C-3"
+  | "C-4"
   | "D-1"
   | "D-2";
 
