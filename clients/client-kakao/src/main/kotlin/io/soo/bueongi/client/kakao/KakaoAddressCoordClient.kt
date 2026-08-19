@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 
 /**
@@ -59,7 +60,7 @@ class KakaoAddressCoordClient(
         for (address in addresses) {
             usedToday += 1
             val point: KakaoAddressPoint? = try {
-                fetchCoord(address)
+                fetchCoordPaced(address)
             } catch (e: Exception) {
                 log.warn("지오코딩 통신 실패 — 배치 중단({}건 변환 뒤): {}", found.size, e.message)
                 return null
@@ -70,6 +71,30 @@ class KakaoAddressCoordClient(
         }
         return found
     }
+
+    /**
+     * 호출 사이에 간격을 두고, 속도 제한(-10)에 걸리면 쉬었다 다시 시도한다.
+     * 실측: 쉼 없이 연타하면 97건쯤에서 "API limit has been exceeded" 로 끊긴다 —
+     * 배치 실패로 돌리면 재시도마다 같은 앞부분만 반복해 영영 못 끝낸다.
+     */
+    private fun fetchCoordPaced(address: String): KakaoAddressPoint? {
+        var attempt: Int = 1
+        while (true) {
+            Thread.sleep(REQUEST_INTERVAL_MS)
+            try {
+                return fetchCoord(address)
+            } catch (e: HttpClientErrorException) {
+                if (!isRateLimited(e) || attempt >= MAX_ATTEMPTS_PER_ADDRESS) {
+                    throw e
+                }
+                Thread.sleep(RATE_LIMIT_BACKOFF_MS * attempt)
+                attempt += 1
+            }
+        }
+    }
+
+    private fun isRateLimited(e: HttpClientErrorException): Boolean =
+        e.responseBodyAsString.contains("API limit has been exceeded")
 
     private fun fetchCoord(address: String): KakaoAddressPoint? {
         val response: KakaoAddressResponse? = restClient.get()
@@ -108,5 +133,14 @@ class KakaoAddressCoordClient(
 
         /** 상한의 "하루"는 서비스 시간대 기준이어야 사람이 예측할 수 있다. */
         val SERVICE_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+
+        /** 호출 간격 — 실측으로 연타는 100건 언저리에서 속도 제한에 걸린다. */
+        const val REQUEST_INTERVAL_MS: Long = 40L
+
+        /** 속도 제한에 걸렸을 때 쉬는 시간 — 시도 횟수에 비례해 늘린다. */
+        const val RATE_LIMIT_BACKOFF_MS: Long = 1_000L
+
+        /** 같은 주소 재시도 상한(최초 1 + 재시도 2). 그래도 막히면 배치 실패로 돌린다. */
+        const val MAX_ATTEMPTS_PER_ADDRESS: Int = 3
     }
 }

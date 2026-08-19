@@ -6,7 +6,9 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.client.ExpectedCount
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.http.HttpStatus
 import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.hamcrest.Matchers.containsString
 import org.springframework.web.client.RestClient
@@ -60,6 +62,27 @@ class KakaoAddressCoordClientHttpTest {
         val coords = client.geocodeAll(listOf("주소1", "주소2", "주소3"))
 
         assertThat(coords).isNull()
+        server.verify()
+    }
+
+    @Test
+    fun `속도 제한에 걸리면 쉬었다 같은 주소를 다시 시도한다`() {
+        val (client, server) = bind()
+        server.expect(requestTo(containsString("address.json")))
+            .andRespond(
+                withStatus(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("""{"errorType":"BadRequest","message":"API limit has been exceeded.","code":-10}"""),
+            )
+        server.expect(requestTo(containsString("address.json")))
+            .andRespond(
+                withSuccess("""{"documents":[{"x":"126.9432","y":"37.5445"}]}""", MediaType.APPLICATION_JSON),
+            )
+
+        val coords = client.geocodeAll(listOf("서울 마포구 토정로37길 46"))
+
+        assertThat(coords).isNotNull()
+        assertThat(coords!!).containsKey("서울 마포구 토정로37길 46")
         server.verify()
     }
 
