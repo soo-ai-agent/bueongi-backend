@@ -16,7 +16,7 @@ include(
     "clients:client-tmap",
     "clients:client-kakao",
     "clients:client-slack",
-    "clients:client-datagokr",
+    "clients:client-datagokr-common",
     "clients:client-datagokr-cctv",
     "clients:client-datagokr-bell",
     "clients:client-datagokr-safehouse",

@@ -191,7 +191,7 @@ backend/
 │   └── apilog · routestats · requestmetric · adevent   # 각 4~5파일이라 그대로 둔다
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   ├── client-tmap/ · client-kakao/ · client-slack/(운영 알림 발송·스로틀)
-│   ├── client-datagokr/         # data.go.kr 공통 전송(페이징·재시도·쿼터·봉투)
+│   ├── client-datagokr-common/  # data.go.kr 공통 전송(페이징·재시도·쿼터·봉투)
 │   │   └── -cctv · -bell · -safehouse · -lamp   # 자원별 어댑터(엔드포인트+필드 매핑만)
 │   └── client-safemap/ · client-safetydata/     # 시설 공공 API 어댑터(소비자 미배선 — 카탈로그 5절)
 └── support/ (logging · monitoring · util)

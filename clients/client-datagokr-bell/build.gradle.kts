@@ -1,9 +1,9 @@
 dependencies {
     implementation(project(":core:core-enum"))
 
-    implementation(project(":clients:client-datagokr"))
+    implementation(project(":clients:client-datagokr-common"))
 
-    testImplementation(testFixtures(project(":clients:client-datagokr")))
+    testImplementation(testFixtures(project(":clients:client-datagokr-common")))
 
     implementation("org.springframework:spring-web")
     implementation("org.springframework:spring-context")
