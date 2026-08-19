@@ -35,9 +35,19 @@ class DataGoKrPagedFetcher(
         fields: DataGoKrFieldNames,
         query: DataGoKrQuery = DataGoKrQuery(),
         dialect: DataGoKrQueryDialect = DataGoKrQueryDialect.CONDITION,
-    ): List<DataGoKrPoint>? {
+    ): List<DataGoKrPoint>? =
+        fetchAllWithAddressOnly(endpoint, fields, query, dialect)?.points
+
+    /** [fetchAll] 과 같되, 좌표 없이 주소만 온 행을 버리지 않고 함께 돌려준다(지오코딩용). */
+    fun fetchAllWithAddressOnly(
+        endpoint: String,
+        fields: DataGoKrFieldNames,
+        query: DataGoKrQuery = DataGoKrQuery(),
+        dialect: DataGoKrQueryDialect = DataGoKrQueryDialect.CONDITION,
+    ): DataGoKrFetchResult? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
+        val addressOnly: ArrayList<DataGoKrAddressRow> = ArrayList<DataGoKrAddressRow>()
         var pageNo: Int = 1
         var received: Long = 0L
         var totalCount: Long = Long.MAX_VALUE
@@ -58,7 +68,17 @@ class DataGoKrPagedFetcher(
             val rows: List<JsonNode> = extractItems(response.body?.items)
             response.body?.totalCount?.let { totalCount = it }
             received += rows.size
-            rows.mapNotNullTo(points) { it.toPoint(fields) }
+            for (row in rows) {
+                val point: DataGoKrPoint? = row.toPoint(fields)
+                if (point != null) {
+                    points.add(point)
+                    continue
+                }
+                val addressRow: DataGoKrAddressRow? = row.toAddressRow(fields)
+                if (addressRow != null) {
+                    addressOnly.add(addressRow)
+                }
+            }
 
             if (rows.isEmpty() || rows.size < pageSizeOf(dialect)) {
                 if (totalCount == Long.MAX_VALUE) {
@@ -75,7 +95,7 @@ class DataGoKrPagedFetcher(
             )
             return null
         }
-        return points
+        return DataGoKrFetchResult(points = points, addressOnlyRows = addressOnly)
     }
 
     /**
@@ -173,6 +193,17 @@ private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {
         lng = lng,
         name = text(fields.name),
         address = text(fields.address),
+        sigungu = text(fields.sigungu),
+        phone = text(fields.phone),
+    )
+}
+
+/** 좌표가 없어도 주소가 있으면 지오코딩으로 살릴 수 있다 — 주소까지 없으면 버린다. */
+private fun JsonNode.toAddressRow(fields: DataGoKrFieldNames): DataGoKrAddressRow? {
+    val address: String = text(fields.address) ?: return null
+    return DataGoKrAddressRow(
+        address = address,
+        name = text(fields.name),
         sigungu = text(fields.sigungu),
         phone = text(fields.phone),
     )

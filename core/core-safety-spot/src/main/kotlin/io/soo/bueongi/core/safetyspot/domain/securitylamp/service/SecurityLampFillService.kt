@@ -1,7 +1,11 @@
 package io.soo.bueongi.core.safetyspot.domain.securitylamp.service
 
+import io.soo.bueongi.client.datagokr.DataGoKrAddressRow
+import io.soo.bueongi.client.datagokr.DataGoKrFetchResult
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
+import io.soo.bueongi.client.kakao.KakaoAddressCoordClient
+import io.soo.bueongi.client.kakao.KakaoAddressPoint
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
@@ -32,6 +36,7 @@ import org.springframework.stereotype.Service
 @Service
 class SecurityLampFillService(
     private val client: SecurityLampClient,
+    private val geocoder: KakaoAddressCoordClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
     private val safetySpots: SafetySpotSpatialSource,
@@ -92,23 +97,68 @@ class SecurityLampFillService(
     }
 
     private fun fetchAndStore(regionCode: String): Int {
-        val fetched: List<DataGoKrPoint>? = client.fetch(DataGoKrQuery(municipalityCode = regionCode))
+        val fetched: DataGoKrFetchResult? = client.fetchWithAddressOnly(DataGoKrQuery(municipalityCode = regionCode))
         if (fetched == null) {
             retryGate.recordFailure(regionCode)
             events.regionFetchFailed(regionCode)
             return 0
         }
-        val points: List<SafetySpotPoint> = toSafetySpots(fetched)
+        val points: ArrayList<SafetySpotPoint> = ArrayList(toSafetySpots(fetched.points))
+        if (fetched.addressOnlyRows.isNotEmpty()) {
+            val geocoded: List<SafetySpotPoint>? = geocode(regionCode, fetched.addressOnlyRows)
+            if (geocoded == null) {
+                // 지오코딩 배치 실패(쿼터·통신) — 부분 저장하면 이 지역이 "받은 것"으로 굳는다. 통째로 미룬다.
+                retryGate.recordFailure(regionCode)
+                events.regionFetchFailed(regionCode)
+                return 0
+            }
+            points.addAll(geocoded)
+        }
         if (points.isEmpty()) {
-            // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 파일로 남겨 매번 다시 받지 않게 한다.
+            // 좌표도 주소도 못 살린 지자체 — 빈 파일로 남겨 매번 다시 받지 않게 한다.
             cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
-            events.regionHadNoCoordinates(regionCode, fetched.size)
+            events.regionHadNoCoordinates(regionCode, fetched.points.size + fetched.addressOnlyRows.size)
             return 0
         }
         cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
         liveStore.append(SafetySpotType.SECURITY_LAMP, points)
-        log.info("보안등 지역 채움: region={}, 받은={}, 좌표있음={}", regionCode, fetched.size, points.size)
+        log.info(
+            "보안등 지역 채움: region={}, 좌표행={}, 주소행={}, 적재={}",
+            regionCode, fetched.points.size, fetched.addressOnlyRows.size, points.size,
+        )
         return points.size
+    }
+
+    /**
+     * 주소만 온 행을 좌표로 살린다. 반환 = 살린 지점(못 찾은 주소는 빠짐), null = 배치 실패.
+     * 같은 주소에 등이 여러 개라 주소를 모아 한 번씩만 물어본다 — 호출 수가 크게 준다.
+     */
+    private fun geocode(regionCode: String, rows: List<DataGoKrAddressRow>): List<SafetySpotPoint>? {
+        if (!geocoder.isEnabled) {
+            log.warn("보안등 지오코딩 건너뜀: Kakao 키 미설정 (region={}, 주소행={})", regionCode, rows.size)
+            return emptyList()
+        }
+        val uniqueAddresses: LinkedHashSet<String> = LinkedHashSet()
+        for (row in rows) {
+            uniqueAddresses.add(row.address)
+        }
+        val coords: Map<String, KakaoAddressPoint> = geocoder.geocodeAll(uniqueAddresses) ?: return null
+        val points: ArrayList<SafetySpotPoint> = ArrayList()
+        for (row in rows) {
+            val coord: KakaoAddressPoint = coords[row.address] ?: continue
+            points.add(
+                SafetySpotPoint(
+                    type = SafetySpotType.SECURITY_LAMP,
+                    lat = coord.lat,
+                    lng = coord.lng,
+                    name = row.name,
+                    sigungu = row.sigungu,
+                    address = row.address,
+                    phone = row.phone,
+                ),
+            )
+        }
+        return points
     }
 
     private fun toSafetySpots(fetched: List<DataGoKrPoint>): List<SafetySpotPoint> {
