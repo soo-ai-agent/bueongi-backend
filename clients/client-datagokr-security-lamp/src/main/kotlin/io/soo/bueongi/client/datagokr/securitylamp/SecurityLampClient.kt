@@ -1,6 +1,5 @@
 package io.soo.bueongi.client.datagokr.securitylamp
 
-import io.soo.bueongi.client.datagokr.DataGoKrFetchResult
 import io.soo.bueongi.client.datagokr.DataGoKrFieldNames
 import io.soo.bueongi.client.datagokr.DataGoKrPagedFetcher
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
@@ -20,10 +19,6 @@ class SecurityLampClient(
     /** 계약: null = 수집 실패(호출자는 기존 데이터 유지), 빈 목록과 다르다. 조건 없이 부르면 전량이라 쿼터를 크게 먹는다. */
     fun fetch(query: DataGoKrQuery = DataGoKrQuery()): List<DataGoKrPoint>? =
         fetcher.fetchAll(ENDPOINT, FIELDS, query, DataGoKrQueryDialect.FIELD)
-
-    /** [fetch] 와 같되, 좌표 없이 주소만 온 행(서울 자치구 다수)을 지오코딩용으로 함께 준다. */
-    fun fetchWithAddressOnly(query: DataGoKrQuery = DataGoKrQuery()): DataGoKrFetchResult? =
-        fetcher.fetchAllWithAddressOnly(ENDPOINT, FIELDS, query, DataGoKrQueryDialect.FIELD)
 
     private companion object {
         const val ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"

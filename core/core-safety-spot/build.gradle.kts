@@ -4,7 +4,6 @@ dependencies {
     implementation(project(":clients:client-safetydata-street-lamp"))
     implementation(project(":clients:client-safemap"))
     implementation(project(":clients:client-safe182"))
-    implementation(project(":clients:client-kakao"))
 
     implementation(project(":core:core-enum"))
     implementation(project(":core:core-common"))
