@@ -116,7 +116,7 @@ async function main(): Promise<void> {
     const { items, stat } = convertWgs84(raw, "C-2");
     bySource["C-2"] = stat;
     for (const [sg, group] of splitBySigungu(items)) {
-      files.push(buildCollection("lamp", sg, group, ["C-2"], NOW, sg));
+      files.push(buildCollection("security_lamp", sg, group, ["C-2"], NOW, sg));
     }
   }
 

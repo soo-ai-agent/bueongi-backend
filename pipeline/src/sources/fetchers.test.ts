@@ -96,7 +96,7 @@ describe("fetchC2 (전국 보안등 표준데이터)", () => {
     expect(records).toHaveLength(1);
     expect(records[0]).toMatchObject({
       source: "C-2",
-      type: "lamp",
+      type: "security_lamp",
       coordSystem: "wgs84",
       name: "역삼동 골목 보안등",
       address: "테헤란로 1",

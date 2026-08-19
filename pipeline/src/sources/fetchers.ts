@@ -83,7 +83,7 @@ const CSV_SPEC: Partial<Record<SourceId, CsvSpec>> = {
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" },
   },
   "C-2": {
-    type: "lamp",
+    type: "security_lamp",
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "소재지지번주소", sigungu: "시군구코드" },
   },
@@ -246,7 +246,7 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
   "C-2": {
     kind: "datagokr",
     endpoint: "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api",
-    type: "lamp",
+    type: "security_lamp",
     coordSystem: "wgs84",
     keyColumns: {
       lat: "latitude",

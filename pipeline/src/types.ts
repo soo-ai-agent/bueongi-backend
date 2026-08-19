@@ -5,6 +5,7 @@ export type AssetType =
   | "safehouse"
   | "police"
   | "lamp"
+  | "security_lamp"
   | "emergency_bell"
   | "pedestrian_signal"
   | "safepath";
