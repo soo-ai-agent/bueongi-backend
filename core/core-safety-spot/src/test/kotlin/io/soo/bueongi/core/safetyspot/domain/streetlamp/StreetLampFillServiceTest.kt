@@ -4,18 +4,24 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import java.nio.file.Path
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -71,6 +77,37 @@ class StreetLampFillServiceTest {
         assertThat(service.fill()).isZero()
         assertThat(liveStore.appended).hasSize(2)
         verify(client).fetchStreetLamps()
+    }
+
+    @Test
+    fun `실패 직후에는 다시 외부를 부르지 않고 냉각이 지나면 다시 시도한다`(@TempDir dir: Path) {
+        val client: StreetLampClient = mock()
+        whenever(client.isEnabled).thenReturn(true)
+        whenever(client.fetchStreetLamps()).thenReturn(null)
+        val now: Instant = Instant.parse("2026-08-19T00:00:00Z")
+        val ticking = TickingClock(now)
+        val service: StreetLampFillService = StreetLampFillService(
+            client = client,
+            cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+            liveStore = FakeLiveStore(),
+            retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
+            events = mock(),
+        )
+
+        service.fill()
+        service.fill()
+        // 실패 1회 뒤 곧바로 온 요청은 외부를 부르지 않는다 — 요청마다 실패 호출이 반복되면 안 된다.
+        verify(client, times(1)).fetchStreetLamps()
+
+        ticking.now = now.plus(Duration.ofMinutes(11))
+        service.fill()
+        verify(client, times(2)).fetchStreetLamps()
+    }
+
+    private class TickingClock(var now: Instant) : Clock() {
+        override fun instant(): Instant = now
+        override fun getZone(): ZoneOffset = ZoneOffset.UTC
+        override fun withZone(zone: java.time.ZoneId): Clock = this
     }
 
     @Test

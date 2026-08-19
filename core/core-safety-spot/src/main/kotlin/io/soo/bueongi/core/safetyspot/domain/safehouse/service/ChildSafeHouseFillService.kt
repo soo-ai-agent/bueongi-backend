@@ -3,6 +3,7 @@ package io.soo.bueongi.core.safetyspot.domain.safehouse.service
 import io.soo.bueongi.client.safe182.ChildSafeHouseClient
 import io.soo.bueongi.client.safe182.ChildSafeHousePoint
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
@@ -32,6 +33,7 @@ class ChildSafeHouseFillService(
     private val client: ChildSafeHouseClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
+    private val retryGate: FillFailureCooldown = FillFailureCooldown(),
     private val events: ChildSafeHouseFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(ChildSafeHouseFillService::class.java)
@@ -50,6 +52,9 @@ class ChildSafeHouseFillService(
         if (isFilled(tile)) {
             return 0
         }
+        if (retryGate.isCoolingDown(tile.code)) {
+            return 0
+        }
         if (inFlight.putIfAbsent(tile.code, true) != null) {
             return 0
         }
@@ -63,6 +68,7 @@ class ChildSafeHouseFillService(
     private fun fetchAndStore(tile: MapTile): Int {
         val fetched: List<ChildSafeHousePoint>? = client.fetchWithin(tile.toBounds())
         if (fetched == null) {
+            retryGate.recordFailure(tile.code)
             events.fetchFailed(tile.code)
             return 0
         }

@@ -3,6 +3,7 @@ package io.soo.bueongi.core.safetyspot.domain.police.service
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPolicePoint
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -29,6 +30,7 @@ class PoliceFillService(
     private val client: SafemapPoliceClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
+    private val retryGate: FillFailureCooldown = FillFailureCooldown(),
     private val events: PoliceFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(PoliceFillService::class.java)
@@ -47,6 +49,9 @@ class PoliceFillService(
         if (isFilled()) {
             return 0
         }
+        if (retryGate.isCoolingDown(NATIONWIDE)) {
+            return 0
+        }
         if (!inFlight.compareAndSet(false, true)) {
             return 0
         }
@@ -60,6 +65,7 @@ class PoliceFillService(
     private fun fetchAndStore(): Int {
         val fetched: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
         if (fetched == null) {
+            retryGate.recordFailure(NATIONWIDE)
             events.fetchFailed()
             return 0
         }

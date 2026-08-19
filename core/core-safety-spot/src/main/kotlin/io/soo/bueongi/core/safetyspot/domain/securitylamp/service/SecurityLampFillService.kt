@@ -4,6 +4,7 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -34,6 +35,7 @@ class SecurityLampFillService(
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
     private val safetySpots: SafetySpotSpatialSource,
+    private val retryGate: FillFailureCooldown = FillFailureCooldown(),
     private val events: SecurityLampFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SecurityLampFillService::class.java)
@@ -71,6 +73,9 @@ class SecurityLampFillService(
             log.info("보안등 수집 건너뜀: 인증키 미설정 (region={})", regionCode)
             return 0
         }
+        if (retryGate.isCoolingDown(regionCode)) {
+            return 0
+        }
         val skip: String? = skipReason(regionCode)
         if (skip != null) {
             log.debug("보안등 수집 건너뜀: {} (region={})", skip, regionCode)
@@ -89,6 +94,7 @@ class SecurityLampFillService(
     private fun fetchAndStore(regionCode: String): Int {
         val fetched: List<DataGoKrPoint>? = client.fetch(DataGoKrQuery(municipalityCode = regionCode))
         if (fetched == null) {
+            retryGate.recordFailure(regionCode)
             events.regionFetchFailed(regionCode)
             return 0
         }

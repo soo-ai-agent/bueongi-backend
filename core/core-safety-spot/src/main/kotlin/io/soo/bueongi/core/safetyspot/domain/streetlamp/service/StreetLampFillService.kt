@@ -3,6 +3,7 @@ package io.soo.bueongi.core.safetyspot.domain.streetlamp.service
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -31,6 +32,7 @@ class StreetLampFillService(
     private val client: StreetLampClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
+    private val retryGate: FillFailureCooldown = FillFailureCooldown(),
     private val events: StreetLampFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
@@ -49,6 +51,9 @@ class StreetLampFillService(
         if (isFilled()) {
             return 0
         }
+        if (retryGate.isCoolingDown(NATIONWIDE)) {
+            return 0
+        }
         if (!inFlight.compareAndSet(false, true)) {
             return 0
         }
@@ -62,6 +67,7 @@ class StreetLampFillService(
     private fun fetchAndStore(): Int {
         val fetched: List<StreetLampPoint>? = client.fetchStreetLamps()
         if (fetched == null) {
+            retryGate.recordFailure(NATIONWIDE)
             events.fetchFailed()
             return 0
         }
