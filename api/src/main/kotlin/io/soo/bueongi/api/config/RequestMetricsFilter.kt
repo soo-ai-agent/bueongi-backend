@@ -17,6 +17,9 @@ import org.springframework.web.filter.OncePerRequestFilter
  *
  * **질의 문자열은 남기지 않는다** — 검색어·좌표가 실려 개인정보가 된다. 경로의 공유 토큰도
  * [normalizeRequestPath] 가 `{token}` 으로 가린다.
+ *
+ * 누가 불렀는지는 클라이언트가 보내는 익명 `X-Client-Id`(무작위 UUID, 비PII)로만 남긴다.
+ * **IP·User-Agent 는 남기지 않는다** — 개인정보이고, 익명 식별자로 이미 재방문을 셀 수 있다.
  */
 class RequestMetricsFilter(
     private val requestMetricStore: RequestMetricStore,
@@ -35,18 +38,20 @@ class RequestMetricsFilter(
         } finally {
             val durationMs: Long = System.currentTimeMillis() - startedAt
             val path: String = normalizeRequestPath(request.requestURI)
-            logRequest(request.method, path, response.status, durationMs)
-            recordSafely(request, path, response.status, startedAt, durationMs)
+            val clientId: String? = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() }
+            logRequest(request.method, path, response.status, durationMs, clientId)
+            recordSafely(clientId, path, request.method, response.status, startedAt, durationMs)
         }
     }
 
     /** 서버 오류는 눈에 띄어야 해 warn 으로 올린다 — 나머지는 info 한 줄. */
-    private fun logRequest(method: String, path: String, status: Int, durationMs: Long) {
+    private fun logRequest(method: String, path: String, status: Int, durationMs: Long, clientId: String?) {
+        val caller: String = clientId ?: UNKNOWN_CLIENT
         if (status >= SERVER_ERROR_STATUS) {
-            log.warn("{} {} {} ({}ms)", method, path, status, durationMs)
+            log.warn("{} {} {} ({}ms) client={}", method, path, status, durationMs, caller)
             return
         }
-        log.info("{} {} {} ({}ms)", method, path, status, durationMs)
+        log.info("{} {} {} ({}ms) client={}", method, path, status, durationMs, caller)
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
@@ -60,8 +65,9 @@ class RequestMetricsFilter(
     }
 
     private fun recordSafely(
-        request: HttpServletRequest,
+        clientId: String?,
         path: String,
+        method: String,
         status: Int,
         startedAt: Long,
         durationMs: Long,
@@ -70,9 +76,9 @@ class RequestMetricsFilter(
             requestMetricStore.record(
                 RequestMetric(
                     atEpochMs = startedAt,
-                    method = request.method,
+                    method = method,
                     endpoint = path,
-                    clientId = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() },
+                    clientId = clientId,
                     status = status,
                     durationMs = durationMs,
                 ),
@@ -86,6 +92,9 @@ class RequestMetricsFilter(
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
 
         const val SERVER_ERROR_STATUS: Int = 500
+
+        /** 헤더를 안 보내는 호출자(옛 앱·직접 curl) 도 한눈에 보이게 값을 채워 남긴다. */
+        const val UNKNOWN_CLIENT: String = "unknown"
 
         val EXCLUDED_PREFIXES: List<String> = listOf("/api/admin", "/actuator", "/healthz", "/cdn")
     }

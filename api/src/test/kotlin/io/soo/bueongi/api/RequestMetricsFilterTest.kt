@@ -106,6 +106,27 @@ class RequestMetricsFilterTest {
     }
 
     @Test
+    fun `누가 불렀는지 익명 client-id 로 남긴다`() {
+        val appender = captureLogs()
+        val request = MockHttpServletRequest("GET", "/api/places/search")
+        request.addHeader("X-Client-Id", "anon-42")
+
+        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+
+        assertThat(appender.list.single().formattedMessage).contains("client=anon-42")
+    }
+
+    @Test
+    fun `헤더를 안 보내는 호출자는 unknown 으로 남긴다`() {
+        val appender = captureLogs()
+        val request = MockHttpServletRequest("GET", "/api/places/search")
+
+        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+
+        assertThat(appender.list.single().formattedMessage).contains("client=unknown")
+    }
+
+    @Test
     fun `서버 오류는 warn 으로 올린다`() {
         val appender = captureLogs()
         val request = MockHttpServletRequest("GET", "/api/routes/safe-compare")
