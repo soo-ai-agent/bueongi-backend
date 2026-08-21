@@ -127,14 +127,57 @@ class RequestMetricsFilterTest {
     }
 
     @Test
-    fun `서버 오류는 warn 으로 올린다`() {
+    fun `서버 오류와 잘못된 요청은 warn 으로 올린다`() {
         val appender = captureLogs()
-        val request = MockHttpServletRequest("GET", "/api/routes/safe-compare")
 
-        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(500))
+        RequestMetricsFilter(CapturingStore())
+            .doFilter(MockHttpServletRequest("GET", "/api/x"), MockHttpServletResponse(), chainSetting(500))
+        RequestMetricsFilter(CapturingStore())
+            .doFilter(MockHttpServletRequest("GET", "/api/y"), MockHttpServletResponse(), chainSetting(404))
+        RequestMetricsFilter(CapturingStore())
+            .doFilter(MockHttpServletRequest("GET", "/api/z"), MockHttpServletResponse(), chainSetting(200))
 
-        val event: ILoggingEvent = appender.list.single()
-        assertThat(event.level).isEqualTo(Level.WARN)
-        assertThat(event.formattedMessage).contains("500")
+        assertThat(appender.list.map { it.level })
+            .containsExactly(Level.WARN, Level.WARN, Level.INFO)
+    }
+
+    @Test
+    fun `요청 주소를 남긴다 - 프록시 뒤에서는 전달 헤더의 맨 앞을 쓴다`() {
+        val appender = captureLogs()
+        val direct = MockHttpServletRequest("GET", "/api/app-info").apply { remoteAddr = "10.0.0.9" }
+        val behindProxy = MockHttpServletRequest("GET", "/api/app-info").apply {
+            remoteAddr = "10.0.0.9"
+            addHeader("X-Forwarded-For", "203.0.113.7, 70.41.3.18")
+        }
+
+        RequestMetricsFilter(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
+        RequestMetricsFilter(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
+
+        assertThat(appender.list[0].formattedMessage).contains("ip=10.0.0.9")
+        assertThat(appender.list[1].formattedMessage).contains("ip=203.0.113.7")
+    }
+
+    @Test
+    fun `우리 API 밖 경로는 로그만 남기고 통계에는 안 센다`() {
+        val appender = captureLogs()
+        val store = CapturingStore()
+        val probe = MockHttpServletRequest("GET", "/wp-login.php")
+
+        RequestMetricsFilter(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
+
+        assertThat(appender.list.single().formattedMessage).contains("/wp-login.php", "404")
+        assertThat(store.recorded).isEmpty()
+    }
+
+    @Test
+    fun `아주 긴 경로는 잘라서 남긴다`() {
+        val appender = captureLogs()
+        val long = "/api/" + "a".repeat(500)
+
+        RequestMetricsFilter(CapturingStore())
+            .doFilter(MockHttpServletRequest("GET", long), MockHttpServletResponse(), chainSetting(404))
+
+        assertThat(appender.list.single().formattedMessage).contains("…")
+        assertThat(appender.list.single().formattedMessage.length).isLessThan(long.length)
     }
 }
