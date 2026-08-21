@@ -9,28 +9,19 @@ data class RequestLogLine(
     // 헤더를 안 보내는 호출자(옛 앱·직접 호출)가 있어 null 이 가능함
     val clientId: String?,
     val address: String,
-    val responseBytes: Long,
-    // 응답 본문이 없는 상태(204·304)에서는 형식도 없어 null 이 가능함
-    val contentType: String?,
     val kind: String,
 ) {
     /**
-     * 칸을 `|` 로 나눠 눈이 같은 자리를 따라가게 한다. 본문 자체는 남기지 않는다 —
-     * 좌표·검색 결과·공유 토큰이 들어 있다. 크기와 형식만 남긴다.
+     * IP 를 맨 앞에 둔다 — 침해 시도를 훑을 때 먼저 찾는 값이다.
+     * 칸을 `|` 로 나눠 눈이 같은 자리를 따라가게 한다. 응답 본문·크기는 남기지 않는다.
      */
     fun format(): String = listOf(
-        "$status $method ${shortPath()}",
+        "🌐 $address",
+        "[$status $method] ${shortPath()}",
         "⏱ ${durationMs}ms",
-        "📦 ${responseBytes}B${typeSuffix()}",
         "👤 ${clientId ?: UNKNOWN_CLIENT}",
         "📱 $kind",
-        "🌐 $address",
     ).joinToString(SEPARATOR)
-
-    private fun typeSuffix(): String {
-        val type: String = contentType ?: return ""
-        return " ${type.substringBefore(';').substringAfter('/')}"
-    }
 
     /** 스캐너가 아주 긴 경로를 던져 로그를 덮는 것을 막는다. */
     private fun shortPath(): String {

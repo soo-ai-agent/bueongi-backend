@@ -108,7 +108,7 @@ class RequestMetricsFilterTest {
         RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("200 POST /share/{token}/location")
+        assertThat(line).contains("[200 POST] /share/{token}/location")
         assertThat(line).doesNotContain("abc123")
         assertThat(line).doesNotContain("37.5")
     }
@@ -173,7 +173,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
 
-        assertThat(appender.list.single().formattedMessage).contains("404 GET /wp-login.php")
+        assertThat(appender.list.single().formattedMessage).contains("[404 GET] /wp-login.php")
         assertThat(store.recorded).isEmpty()
     }
 
@@ -189,20 +189,4 @@ class RequestMetricsFilterTest {
         assertThat(appender.list.single().formattedMessage.length).isLessThan(long.length)
     }
 
-    @Test
-    fun `응답 크기와 형식을 남기되 본문은 남기지 않는다`() {
-        val appender = captureLogs()
-        val body = """{"token":"secret-abc","lat":37.5}"""
-
-        RequestMetricsFilter(CapturingStore()).doFilter(
-            MockHttpServletRequest("GET", "/api/app-info"),
-            MockHttpServletResponse(),
-            chainWriting(200, body, "application/json;charset=UTF-8"),
-        )
-
-        val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("📦 ${body.toByteArray().size}B json")
-        assertThat(line).doesNotContain("secret-abc")
-        assertThat(line).doesNotContain("37.5")
-    }
 }

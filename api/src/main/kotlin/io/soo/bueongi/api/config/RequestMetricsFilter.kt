@@ -9,7 +9,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.web.filter.OncePerRequestFilter
-import org.springframework.web.util.ContentCachingResponseWrapper
 
 /**
  * 요청을 한 줄로 남기고 메트릭에 기록한다.
@@ -26,14 +25,9 @@ class RequestMetricsFilter(
         filterChain: FilterChain,
     ) {
         val startedAt: Long = System.currentTimeMillis()
-        // 응답 크기를 알려면 내보낸 바이트를 세야 한다 — 래퍼가 세고 마지막에 실제 응답으로 흘려보낸다.
-        val counted = ContentCachingResponseWrapper(response)
         try {
-            filterChain.doFilter(request, counted)
+            filterChain.doFilter(request, response)
         } finally {
-            val responseBytes: Long = counted.contentSize.toLong()
-            val contentType: String? = counted.contentType
-            counted.copyBodyToResponse()
             val durationMs: Long = System.currentTimeMillis() - startedAt
             val path: String = normalizeRequestPath(request.requestURI)
             val clientId: String? = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() }
@@ -45,8 +39,6 @@ class RequestMetricsFilter(
                     durationMs = durationMs,
                     clientId = clientId,
                     address = clientAddressOf(request),
-                    responseBytes = responseBytes,
-                    contentType = contentType,
                     kind = clientKindOf(
                         declaredPlatform = request.getHeader(CLIENT_PLATFORM_HEADER),
                         userAgent = request.getHeader(HttpHeaders.USER_AGENT),
