@@ -8,14 +8,10 @@ import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.filter.OncePerRequestFilter
+import org.springframework.web.util.ContentCachingResponseWrapper
 
 /**
  * 요청을 한 줄로 남기고 메트릭에 기록한다.
- *
- * AOP 가 아니라 필터인 이유: 컨트롤러에 닿기 전에 끝나는 요청(404·인증 거부·검증 실패)도
- * 남겨야 하고, 최종 응답 상태는 이 자리에서만 알 수 있다.
- *
- * 질의 문자열은 남기지 않는다 — 검색어·좌표가 실려 개인정보가 된다.
  */
 class RequestMetricsFilter(
     private val requestMetricStore: RequestMetricStore,
@@ -29,9 +25,14 @@ class RequestMetricsFilter(
         filterChain: FilterChain,
     ) {
         val startedAt: Long = System.currentTimeMillis()
+        // 응답 크기를 알려면 내보낸 바이트를 세야 한다 — 래퍼가 세고 마지막에 실제 응답으로 흘려보낸다.
+        val counted = ContentCachingResponseWrapper(response)
         try {
-            filterChain.doFilter(request, response)
+            filterChain.doFilter(request, counted)
         } finally {
+            val responseBytes: Long = counted.contentSize.toLong()
+            val contentType: String? = counted.contentType
+            counted.copyBodyToResponse()
             val durationMs: Long = System.currentTimeMillis() - startedAt
             val path: String = normalizeRequestPath(request.requestURI)
             val clientId: String? = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() }
@@ -43,6 +44,8 @@ class RequestMetricsFilter(
                     durationMs = durationMs,
                     clientId = clientId,
                     address = clientAddressOf(request),
+                    responseBytes = responseBytes,
+                    contentType = contentType,
                 ),
             )
             if (isOurApi(path)) {
@@ -105,9 +108,7 @@ class RequestMetricsFilter(
 
     private companion object {
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
-
         val EXCLUDED_PREFIXES: List<String> = listOf("/api/admin", "/actuator", "/healthz", "/cdn")
-
         val METRIC_PREFIXES: List<String> = listOf("/api", "/share")
     }
 }

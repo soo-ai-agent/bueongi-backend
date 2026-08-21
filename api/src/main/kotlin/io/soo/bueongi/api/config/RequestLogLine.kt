@@ -9,9 +9,19 @@ data class RequestLogLine(
     // 헤더를 안 보내는 호출자(옛 앱·직접 호출)가 있어 null 이 가능함
     val clientId: String?,
     val address: String,
+    val responseBytes: Long,
+    // 응답 본문이 없는 상태(204·304)에서는 형식도 없어 null 이 가능함
+    val contentType: String?,
 ) {
+    /** 본문 자체는 남기지 않는다 — 좌표·검색 결과·공유 토큰이 들어 있다. 크기와 형식만 남긴다. */
     fun format(): String =
-        "$method ${shortPath()} $status (${durationMs}ms) client=${clientId ?: UNKNOWN_CLIENT} ip=$address"
+        "$method ${shortPath()} $status (${durationMs}ms) " +
+            "client=${clientId ?: UNKNOWN_CLIENT} ip=$address out=${responseBytes}B${typeSuffix()}"
+
+    private fun typeSuffix(): String {
+        val type: String = contentType ?: return ""
+        return " type=${type.substringBefore(';')}"
+    }
 
     /** 스캐너가 아주 긴 경로를 던져 로그를 덮는 것을 막는다. */
     private fun shortPath(): String {

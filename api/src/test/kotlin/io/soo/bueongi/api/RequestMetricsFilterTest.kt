@@ -30,6 +30,14 @@ class RequestMetricsFilterTest {
         (response as HttpServletResponse).status = status
     }
 
+    private fun chainWriting(status: Int, body: String, type: String) = FilterChain { _, response ->
+        val http = response as HttpServletResponse
+        http.status = status
+        http.contentType = type
+        http.writer.write(body)
+        http.writer.flush()
+    }
+
     @Test
     fun `체인 실행 후 메서드 정규화경로 clientId status 를 기록한다`() {
         val store = CapturingStore()
@@ -179,5 +187,22 @@ class RequestMetricsFilterTest {
 
         assertThat(appender.list.single().formattedMessage).contains("…")
         assertThat(appender.list.single().formattedMessage.length).isLessThan(long.length)
+    }
+
+    @Test
+    fun `응답 크기와 형식을 남기되 본문은 남기지 않는다`() {
+        val appender = captureLogs()
+        val body = """{"token":"secret-abc","lat":37.5}"""
+
+        RequestMetricsFilter(CapturingStore()).doFilter(
+            MockHttpServletRequest("GET", "/api/app-info"),
+            MockHttpServletResponse(),
+            chainWriting(200, body, "application/json;charset=UTF-8"),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("out=${body.toByteArray().size}B", "type=application/json")
+        assertThat(line).doesNotContain("secret-abc")
+        assertThat(line).doesNotContain("37.5")
     }
 }

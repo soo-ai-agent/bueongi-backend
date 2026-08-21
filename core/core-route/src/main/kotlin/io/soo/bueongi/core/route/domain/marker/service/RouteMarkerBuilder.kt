@@ -5,7 +5,6 @@ import io.soo.bueongi.core.enums.SafetySpotPoiType
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillTrigger
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -25,8 +24,8 @@ class RouteMarkerBuilder(
     private val safetySpots: SafetySpotSpatialSource,
     // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val markerEvents: MarkerEventPublisher? = null,
-    // 지역 채우기를 안 쓰는 구성(테스트 등)에서 null 이 가능함
-    private val regionFill: SafetySpotFillTrigger? = null,
+    // 사건을 받을 쪽이 없는 구성(테스트 등)에서 null 이 가능함
+    private val visitEvents: RouteVisitEventPublisher? = null,
 ) {
 
     fun buildMarkers(
@@ -35,8 +34,8 @@ class RouteMarkerBuilder(
         path: List<GeoPoint>,
     ): List<SafetySpotPoi> {
         alertIfIndexEmpty()
-        // 이번 응답은 지금 있는 것으로 나가고, 안 받은 지역은 뒤에서 채워 다음 요청부터 보인다.
-        regionFill?.fillAround(listOf(origin, destination))
+        // 이번 응답은 지금 있는 것으로 나간다. 사건을 받은 쪽이 안 받은 지역을 뒤에서 채운다.
+        visitEvents?.routeVisited(listOf(origin, destination))
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         // x·y 는 전체 마커 범위를 알아야 정해지므로 여기서는 0 으로 두고 마지막에 한 번에 채운다.
