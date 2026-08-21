@@ -2,8 +2,13 @@ package io.soo.bueongi.api
 
 import io.soo.bueongi.api.config.RequestMetricsFilter
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger as LogbackLogger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
+import org.slf4j.LoggerFactory
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -76,5 +81,39 @@ class RequestMetricsFilterTest {
         }
 
         assertThat(store.recorded).isEmpty()
+    }
+
+    private fun captureLogs(): ListAppender<ILoggingEvent> {
+        val logger: LogbackLogger = LoggerFactory.getLogger(RequestMetricsFilter::class.java) as LogbackLogger
+        val appender: ListAppender<ILoggingEvent> = ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        return appender
+    }
+
+    @Test
+    fun `요청 한 줄을 남긴다 - 공유 토큰은 가리고 질의 문자열은 안 남긴다`() {
+        val appender = captureLogs()
+        val request = MockHttpServletRequest("POST", "/share/abc123/location")
+        request.queryString = "lat=37.5&lng=127.0"
+
+        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("POST", "/share/{token}/location", "200")
+        assertThat(line).doesNotContain("abc123")
+        assertThat(line).doesNotContain("37.5")
+    }
+
+    @Test
+    fun `서버 오류는 warn 으로 올린다`() {
+        val appender = captureLogs()
+        val request = MockHttpServletRequest("GET", "/api/routes/safe-compare")
+
+        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(500))
+
+        val event: ILoggingEvent = appender.list.single()
+        assertThat(event.level).isEqualTo(Level.WARN)
+        assertThat(event.formattedMessage).contains("500")
     }
 }
