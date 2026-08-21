@@ -108,7 +108,7 @@ class RequestMetricsFilterTest {
         RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("[200 POST] /share/{token}/location")
+        assertThat(line).contains("200 POST", "/share/{token}/location")
         assertThat(line).doesNotContain("abc123")
         assertThat(line).doesNotContain("37.5")
     }
@@ -173,7 +173,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
 
-        assertThat(appender.list.single().formattedMessage).contains("[404 GET] /wp-login.php")
+        assertThat(appender.list.single().formattedMessage).contains("404 GET", "/wp-login.php")
         assertThat(store.recorded).isEmpty()
     }
 

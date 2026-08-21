@@ -17,7 +17,8 @@ data class RequestLogLine(
      */
     fun format(): String = listOf(
         "🌐 $address",
-        "[$status $method] ${shortPath()}",
+        "$status $method",
+        shortPath(),
         "⏱ ${durationMs}ms",
         "👤 ${clientId ?: UNKNOWN_CLIENT}",
         "📱 $kind",
