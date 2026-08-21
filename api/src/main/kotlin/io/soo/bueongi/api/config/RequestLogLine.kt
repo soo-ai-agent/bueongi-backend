@@ -12,15 +12,24 @@ data class RequestLogLine(
     val responseBytes: Long,
     // 응답 본문이 없는 상태(204·304)에서는 형식도 없어 null 이 가능함
     val contentType: String?,
+    val kind: String,
 ) {
-    /** 본문 자체는 남기지 않는다 — 좌표·검색 결과·공유 토큰이 들어 있다. 크기와 형식만 남긴다. */
-    fun format(): String =
-        "$method ${shortPath()} $status (${durationMs}ms) " +
-            "client=${clientId ?: UNKNOWN_CLIENT} ip=$address out=${responseBytes}B${typeSuffix()}"
+    /**
+     * 칸을 `|` 로 나눠 눈이 같은 자리를 따라가게 한다. 본문 자체는 남기지 않는다 —
+     * 좌표·검색 결과·공유 토큰이 들어 있다. 크기와 형식만 남긴다.
+     */
+    fun format(): String = listOf(
+        "$status $method ${shortPath()}",
+        "⏱ ${durationMs}ms",
+        "📦 ${responseBytes}B${typeSuffix()}",
+        "👤 ${clientId ?: UNKNOWN_CLIENT}",
+        "📱 $kind",
+        "🌐 $address",
+    ).joinToString(SEPARATOR)
 
     private fun typeSuffix(): String {
         val type: String = contentType ?: return ""
-        return " type=${type.substringBefore(';')}"
+        return " ${type.substringBefore(';').substringAfter('/')}"
     }
 
     /** 스캐너가 아주 긴 경로를 던져 로그를 덮는 것을 막는다. */
@@ -35,6 +44,7 @@ data class RequestLogLine(
     fun needsAttention(): Boolean = status >= CLIENT_ERROR_STATUS
 
     private companion object {
+        const val SEPARATOR: String = "  |  "
         const val CLIENT_ERROR_STATUS: Int = 400
         const val MAX_PATH_LENGTH: Int = 200
         const val UNKNOWN_CLIENT: String = "unknown"

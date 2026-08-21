@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
 import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.util.ContentCachingResponseWrapper
 
@@ -46,6 +47,10 @@ class RequestMetricsFilter(
                     address = clientAddressOf(request),
                     responseBytes = responseBytes,
                     contentType = contentType,
+                    kind = clientKindOf(
+                        declaredPlatform = request.getHeader(CLIENT_PLATFORM_HEADER),
+                        userAgent = request.getHeader(HttpHeaders.USER_AGENT),
+                    ),
                 ),
             )
             if (isOurApi(path)) {
@@ -108,6 +113,9 @@ class RequestMetricsFilter(
 
     private companion object {
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
+
+        /** 앱이 자기 정체를 직접 밝히는 헤더 — UA 짐작보다 정확하다. */
+        const val CLIENT_PLATFORM_HEADER: String = "X-Client-Platform"
         val EXCLUDED_PREFIXES: List<String> = listOf("/api/admin", "/actuator", "/healthz", "/cdn")
         val METRIC_PREFIXES: List<String> = listOf("/api", "/share")
     }

@@ -108,7 +108,7 @@ class RequestMetricsFilterTest {
         RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("POST", "/share/{token}/location", "200")
+        assertThat(line).contains("200 POST /share/{token}/location")
         assertThat(line).doesNotContain("abc123")
         assertThat(line).doesNotContain("37.5")
     }
@@ -121,7 +121,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
-        assertThat(appender.list.single().formattedMessage).contains("client=anon-42")
+        assertThat(appender.list.single().formattedMessage).contains("👤 anon-42")
     }
 
     @Test
@@ -131,7 +131,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
-        assertThat(appender.list.single().formattedMessage).contains("client=unknown")
+        assertThat(appender.list.single().formattedMessage).contains("👤 unknown")
     }
 
     @Test
@@ -161,8 +161,8 @@ class RequestMetricsFilterTest {
         RequestMetricsFilter(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
         RequestMetricsFilter(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
 
-        assertThat(appender.list[0].formattedMessage).contains("ip=10.0.0.9")
-        assertThat(appender.list[1].formattedMessage).contains("ip=203.0.113.7")
+        assertThat(appender.list[0].formattedMessage).contains("🌐 10.0.0.9")
+        assertThat(appender.list[1].formattedMessage).contains("🌐 203.0.113.7")
     }
 
     @Test
@@ -173,7 +173,7 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
 
-        assertThat(appender.list.single().formattedMessage).contains("/wp-login.php", "404")
+        assertThat(appender.list.single().formattedMessage).contains("404 GET /wp-login.php")
         assertThat(store.recorded).isEmpty()
     }
 
@@ -201,7 +201,7 @@ class RequestMetricsFilterTest {
         )
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("out=${body.toByteArray().size}B", "type=application/json")
+        assertThat(line).contains("📦 ${body.toByteArray().size}B json")
         assertThat(line).doesNotContain("secret-abc")
         assertThat(line).doesNotContain("37.5")
     }
