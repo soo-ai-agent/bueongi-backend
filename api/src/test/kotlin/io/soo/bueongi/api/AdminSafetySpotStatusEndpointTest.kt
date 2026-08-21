@@ -29,4 +29,17 @@ class AdminSafetySpotStatusEndpointTest(
                 jsonPath("$.safetySpots[0].cdnVersion") { value("2026-06-19") }
             }
     }
+
+    @Test
+    fun `regions 는 자치단체별 종류 건수와 이름을 반환한다`() {
+        mockMvc.get("/api/admin/safety-spot-status/regions")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$[0].code") { value("3130000") }
+                jsonPath("$[0].sido") { value("서울특별시") }
+                jsonPath("$[0].name") { value("마포구") }
+                jsonPath("$[0].total") { value(2) }
+                jsonPath("$[0].counts.cctv") { value(2) }
+            }
+    }
 }

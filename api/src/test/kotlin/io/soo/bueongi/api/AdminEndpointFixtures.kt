@@ -1,6 +1,9 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ads.domain.service.AdStatsService
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
+import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
 import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
@@ -85,11 +88,18 @@ class AdminEndpointFixtures {
         fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)
 
         @Bean
-        fun safetySpotStatusService(): SafetySpotStatusService {
-            val source = object : SafetySpotSpatialSource {
+        fun safetySpotSource(): SafetySpotSpatialSource =
+            object : SafetySpotSpatialSource {
                 private val cctv = GridSpatialIndex(
                     // 인덱스가 같은 좌표를 하나로 세므로 지점을 달리한다.
-                    List(2) { i -> SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.5 + i * 0.001, lng = 127.0) },
+                    List(2) { i ->
+                        SafetySpotPoint(
+                            type = SafetySpotType.CCTV,
+                            lat = 37.5 + i * 0.001,
+                            lng = 127.0,
+                            sigungu = "3130000",
+                        )
+                    },
                 )
                 override fun index(type: SafetySpotType): GridSpatialIndex =
                     if (type == SafetySpotType.CCTV) {
@@ -100,11 +110,18 @@ class AdminEndpointFixtures {
                 override val safePaths: List<SafePath> = emptyList()
                 override val freshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }
+
+        @Bean
+        fun safetySpotStatusService(source: SafetySpotSpatialSource): SafetySpotStatusService {
             val holder = SafetySpotRefreshStatusStore().apply {
                 record(mapOf(SafetySpotType.CCTV to 2), atEpochMs = 1L)
             }
             return SafetySpotStatusService(source, holder)
         }
+
+        @Bean
+        fun regionSafetySpotStatusService(source: SafetySpotSpatialSource): RegionSafetySpotStatusService =
+            RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper()))
 
         @Bean
         fun locationStore(): LocationStore = InMemoryLocationStore(FIXED_CLOCK).apply {

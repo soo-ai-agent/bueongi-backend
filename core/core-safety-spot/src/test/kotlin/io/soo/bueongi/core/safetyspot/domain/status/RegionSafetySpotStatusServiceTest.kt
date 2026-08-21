@@ -1,0 +1,80 @@
+package io.soo.bueongi.core.safetyspot.domain.status
+
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.status.model.RegionSafetySpotCount
+import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
+import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+
+class RegionSafetySpotStatusServiceTest {
+
+    private fun service(points: Map<SafetySpotType, List<SafetySpotPoint>>): RegionSafetySpotStatusService =
+        RegionSafetySpotStatusService(FakeSafetySpotSource(points), RegionNameCatalog(jacksonObjectMapper()))
+
+    @Test
+    fun `자치단체별로 종류를 나눠 세고 많은 곳부터 보여 준다`() {
+        val summary: List<RegionSafetySpotCount> = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                    SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                ),
+                SafetySpotType.BELL to listOf(
+                    SafetySpotPoint(SafetySpotType.BELL, 37.52, 127.02, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        assertThat(summary.map { it.code }).containsExactly(MAPO, CHANGNYEONG)
+        val mapo: RegionSafetySpotCount = summary.first()
+        assertThat(mapo.total).isEqualTo(3)
+        assertThat(mapo.countsByType[SafetySpotType.CCTV]).isEqualTo(2)
+        assertThat(mapo.countsByType[SafetySpotType.BELL]).isEqualTo(1)
+    }
+
+    @Test
+    fun `이름표에 있는 코드는 사람이 읽는 이름으로 바꾼다`() {
+        val summary = service(
+            mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = MAPO))),
+        ).summarize()
+
+        assertThat(summary.single().sido).isEqualTo("서울특별시")
+        assertThat(summary.single().name).isEqualTo("마포구")
+    }
+
+    @Test
+    fun `모르는 코드는 코드를 그대로 보여 주고 시도는 비운다 - 추측하지 않는다`() {
+        val summary = service(
+            mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "9999999"))),
+        ).summarize()
+
+        assertThat(summary.single().name).isEqualTo("9999999")
+        assertThat(summary.single().sido).isEmpty()
+    }
+
+    /** 빼 버리면 합계가 전체 적재량과 안 맞아 "왜 적은가"를 다시 조사하게 된다. */
+    @Test
+    fun `지역을 모르는 지점도 한 줄로 모아 합계를 맞춘다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0),
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.6, 127.1, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        assertThat(summary.sumOf { it.total }).isEqualTo(2)
+        assertThat(summary.map { it.code }).contains("unknown")
+    }
+
+    private companion object {
+        const val MAPO: String = "3130000"
+        const val CHANGNYEONG: String = "5410000"
+    }
+}
