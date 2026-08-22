@@ -92,12 +92,51 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.map { it.code }).contains("unknown")
     }
 
+    /**
+     * '전남광주통합특별시' 는 통합 논의 때 쓰던 이름이라 현행 법정 시도가 아니다.
+     * 개명이 아니라 두 시도를 묶은 것이라, 이름표만 바꿔서는 못 풀고 자치단체로 갈라야 한다.
+     */
+    @Test
+    fun `묶어 적은 광주 전남은 자치단체로 갈라 제 시도로 돌린다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 35.1, 126.9, sigungu = GWANGJU_BUKGU),
+                    SafetySpotPoint(SafetySpotType.CCTV, 34.8, 126.4, sigungu = MOKPO),
+                ),
+            ),
+        ).summarize()
+
+        val bySido: Map<String, String> = summary.associate { it.name to it.sido }
+        assertThat(bySido["북구"]).isEqualTo("광주광역시")
+        assertThat(bySido["목포시"]).isEqualTo("전라남도")
+        assertThat(summary.map { it.sido }).doesNotContain("전남광주통합특별시")
+    }
+
+    @Test
+    fun `묶어 적은 이름은 어느 줄에도 남지 않는다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 34.9, 127.5, sigungu = SUNCHEON),
+                ),
+            ),
+        ).summarize()
+
+        assertThat(summary.single().sido).isEqualTo("전라남도")
+    }
+
     private companion object {
         const val MAPO: String = "3130000"
 
         /** 이름표에 옛 이름('강원도')으로 남아 있던 유일한 자치단체. */
         const val HWACHEON: String = "4311000"
         const val GANGNEUNG: String = "4201000"
+
+        /** 원천이 '전남광주통합특별시' 로 묶어 적어 둔 자치단체들. */
+        const val GWANGJU_BUKGU: String = "5820000"
+        const val MOKPO: String = "5780000"
+        const val SUNCHEON: String = "5790000"
         const val CHANGNYEONG: String = "5410000"
     }
 }

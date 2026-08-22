@@ -40,21 +40,44 @@ class RegionNameCatalog(objectMapper: ObjectMapper) {
     }
 
     /**
-     * 같은 시도가 옛 이름과 새 이름으로 갈려 오는 것을 하나로 모은다 —
-     * 원천 CSV 가 기관마다 갱신 시점이 달라 화천군만 '강원도' 로 남아 있는 식이다.
-     * 이름만 맞추는 것이고 어느 시도인지 추측하지는 않는다.
+     * 원천이 적어 준 시도를 현행 법정 시도로 맞춘다. 두 가지를 푼다 —
+     * 옛 이름(화천군만 '강원도')과, 두 시도를 묶어 부른 이름('전남광주통합특별시').
+     *
+     * **시도를 안 적어 준 곳은 그대로 비워 둔다** — 이름으로 짐작해 채우지 않는다.
      */
     private fun withCurrentSidoNames(loaded: Map<String, RegionName>): Map<String, RegionName> {
         val normalized: LinkedHashMap<String, RegionName> = LinkedHashMap()
         for ((code, region) in loaded) {
-            val currentSido: String = SIDO_RENAMES[region.sido] ?: region.sido
-            normalized[code] = region.copy(sido = currentSido)
+            normalized[code] = region.copy(sido = currentSidoOf(region))
         }
         return normalized
     }
 
+    /**
+     * 원천이 광주와 전남을 한 이름으로 묶어 적은 것은 개명이 아니라 **두 시도를 합쳐 부른 것**이라,
+     * 이름표를 바꾸는 것만으로는 못 푼다. 자치단체 이름으로 갈라 현재 법정 시도에 돌려 놓는다.
+     */
+    private fun currentSidoOf(region: RegionName): String {
+        if (region.sido == MERGED_GWANGJU_JEONNAM) {
+            if (GWANGJU_DISTRICTS.contains(region.name)) {
+                return "광주광역시"
+            }
+            return "전라남도"
+        }
+        return SIDO_RENAMES[region.sido] ?: region.sido
+    }
+
     private companion object {
         const val RESOURCE_PATH: String = "region-names.json"
+
+        /** 통합 논의 때 쓰던 이름 — 현행 법정 시도가 아니고, 이 표에서 22곳만 이렇게 적혀 있었다. */
+        const val MERGED_GWANGJU_JEONNAM: String = "전남광주통합특별시"
+
+        /**
+         * 묶인 이름 안에서 광주 쪽인 자치구. 이름이 흔해도(동구·서구…) 이 묶음 안에서만 보므로
+         * 다른 시도의 같은 이름과 섞이지 않는다. 광산구는 원천이 이미 광주광역시로 적어 여기 없다.
+         */
+        val GWANGJU_DISTRICTS: Set<String> = setOf("동구", "서구", "남구", "북구", "광산구")
 
         /** 옛 이름 → 현재 법정 이름(강원 2023-06-11, 전북 2024-01-18 개편). */
         val SIDO_RENAMES: Map<String, String> = mapOf(
