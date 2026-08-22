@@ -1,5 +1,7 @@
 package io.soo.bueongi.api.config
 
+import io.soo.bueongi.core.enums.RequestCaller
+import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import jakarta.servlet.FilterChain
@@ -15,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter
  */
 class RequestMetricsFilter(
     private val requestMetricStore: RequestMetricStore,
+    private val adminRequestMetricStore: AdminRequestMetricStore,
 ) : OncePerRequestFilter() {
 
     private val log: Logger = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
@@ -47,8 +50,8 @@ class RequestMetricsFilter(
                     caller = caller,
                 ),
             )
-            if (caller == RequestCaller.USER && isOurApi(path)) {
-                recordSafely(clientId, path, request.method, response.status, startedAt, durationMs)
+            if (isOurApi(path)) {
+                recordSafely(caller, clientId, path, request.method, response.status, startedAt, durationMs)
             }
         }
     }
@@ -64,8 +67,8 @@ class RequestMetricsFilter(
     }
 
     /**
-     * 관리자 화면의 조회는 사용자 트래픽이 아니다. 로그에는 남기되(누가 언제 봤는지가 필요하다)
-     * 트래픽 지표에는 넣지 않는다 — 미리보기 5초 폴링이 사용자 수·호출량을 부풀린다.
+     * 관리자 화면의 조회는 사용자 트래픽이 아니다. 버리지 않고 **다른 창에 따로** 담아
+     * 화면에서 갈라 보여 준다 — 섞으면 미리보기 5초 폴링이 사용자 수·호출량을 부풀린다.
      */
     private fun callerOf(path: String): RequestCaller {
         for (prefix in ADMIN_PREFIXES) {
@@ -94,7 +97,14 @@ class RequestMetricsFilter(
         log.info(line.format())
     }
 
+    /** 부른 쪽마다 다른 창에 담는다 — 섞으면 한쪽이 다른 쪽을 밀어낸다. */
+    private fun storeFor(caller: RequestCaller): RequestMetricStore = when (caller) {
+        RequestCaller.ADMIN -> adminRequestMetricStore
+        RequestCaller.USER -> requestMetricStore
+    }
+
     private fun recordSafely(
+        caller: RequestCaller,
         clientId: String?,
         path: String,
         method: String,
@@ -103,7 +113,7 @@ class RequestMetricsFilter(
         durationMs: Long,
     ) {
         try {
-            requestMetricStore.record(
+            storeFor(caller).record(
                 RequestMetric(
                     atEpochMs = startedAt,
                     method = method,
@@ -111,6 +121,7 @@ class RequestMetricsFilter(
                     clientId = clientId,
                     status = status,
                     durationMs = durationMs,
+                    caller = caller,
                 ),
             )
         } catch (e: Exception) {

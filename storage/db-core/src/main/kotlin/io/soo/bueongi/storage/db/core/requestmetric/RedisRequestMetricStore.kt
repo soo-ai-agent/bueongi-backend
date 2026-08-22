@@ -7,14 +7,16 @@ import org.springframework.data.redis.core.StringRedisTemplate
 
 class RedisRequestMetricStore(
     redis: StringRedisTemplate,
+    key: String = "requestmetric",
+    cap: Int = REQUEST_METRIC_CAP,
     objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : RequestMetricStore {
 
     private val entries: RedisJsonLog<RequestMetric> = RedisJsonLog(
         redis = redis,
         objectMapper = objectMapper,
-        key = "requestmetric",
-        cap = REQUEST_METRIC_CAP,
+        key = key,
+        cap = cap,
         type = RequestMetric::class.java,
         label = "수신 요청 메트릭",
     )

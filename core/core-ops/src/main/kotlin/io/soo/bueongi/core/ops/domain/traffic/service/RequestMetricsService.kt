@@ -2,6 +2,7 @@ package io.soo.bueongi.core.ops.domain.traffic.service
 
 import io.soo.bueongi.support.util.todayStartMs
 import io.soo.bueongi.support.util.SERVICE_ZONE
+import io.soo.bueongi.core.ops.domain.traffic.model.AdminTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.DailyActive
 import io.soo.bueongi.core.ops.domain.traffic.model.EndpointTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.EstimatedUsers
@@ -12,10 +13,13 @@ import io.soo.bueongi.support.util.countByHour
 import io.soo.bueongi.core.ops.domain.traffic.model.LatencyPercentiles
 import io.soo.bueongi.support.util.nearestRankPercentile
 
+import io.soo.bueongi.storage.db.core.requestmetric.ADMIN_REQUEST_METRIC_CAP
+import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.springframework.stereotype.Service
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -24,6 +28,8 @@ import kotlin.math.roundToLong
 @Service
 class RequestMetricsService(
     private val requestMetricStore: RequestMetricStore,
+    private val adminRequestMetricStore: AdminRequestMetricStore,
+    private val clock: Clock,
 ) {
 
     fun summarize(): TrafficSummary {
@@ -37,6 +43,21 @@ class RequestMetricsService(
             hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
             hourlyErrors = hourlyErrors(metrics),
             dailyActiveUsers = dailyActiveUsers(metrics),
+            adminCalls = adminCalls(),
+        )
+    }
+
+    /** 관리자 호출은 따로 센다 — 사용자 수 추정은 뜻이 없어 넣지 않는다(관리자는 한 사람이다). */
+    private fun adminCalls(): AdminTraffic {
+        val metrics: List<RequestMetric> = adminRequestMetricStore.findRecent(ADMIN_REQUEST_METRIC_CAP)
+        val todayStartMs: Long = todayStartMs(clock.millis())
+        return AdminTraffic(
+            totalCalls = metrics.size,
+            callsToday = metrics.count { it.atEpochMs >= todayStartMs },
+            windowSize = metrics.size,
+            windowCap = ADMIN_REQUEST_METRIC_CAP,
+            byEndpoint = byEndpoint(metrics),
+            hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
         )
     }
 

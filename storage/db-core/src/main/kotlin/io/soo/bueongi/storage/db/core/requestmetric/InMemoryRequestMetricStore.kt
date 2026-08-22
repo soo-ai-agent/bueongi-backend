@@ -3,7 +3,9 @@ package io.soo.bueongi.storage.db.core.requestmetric
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class InMemoryRequestMetricStore : RequestMetricStore {
+class InMemoryRequestMetricStore(
+    private val cap: Int = REQUEST_METRIC_CAP,
+) : RequestMetricStore {
 
     private val logger: Logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
     private val metrics: ArrayDeque<RequestMetric> = ArrayDeque<RequestMetric>()
@@ -13,7 +15,7 @@ class InMemoryRequestMetricStore : RequestMetricStore {
         try {
             synchronized(lock) {
                 metrics.addFirst(metric)
-                while (metrics.size > REQUEST_METRIC_CAP) {
+                while (metrics.size > cap) {
                     metrics.removeLast()
                 }
             }

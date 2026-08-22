@@ -6,6 +6,7 @@ import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.enums.ExternalApiProvider
+import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.core.ops.domain.external.service.ExternalApiMetricsService
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
@@ -17,6 +18,7 @@ import io.soo.bueongi.support.monitoring.AlertRecord
 import io.soo.bueongi.client.slack.SlackAlertConfig
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
+import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
@@ -39,6 +41,7 @@ import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Primary
 
 /** 관리자 조회 엔드포인트들이 공유하는 가짜 저장소. 각 테스트는 자기 컨트롤러만 띄우고 이것을 @Import 한다. */
 class AdminEndpointFixtures {
@@ -63,6 +66,7 @@ class AdminEndpointFixtures {
         fun routeStatsService(store: RouteStatsStore): RouteStatsService = RouteStatsService(store)
 
         @Bean
+        @Primary
         fun requestMetricStore(): RequestMetricStore = object : RequestMetricStore {
             override fun record(metric: RequestMetric) = Unit
             override fun findRecent(limit: Int): List<RequestMetric> =
@@ -79,7 +83,27 @@ class AdminEndpointFixtures {
         }
 
         @Bean
-        fun requestMetricsService(store: RequestMetricStore): RequestMetricsService = RequestMetricsService(store)
+        fun adminRequestMetricStore(): AdminRequestMetricStore = object : AdminRequestMetricStore {
+            override fun record(metric: RequestMetric) = Unit
+            override fun findRecent(limit: Int): List<RequestMetric> =
+                listOf(
+                    RequestMetric(
+                        atEpochMs = FIXED_NOW.toEpochMilli(),
+                        method = "GET",
+                        endpoint = "/api/admin/traffic",
+                        clientId = null,
+                        status = 200,
+                        durationMs = 8,
+                        caller = RequestCaller.ADMIN,
+                    ),
+                )
+        }
+
+        @Bean
+        fun requestMetricsService(
+            store: RequestMetricStore,
+            adminStore: AdminRequestMetricStore,
+        ): RequestMetricsService = RequestMetricsService(store, adminStore, FIXED_CLOCK)
 
         @Bean
         fun externalCallMetricStore(): ExternalCallMetricStore = object : ExternalCallMetricStore {

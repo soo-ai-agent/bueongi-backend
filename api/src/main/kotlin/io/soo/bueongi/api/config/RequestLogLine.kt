@@ -1,5 +1,7 @@
 package io.soo.bueongi.api.config
 
+import io.soo.bueongi.core.enums.RequestCaller
+
 /** 요청 한 건을 로그 한 줄로 옮긴 값. */
 data class RequestLogLine(
     val method: String,
@@ -19,13 +21,19 @@ data class RequestLogLine(
      */
     fun format(): String = listOf(
         "🌐 $address",
-        caller.label,
+        callerLabel(),
         "$status $method",
         shortPath(),
         "⏱ ${durationMs}ms",
         "👤 ${clientId ?: UNKNOWN_CLIENT}",
         "📱 $kind",
     ).joinToString(SEPARATOR)
+
+    /** 눈으로 훑을 때 갈리라고 기호를 붙인다 — 와이어 값(admin·user)은 그대로 두고 여기서만 꾸민다. */
+    private fun callerLabel(): String = when (caller) {
+        RequestCaller.ADMIN -> "🛠 관리자"
+        RequestCaller.USER -> "🙋 사용자"
+    }
 
     /** 스캐너가 아주 긴 경로를 던져 로그를 덮는 것을 막는다. */
     private fun shortPath(): String {

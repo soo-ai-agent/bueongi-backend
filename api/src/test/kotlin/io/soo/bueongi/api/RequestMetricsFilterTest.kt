@@ -6,6 +6,8 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger as LogbackLogger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.soo.bueongi.core.enums.RequestCaller
+import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import org.slf4j.LoggerFactory
@@ -26,6 +28,17 @@ class RequestMetricsFilterTest {
         override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
     }
 
+    private class CapturingAdminStore : AdminRequestMetricStore {
+        val recorded: MutableList<RequestMetric> = mutableListOf<RequestMetric>()
+        override fun record(metric: RequestMetric) {
+            recorded += metric
+        }
+        override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
+    }
+
+    /** 관리자 창을 안 볼 때 쓰는 기본 조립 — 사용자 창만 단언하는 시험에서 잡음을 줄인다. */
+    private fun filterOf(store: RequestMetricStore) = RequestMetricsFilter(store, CapturingAdminStore())
+
     private fun chainSetting(status: Int) = FilterChain { _, response ->
         (response as HttpServletResponse).status = status
     }
@@ -45,7 +58,7 @@ class RequestMetricsFilterTest {
         request.addHeader("X-Client-Id", "anon-42")
         val response = MockHttpServletResponse()
 
-        RequestMetricsFilter(store).doFilter(request, response, chainSetting(200))
+        filterOf(store).doFilter(request, response, chainSetting(200))
 
         val metric: RequestMetric = store.recorded.single()
         assertThat(metric.method).isEqualTo("POST")
@@ -61,8 +74,8 @@ class RequestMetricsFilterTest {
         val missing = MockHttpServletRequest("GET", "/api/places/search")
         val blank = MockHttpServletRequest("GET", "/api/places/search").apply { addHeader("X-Client-Id", "   ") }
 
-        RequestMetricsFilter(store).doFilter(missing, MockHttpServletResponse(), chainSetting(200))
-        RequestMetricsFilter(store).doFilter(blank, MockHttpServletResponse(), chainSetting(200))
+        filterOf(store).doFilter(missing, MockHttpServletResponse(), chainSetting(200))
+        filterOf(store).doFilter(blank, MockHttpServletResponse(), chainSetting(200))
 
         assertThat(store.recorded.map { it.clientId }).containsExactly(null, null)
     }
@@ -73,7 +86,7 @@ class RequestMetricsFilterTest {
         val request = MockHttpServletRequest("GET", "/api/places/search")
         request.addHeader("X-Client-Id", "anon-1")
 
-        RequestMetricsFilter(store).doFilter(request, MockHttpServletResponse(), chainSetting(500))
+        filterOf(store).doFilter(request, MockHttpServletResponse(), chainSetting(500))
 
         assertThat(store.recorded.single().status).isEqualTo(500)
     }
@@ -81,7 +94,7 @@ class RequestMetricsFilterTest {
     @Test
     fun `관리자와 운영 경로는 계측하지 않는다`() {
         val store = CapturingStore()
-        val filter = RequestMetricsFilter(store)
+        val filter = filterOf(store)
         val excluded: List<String> = listOf("/api/admin/traffic", "/actuator/health", "/healthz", "/cdn/safetySpots.json")
 
         excluded.forEach { path ->
@@ -99,7 +112,7 @@ class RequestMetricsFilterTest {
     fun `관리자 조회는 로그에 남기되 사용자 트래픽과 갈라 적는다`() {
         val appender = captureLogs()
         val store = CapturingStore()
-        val filter = RequestMetricsFilter(store)
+        val filter = filterOf(store)
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/api/admin/share-sessions/abc123/location"),
@@ -119,7 +132,7 @@ class RequestMetricsFilterTest {
     @Test
     fun `관리자 인증 경로도 사용자 트래픽에서 뺀다`() {
         val store = CapturingStore()
-        val filter = RequestMetricsFilter(store)
+        val filter = filterOf(store)
         val adminAuthPaths: List<String> = listOf(
             "/api/v1/auth/admin/login",
             "/api/v1/auth/local/token/refresh",
@@ -132,10 +145,61 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
+    /**
+     * 버리지 않는다 — 관리자가 무엇을 얼마나 열람했는지도 볼 수 있어야 한다.
+     * 다만 창을 갈라 담아, 5초 폴링이 사용자 기록을 밀어내지 않게 한다.
+     */
+    @Test
+    fun `관리자 호출은 관리자 창에만 담는다`() {
+        val store = CapturingStore()
+        val adminStore = CapturingAdminStore()
+        val filter = RequestMetricsFilter(store, adminStore)
+
+        filter.doFilter(
+            MockHttpServletRequest("GET", "/api/admin/traffic"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        assertThat(store.recorded).isEmpty()
+        val metric: RequestMetric = adminStore.recorded.single()
+        assertThat(metric.endpoint).isEqualTo("/api/admin/traffic")
+        assertThat(metric.caller).isEqualTo(RequestCaller.ADMIN)
+    }
+
+    @Test
+    fun `사용자 호출은 사용자 창에만 담는다`() {
+        val store = CapturingStore()
+        val adminStore = CapturingAdminStore()
+        val filter = RequestMetricsFilter(store, adminStore)
+
+        filter.doFilter(
+            MockHttpServletRequest("GET", "/api/places/search"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        assertThat(adminStore.recorded).isEmpty()
+        assertThat(store.recorded.single().caller).isEqualTo(RequestCaller.USER)
+    }
+
+    /** 우리 API 밖(스캐너)은 어느 창에도 안 담는다 — 로그에만 남는다. */
+    @Test
+    fun `우리 API 밖 경로는 관리자 창에도 안 담는다`() {
+        val store = CapturingStore()
+        val adminStore = CapturingAdminStore()
+
+        RequestMetricsFilter(store, adminStore).doFilter(
+            MockHttpServletRequest("GET", "/wp-login.php"),
+            MockHttpServletResponse(), chainSetting(404),
+        )
+
+        assertThat(store.recorded).isEmpty()
+        assertThat(adminStore.recorded).isEmpty()
+    }
+
     @Test
     fun `관리자 인증 경로는 관리자로 적는다`() {
         val appender = captureLogs()
-        val filter = RequestMetricsFilter(CapturingStore())
+        val filter = filterOf(CapturingStore())
 
         filter.doFilter(
             MockHttpServletRequest("POST", "/api/v1/auth/local/token/refresh"),
@@ -149,7 +213,7 @@ class RequestMetricsFilterTest {
     fun `사용자 조회는 사용자로 적고 통계에도 센다`() {
         val appender = captureLogs()
         val store = CapturingStore()
-        val filter = RequestMetricsFilter(store)
+        val filter = filterOf(store)
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/share/abc123/location"),
@@ -176,7 +240,7 @@ class RequestMetricsFilterTest {
         val request = MockHttpServletRequest("POST", "/share/abc123/location")
         request.queryString = "lat=37.5&lng=127.0"
 
-        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+        filterOf(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         val line: String = appender.list.single().formattedMessage
         assertThat(line).contains("200 POST", "/share/{token}/location")
@@ -190,7 +254,7 @@ class RequestMetricsFilterTest {
         val request = MockHttpServletRequest("GET", "/api/places/search")
         request.addHeader("X-Client-Id", "anon-42")
 
-        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+        filterOf(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         assertThat(appender.list.single().formattedMessage).contains("👤 anon-42")
     }
@@ -200,7 +264,7 @@ class RequestMetricsFilterTest {
         val appender = captureLogs()
         val request = MockHttpServletRequest("GET", "/api/places/search")
 
-        RequestMetricsFilter(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+        filterOf(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
         assertThat(appender.list.single().formattedMessage).contains("👤 unknown")
     }
@@ -209,11 +273,11 @@ class RequestMetricsFilterTest {
     fun `서버 오류와 잘못된 요청은 warn 으로 올린다`() {
         val appender = captureLogs()
 
-        RequestMetricsFilter(CapturingStore())
+        filterOf(CapturingStore())
             .doFilter(MockHttpServletRequest("GET", "/api/x"), MockHttpServletResponse(), chainSetting(500))
-        RequestMetricsFilter(CapturingStore())
+        filterOf(CapturingStore())
             .doFilter(MockHttpServletRequest("GET", "/api/y"), MockHttpServletResponse(), chainSetting(404))
-        RequestMetricsFilter(CapturingStore())
+        filterOf(CapturingStore())
             .doFilter(MockHttpServletRequest("GET", "/api/z"), MockHttpServletResponse(), chainSetting(200))
 
         assertThat(appender.list.map { it.level })
@@ -229,8 +293,8 @@ class RequestMetricsFilterTest {
             addHeader("X-Forwarded-For", "203.0.113.7, 70.41.3.18")
         }
 
-        RequestMetricsFilter(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
-        RequestMetricsFilter(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
+        filterOf(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
+        filterOf(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
 
         assertThat(appender.list[0].formattedMessage).contains("🌐 10.0.0.9")
         assertThat(appender.list[1].formattedMessage).contains("🌐 203.0.113.7")
@@ -242,7 +306,7 @@ class RequestMetricsFilterTest {
         val store = CapturingStore()
         val probe = MockHttpServletRequest("GET", "/wp-login.php")
 
-        RequestMetricsFilter(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
+        filterOf(store).doFilter(probe, MockHttpServletResponse(), chainSetting(404))
 
         assertThat(appender.list.single().formattedMessage).contains("404 GET", "/wp-login.php")
         assertThat(store.recorded).isEmpty()
@@ -253,7 +317,7 @@ class RequestMetricsFilterTest {
         val appender = captureLogs()
         val long = "/api/" + "a".repeat(500)
 
-        RequestMetricsFilter(CapturingStore())
+        filterOf(CapturingStore())
             .doFilter(MockHttpServletRequest("GET", long), MockHttpServletResponse(), chainSetting(404))
 
         assertThat(appender.list.single().formattedMessage).contains("…")

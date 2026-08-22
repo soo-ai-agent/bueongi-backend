@@ -33,4 +33,21 @@ class AdminTrafficEndpointTest(
                 jsonPath("$.dailyActiveUsers.length()") { value(7) }
             }
     }
+
+    /** 사용자 표와 관리자 표가 한 응답 안에서 갈려 있어야 화면이 섞어 그리지 않는다. */
+    @Test
+    fun `traffic 은 관리자 호출을 사용자 집계와 갈라서 반환한다`() {
+        mockMvc.get("/api/admin/traffic")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCalls") { value(1) }
+                jsonPath("$.byEndpoint[0].endpoint") { value("/api/places/search") }
+                jsonPath("$.adminCalls.totalCalls") { value(1) }
+                jsonPath("$.adminCalls.callsToday") { value(1) }
+                jsonPath("$.adminCalls.windowCap") { value(1000) }
+                jsonPath("$.adminCalls.byEndpoint[0].endpoint") { value("/api/admin/traffic") }
+                jsonPath("$.adminCalls.hourlyCalls.length()") { value(24) }
+                jsonPath("$.adminCalls.estimatedUsers") { doesNotExist() }
+            }
+    }
 }
