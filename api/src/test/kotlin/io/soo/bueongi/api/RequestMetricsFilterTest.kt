@@ -112,6 +112,39 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
+    /**
+     * 관리자 로그인·토큰 갱신은 /api/admin 밖에 있어 사용자 트래픽으로 세지고 있었다.
+     * 갱신은 토큰 수명(15분)마다 나가 관리자가 화면을 열어둔 동안 계속 쌓인다.
+     */
+    @Test
+    fun `관리자 인증 경로도 사용자 트래픽에서 뺀다`() {
+        val store = CapturingStore()
+        val filter = RequestMetricsFilter(store)
+        val adminAuthPaths: List<String> = listOf(
+            "/api/v1/auth/admin/login",
+            "/api/v1/auth/local/token/refresh",
+        )
+
+        adminAuthPaths.forEach { path ->
+            filter.doFilter(MockHttpServletRequest("POST", path), MockHttpServletResponse(), chainSetting(200))
+        }
+
+        assertThat(store.recorded).isEmpty()
+    }
+
+    @Test
+    fun `관리자 인증 경로는 관리자로 적는다`() {
+        val appender = captureLogs()
+        val filter = RequestMetricsFilter(CapturingStore())
+
+        filter.doFilter(
+            MockHttpServletRequest("POST", "/api/v1/auth/local/token/refresh"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        assertThat(appender.list.single().formattedMessage).contains("🛠 관리자")
+    }
+
     @Test
     fun `사용자 조회는 사용자로 적고 통계에도 센다`() {
         val appender = captureLogs()

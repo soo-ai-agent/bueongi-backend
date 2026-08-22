@@ -68,8 +68,10 @@ class RequestMetricsFilter(
      * 트래픽 지표에는 넣지 않는다 — 미리보기 5초 폴링이 사용자 수·호출량을 부풀린다.
      */
     private fun callerOf(path: String): RequestCaller {
-        if (path == ADMIN_PREFIX || path.startsWith("$ADMIN_PREFIX/")) {
-            return RequestCaller.ADMIN
+        for (prefix in ADMIN_PREFIXES) {
+            if (path == prefix || path.startsWith("$prefix/")) {
+                return RequestCaller.ADMIN
+            }
         }
         return RequestCaller.USER
     }
@@ -121,7 +123,11 @@ class RequestMetricsFilter(
 
         /** 앱이 자기 정체를 직접 밝히는 헤더 — UA 짐작보다 정확하다. */
         const val CLIENT_PLATFORM_HEADER: String = "X-Client-Platform"
-        const val ADMIN_PREFIX: String = "/api/admin"
+        /**
+         * 관리자만 부르는 경로. `/api/v1/auth` 는 전부 AdminAuthController 라 사용자 호출자가 없고,
+         * 토큰 갱신(수명 15분)이 관리자가 화면을 보는 동안 계속 나가 사용자 트래픽을 부풀렸다.
+         */
+        val ADMIN_PREFIXES: List<String> = listOf("/api/admin", "/api/v1/auth")
 
         // /api/admin 은 더 이상 빼지 않는다 — 관리자가 무엇을 조회했는지 로그에 보여야 한다.
         val EXCLUDED_PREFIXES: List<String> = listOf("/actuator", "/healthz", "/cdn")
