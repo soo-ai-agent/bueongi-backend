@@ -310,4 +310,47 @@ class RequestMetricsServiceTest {
         assertThat(summary.adminCalls.totalCalls).isEqualTo(2)
         assertThat(summary.adminCalls.callsToday).isEqualTo(1)
     }
+
+    /**
+     * 성공률(0.98)만으로는 "몇 건이 실패했나"를 못 읽는다 — 건수로도 낸다.
+     * 성공 기준은 기존 성공률과 같은 200..399 다(3xx 포함).
+     */
+    @Test
+    fun `성공 건수와 실패 건수를 함께 낸다`() {
+        val summary = serviceOf(
+            listOf(
+                metric(status = 200),
+                metric(status = 204),
+                metric(status = 500),
+                metric(status = 404),
+            ),
+        ).summarize()
+
+        assertThat(summary.totalCalls).isEqualTo(4)
+        assertThat(summary.successCount).isEqualTo(2)
+        assertThat(summary.failureCount).isEqualTo(2)
+    }
+
+    @Test
+    fun `성공 건수와 실패 건수의 합은 총 호출수다`() {
+        val summary = serviceOf(listOf(metric(status = 200), metric(status = 301), metric(status = 500)))
+            .summarize()
+
+        assertThat(summary.successCount + summary.failureCount).isEqualTo(summary.totalCalls)
+        // 3xx 는 성공으로 센다 — 기존 성공률·시간대별 에러가 쓰는 기준(200..399)과 같아야
+        // 화면의 두 수가 서로 어긋나지 않는다.
+        assertThat(summary.successCount).isEqualTo(2)
+    }
+
+    @Test
+    fun `관리자 호출도 성공 실패 건수를 갖는다`() {
+        val summary = RequestMetricsService(
+            store(emptyList()),
+            adminStore(listOf(metric(status = 200), metric(status = 401))),
+            fixedClock,
+        ).summarize()
+
+        assertThat(summary.adminCalls.successCount).isEqualTo(1)
+        assertThat(summary.adminCalls.failureCount).isEqualTo(1)
+    }
 }

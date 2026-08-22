@@ -36,6 +36,8 @@ class RequestMetricsService(
         val metrics: List<RequestMetric> = requestMetricStore.findRecent(REQUEST_METRIC_CAP)
         return TrafficSummary(
             totalCalls = metrics.size,
+            successCount = metrics.count { isSuccess(it) },
+            failureCount = metrics.count { !isSuccess(it) },
             windowSize = metrics.size,
             byEndpoint = byEndpoint(metrics),
             estimatedUsers = estimatedUsers(metrics),
@@ -53,6 +55,8 @@ class RequestMetricsService(
         val todayStartMs: Long = todayStartMs(clock.millis())
         return AdminTraffic(
             totalCalls = metrics.size,
+            successCount = metrics.count { isSuccess(it) },
+            failureCount = metrics.count { !isSuccess(it) },
             callsToday = metrics.count { it.atEpochMs >= todayStartMs },
             windowSize = metrics.size,
             windowCap = ADMIN_REQUEST_METRIC_CAP,
@@ -60,6 +64,9 @@ class RequestMetricsService(
             hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
         )
     }
+
+    private fun isSuccess(metric: RequestMetric): Boolean =
+        metric.status in SUCCESS_STATUS_RANGE
 
     private fun latency(metrics: List<RequestMetric>): LatencyPercentiles {
         val sortedDurations: List<Long> = metrics.map { it.durationMs }.sorted()

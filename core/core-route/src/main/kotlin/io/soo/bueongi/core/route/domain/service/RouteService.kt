@@ -47,8 +47,13 @@ class RouteService(
 }
 
 /** 추천 집계. 저장소가 없으면(Redis 미설정) 조용히 건너뛴다 — 집계 실패가 경로 응답을 막지 않는다. */
+/**
+ * 재탐색은 추천으로 세지 않는다. 걷던 길에서 벗어나 되돌아가는 것이라 **같은 여정의 이어짐**이지
+ * 새로 고른 경로가 아니다. 세면 이탈이 잦은 한 번의 이동이 선호 분포를 통째로 기울인다
+ * (실측: 요청 1건 + 재탐색 3건 = 추천 4건, 전부 같은 강도).
+ */
 internal fun RouteStatsStore?.recordRecommendation(endpoint: String, query: RouteQuery) {
-    if (this == null) {
+    if (this == null || query.reroute) {
         return
     }
     record(

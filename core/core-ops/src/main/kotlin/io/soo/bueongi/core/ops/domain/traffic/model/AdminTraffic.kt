@@ -9,6 +9,8 @@ import io.soo.bueongi.support.util.HourlyBucket
  */
 data class AdminTraffic(
     val totalCalls: Int,
+    val successCount: Int,
+    val failureCount: Int,
     val callsToday: Int,
     val windowSize: Int,
     /** 보관 상한 — 여기 닿았으면 오래된 기록이 밀려나 실제 누적은 더 많다. */

@@ -18,6 +18,8 @@ import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
+import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -102,5 +104,34 @@ class RerouteCallBudgetTest {
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().path).isNotNull()
+    }
+
+    /**
+     * 재탐색은 걷던 길로 되돌아가는 것이라 **같은 여정의 이어짐**이지 새로 고른 경로가 아니다.
+     * 추천으로 세면 이탈이 잦은 한 번의 이동이 선호 분포를 통째로 기울인다
+     * (실측: 요청 1건 + 재탐색 3건 = 추천 4건, 전부 같은 강도).
+     */
+    @Test
+    fun `재탐색은 추천 통계에 세지 않는다`() {
+        val recorded: MutableList<RouteRecommendationLog> = mutableListOf()
+        val store = object : RouteStatsStore {
+            override fun record(log: RouteRecommendationLog) {
+                recorded.add(log)
+            }
+            override fun findRecent(limit: Int): List<RouteRecommendationLog> = recorded
+        }
+        val service = SafeRouteService(
+            routeService = RouteService(RouteTypeCatalog()),
+            collector = RouteCandidateCollector(tmapReturning(), SafeDetourPlanner(source), RouteCandidateMerger()),
+            scorer = SafetyScorer(source),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+            routeStatsStore = store,
+        )
+
+        service.safeCompare(queryOf(reroute = false))
+        service.safeCompare(queryOf(reroute = true))
+        service.safeCompare(queryOf(reroute = true))
+
+        assertThat(recorded).hasSize(1)
     }
 }
