@@ -29,7 +29,10 @@ import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.storage.db.core.share.model.StoredCoord
 import io.soo.bueongi.storage.db.core.share.model.StoredLocation
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
+import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 
@@ -137,6 +140,11 @@ class AdminEndpointFixtures {
                         } else {
                             null
                         },
+                        route = if (i == 0) {
+                            FIXTURE_ROUTE
+                        } else {
+                            null
+                        },
                     ),
                 )
             }
@@ -167,6 +175,16 @@ class AdminEndpointFixtures {
             val FIXED_CLOCK: java.time.Clock = java.time.Clock.fixed(FIXED_NOW, java.time.ZoneOffset.UTC)
 
             const val SHARE_BASE_URL: String = "http://localhost:3619"
+
+            /** 관리자 미리보기가 보호자 화면과 같은 경로선·목적지를 그리는지 보려면 세션에 경로가 있어야 한다. */
+            val FIXTURE_ROUTE: StoredRoute = StoredRoute(
+                destination = StoredRouteDestination(name = "삼성역", lat = 37.5089, lng = 127.0631),
+                path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.5089, 127.0631)),
+                markers = emptyList(),
+                totalDistanceM = 1200,
+                totalTimeS = 900,
+                type = "safe",
+            )
         }
     }
 }

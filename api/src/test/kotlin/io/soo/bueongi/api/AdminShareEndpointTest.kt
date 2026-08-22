@@ -81,4 +81,57 @@ class AdminShareEndpointTest(
                 jsonPath("$.lat") { value(null) }
             }
     }
+
+    /**
+     * 관리자 미리보기는 보호자 화면을 재사용하는데, 경로를 보호자 엔드포인트로 받으면
+     * 공유 서버 base URL 이 필요해 목적지·경로선·잔여 표기가 조용히 빠졌다. 같은 오리진에서 받는다.
+     */
+    @Test
+    fun `share-sessions token route 는 등록된 경로를 보호자와 같은 와이어로 반환한다`() {
+        mockMvc.get("/api/admin/share-sessions/tok0/route")
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith("application/json") }
+                jsonPath("$.expired") { value(false) }
+                jsonPath("$.route.destination.name") { value("삼성역") }
+                jsonPath("$.route.path.length()") { value(2) }
+                jsonPath("$.route.total_distance_m") { value(1200) }
+                jsonPath("$.route.total_time_s") { value(900) }
+                jsonPath("$.route.type") { value("safe") }
+                jsonPath("$.route.totalDistanceM") { doesNotExist() }
+            }
+    }
+
+    @Test
+    fun `경로 미등록 세션의 route 는 200 route=null 이다`() {
+        mockMvc.get("/api/admin/share-sessions/tok1/route")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.expired") { value(false) }
+                jsonPath("$.route") { value(null) }
+            }
+    }
+
+    @Test
+    fun `share-sessions token route 반복 열람은 viewerActive 를 올리지 않는다(비집계)`() {
+        repeat(3) {
+            mockMvc.get("/api/admin/share-sessions/tok0/route").andExpect { status { isOk() } }
+        }
+        mockMvc.get("/api/admin/share-sessions")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.sessions[0].token") { value("tok0") }
+                jsonPath("$.sessions[0].viewerActive") { value(false) }
+            }
+    }
+
+    @Test
+    fun `없는 token 의 route 는 200 expired=true(공개 조회와 동일 규약)`() {
+        mockMvc.get("/api/admin/share-sessions/does-not-exist/route")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.expired") { value(true) }
+                jsonPath("$.route") { value(null) }
+            }
+    }
 }
