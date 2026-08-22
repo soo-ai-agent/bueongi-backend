@@ -47,6 +47,25 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().name).isEqualTo("마포구")
     }
 
+    /**
+     * 원천 CSV 가 기관마다 갱신 시점이 달라 화천군만 옛 이름('강원도')으로 남아 있었다.
+     * 그대로 두면 같은 도가 화면에서 두 줄로 갈린다.
+     */
+    @Test
+    fun `옛 시도 이름은 현재 이름으로 모은다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 38.1, 127.7, sigungu = HWACHEON),
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.7, 128.8, sigungu = GANGNEUNG),
+                ),
+            ),
+        ).summarize()
+
+        assertThat(summary.map { it.sido }.toSet()).containsExactly("강원특별자치도")
+        assertThat(summary.map { it.name }).containsExactlyInAnyOrder("화천군", "강릉시")
+    }
+
     @Test
     fun `모르는 코드는 코드를 그대로 보여 주고 시도는 비운다 - 추측하지 않는다`() {
         val summary = service(
@@ -75,6 +94,10 @@ class RegionSafetySpotStatusServiceTest {
 
     private companion object {
         const val MAPO: String = "3130000"
+
+        /** 이름표에 옛 이름('강원도')으로 남아 있던 유일한 자치단체. */
+        const val HWACHEON: String = "4311000"
+        const val GANGNEUNG: String = "4201000"
         const val CHANGNYEONG: String = "5410000"
     }
 }

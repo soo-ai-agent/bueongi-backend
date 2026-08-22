@@ -31,14 +31,35 @@ class RegionNameCatalog(objectMapper: ObjectMapper) {
         return try {
             val type = objectMapper.typeFactory
                 .constructMapType(LinkedHashMap::class.java, String::class.java, RegionName::class.java)
-            resource.inputStream.use { objectMapper.readValue(it, type) }
+            val loaded: Map<String, RegionName> = resource.inputStream.use { objectMapper.readValue(it, type) }
+            withCurrentSidoNames(loaded)
         } catch (e: Exception) {
             log.warn("자치단체 이름표를 읽지 못했습니다(코드로만 표시): {}", e.message)
             emptyMap()
         }
     }
 
+    /**
+     * 같은 시도가 옛 이름과 새 이름으로 갈려 오는 것을 하나로 모은다 —
+     * 원천 CSV 가 기관마다 갱신 시점이 달라 화천군만 '강원도' 로 남아 있는 식이다.
+     * 이름만 맞추는 것이고 어느 시도인지 추측하지는 않는다.
+     */
+    private fun withCurrentSidoNames(loaded: Map<String, RegionName>): Map<String, RegionName> {
+        val normalized: LinkedHashMap<String, RegionName> = LinkedHashMap()
+        for ((code, region) in loaded) {
+            val currentSido: String = SIDO_RENAMES[region.sido] ?: region.sido
+            normalized[code] = region.copy(sido = currentSido)
+        }
+        return normalized
+    }
+
     private companion object {
         const val RESOURCE_PATH: String = "region-names.json"
+
+        /** 옛 이름 → 현재 법정 이름(강원 2023-06-11, 전북 2024-01-18 개편). */
+        val SIDO_RENAMES: Map<String, String> = mapOf(
+            "강원도" to "강원특별자치도",
+            "전라북도" to "전북특별자치도",
+        )
     }
 }
