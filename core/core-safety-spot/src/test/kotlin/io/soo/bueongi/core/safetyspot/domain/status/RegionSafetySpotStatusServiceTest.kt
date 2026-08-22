@@ -5,9 +5,11 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.status.model.RegionSafetySpotCount
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class RegionSafetySpotStatusServiceTest {
@@ -233,6 +235,79 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(bySido["5000000"]).isEqualTo("전라남도")
         // 자치단체 이름은 원천이 주지 않아 코드를 그대로 보여 준다.
         assertThat(summary.map { it.name }).contains("3490000")
+    }
+
+    /** 지도가 이 지역을 가리킬 한 점 — 지점들의 평균이다. */
+    @Test
+    fun `지역 중심은 그 지역 지점들의 평균 좌표다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.60, 127.20, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        val center: GeoPoint = summary.single().center ?: error("중심 좌표가 있어야 한다")
+        assertThat(center.lat).isCloseTo(37.55, within(1e-9))
+        assertThat(center.lng).isCloseTo(127.10, within(1e-9))
+    }
+
+    /** 원천 좌표가 0 이거나 다른 좌표계로 온 지점이 섞이면 중심이 바다로 끌려간다. */
+    @Test
+    fun `한반도 밖 좌표는 중심 계산에서 뺀다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                    SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                    SafetySpotPoint(SafetySpotType.CCTV, Double.NaN, 127.0, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        val row: RegionSafetySpotCount = summary.single()
+        assertThat(row.total).isEqualTo(3)
+        val center: GeoPoint = row.center ?: error("중심 좌표가 있어야 한다")
+        assertThat(center.lat).isCloseTo(37.50, within(1e-9))
+        assertThat(center.lng).isCloseTo(127.00, within(1e-9))
+    }
+
+    @Test
+    fun `쓸 수 있는 좌표가 하나도 없으면 중심을 비운다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        assertThat(summary.single().center).isNull()
+    }
+
+    /**
+     * '지역 미상' 줄의 평균 좌표는 전국에 흩어진 점들의 무게중심이라 국토 한가운데를 가리킨다.
+     * 그 자리에 아무것도 없는데 지도에는 가장 큰 원으로 찍힌다 — 중심을 주지 않는다.
+     */
+    @Test
+    fun `지역을 모르는 줄에는 중심 좌표를 주지 않는다`() {
+        val summary = service(
+            mapOf(
+                SafetySpotType.CCTV to listOf(
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = null),
+                    SafetySpotPoint(SafetySpotType.CCTV, 35.1, 129.0, sigungu = null),
+                    SafetySpotPoint(SafetySpotType.CCTV, 37.56, 126.91, sigungu = MAPO),
+                ),
+            ),
+        ).summarize()
+
+        val unknown = summary.single { it.code == "unknown" }
+        assertThat(unknown.total).isEqualTo(2)
+        assertThat(unknown.center).isNull()
+        // 지역을 아는 줄은 그대로 중심을 갖는다.
+        assertThat(summary.single { it.name == "마포구" }.center).isNotNull()
     }
 
     private companion object {
