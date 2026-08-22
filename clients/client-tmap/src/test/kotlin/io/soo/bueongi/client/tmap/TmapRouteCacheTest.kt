@@ -28,14 +28,33 @@ class TmapRouteCacheTest {
         assertThat(cache.get(origin, dest, "0", null)).isNull()
     }
 
+    /**
+     * 소수 5자리(약 1.1m)로 잡았더니 **제자리에 서 있어도** GPS 가 그만큼 흔들려 재요청이
+     * 매번 캐시를 빗나갔다(실측: 출발지 3.3m 이동에 경로 호출 7회 전량 재발생).
+     */
     @Test
-    fun `좌표 소수 5자리 반올림 - GPS 미세 흔들림에도 히트`() {
+    fun `서 있을 때의 GPS 흔들림은 같은 격자로 본다`() {
         val cache = TmapRouteCache(clock = { 0L })
         cache.put(origin, dest, "0", null, route)
+
         val jitter = TmapCoord(37.500001, 127.000004)
         assertThat(cache.get(jitter, dest, "0", null)).isEqualTo(route)
-        val far = TmapCoord(37.5001, 127.0)
-        assertThat(cache.get(far, dest, "0", null)).isNull()
+        // 약 3.3m — 옛 격자(1.1m)에서는 빗나가던 거리다.
+        val threeMeters = TmapCoord(37.50003, 127.00003)
+        assertThat(cache.get(threeMeters, dest, "0", null)).isEqualTo(route)
+    }
+
+    /** 격자를 더 키우면 안내 시작점이 눈에 띄게 어긋난다 — 걸어서 벗어난 거리는 갈라야 한다. */
+    @Test
+    fun `격자를 벗어나면 다른 요청으로 본다`() {
+        val cache = TmapRouteCache(clock = { 0L })
+        cache.put(origin, dest, "0", null, route)
+
+        // 약 33m — 이 거리의 경로를 같은 것으로 주면 시작점이 어긋난다.
+        val farOrigin = TmapCoord(37.5003, 127.0)
+        assertThat(cache.get(farOrigin, dest, "0", null)).isNull()
+        val farDest = TmapCoord(37.5103, 127.01)
+        assertThat(cache.get(origin, farDest, "0", null)).isNull()
     }
 
     @Test

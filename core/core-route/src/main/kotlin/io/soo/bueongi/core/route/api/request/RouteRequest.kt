@@ -21,6 +21,8 @@ data class RouteRequest(
     val routeType: String? = null,
     // 고르지 않으면 null 이 가능함 — 가장 안전한 쪽으로 읽는다
     val safetyPreference: String? = null,
+    /** 안내 중 경로 이탈로 다시 찾는 요청. 안 보내면 처음 찾는 요청으로 본다. */
+    val reroute: Boolean = false,
 )
 
 fun RouteRequest.toValidatedQuery(routeTypeCatalog: RouteTypeCatalog): RouteQuery {
@@ -34,6 +36,7 @@ fun RouteRequest.toValidatedQuery(routeTypeCatalog: RouteTypeCatalog): RouteQuer
         destinationName = destination?.name,
         routeType = routeTypeCatalog.typeOf(routeType),
         safetyPreference = toSafetyPreference(safetyPreference),
+        reroute = reroute,
     )
 }
 

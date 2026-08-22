@@ -39,6 +39,10 @@ class RouteCandidateCollector(
 
     /** 예산을 넘는 후보는 버린다 — 너무 멀리 도는 길은 안전해도 쓰지 않는다. */
     private fun collectSafeDetours(query: RouteQuery, base: List<TmapRoute>): List<TmapRoute> {
+        // 재탐색은 걷던 종류 하나만 쓰고 나머지를 버린다 — 우회 호출(최대 4회)이 통째로 낭비였다.
+        if (query.reroute) {
+            return emptyList()
+        }
         val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
         val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
         val waypointCombos: List<List<GeoPoint>> =
