@@ -10,13 +10,16 @@ data class RequestLogLine(
     val clientId: String?,
     val address: String,
     val kind: String,
+    val caller: RequestCaller,
 ) {
     /**
-     * IP 를 맨 앞에 둔다 — 침해 시도를 훑을 때 먼저 찾는 값이다.
+     * IP 를 맨 앞에 두고 바로 뒤에 부른 쪽을 적는다 — 침해 시도를 훑을 때 먼저 찾는 값이고,
+     * 관리자 화면의 조회가 사용자 트래픽으로 읽히면 지표를 잘못 읽게 된다.
      * 칸을 `|` 로 나눠 눈이 같은 자리를 따라가게 한다. 응답 본문·크기는 남기지 않는다.
      */
     fun format(): String = listOf(
         "🌐 $address",
+        caller.label,
         "$status $method",
         shortPath(),
         "⏱ ${durationMs}ms",

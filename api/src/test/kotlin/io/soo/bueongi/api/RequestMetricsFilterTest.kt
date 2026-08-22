@@ -91,6 +91,44 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
+    /**
+     * 관리자 미리보기는 5초마다 폴링한다 — 통계에 넣으면 사용자 수·호출량이 부풀지만,
+     * 누가 무엇을 열람했는지는 남아야 해서 로그에는 넣는다.
+     */
+    @Test
+    fun `관리자 조회는 로그에 남기되 사용자 트래픽과 갈라 적는다`() {
+        val appender = captureLogs()
+        val store = CapturingStore()
+        val filter = RequestMetricsFilter(store)
+
+        filter.doFilter(
+            MockHttpServletRequest("GET", "/api/admin/share-sessions/abc123/location"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("🛠 관리자")
+        assertThat(line).doesNotContain("🙋 사용자")
+        assertThat(store.recorded).isEmpty()
+    }
+
+    @Test
+    fun `사용자 조회는 사용자로 적고 통계에도 센다`() {
+        val appender = captureLogs()
+        val store = CapturingStore()
+        val filter = RequestMetricsFilter(store)
+
+        filter.doFilter(
+            MockHttpServletRequest("GET", "/share/abc123/location"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("🙋 사용자")
+        assertThat(line).doesNotContain("🛠 관리자")
+        assertThat(store.recorded).hasSize(1)
+    }
+
     private fun captureLogs(): ListAppender<ILoggingEvent> {
         val logger: LogbackLogger = LoggerFactory.getLogger(RequestMetricsFilter::class.java) as LogbackLogger
         val appender: ListAppender<ILoggingEvent> = ListAppender<ILoggingEvent>()

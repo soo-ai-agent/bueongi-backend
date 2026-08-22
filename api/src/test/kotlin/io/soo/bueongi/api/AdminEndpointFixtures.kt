@@ -5,7 +5,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
+import io.soo.bueongi.core.enums.ExternalApiProvider
+import io.soo.bueongi.core.ops.domain.external.service.ExternalApiMetricsService
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
+import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
+import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetricStore
 import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.support.monitoring.AlertNotifier
@@ -76,6 +80,36 @@ class AdminEndpointFixtures {
 
         @Bean
         fun requestMetricsService(store: RequestMetricStore): RequestMetricsService = RequestMetricsService(store)
+
+        @Bean
+        fun externalCallMetricStore(): ExternalCallMetricStore = object : ExternalCallMetricStore {
+            override fun record(metric: ExternalCallMetric) = Unit
+            override fun findRecent(limit: Int): List<ExternalCallMetric> =
+                listOf(
+                    ExternalCallMetric(
+                        atEpochMs = FIXED_NOW.toEpochMilli(),
+                        provider = ExternalApiProvider.TMAP,
+                        method = "GET",
+                        endpoint = "/tmap/routes/pedestrian",
+                        status = 200,
+                        durationMs = 320,
+                        failureReason = null,
+                    ),
+                    ExternalCallMetric(
+                        atEpochMs = FIXED_NOW.toEpochMilli(),
+                        provider = ExternalApiProvider.KAKAO,
+                        method = "GET",
+                        endpoint = "/v2/local/search/keyword.json",
+                        status = 429,
+                        durationMs = 90,
+                        failureReason = null,
+                    ),
+                )
+        }
+
+        @Bean
+        fun externalApiMetricsService(store: ExternalCallMetricStore): ExternalApiMetricsService =
+            ExternalApiMetricsService(store, FIXED_CLOCK)
 
         @Bean
         fun adEventStore(): AdEventStore = object : AdEventStore {
