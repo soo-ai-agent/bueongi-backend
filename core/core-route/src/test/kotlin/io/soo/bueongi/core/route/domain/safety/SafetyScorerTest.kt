@@ -21,11 +21,37 @@ class SafetyScorerTest {
      */
     @Test
     fun `종류별 가중치가 점수에 그대로 실린다`() {
-        assertThat(scoreWithSaturated(SafetySpotType.CCTV)).isEqualTo(30)
-        assertThat(scoreWithSaturated(SafetySpotType.STREET_LAMP)).isEqualTo(20)
+        assertThat(scoreWithSaturated(SafetySpotType.CCTV)).isEqualTo(25)
+        assertThat(scoreWithSaturated(SafetySpotType.STREET_LAMP)).isEqualTo(25)
+        assertThat(scoreWithSaturated(SafetySpotType.SECURITY_LAMP)).isEqualTo(25)
         assertThat(scoreWithSaturated(SafetySpotType.BELL)).isEqualTo(18)
         assertThat(scoreWithSaturated(SafetySpotType.POLICE)).isEqualTo(10)
         assertThat(scoreWithSaturated(SafetySpotType.SAFEHOUSE)).isEqualTo(7)
+    }
+
+    /**
+     * 보안등은 가로등과 같은 조명 점수에 **합산**된다(관리 주체만 다른 같은 조명).
+     * 지금까지 보안등은 점수 쪽 테스트가 하나도 없어, 합산을 통째로 빼도 아무 데서도 안 깨졌다.
+     */
+    @Test
+    fun `보안등은 가로등과 합쳐 조명 점수가 된다`() {
+        val lamps: List<GeoPoint> = saturatingSpots(SafetySpotType.STREET_LAMP)
+        val street: List<GeoPoint> = lamps.take(lamps.size / 2)
+        val security: List<GeoPoint> = lamps.drop(lamps.size / 2)
+
+        val streetOnly: Int = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.STREET_LAMP, street)).score(path).score
+        val bothSource = FakeSafetySpotSource(
+            mapOf(
+                SafetySpotType.STREET_LAMP to street.map { SafetySpotPoint(SafetySpotType.STREET_LAMP, it.lat, it.lng) },
+                SafetySpotType.SECURITY_LAMP to
+                    security.map { SafetySpotPoint(SafetySpotType.SECURITY_LAMP, it.lat, it.lng) },
+            ),
+        )
+        val both: Int = SafetyScorer(bothSource).score(path).score
+
+        // 절반만으로는 포화에 못 미치고(14), 보안등을 더해 40개를 채우면 조명 가중치를 다 받는다(25).
+        assertThat(streetOnly).isEqualTo(14)
+        assertThat(both).isEqualTo(25)
     }
 
     @Test
@@ -51,8 +77,8 @@ class SafetyScorerTest {
         val fiveScore: Int = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.CCTV, five)).score(path).score
         val tenScore: Int = SafetyScorer(FakeSafetySpotSource.of(SafetySpotType.CCTV, ten)).score(path).score
 
-        assertThat(fiveScore).isEqualTo(9)
-        assertThat(tenScore).isEqualTo(17)
+        assertThat(fiveScore).isEqualTo(7)
+        assertThat(tenScore).isEqualTo(14)
     }
 
     /** 기준을 낮추면 절반만 깔아도 포화돼 두 점수가 같아진다 — 그때 이 단언이 깨진다. */
@@ -77,6 +103,7 @@ class SafetyScorerTest {
         val needed: Int = when (type) {
             SafetySpotType.CCTV -> 20
             SafetySpotType.STREET_LAMP -> 40
+            SafetySpotType.SECURITY_LAMP -> 40
             SafetySpotType.BELL -> 5
             SafetySpotType.POLICE -> 2
             SafetySpotType.SAFEHOUSE -> 3
@@ -221,8 +248,8 @@ class SafetyScorerTest {
     private companion object {
 
         val WEIGHTED_TYPES: List<SafetySpotType> = listOf(
-            SafetySpotType.CCTV, SafetySpotType.STREET_LAMP, SafetySpotType.BELL,
-            SafetySpotType.POLICE, SafetySpotType.SAFEHOUSE,
+            SafetySpotType.CCTV, SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP,
+            SafetySpotType.BELL, SafetySpotType.POLICE, SafetySpotType.SAFEHOUSE,
         )
     }
 }

@@ -8,6 +8,10 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
+import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
@@ -27,6 +31,7 @@ class RouteMarkerBuilder(
     // 사건을 받을 쪽이 없는 구성(테스트 등)에서 null 이 가능함
     private val visitEvents: RouteVisitEventPublisher? = null,
 ) {
+    private val log: Logger = LoggerFactory.getLogger(RouteMarkerBuilder::class.java)
 
     fun buildMarkers(
         origin: GeoPoint,
@@ -34,8 +39,7 @@ class RouteMarkerBuilder(
         path: List<GeoPoint>,
     ): List<SafetySpotPoi> {
         alertIfIndexEmpty()
-        // 이번 응답은 지금 있는 것으로 나간다. 사건을 받은 쪽이 안 받은 지역을 뒤에서 채운다.
-        visitEvents?.routeVisited(listOf(origin, destination))
+        publishVisitedPoints(origin, destination, path)
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         // x·y 는 전체 마커 범위를 알아야 정해지므로 여기서는 0 으로 두고 마지막에 한 번에 채운다.
@@ -96,6 +100,31 @@ class RouteMarkerBuilder(
         return percent.roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
     }
 
+    /**
+     * 지연 적재를 부르는 사건. 출발·목적지 두 점만 보내면 **그 사이 자치단체가 영원히 안 채워진다** —
+     * 보안등은 자치단체(instt_code)당 한 번 받는 원천이라, 강남→마포 경로에서 서초·용산·중구가
+     * 통째로 빠져 "보안등이 출발지 주변에만 있다"가 됐다. 경로를 일정 간격으로 훑어 함께 보낸다.
+     *
+     * 채우기는 뒤에서 돌아 이번 응답에는 안 잡힌다. 다음 요청부터 보인다.
+     */
+    private fun publishVisitedPoints(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>) {
+        val publisher: RouteVisitEventPublisher = visitEvents ?: return
+        val route: List<GeoPoint> = if (path.size >= 2) {
+            path
+        } else {
+            listOf(origin, destination)
+        }
+        val lengthMeters: Double = route.pathLengthMeters()
+        val spanAtDefaultSpacing: Double = FILL_SAMPLE_SPACING_METERS * (MAX_FILL_SAMPLE_POINTS - 1)
+        if (lengthMeters > spanAtDefaultSpacing) {
+            log.info(
+                "경로가 길어 지연 적재 표본 간격을 넓힙니다: 길이 {}m, 기준 간격 {}m, 표본 상한 {}개",
+                lengthMeters.roundToInt(), FILL_SAMPLE_SPACING_METERS.roundToInt(), MAX_FILL_SAMPLE_POINTS,
+            )
+        }
+        publisher.routeVisited(route.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
+    }
+
     private fun alertIfIndexEmpty() {
         val publisher: MarkerEventPublisher = markerEvents ?: return
         val totalLoaded: Int = MARKER_TYPES.sumOf { (_, safetySpotType) -> safetySpots.index(safetySpotType).size }
@@ -143,5 +172,14 @@ class RouteMarkerBuilder(
 
         /** 종류당 마커 상한. 응답 크기와 지도 가독성 때문에 자른다. */
         const val MAX_MARKERS_PER_TYPE: Int = 12
+
+        /** 지연 적재를 부를 표본 간격. 자치단체 하나를 건너뛰지 않을 만큼 촘촘하면 된다. */
+        const val FILL_SAMPLE_SPACING_METERS: Double = 2_000.0
+
+        /**
+         * 한 요청이 발행하는 표본 점 상한. 점 하나가 최악의 경우 자치단체 하나(보안등 약 8회 호출)라
+         * 상한 없이는 긴 경로 한 건이 외부 쿼터를 크게 먹는다. 넘으면 간격을 넓혀 목적지까지 덮는다.
+         */
+        const val MAX_FILL_SAMPLE_POINTS: Int = 12
     }
 }

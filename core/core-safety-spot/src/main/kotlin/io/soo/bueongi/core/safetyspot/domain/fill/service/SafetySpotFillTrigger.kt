@@ -88,6 +88,8 @@ class SafetySpotFillTrigger(
             log.info("좌표의 자치단체를 찾지 못해 보안등 채우기를 건너뜁니다({}개 좌표)", points.size)
             return
         }
+        // 좌표 수보다 자치단체 수가 외부 호출량을 정한다 — 늘어난 표본이 어디까지 번졌는지 남긴다.
+        log.info("보안등 채우기 대상: 좌표 {}개 → 자치단체 {}개 {}", points.size, regions.size, regions)
         for (region in regions) {
             securityLampFill.fill(region)
         }

@@ -133,8 +133,17 @@ class SafetyScorer(
         const val SAT_SAFEHOUSE_COUNT: Double = 3.0
         const val SAT_POLICE_COUNT: Double = 2.0
 
-        const val WEIGHT_CCTV: Double = 0.30
-        const val WEIGHT_LAMP: Double = 0.20
+        const val WEIGHT_CCTV: Double = 0.25
+
+        /**
+         * 조명(가로등+보안등) 가중치. 0.20 → 0.25 로 올렸다(2026-08-22, 사용자 요청 "보안등 점수를 높여라").
+         *
+         * 올린 만큼을 CCTV 에서 뺀 이유는 실측이다 — 강남역→홍대입구 13.2km 에서 조명은 14.89/km 로
+         * 포화 기준(40)의 37% 를 실제로 채우는데, CCTV 는 2.57/km 로 기준(20)의 13% 밖에 못 채운다.
+         * 가장 무거운 가중치가 거의 안 실리는 축에 놓여 있어, 데이터가 실제로 있는 축으로 옮겼다.
+         * 합은 1.0 그대로라 0~100 계약은 변하지 않는다.
+         */
+        const val WEIGHT_LAMP: Double = 0.25
         const val WEIGHT_BELL: Double = 0.18
         const val WEIGHT_SAFEHOUSE: Double = 0.07
         const val WEIGHT_POLICE: Double = 0.10
