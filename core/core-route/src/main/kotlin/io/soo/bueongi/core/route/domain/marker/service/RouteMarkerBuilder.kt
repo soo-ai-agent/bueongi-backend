@@ -46,7 +46,7 @@ class RouteMarkerBuilder(
         for ((markerType, safetySpotType) in MARKER_TYPES) {
             val typeIndex: GridSpatialIndex = safetySpots.index(safetySpotType)
             val alongPath: List<SafetySpotPoint> = typeIndex.withinCorridor(path, corridor)
-            val shown: List<SafetySpotPoint> = alongPath.take(MAX_MARKERS_PER_TYPE)
+            val shown: List<SafetySpotPoint> = spreadAlongPath(alongPath, MAX_MARKERS_PER_TYPE)
             for (safetySpot in shown) {
                 raw.add(
                     SafetySpotPoi(
@@ -106,6 +106,22 @@ class RouteMarkerBuilder(
             "시설 인덱스 총 적재 0(적재 실패/부재) — /api/routes/safetySpots·/api/routes/safe-compare 의 " +
                 "경로변 시설 마커를 생성할 수 없음. 데이터 적재/원천 확인 필요",
         )
+    }
+
+    /**
+     * 경로 앞에서부터 자르면 출발지 쪽에서 예산을 다 쓴다 — `withinCorridor` 가 경로 순서로
+     * 돌려주기 때문이다. 실측(강남역→홍대입구 13.4km)에서 가로등 12개가 전부 첫 1/3 구간,
+     * 그것도 가로 150m 안에 몰려 목적지 쪽이 0개였다. 등간격으로 골라 경로 전체에 편다.
+     */
+    private fun spreadAlongPath(alongPath: List<SafetySpotPoint>, limit: Int): List<SafetySpotPoint> {
+        if (alongPath.size <= limit) {
+            return alongPath
+        }
+        val picked: ArrayList<SafetySpotPoint> = ArrayList(limit)
+        for (slot in 0 until limit) {
+            picked.add(alongPath[slot * alongPath.size / limit])
+        }
+        return picked
     }
 
     private companion object {
