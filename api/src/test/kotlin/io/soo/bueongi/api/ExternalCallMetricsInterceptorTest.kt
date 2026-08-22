@@ -108,6 +108,7 @@ class ExternalCallMetricsInterceptorTest {
 
     @Test
     fun `연결 실패는 상태 0 과 사유로 남기고 예외는 그대로 올린다`() {
+        val appender = captureLogs()
         val store = CapturingStore()
         val interceptor = ExternalCallMetricsInterceptor(store, clock)
         val failing = ClientHttpRequestExecution { _, _ -> throw IOException("connect timed out") }
@@ -119,6 +120,31 @@ class ExternalCallMetricsInterceptorTest {
         val metric: ExternalCallMetric = store.recorded.single()
         assertThat(metric.status).isEqualTo(0)
         assertThat(metric.failureReason).isEqualTo("IOException")
+        assertThat(appender.list.single().formattedMessage).contains("--- GET", "✖ IOException")
+    }
+
+    /**
+     * 로그를 볼 때 우리가 보낸 호출인지가 맨 앞에서 갈려야 한다.
+     * 상대(원천)·상태+메서드 칸은 수신 요청 줄([RequestLogLine])과 같은 자리에 온다.
+     */
+    @Test
+    fun `외부 호출은 방향을 맨 앞에 두고 원천 상태 경로 순으로 적는다`() {
+        val appender = captureLogs()
+        val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
+
+        interceptor.intercept(
+            requestTo("https://dapi.kakao.com/v2/local/search/keyword.json"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).startsWith("[송신]")
+        assertThat(line).doesNotContain("[수신]")
+        val columns: List<String> = line.split("  |  ").map { it.trim() }
+        assertThat(columns[1]).isEqualTo("kakao")
+        assertThat(columns[2]).isEqualTo("200 GET")
+        assertThat(columns[3]).isEqualTo("/v2/local/search/keyword.json")
+        assertThat(columns[4]).endsWith("ms")
     }
 
     @Test

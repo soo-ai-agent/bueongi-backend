@@ -120,8 +120,8 @@ class RequestMetricsFilterTest {
         )
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("🛠 관리자")
-        assertThat(line).doesNotContain("🙋 사용자")
+        assertThat(line).startsWith("[수신] 관리자")
+        assertThat(line).doesNotContain("사용자")
         assertThat(store.recorded).isEmpty()
     }
 
@@ -206,7 +206,7 @@ class RequestMetricsFilterTest {
             MockHttpServletResponse(), chainSetting(200),
         )
 
-        assertThat(appender.list.single().formattedMessage).contains("🛠 관리자")
+        assertThat(appender.list.single().formattedMessage).startsWith("[수신] 관리자")
     }
 
     @Test
@@ -221,8 +221,8 @@ class RequestMetricsFilterTest {
         )
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).contains("🙋 사용자")
-        assertThat(line).doesNotContain("🛠 관리자")
+        assertThat(line).startsWith("[수신] 사용자")
+        assertThat(line).doesNotContain("관리자")
         assertThat(store.recorded).hasSize(1)
     }
 
@@ -296,8 +296,49 @@ class RequestMetricsFilterTest {
         filterOf(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
         filterOf(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
 
-        assertThat(appender.list[0].formattedMessage).contains("🌐 10.0.0.9")
-        assertThat(appender.list[1].formattedMessage).contains("🌐 203.0.113.7")
+        assertThat(appender.list[0].formattedMessage).contains("10.0.0.9")
+        assertThat(appender.list[1].formattedMessage).contains("203.0.113.7")
+        assertThat(appender.list[1].formattedMessage).doesNotContain("10.0.0.9")
+    }
+
+    /**
+     * 로그를 볼 때 우리가 받은 요청인지 우리가 보낸 호출인지가 맨 앞에서 갈려야 한다.
+     * 상대(IP)·상태+메서드 칸도 외부 송신 줄과 같은 자리에 온다.
+     */
+    @Test
+    fun `수신 요청은 방향을 맨 앞에 두고 상대 상태 경로 순으로 적는다`() {
+        val appender = captureLogs()
+        val request = MockHttpServletRequest("GET", "/api/places/search").apply { remoteAddr = "10.0.0.9" }
+
+        filterOf(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).startsWith("[수신] 사용자")
+        assertThat(line).doesNotContain("[송신]")
+        val columns: List<String> = line.split("  |  ").map { it.trim() }
+        assertThat(columns[1]).isEqualTo("10.0.0.9")
+        assertThat(columns[2]).isEqualTo("200 GET")
+        assertThat(columns[3]).isEqualTo("/api/places/search")
+        assertThat(columns[4]).endsWith("ms")
+    }
+
+    /** 폭이 들쭉날쭉하면 세로로 훑을 수 없다 — 방향·상대·상태 칸은 값이 달라도 같은 자리에서 끝난다. */
+    @Test
+    fun `앞의 세 칸은 값이 짧아도 폭을 채운다`() {
+        val appender = captureLogs()
+        val filter = filterOf(CapturingStore())
+
+        filter.doFilter(
+            MockHttpServletRequest("GET", "/api/admin/traffic").apply { remoteAddr = "10.0.0.9" },
+            MockHttpServletResponse(), chainSetting(200),
+        )
+        filter.doFilter(
+            MockHttpServletRequest("DELETE", "/api/x").apply { remoteAddr = "203.0.113.7" },
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        val pathStarts: List<Int> = appender.list.map { it.formattedMessage.indexOf("/api/") }
+        assertThat(pathStarts[0]).isEqualTo(pathStarts[1])
     }
 
     @Test

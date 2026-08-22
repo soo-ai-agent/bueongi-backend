@@ -15,24 +15,27 @@ data class RequestLogLine(
     val caller: RequestCaller,
 ) {
     /**
-     * IP 를 맨 앞에 두고 바로 뒤에 부른 쪽을 적는다 — 침해 시도를 훑을 때 먼저 찾는 값이고,
-     * 관리자 화면의 조회가 사용자 트래픽으로 읽히면 지표를 잘못 읽게 된다.
-     * 칸을 `|` 로 나눠 눈이 같은 자리를 따라가게 한다. 응답 본문·크기는 남기지 않는다.
+     * 맨 앞이 방향이다 — 우리가 받은 요청인지 우리가 보낸 호출인지가 기호가 아니라 낱말로 갈린다.
+     * 뒤이어 상대(부른 IP) · 상태+메서드 · 경로 · 소요시간 · 부가 순으로, 외부 송신 줄
+     * ([ExternalCallLogLine])과 같은 자리에 같은 뜻이 오게 맞춘다. 응답 본문·크기는 남기지 않는다.
      */
     fun format(): String = listOf(
-        "🌐 $address",
-        callerLabel(),
-        "$status $method",
+        padColumn(directionAndCaller(), DIRECTION_COLUMN_WIDTH),
+        padColumn(address, COUNTERPART_COLUMN_WIDTH),
+        padColumn("$status $method", STATUS_COLUMN_WIDTH),
         shortPath(),
-        "⏱ ${durationMs}ms",
+        "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
         "👤 ${clientId ?: UNKNOWN_CLIENT}",
         "📱 $kind",
-    ).joinToString(SEPARATOR)
+    ).joinToString(LOG_COLUMN_SEPARATOR)
 
-    /** 눈으로 훑을 때 갈리라고 기호를 붙인다 — 와이어 값(admin·user)은 그대로 두고 여기서만 꾸민다. */
-    private fun callerLabel(): String = when (caller) {
-        RequestCaller.ADMIN -> "🛠 관리자"
-        RequestCaller.USER -> "🙋 사용자"
+    /**
+     * 방향 바로 옆에 부른 쪽을 적는다 — 관리자 화면의 조회가 사용자 트래픽으로 읽히면
+     * 지표를 잘못 읽게 된다. 와이어 값(admin·user)은 그대로 두고 여기서만 꾸민다.
+     */
+    private fun directionAndCaller(): String = when (caller) {
+        RequestCaller.ADMIN -> "$INBOUND_DIRECTION 관리자"
+        RequestCaller.USER -> "$INBOUND_DIRECTION 사용자"
     }
 
     /** 스캐너가 아주 긴 경로를 던져 로그를 덮는 것을 막는다. */
@@ -47,7 +50,6 @@ data class RequestLogLine(
     fun needsAttention(): Boolean = status >= CLIENT_ERROR_STATUS
 
     private companion object {
-        const val SEPARATOR: String = "  |  "
         const val CLIENT_ERROR_STATUS: Int = 400
         const val MAX_PATH_LENGTH: Int = 200
         const val UNKNOWN_CLIENT: String = "unknown"
