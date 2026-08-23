@@ -3,6 +3,9 @@ package io.soo.bueongi.api.config
 import io.soo.bueongi.core.enums.ExternalApiProvider
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetricStore
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpRequest
@@ -32,16 +35,16 @@ class ExternalCallMetricsInterceptor(
         val startedAt: Long = clock.millis()
         try {
             val response: ClientHttpResponse = execution.execute(request, body)
-            finish(request, startedAt, response.statusCode.value(), failureReason = null)
+            finish(request, startedAt, response.statusCode.value(), cause = null)
             return response
         } catch (e: IOException) {
             // 연결 실패·타임아웃은 응답 코드가 없다. 기록만 남기고 예외는 그대로 올려보낸다.
-            finish(request, startedAt, status = 0, failureReason = reasonOf(e))
+            finish(request, startedAt, status = 0, cause = e)
             throw e
         }
     }
 
-    private fun finish(request: HttpRequest, startedAt: Long, status: Int, failureReason: String?) {
+    private fun finish(request: HttpRequest, startedAt: Long, status: Int, cause: Throwable?) {
         val durationMs: Long = clock.millis() - startedAt
         val provider: ExternalApiProvider = providerOfHost(request.uri.host)
         val endpoint: String = request.uri.path
@@ -53,7 +56,9 @@ class ExternalCallMetricsInterceptor(
                 endpoint = endpoint,
                 status = status,
                 durationMs = durationMs,
-                failureReason = failureReason,
+                // 원인 사슬이라야 "왜 실패했는지"가 보인다 — 마스킹은 causeChainOf 가 한다.
+                failureReason = if (cause == null) "" else causeChainOf(cause),
+                paging = pagingOf(request.uri.rawQuery),
             ),
         )
         recordSafely(
@@ -64,7 +69,7 @@ class ExternalCallMetricsInterceptor(
                 endpoint = endpoint,
                 status = status,
                 durationMs = durationMs,
-                failureReason = failureReason,
+                failureReason = cause?.let { reasonOf(it) },
             ),
         )
     }
@@ -81,11 +86,44 @@ class ExternalCallMetricsInterceptor(
         try {
             externalCallMetricStore.record(metric)
         } catch (e: Exception) {
-            log.warn("외부 API 호출 계측 실패(무시): {}", e.message)
+            log.warn(
+                ExceptionLogLine(
+                    kind = IGNORED_EXCEPTION,
+                    counterpart = "호출 계측",
+                    subject = metric.endpoint,
+                    cause = causeChainOf(e),
+                    action = "외부 호출 결과는 그대로 사용(계측만 유실)",
+                ).format(),
+            )
         }
     }
 
-    /** 예외 메시지에 인증키가 실린 URL 이 들어올 수 있어 예외 종류만 남긴다. */
-    private fun reasonOf(e: IOException): String =
+    /**
+     * 적재 계열은 몇 페이지째에서 멈췄는지가 진단의 첫 단서다. 다만 질의 문자열에는 인증키가
+     * 실리므로 이름이 허용 목록에 있고 값이 숫자뿐인 항목만 통과시킨다 — 키 값은 숫자가 아니다.
+     */
+    private fun pagingOf(rawQuery: String?): String {
+        if (rawQuery.isNullOrEmpty()) {
+            return ""
+        }
+        val shown: MutableList<String> = mutableListOf()
+        for (pair in rawQuery.split("&")) {
+            val name: String = pair.substringBefore("=")
+            val value: String = pair.substringAfter("=", "")
+            val isPaging: Boolean = name.lowercase() in PAGING_PARAMS
+            val isNumber: Boolean = value.isNotEmpty() && value.all { it.isDigit() }
+            if (isPaging && isNumber) {
+                shown.add("$name=$value")
+            }
+        }
+        return shown.joinToString(" ")
+    }
+
+    /** 기록에는 종류만 남긴다 — 관리자 화면에 그대로 보이는 값이라 짧아야 한다. */
+    private fun reasonOf(e: Throwable): String =
         e::class.simpleName ?: "IOException"
+
+    private companion object {
+        val PAGING_PARAMS: Set<String> = setOf("pageno", "pageindex", "page", "numofrows", "pageunit", "perpage")
+    }
 }

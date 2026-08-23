@@ -4,6 +4,9 @@ import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -94,7 +97,7 @@ class SlackAlertNotifier internal constructor(
                 .toBodilessEntity()
             response.statusCode.is2xxSuccessful
         } catch (e: Exception) {
-            log.warn("Slack 테스트 발송 실패(무시): {}", e.message)
+            log.warn(failureLine(e, subject = "발송 시험", action = "시험 실패로 응답(운영 알림은 그대로)"))
             false
         }
     }
@@ -118,12 +121,27 @@ class SlackAlertNotifier internal constructor(
                 .retrieve()
                 .toBodilessEntity()
         } catch (e: Exception) {
-            log.warn("Slack 알림 발송 실패(무시): {}", e.message)
+            log.warn(failureLine(e, subject = "운영 알림", action = "알림만 유실(이력은 남음)"))
         }
     }
 
+    /**
+     * webhook URL 자체가 시크릿이라(경로에 토큰이 들어 있다) 대상 칸에 URL 을 적지 않고,
+     * 예외 메시지에 섞여 온 URL 도 함께 넘겨 지운다.
+     */
+    private fun failureLine(e: Throwable, subject: String, action: String): String = ExceptionLogLine(
+        kind = IGNORED_EXCEPTION,
+        counterpart = PROVIDER,
+        subject = subject,
+        cause = causeChainOf(e, config.webhookUrl()),
+        action = action,
+    ).format()
+
     private companion object {
         const val ALERT_HISTORY_CAP: Int = 200
+
+        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        const val PROVIDER: String = "slack"
 
         const val TEST_MESSAGE: String = ":white_check_mark: bueongi 운영 알림 테스트 — 이 메시지가 보이면 Slack 연동이 정상입니다."
 

@@ -1,6 +1,10 @@
 package io.soo.bueongi.client.safe182
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.logging.maskSecrets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -74,7 +78,7 @@ class ChildSafeHouseClient(
                 ?: return null
             objectMapper.readValue(body, Safe182Response::class.java)
         } catch (e: Exception) {
-            log.warn("아동안전지킴이집 호출 실패(page={}): {} — 수집 중단", pageIndex, sanitize(e.message))
+            log.warn(failureLine(cause = causeChainOf(e, esntlId, authKey), pageIndex = pageIndex))
             null
         }
     }
@@ -99,10 +103,21 @@ class ChildSafeHouseClient(
             return true
         }
         if (code == QUOTA_EXCEEDED_CODE) {
-            log.warn("아동안전지킴이집 일일 조회 한도 초과 — 오늘은 더 받지 않는다")
+            log.warn(
+                failureLine(
+                    cause = "일일 조회 한도 초과(result=$QUOTA_EXCEEDED_CODE)",
+                    pageIndex = 0,
+                    action = "오늘은 더 받지 않음(기존 데이터 유지)",
+                ),
+            )
             return false
         }
-        log.warn("아동안전지킴이집 result={}({}) — 수집 중단", code, response.msg.orEmpty())
+        log.warn(
+            failureLine(
+                cause = "result=$code(${maskSecrets(response.msg.orEmpty(), esntlId, authKey)})",
+                pageIndex = 0,
+            ),
+        )
         return false
     }
 
@@ -136,12 +151,24 @@ class ChildSafeHouseClient(
         return rowCount < PAGE_SIZE
     }
 
-    /** 예외 메시지에 본문(자격증명 포함)이 섞일 수 있다. */
-    private fun sanitize(message: String?): String =
-        (message ?: "원인 미상").replace(esntlId, "***").replace(authKey, "***")
+    /** 예외 메시지에 본문(자격증명 포함)이 섞일 수 있어 esntlId·authKey 를 함께 넘겨 지운다. */
+    private fun failureLine(cause: String, pageIndex: Int, action: String = STOPPED_ACTION): String =
+        ExceptionLogLine(
+            kind = IGNORED_EXCEPTION,
+            counterpart = PROVIDER,
+            subject = PATH,
+            cause = cause,
+            action = action,
+            paging = if (pageIndex > 0) "page=$pageIndex" else "",
+        ).format()
 
     private companion object {
         const val PATH: String = "/api/lcm/safeMap.do"
+
+        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        const val PROVIDER: String = "safe182"
+
+        const val STOPPED_ACTION: String = "수집 중단(기존 데이터 유지)"
 
         const val CHILD_SAFE_HOUSE_CODE: String = "09"
 

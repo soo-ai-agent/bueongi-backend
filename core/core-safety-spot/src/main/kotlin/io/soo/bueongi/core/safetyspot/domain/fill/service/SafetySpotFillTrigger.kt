@@ -7,6 +7,9 @@ import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import org.slf4j.Logger
@@ -56,7 +59,16 @@ class SafetySpotFillTrigger(
                 fillChildSafeHousesOf(points)
             } catch (e: Exception) {
                 // 채우기 실패가 사용자 요청에 영향을 주면 안 된다 — 로그만 남긴다.
-                log.warn("안심시설 채우기 실패(무시): {}", e.message)
+                // 메시지에는 인증키가 실린 URL 이 섞여 올 수 있어 causeChainOf 로 지운다.
+                log.warn(
+                    ExceptionLogLine(
+                        kind = IGNORED_EXCEPTION,
+                        counterpart = "안심시설",
+                        subject = "뒤에서 채우기",
+                        cause = causeChainOf(e),
+                        action = "이번 채우기만 건너뜀(기존 데이터 유지)",
+                    ).format(),
+                )
             }
         }
     }

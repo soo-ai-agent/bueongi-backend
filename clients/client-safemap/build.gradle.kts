@@ -1,4 +1,5 @@
 dependencies {
+    implementation(project(":support:logging"))
     implementation(project(":support:util"))
 
     implementation("org.springframework:spring-web")

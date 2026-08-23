@@ -4,6 +4,11 @@ import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.beginTrace
+import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.logging.endTrace
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -28,11 +33,13 @@ class RequestMetricsFilter(
         filterChain: FilterChain,
     ) {
         val startedAt: Long = System.currentTimeMillis()
+        val path: String = normalizeRequestPath(request.requestURI)
+        // 이 요청이 낳는 송신·예외 줄이 같은 표식을 달고 나가야 나중에 짝을 맞출 수 있다.
+        beginTrace("${request.method} $path")
         try {
             filterChain.doFilter(request, response)
         } finally {
             val durationMs: Long = System.currentTimeMillis() - startedAt
-            val path: String = normalizeRequestPath(request.requestURI)
             val clientId: String? = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() }
             val caller: RequestCaller = callerOf(path)
             logRequest(
@@ -53,6 +60,7 @@ class RequestMetricsFilter(
             if (isOurApi(path)) {
                 recordSafely(caller, clientId, path, request.method, response.status, startedAt, durationMs)
             }
+            endTrace()
         }
     }
 
@@ -125,7 +133,16 @@ class RequestMetricsFilter(
                 ),
             )
         } catch (e: Exception) {
-            log.warn("수신 요청 메트릭 계측 실패(무시): {}", e.message)
+            log.warn(
+                ExceptionLogLine(
+                    kind = IGNORED_EXCEPTION,
+                    counterpart = "요청 계측",
+                    subject = path,
+                    cause = causeChainOf(e),
+                    result = "$status $method",
+                    action = "응답은 그대로 나감(통계만 유실)",
+                ).format(),
+            )
         }
     }
 

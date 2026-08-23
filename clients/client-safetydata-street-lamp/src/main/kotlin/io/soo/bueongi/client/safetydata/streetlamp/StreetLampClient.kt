@@ -1,5 +1,9 @@
 package io.soo.bueongi.client.safetydata.streetlamp
 
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.logging.maskSecrets
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 import java.net.URI
@@ -55,11 +59,11 @@ class StreetLampClient(
         val response: StreetLampResponse? = try {
             restClient.get().uri(URI.create(url)).retrieve().body(StreetLampResponse::class.java)
         } catch (e: Exception) {
-            log.warn("가로등 호출 실패(page={}): {} — 수집 중단", pageNo, sanitize(e.message))
+            log.warn(failureLine(cause = causeChainOf(e, serviceKey), pageNo = pageNo))
             return null
         }
         if (response == null) {
-            log.warn("가로등 빈 응답(page={}) — 수집 중단", pageNo)
+            log.warn(failureLine(cause = "빈 응답(본문 없음)", pageNo = pageNo))
         }
         return response
     }
@@ -69,7 +73,12 @@ class StreetLampClient(
         if (code.isNullOrBlank() || code in SUCCESS_CODES) {
             return true
         }
-        log.warn("가로등 resultCode={}({}) — 수집 중단", code, header.resultMsg.orEmpty())
+        log.warn(
+            failureLine(
+                cause = "resultCode=$code(${maskSecrets(header.resultMsg.orEmpty())})",
+                pageNo = 0,
+            ),
+        )
         return false
     }
 
@@ -98,11 +107,20 @@ class StreetLampClient(
         return rowCount < PAGE_SIZE
     }
 
-    private fun sanitize(message: String?): String =
-        (message ?: "원인 미상").replace(serviceKey, "***")
+    private fun failureLine(cause: String, pageNo: Int): String = ExceptionLogLine(
+        kind = IGNORED_EXCEPTION,
+        counterpart = PROVIDER,
+        subject = PATH,
+        cause = cause,
+        action = "수집 중단(기존 데이터 유지)",
+        paging = if (pageNo > 0) "page=$pageNo" else "",
+    ).format()
 
     private companion object {
         const val PATH: String = "/V2/api/DSSP-IF-00084"
+
+        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        const val PROVIDER: String = "safetydata"
 
         /** data.go.kr(100) 과 달리 1,000 을 받아 호출 수가 훨씬 적다. */
         const val PAGE_SIZE: Int = 1000

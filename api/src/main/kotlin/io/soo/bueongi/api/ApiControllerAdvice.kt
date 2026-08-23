@@ -3,6 +3,10 @@ package io.soo.bueongi.api
 import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.UNHANDLED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.logging.currentRequestOrigin
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -142,7 +146,12 @@ class ApiControllerAdvice(
 
     @ExceptionHandler(LocationStoreUnavailableException::class)
     fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
-        log.error("위치 공유 저장소 접근 실패 — 503 SHARE_STORE_UNAVAILABLE 로 응답합니다.", ex)
+        logUnhandled(
+            counterpart = "공유 저장소",
+            status = HttpStatus.SERVICE_UNAVAILABLE.value(),
+            action = "503 SHARE_STORE_UNAVAILABLE 응답(Retry-After ${RETRY_AFTER_SECONDS}s)",
+            ex = ex,
+        )
         apiEvents?.shareStoreUnavailable(
             "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
         )
@@ -160,7 +169,12 @@ class ApiControllerAdvice(
 
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
-        log.error("처리되지 않은 예외 — 500 INTERNAL_ERROR 로 응답합니다.", ex)
+        logUnhandled(
+            counterpart = "요청 처리",
+            status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            action = "500 INTERNAL_ERROR 응답",
+            ex = ex,
+        )
         apiEvents?.unhandledServerError(
             exceptionName = ex.javaClass.simpleName,
             detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
@@ -174,7 +188,27 @@ class ApiControllerAdvice(
         }
     }
 
+    /**
+     * 우리가 못 잡은 예외는 우리 쪽 결함이다 — 한 줄에는 원인 사슬을(겉 예외만 남기면 진짜
+     * 원인이 사라진다), 뒤에는 예외 자체를 함께 넘겨 스택의 줄 번호까지 남긴다. 500·503 은
+     * 드물어야 하는 사건이라 이때만 스택을 감수한다.
+     */
+    private fun logUnhandled(counterpart: String, status: Int, action: String, ex: Exception) {
+        val line: String = ExceptionLogLine(
+            kind = UNHANDLED_EXCEPTION,
+            counterpart = counterpart,
+            subject = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN },
+            cause = causeChainOf(ex),
+            result = status.toString(),
+            action = action,
+        ).format()
+        log.error(line, ex)
+    }
+
     private companion object {
         const val RETRY_AFTER_SECONDS: Int = 5
+
+        /** 수신 필터를 안 거친 경로(actuator·정적 자원)는 무슨 요청이었는지 표식이 없다. */
+        const val UNKNOWN_ORIGIN: String = "요청 미상"
     }
 }

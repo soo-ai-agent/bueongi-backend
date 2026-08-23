@@ -1,14 +1,15 @@
-package io.soo.bueongi.api.config
+package io.soo.bueongi.support.logging
 
 /**
- * 수신 요청([RequestLogLine])과 외부 송신([ExternalCallLogLine])이 함께 쓰는 칸 규격.
+ * 수신 요청·외부 송신·예외 세 줄이 함께 쓰는 칸 규격.
  *
- * 두 줄이 같은 자리에 같은 뜻의 값을 두어야 눈이 세로로 훑는다 —
- * 방향 · 상대 · 상태+메서드 · 경로 · 소요시간 · 부가 순이고, 앞의 세 칸은 폭을 고정한다.
+ * 세 줄이 같은 자리에 같은 뜻의 값을 두어야 눈이 세로로 훑는다 —
+ * 방향 · 상대 · 상태 · 대상 · (소요시간) · 부가 순이고, 앞의 세 칸은 폭을 고정한다.
+ * 부가 칸은 줄마다 달라 표식(🔗 ↩ 📄 ✖ ↳ 👤 📱)으로 구분한다.
  */
 const val LOG_COLUMN_SEPARATOR: String = "  |  "
 
-/** `[수신] 사용자` 가 들어가는 폭. */
+/** `[수신] 관리자` · `[예외] 미처리` 가 들어가는 폭. */
 const val DIRECTION_COLUMN_WIDTH: Int = 13
 
 /** IPv6 로 적힌 로컬 주소(`0:0:0:0:0:0:0:1`)와 가장 긴 원천 이름(`safetydata`)이 들어가는 폭. */
@@ -25,6 +26,7 @@ const val NO_RESPONSE_STATUS: String = "---"
 
 const val INBOUND_DIRECTION: String = "[수신]"
 const val OUTBOUND_DIRECTION: String = "[송신]"
+const val EXCEPTION_DIRECTION: String = "[예외]"
 
 /**
  * 터미널에서 한글은 두 칸을 차지한다 — 글자 수로 채우면 한글이 섞인 줄만 오른쪽으로 밀린다.

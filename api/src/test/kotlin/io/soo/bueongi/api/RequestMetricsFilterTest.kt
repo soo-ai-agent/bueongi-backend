@@ -10,6 +10,8 @@ import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
+import io.soo.bueongi.support.logging.currentRequestOrigin
+import io.soo.bueongi.support.logging.currentTraceId
 import org.slf4j.LoggerFactory
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletResponse
@@ -351,6 +353,63 @@ class RequestMetricsFilterTest {
 
         assertThat(appender.list.single().formattedMessage).contains("404 GET", "/wp-login.php")
         assertThat(store.recorded).isEmpty()
+    }
+
+    /**
+     * 이 요청이 낳은 송신·예외 줄과 짝을 맞추는 표식이다 — 요청이 끝나면 지워야
+     * 스레드를 물려받은 다음 요청이 남의 표식을 달고 나가지 않는다.
+     */
+    @Test
+    fun `요청마다 짝 표식을 심고 끝나면 지운다`() {
+        val appender = captureLogs()
+
+        filterOf(CapturingStore()).doFilter(
+            MockHttpServletRequest("GET", "/api/places/search"),
+            MockHttpServletResponse(), chainSetting(200),
+        )
+
+        assertThat(appender.list.single().formattedMessage).containsPattern("🔗 [0-9a-f]{8}")
+        assertThat(currentTraceId()).isEmpty()
+    }
+
+    /** 송신 줄이 "왜 불렸는지"로 그대로 적는 값이다 — 공유 토큰이 여기로 새면 안 된다. */
+    @Test
+    fun `왜 불렸는지는 토큰을 가린 경로로 남긴다`() {
+        var seenOrigin: String = ""
+        val chain = FilterChain { _, response ->
+            seenOrigin = currentRequestOrigin()
+            (response as HttpServletResponse).status = 200
+        }
+
+        filterOf(CapturingStore()).doFilter(
+            MockHttpServletRequest("POST", "/share/abc123/location"),
+            MockHttpServletResponse(), chain,
+        )
+
+        assertThat(seenOrigin).isEqualTo("POST /share/{token}/location")
+        assertThat(seenOrigin).doesNotContain("abc123")
+    }
+
+    /** 통계가 깨지는 것과 요청이 깨지는 것은 다른 사건이다 — 예외 줄로 갈라 적고 원인은 사슬로 남긴다. */
+    @Test
+    fun `통계 기록 실패는 예외 줄로 남기고 응답은 그대로 나간다`() {
+        val appender = captureLogs()
+        val broken = object : RequestMetricStore {
+            override fun record(metric: RequestMetric) =
+                throw IllegalStateException("창이 닫혔다", IllegalArgumentException("연결 없음"))
+            override fun findRecent(limit: Int): List<RequestMetric> = emptyList()
+        }
+        val response = MockHttpServletResponse()
+
+        RequestMetricsFilter(broken, CapturingAdminStore()).doFilter(
+            MockHttpServletRequest("GET", "/api/places/search"), response, chainSetting(200),
+        )
+
+        val exceptionLine: String = appender.list.last().formattedMessage
+        assertThat(exceptionLine).startsWith("[예외] 무시")
+        assertThat(exceptionLine).contains("✖ IllegalStateException: 창이 닫혔다")
+        assertThat(exceptionLine).contains("IllegalArgumentException: 연결 없음")
+        assertThat(response.status).isEqualTo(200)
     }
 
     @Test

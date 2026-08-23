@@ -2,6 +2,9 @@ package io.soo.bueongi.client.tmap
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -95,31 +98,18 @@ class TmapRouteClient(
             route
         } catch (e: Exception) {
             // 시크릿(appKey) 비노출 — 스택 대신 원인 사슬만 남긴다.
-            log.warn("Tmap 보행자 경로 호출 실패(option={}): {}", searchOption, causeChainOf(e))
+            log.warn(
+                ExceptionLogLine(
+                    kind = IGNORED_EXCEPTION,
+                    counterpart = PROVIDER,
+                    subject = PEDESTRIAN_PATH,
+                    cause = causeChainOf(e, appKey),
+                    action = "이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
+                    paging = "searchOption=$searchOption",
+                ).format(),
+            )
             null
         }
-    }
-
-    /**
-     * 예외 메시지만 남기면 진짜 원인이 사라진다 — 실제로 파싱 오류가 겉의
-     * "Error while extracting response" 뒤에 가려 오래 안 보였다(NUL 사건, 2026-08-15).
-     */
-    private fun causeChainOf(e: Throwable): String {
-        val chain = StringBuilder()
-        var current: Throwable? = e
-        var depth: Int = 0
-        while (current != null && depth < MAX_CAUSE_DEPTH) {
-            if (depth > 0) {
-                chain.append(" <- ")
-            }
-            chain.append(current.javaClass.simpleName).append(": ").append(current.message)
-            if (current.cause === current) {
-                return chain.toString()
-            }
-            current = current.cause
-            depth++
-        }
-        return chain.toString()
     }
 
     private fun buildRequestBody(
@@ -150,13 +140,15 @@ class TmapRouteClient(
 
         private const val PEDESTRIAN_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
 
+        /** 로그 대상 칸은 경로만 적는다 — 송신 줄과 같은 자리에서 같은 값이 보여야 한다. */
+        private const val PEDESTRIAN_PATH: String = "/tmap/routes/pedestrian"
+
+        private const val PROVIDER: String = "tmap"
+
         /** Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10. 세 갈래를 비교 후보로 쓴다. */
         private val DEFAULT_SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
 
         /** 경유지 경로는 추천(0) 하나만 쓴다 — 경유지가 이미 경로를 규정한다. */
         private const val VIA_SEARCH_OPTION: String = "0"
-
-        /** 원인 사슬 로깅 깊이 상한 — 순환·과다 로그 방지. */
-        private const val MAX_CAUSE_DEPTH: Int = 5
     }
 }

@@ -7,7 +7,11 @@ import io.soo.bueongi.api.config.ExternalCallMetricsInterceptor
 import io.soo.bueongi.core.enums.ExternalApiProvider
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetricStore
+import io.soo.bueongi.support.logging.beginTrace
+import io.soo.bueongi.support.logging.currentTraceId
+import io.soo.bueongi.support.logging.endTrace
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.slf4j.LoggerFactory
@@ -48,6 +52,11 @@ class ExternalCallMetricsInterceptorTest {
         appender.start()
         logger.addAppender(appender)
         return appender
+    }
+
+    @AfterEach
+    fun clearTrace() {
+        endTrace()
     }
 
     @Test
@@ -159,6 +168,106 @@ class ExternalCallMetricsInterceptorTest {
 
         assertThat(appender.list.single().level.toString()).isEqualTo("WARN")
         assertThat(appender.list.single().formattedMessage).contains("429 GET")
+    }
+
+    /**
+     * 경로 요청 한 건이 Tmap 을 일곱 번 부른다 — 표식이 없으면 그 일곱 줄이 한 요청인지
+     * 일곱 요청인지 못 가른다. 수신 요청 밖(스케줄러·비동기 적재)은 `배치` 로 갈린다.
+     */
+    @Test
+    fun `왜 불렀는지를 남긴다 - 수신 요청에서 갈라졌으면 그 요청을 배치면 배치라고 적는다`() {
+        val appender = captureLogs()
+        val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
+
+        interceptor.intercept(
+            requestTo("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+        beginTrace("POST /api/routes")
+        interceptor.intercept(
+            requestTo("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+
+        assertThat(appender.list[0].formattedMessage).contains("↩ 배치")
+        assertThat(appender.list[0].formattedMessage).doesNotContain("🔗")
+        assertThat(appender.list[1].formattedMessage).contains("↩ POST /api/routes")
+        assertThat(appender.list[1].formattedMessage).contains("🔗 ${currentTraceId()}")
+    }
+
+    /** 적재가 몇 페이지째에서 멈췄는지는 진단의 첫 단서다 — 다만 인증키는 같은 질의 문자열에 실린다. */
+    @Test
+    fun `페이징 항목만 남기고 나머지 질의 문자열은 버린다`() {
+        val appender = captureLogs()
+        val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
+
+        interceptor.intercept(
+            requestTo("https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE&pageNo=3&numOfRows=1000"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("📄 pageNo=3 numOfRows=1000")
+        assertThat(line).doesNotContain("SECRET-KEY-VALUE")
+        assertThat(line).doesNotContain("serviceKey")
+    }
+
+    /** 숫자가 아닌 값은 통과시키지 않는다 — 인증키가 페이징 이름을 달고 와도 새지 않는다. */
+    @Test
+    fun `페이징 이름이라도 값이 숫자가 아니면 버린다`() {
+        val appender = captureLogs()
+        val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
+
+        interceptor.intercept(
+            requestTo("https://apis.data.go.kr/1741000/x?pageNo=SECRET-KEY-VALUE"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).doesNotContain("SECRET-KEY-VALUE")
+        assertThat(line).doesNotContain("📄")
+    }
+
+    /** 겉 예외만 남기면 진짜 원인이 사라진다 — 실패 줄은 사슬로 적는다. */
+    @Test
+    fun `실패 사유는 원인 사슬로 적되 URL 의 질의 문자열은 지운다`() {
+        val appender = captureLogs()
+        val hidden = IOException(
+            """connect timed out: https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE""",
+            IllegalStateException("소켓이 닫혔다"),
+        )
+        val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
+
+        assertThrows<IOException> {
+            interceptor.intercept(
+                requestTo("https://apis.data.go.kr/1741000/x"),
+                ByteArray(0), ClientHttpRequestExecution { _, _ -> throw hidden },
+            )
+        }
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).contains("✖ IOException: connect timed out")
+        assertThat(line).contains("IllegalStateException: 소켓이 닫혔다")
+        assertThat(line).doesNotContain("SECRET-KEY-VALUE")
+    }
+
+    /** 계측이 깨지는 것과 외부 호출이 깨지는 것은 다른 사건이다 — 예외 줄로 갈라 적는다. */
+    @Test
+    fun `계측 저장 실패는 예외 줄로 남긴다`() {
+        val appender = captureLogs()
+        val brokenStore = object : ExternalCallMetricStore {
+            override fun record(metric: ExternalCallMetric) = throw IllegalStateException("저장 불가")
+            override fun findRecent(limit: Int): List<ExternalCallMetric> = emptyList()
+        }
+
+        ExternalCallMetricsInterceptor(brokenStore, clock).intercept(
+            requestTo("https://apis.openapi.sk.com/tmap/x"),
+            ByteArray(0), executionReturning(HttpStatus.OK),
+        )
+
+        val exceptionLine: String = appender.list.last().formattedMessage
+        assertThat(exceptionLine).startsWith("[예외] 무시")
+        assertThat(exceptionLine).contains("✖ IllegalStateException: 저장 불가")
     }
 
     @Test

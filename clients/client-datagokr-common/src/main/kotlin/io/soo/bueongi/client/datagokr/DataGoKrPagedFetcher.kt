@@ -2,6 +2,11 @@ package io.soo.bueongi.client.datagokr
 
 import io.soo.bueongi.core.enums.DataGoKrQueryDialect
 import com.fasterxml.jackson.databind.JsonNode
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.NO_RESPONSE_STATUS
+import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.logging.maskSecrets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -49,8 +54,11 @@ class DataGoKrPagedFetcher(
             val code: String? = header?.resultCode
             if (!code.isNullOrBlank() && code !in DataGoKrApiSpec.SUCCESS_CODES) {
                 log.warn(
-                    "data.go.kr resultCode={}({}) (endpoint={}) — 갱신 중단(기존 데이터 유지)",
-                    code, header.resultMsg ?: "", endpoint,
+                    failureLine(
+                        endpoint = endpoint,
+                        cause = "resultCode=$code(${maskSecrets(header.resultMsg.orEmpty())})",
+                        paging = "page=$pageNo",
+                    ),
                 )
                 return null
             }
@@ -70,8 +78,11 @@ class DataGoKrPagedFetcher(
         }
         if (received < totalCount) {
             log.warn(
-                "data.go.kr 페이지 상한 도달(endpoint={}, received={}, total={}) — 갱신 중단(기존 데이터 유지)",
-                endpoint, received, totalCount,
+                failureLine(
+                    endpoint = endpoint,
+                    cause = "페이지 상한 도달(받은 ${received}건 / 총 ${totalCount}건)",
+                    paging = "page=${DataGoKrApiSpec.MAX_PAGES}",
+                ),
             )
             return null
         }
@@ -98,24 +109,35 @@ class DataGoKrPagedFetcher(
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
-                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 마스킹
+                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 causeChainOf 가 마스킹한다.
                 log.warn(
-                    "data.go.kr 영구 실패(endpoint={}, page={}): {} — 갱신 중단(기존 데이터 유지)",
-                    endpoint, pageNo, sanitize(e.message),
+                    failureLine(
+                        endpoint = endpoint,
+                        cause = causeChainOf(e, serviceKey),
+                        paging = "page=$pageNo 시도=${attempt}회",
+                        result = "${e.statusCode.value()} GET",
+                    ),
                 )
                 return null
             } catch (e: Exception) {
                 if (attempt >= DataGoKrApiSpec.MAX_ATTEMPTS_PER_PAGE) {
                     log.warn(
-                        "data.go.kr 호출 실패(endpoint={}, page={}, 시도={}회): {} — 갱신 중단(기존 데이터 유지)",
-                        endpoint, pageNo, attempt, sanitize(e.message),
+                        failureLine(
+                            endpoint = endpoint,
+                            cause = causeChainOf(e, serviceKey),
+                            paging = "page=$pageNo 시도=${attempt}회",
+                        ),
                     )
                     return null
                 }
                 val backoffMs: Long = DataGoKrApiSpec.RETRY_BASE_DELAY_MS * attempt
                 log.warn(
-                    "data.go.kr 일시 실패(endpoint={}, page={}, 시도={}회): {} — {}ms 후 재시도",
-                    endpoint, pageNo, attempt, sanitize(e.message), backoffMs,
+                    failureLine(
+                        endpoint = endpoint,
+                        cause = causeChainOf(e, serviceKey),
+                        paging = "page=$pageNo 시도=${attempt}회",
+                        action = "${backoffMs}ms 후 재시도",
+                    ),
                 )
                 Thread.sleep(backoffMs)
                 attempt += 1
@@ -161,8 +183,31 @@ class DataGoKrPagedFetcher(
         else -> emptyList()
     }
 
-    private fun sanitize(message: String?): String =
-        (message ?: "원인 미상").replace(serviceKey, "***")
+    /**
+     * 실패 한 건을 예외 줄 규격으로 옮긴다 — 바로 위의 송신 줄과 같은 자리에서 원천·경로가 보인다.
+     * 대상 칸에는 경로만 적는다(엔드포인트는 전체 URL 로 들어온다).
+     */
+    private fun failureLine(
+        endpoint: String,
+        cause: String,
+        paging: String,
+        action: String = STOPPED_ACTION,
+        result: String = NO_RESPONSE_STATUS,
+    ): String = ExceptionLogLine(
+        kind = IGNORED_EXCEPTION,
+        counterpart = PROVIDER,
+        subject = URI.create(endpoint).path,
+        cause = cause,
+        result = result,
+        action = action,
+        paging = paging,
+    ).format()
+
+    private companion object {
+        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다([ExternalApiProvider.DATA_GO_KR]). */
+        const val PROVIDER: String = "data_go_kr"
+        const val STOPPED_ACTION: String = "갱신 중단(기존 데이터 유지)"
+    }
 }
 
 private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {

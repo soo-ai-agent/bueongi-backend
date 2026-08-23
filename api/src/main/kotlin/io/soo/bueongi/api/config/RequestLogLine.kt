@@ -1,6 +1,14 @@
 package io.soo.bueongi.api.config
 
 import io.soo.bueongi.core.enums.RequestCaller
+import io.soo.bueongi.support.logging.COUNTERPART_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.DIRECTION_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.DURATION_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.INBOUND_DIRECTION
+import io.soo.bueongi.support.logging.LOG_COLUMN_SEPARATOR
+import io.soo.bueongi.support.logging.STATUS_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.padColumn
+import io.soo.bueongi.support.logging.traceColumn
 
 /** 요청 한 건을 로그 한 줄로 옮긴 값. */
 data class RequestLogLine(
@@ -17,7 +25,8 @@ data class RequestLogLine(
     /**
      * 맨 앞이 방향이다 — 우리가 받은 요청인지 우리가 보낸 호출인지가 기호가 아니라 낱말로 갈린다.
      * 뒤이어 상대(부른 IP) · 상태+메서드 · 경로 · 소요시간 · 부가 순으로, 외부 송신 줄
-     * ([ExternalCallLogLine])과 같은 자리에 같은 뜻이 오게 맞춘다. 응답 본문·크기는 남기지 않는다.
+     * ([ExternalCallLogLine])·예외 줄과 같은 자리에 같은 뜻이 오게 맞춘다.
+     * 🔗 는 이 요청이 낳은 송신·예외 줄과 짝을 맞추는 표식이다. 응답 본문·크기는 남기지 않는다.
      */
     fun format(): String = listOf(
         padColumn(directionAndCaller(), DIRECTION_COLUMN_WIDTH),
@@ -25,6 +34,7 @@ data class RequestLogLine(
         padColumn("$status $method", STATUS_COLUMN_WIDTH),
         shortPath(),
         "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
+        traceColumn(),
         "👤 ${clientId ?: UNKNOWN_CLIENT}",
         "📱 $kind",
     ).joinToString(LOG_COLUMN_SEPARATOR)

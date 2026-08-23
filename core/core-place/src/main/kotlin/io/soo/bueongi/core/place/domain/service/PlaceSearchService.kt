@@ -3,6 +3,9 @@ package io.soo.bueongi.core.place.domain.service
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 
 import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
+import io.soo.bueongi.support.logging.ExceptionLogLine
+import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
+import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -30,10 +33,18 @@ class PlaceSearchService(
         return try {
             remoteProvider.search(trimmed)
         } catch (e: Exception) {
-            log.warn("외부 장소 검색 실패 → 시드 폴백 (keyword='{}'): {}", trimmed, e.message)
-            placeEvents?.placeSearchFellBack(
-                "${e.javaClass.simpleName}: ${e.message ?: "메시지 없음"} — 시드 카탈로그로 폴백 중",
+            // 검색어는 남기지 않는다 — 사용자가 어디로 가려 했는지가 로그에 쌓인다.
+            val cause: String = causeChainOf(e)
+            log.warn(
+                ExceptionLogLine(
+                    kind = IGNORED_EXCEPTION,
+                    counterpart = "장소 검색",
+                    subject = "외부 장소 검색",
+                    cause = cause,
+                    action = "시드 카탈로그로 폴백",
+                ).format(),
             )
+            placeEvents?.placeSearchFellBack("$cause — 시드 카탈로그로 폴백 중")
             seedProvider.search(trimmed)
         }
     }

@@ -5,9 +5,13 @@ import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
 import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
+import ch.qos.logback.classic.Logger as LogbackLogger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 
 class PlaceSearchServiceSourceTest {
 
@@ -67,6 +71,25 @@ class PlaceSearchServiceSourceTest {
 
         assertThat(remote.calledWith).isEqualTo("강남")
         assertThat(result.map { it.name }).contains("강남역 2번 출구")
+    }
+
+    /** 사용자가 어디로 가려 했는지가 로그에 쌓이면 안 된다 — 실패해도 검색어는 남기지 않는다. */
+    @Test
+    fun `폴백 로그에 검색어를 남기지 않고 원인 사슬만 적는다`() {
+        val logger: LogbackLogger = LoggerFactory.getLogger(PlaceSearchService::class.java) as LogbackLogger
+        val appender: ListAppender<ILoggingEvent> = ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        val hidden = RuntimeException("Kakao 5xx", IllegalStateException("연결 끊김"))
+        val remote = FakeRemote(isEnabled = true) { throw hidden }
+
+        PlaceSearchService(seed, remote).search("우리집 앞 골목")
+
+        val line: String = appender.list.single().formattedMessage
+        assertThat(line).doesNotContain("우리집")
+        assertThat(line).startsWith("[예외] 무시")
+        assertThat(line).contains("✖ RuntimeException: Kakao 5xx")
+        assertThat(line).contains("IllegalStateException: 연결 끊김")
     }
 
     @Test
