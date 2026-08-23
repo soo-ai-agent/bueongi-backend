@@ -18,6 +18,12 @@ data class ExternalApiUsage(
     val lastCallAtEpochMs: Long?,
     // 실패가 없었으면 null 이 가능함
     val lastFailureReason: String?,
+    // 실패가 없었으면 null 이 가능함
+    val lastFailureAtEpochMs: Long?,
+    /** 마지막 호출이 성공이었나 — 실패 뒤 회복했는지를 한 값으로 답한다(호출이 없었으면 true). */
+    val lastCallOk: Boolean,
     val hourlyCalls: List<HourlyBucket>,
+    /** [hourlyCalls] 와 같은 24칸, 실패만. 선 그래프에 겹치면 언제 무너지고 언제 돌아왔는지가 보인다. */
+    val hourlyFailures: List<HourlyBucket>,
     val topEndpoints: List<ExternalApiEndpoint>,
 )

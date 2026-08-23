@@ -36,6 +36,30 @@ class ExternalApiMetricsServiceTest {
         status = status, durationMs = durationMs, failureReason = failureReason,
     )
 
+    /** 실패가 남아 있어도 마지막 호출이 성공이면 "지금은 정상"이 읽혀야 한다. */
+    @Test
+    fun `실패 뒤 회복하면 마지막 호출 성공으로 답하고 실패는 시간대별로 따로 센다`() {
+        val oneHourMs: Long = 60 * 60 * 1000L
+        // 시간대 버킷은 벽시계(countByHour)로 나뉜다 — 고정 시계 시각을 쓰면 24칸 밖으로 벗어난다.
+        val realNowMs: Long = System.currentTimeMillis()
+        val service = ExternalApiMetricsService(
+            storeOf(
+                call(ExternalApiProvider.TMAP, status = 500, atEpochMs = realNowMs - oneHourMs),
+                call(ExternalApiProvider.TMAP, status = 200, atEpochMs = realNowMs),
+            ),
+            clock,
+        )
+
+        val tmap: ExternalApiUsage =
+            service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
+
+        assertThat(tmap.lastCallOk).isTrue()
+        assertThat(tmap.lastFailureAtEpochMs).isEqualTo(realNowMs - oneHourMs)
+        assertThat(tmap.hourlyFailures.sumOf { it.count }).isEqualTo(1)
+        assertThat(tmap.hourlyFailures.last().count).isEqualTo(0)
+        assertThat(tmap.hourlyCalls.last().count).isEqualTo(1)
+    }
+
     @Test
     fun `원천별로 호출 수와 성공률을 낸다`() {
         val service = ExternalApiMetricsService(
@@ -155,5 +179,43 @@ class ExternalApiMetricsServiceTest {
         assertThat(summary.totalCalls).isZero()
         assertThat(summary.byProvider).isEmpty()
         assertThat(summary.hourlyCalls).hasSize(24)
+    }
+
+    /**
+     * 회복했는지를 한 값으로 답하는 칸이라 **실패로 끝난 경우가 반대로 나와야** 뜻이 있다.
+     * `true` 만 확인하면 항상 true 를 돌려줘도 통과한다.
+     */
+    @Test
+    fun `마지막 호출이 실패면 회복하지 않은 것으로 본다`() {
+        val oneHourMs: Long = 60 * 60 * 1000L
+        val service = ExternalApiMetricsService(
+            storeOf(
+                call(ExternalApiProvider.TMAP, status = 200, atEpochMs = nowMs - oneHourMs),
+                call(ExternalApiProvider.TMAP, status = 500, atEpochMs = nowMs),
+            ),
+            clock,
+        )
+
+        val tmap: ExternalApiUsage =
+            service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
+
+        assertThat(tmap.lastCallOk).isFalse()
+        assertThat(tmap.lastFailureAtEpochMs).isEqualTo(nowMs)
+    }
+
+    /** 호출이 아예 없던 원천을 '실패 중'으로 보이게 하면 안 된다. */
+    @Test
+    fun `실패가 한 번도 없으면 실패 시각은 비어 있다`() {
+        val service = ExternalApiMetricsService(
+            storeOf(call(ExternalApiProvider.KAKAO, status = 200, atEpochMs = nowMs)),
+            clock,
+        )
+
+        val kakao: ExternalApiUsage =
+            service.summarize().byProvider.first { it.provider == ExternalApiProvider.KAKAO }
+
+        assertThat(kakao.lastCallOk).isTrue()
+        assertThat(kakao.lastFailureAtEpochMs).isNull()
+        assertThat(kakao.hourlyFailures.sumOf { it.count }).isZero()
     }
 }

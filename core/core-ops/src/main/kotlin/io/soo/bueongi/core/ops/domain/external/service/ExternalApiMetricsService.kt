@@ -53,6 +53,8 @@ class ExternalApiMetricsService(
         val total: Int = group.size
         val failures: List<ExternalCallMetric> = group.filter { isFailure(it) }
         val durations: List<Long> = group.map { it.durationMs }.sorted()
+        val lastFailure: ExternalCallMetric? = failures.maxByOrNull { it.atEpochMs }
+        val lastCall: ExternalCallMetric? = group.maxByOrNull { it.atEpochMs }
         return ExternalApiUsage(
             provider = provider,
             totalCalls = total,
@@ -62,20 +64,23 @@ class ExternalApiMetricsService(
             p95DurationMs = nearestRankPercentile(durations, 95),
             callsToday = countSince(group, todayStartMs(nowMs)),
             callsLastHour = countSince(group, nowMs - ONE_HOUR_MS),
-            lastCallAtEpochMs = group.maxOfOrNull { it.atEpochMs },
-            lastFailureReason = lastFailureReasonOf(failures),
+            lastCallAtEpochMs = lastCall?.atEpochMs,
+            lastFailureReason = lastFailure?.let { reasonOf(it) },
+            lastFailureAtEpochMs = lastFailure?.atEpochMs,
+            lastCallOk = lastCall == null || !isFailure(lastCall),
             hourlyCalls = countByHour(group.map { it.atEpochMs }),
+            hourlyFailures = countByHour(failures.map { it.atEpochMs }),
             topEndpoints = topEndpoints(group),
         )
     }
 
-    /** 무엇이 마지막으로 잘못됐는지 한 줄로 — 연결 실패면 예외 종류, 응답이 왔으면 상태 코드. */
-    private fun lastFailureReasonOf(failures: List<ExternalCallMetric>): String? {
-        val latest: ExternalCallMetric = failures.maxByOrNull { it.atEpochMs } ?: return null
-        if (latest.failureReason != null) {
-            return latest.failureReason
+    /** 무엇이 잘못됐는지 한 줄로 — 연결 실패면 예외 종류, 응답이 왔으면 상태 코드. */
+    private fun reasonOf(metric: ExternalCallMetric): String {
+        val reason: String? = metric.failureReason
+        if (reason != null) {
+            return reason
         }
-        return "HTTP ${latest.status}"
+        return "HTTP ${metric.status}"
     }
 
     private fun topEndpoints(group: List<ExternalCallMetric>): List<ExternalApiEndpoint> {
