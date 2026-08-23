@@ -7,6 +7,7 @@ import io.soo.bueongi.support.logging.DURATION_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.INBOUND_DIRECTION
 import io.soo.bueongi.support.logging.LOG_COLUMN_SEPARATOR
 import io.soo.bueongi.support.logging.STATUS_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.TARGET_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.padColumn
 import io.soo.bueongi.support.logging.traceColumn
 
@@ -32,7 +33,7 @@ data class RequestLogLine(
         padColumn(directionAndCaller(), DIRECTION_COLUMN_WIDTH),
         padColumn(address, COUNTERPART_COLUMN_WIDTH),
         padColumn("$status $method", STATUS_COLUMN_WIDTH),
-        shortPath(),
+        padColumn(shortPath(), TARGET_COLUMN_WIDTH),
         "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
         traceColumn(),
         "👤 ${clientId ?: UNKNOWN_CLIENT}",

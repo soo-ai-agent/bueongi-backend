@@ -9,6 +9,7 @@ import io.soo.bueongi.support.logging.NO_RESPONSE_STATUS
 import io.soo.bueongi.support.logging.OUTBOUND_DIRECTION
 import io.soo.bueongi.support.logging.STATUS_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.currentRequestOrigin
+import io.soo.bueongi.support.logging.TARGET_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.padColumn
 import io.soo.bueongi.support.logging.traceColumn
 
@@ -34,7 +35,7 @@ data class ExternalCallLogLine(
             padColumn(OUTBOUND_DIRECTION, DIRECTION_COLUMN_WIDTH),
             padColumn(provider, COUNTERPART_COLUMN_WIDTH),
             padColumn(statusText(), STATUS_COLUMN_WIDTH),
-            endpoint,
+            padColumn(endpoint, TARGET_COLUMN_WIDTH),
             "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
         )
         val trace: String = traceColumn()
@@ -48,7 +49,8 @@ data class ExternalCallLogLine(
         if (failureReason.isNotEmpty()) {
             columns.add("✖ $failureReason")
         }
-        return columns.joinToString(LOG_COLUMN_SEPARATOR)
+        // 대상 칸이 마지막이면 채운 공백이 줄 끝에 남는다.
+        return columns.joinToString(LOG_COLUMN_SEPARATOR).trimEnd()
     }
 
     /**

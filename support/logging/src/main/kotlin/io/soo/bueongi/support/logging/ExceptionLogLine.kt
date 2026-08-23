@@ -24,7 +24,7 @@ data class ExceptionLogLine(
             padColumn("$EXCEPTION_DIRECTION $kind", DIRECTION_COLUMN_WIDTH),
             padColumn(counterpart, COUNTERPART_COLUMN_WIDTH),
             padColumn(result, STATUS_COLUMN_WIDTH),
-            subject,
+            padColumn(subject, TARGET_COLUMN_WIDTH),
         )
         val trace: String = traceColumn()
         if (trace.isNotEmpty()) {
@@ -37,7 +37,8 @@ data class ExceptionLogLine(
         if (action.isNotEmpty()) {
             columns.add("↳ $action")
         }
-        return columns.joinToString(LOG_COLUMN_SEPARATOR)
+        // 대상 칸이 마지막이면 채운 공백이 줄 끝에 남는다.
+        return columns.joinToString(LOG_COLUMN_SEPARATOR).trimEnd()
     }
 }
 
