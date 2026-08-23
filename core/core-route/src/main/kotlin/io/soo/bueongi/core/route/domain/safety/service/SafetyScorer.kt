@@ -7,8 +7,11 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
+import io.soo.bueongi.support.util.zonedAt
 
 import org.springframework.stereotype.Component
+import java.time.Clock
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -17,6 +20,9 @@ import kotlin.math.roundToInt
 @Component
 class SafetyScorer(
     private val safetySpots: SafetySpotSpatialSource,
+    private val weightsCatalog: SafetyWeightsCatalog = SafetyWeightsCatalog(),
+    /** 밤낮 판정에 쓴다 — 테스트가 두 시간대를 모두 검증할 수 있게 주입받는다. */
+    private val clock: Clock = Clock.systemUTC(),
 ) {
 
     fun score(path: List<GeoPoint>): SafetyScore {
@@ -31,7 +37,8 @@ class SafetyScorer(
 
         val counts: SafetySpotCounts = countNearby(path)
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
-        val normalized: Double = normalizedScore(counts, km, safePathOverlap)
+        val weights: SafetyWeights = weightsCatalog.weightsAt(zonedAt(clock.millis()))
+        val normalized: Double = normalizedScore(counts, km, safePathOverlap, weights)
         val penalized: Double = applyRiskPenalty(normalized, counts.crimeProneArea, km)
 
         return SafetyScore(
@@ -88,13 +95,18 @@ class SafetyScorer(
     }
 
     /** 가중치 합은 1.0 이어야 점수가 0~100 을 벗어나지 않는다. */
-    private fun normalizedScore(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Double =
-        WEIGHT_CCTV * saturate(counts.cctv / km, SAT_CCTV_PER_KM) +
-            WEIGHT_LAMP * saturate(counts.lamp / km, SAT_LAMP_PER_KM) +
-            WEIGHT_BELL * saturate(counts.bell / km, SAT_BELL_PER_KM) +
-            WEIGHT_SAFEHOUSE * saturate(counts.safehouse.toDouble(), SAT_SAFEHOUSE_COUNT) +
-            WEIGHT_POLICE * saturate(counts.police.toDouble(), SAT_POLICE_COUNT) +
-            WEIGHT_SAFE_PATH * safePathOverlap
+    private fun normalizedScore(
+        counts: SafetySpotCounts,
+        km: Double,
+        safePathOverlap: Double,
+        weights: SafetyWeights,
+    ): Double =
+        weights.cctv * saturate(counts.cctv / km, SAT_CCTV_PER_KM) +
+            weights.lamp * saturate(counts.lamp / km, SAT_LAMP_PER_KM) +
+            weights.bell * saturate(counts.bell / km, SAT_BELL_PER_KM) +
+            weights.safehouse * saturate(counts.safehouse.toDouble(), SAT_SAFEHOUSE_COUNT) +
+            weights.police * saturate(counts.police.toDouble(), SAT_POLICE_COUNT) +
+            weights.safePath * safePathOverlap
 
     /**
      * 우범지역만큼 점수를 깎는다. 더하는 쪽(가중치 합 1.0)과 섞지 않고 뒤에서 빼는 이유는,
@@ -127,27 +139,25 @@ class SafetyScorer(
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0
 
-        const val SAT_CCTV_PER_KM: Double = 20.0
-        const val SAT_LAMP_PER_KM: Double = 40.0
-        const val SAT_BELL_PER_KM: Double = 5.0
-        const val SAT_SAFEHOUSE_COUNT: Double = 3.0
-        const val SAT_POLICE_COUNT: Double = 2.0
-
-        const val WEIGHT_CCTV: Double = 0.25
-
         /**
-         * 조명(가로등+보안등) 가중치. 0.20 → 0.25 로 올렸다(2026-08-22, 사용자 요청 "보안등 점수를 높여라").
-         *
-         * 올린 만큼을 CCTV 에서 뺀 이유는 실측이다 — 강남역→홍대입구 13.2km 에서 조명은 14.89/km 로
-         * 포화 기준(40)의 37% 를 실제로 채우는데, CCTV 는 2.57/km 로 기준(20)의 13% 밖에 못 채운다.
-         * 가장 무거운 가중치가 거의 안 실리는 축에 놓여 있어, 데이터가 실제로 있는 축으로 옮겼다.
-         * 합은 1.0 그대로라 0~100 계약은 변하지 않는다.
+         * 포화 기준은 **실측 분포**에서 잡는다. 상한이 실제보다 높으면 모든 경로가 축의 아래쪽에
+         * 몰려 그 항목이 길을 가르지 못한다 — 20/km 였을 때 서울 4개 구간 16개 후보의 CCTV 밀도는
+         * 1.48~10.58/km(중앙값 2.82)라 대부분 13% 만 채우고 끝났다. 관측 최댓값(10.58)을 상한으로
+         * 두면 같은 후보들이 15%~100% 로 퍼진다. 표본이 16개뿐이라 지역을 넓혀 재검토할 값이다.
          */
-        const val WEIGHT_LAMP: Double = 0.25
-        const val WEIGHT_BELL: Double = 0.18
-        const val WEIGHT_SAFEHOUSE: Double = 0.07
-        const val WEIGHT_POLICE: Double = 0.10
-        const val WEIGHT_SAFE_PATH: Double = 0.15
+        const val SAT_CCTV_PER_KM: Double = 10.0
+
+        /** 실측 0~15.17/km(p90 14.89). 40 은 조명이 깔린 구간조차 37% 에서 멈추게 했다. */
+        const val SAT_LAMP_PER_KM: Double = 16.0
+
+        /** 실측 0~5.76/km(p90 4.26). 5.0 은 관측 최댓값을 잘라 상위 구간이 뭉갰다. */
+        const val SAT_BELL_PER_KM: Double = 6.0
+
+        /** 실측 0 또는 2~3개. 상한 3 이면 2개와 3개가 갈린다 — 그대로 둔다. */
+        const val SAT_SAFEHOUSE_COUNT: Double = 3.0
+
+        /** 실측 0 또는 1개. 상한 2 는 아직 관측 범위를 덮는다 — 그대로 둔다. */
+        const val SAT_POLICE_COUNT: Double = 2.0
 
         /** 구역을 대표 좌표 하나로 받아 시설(30m)보다 넓게 본다. */
         const val RISK_CORRIDOR_METERS: Double = 100.0
@@ -155,7 +165,13 @@ class SafetyScorer(
         /** km 당 이만큼 있으면 감점이 최대에 이른다. */
         const val SAT_RISK_PER_KM: Double = 2.0
 
-        /** 감점 상한 — 조명 가중치와 같은 크기다. 우범지역이 있다고 점수를 0 으로 만들지는 않는다. */
+        /**
+         * 감점 상한. 우범지역이 있다고 점수를 0 으로 만들지는 않는다.
+         *
+         * 이 축은 원천이 전국 0건이라 아직 한 번도 발동한 적이 없다. 그래도 구조를 그대로 두는 이유는,
+         * **더하는 쪽(합 1.0)의 밖에서 빼는 값**이라 데이터가 없는 동안 점수 폭을 한 뼘도 잡아먹지
+         * 않기 때문이다(가중치를 나눠 갖던 안심귀갓길과 다른 점). 데이터가 들어오면 그날부터 그대로 작동한다.
+         */
         const val MAX_RISK_PENALTY: Double = 0.20
     }
 }

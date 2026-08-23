@@ -51,7 +51,7 @@ class SafeRouteServiceTest {
         SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
     }
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
-    private val scorer = SafetyScorer(source)
+    private val scorer = nightScorer(source)
     private val detourPlanner = SafeDetourPlanner(source)
     private val routeService = RouteService(RouteTypeCatalog())
 
@@ -158,7 +158,7 @@ class SafeRouteServiceTest {
                 whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
                 whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
             },
-            scorer = SafetyScorer(richSource),
+            scorer = nightScorer(richSource),
             detourPlanner = SafeDetourPlanner(richSource),
             source = richSource,
         )

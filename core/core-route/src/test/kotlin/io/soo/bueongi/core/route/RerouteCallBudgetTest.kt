@@ -9,7 +9,6 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
-import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
@@ -74,7 +73,7 @@ class RerouteCallBudgetTest {
     private fun serviceOf(tmap: TmapRouteClient): SafeRouteService = SafeRouteService(
         routeService = RouteService(RouteTypeCatalog()),
         collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
-        scorer = SafetyScorer(source),
+        scorer = nightScorer(source),
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
     )
 
@@ -123,7 +122,7 @@ class RerouteCallBudgetTest {
         val service = SafeRouteService(
             routeService = RouteService(RouteTypeCatalog()),
             collector = RouteCandidateCollector(tmapReturning(), SafeDetourPlanner(source), RouteCandidateMerger()),
-            scorer = SafetyScorer(source),
+            scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
             routeStatsStore = store,
         )
