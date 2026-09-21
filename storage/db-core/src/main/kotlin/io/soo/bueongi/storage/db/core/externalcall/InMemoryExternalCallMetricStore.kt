@@ -1,29 +1,15 @@
 package io.soo.bueongi.storage.db.core.externalcall
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import io.soo.bueongi.storage.db.core.InMemoryRecentLog
 
 class InMemoryExternalCallMetricStore : ExternalCallMetricStore {
 
-    private val logger: Logger = LoggerFactory.getLogger(InMemoryExternalCallMetricStore::class.java)
-    private val metrics: ArrayDeque<ExternalCallMetric> = ArrayDeque<ExternalCallMetric>()
-    private val lock = Any()
+    private val recent: InMemoryRecentLog<ExternalCallMetric> = InMemoryRecentLog(EXTERNAL_CALL_METRIC_CAP)
 
     override fun record(metric: ExternalCallMetric) {
-        try {
-            synchronized(lock) {
-                metrics.addFirst(metric)
-                while (metrics.size > EXTERNAL_CALL_METRIC_CAP) {
-                    metrics.removeLast()
-                }
-            }
-        } catch (e: Exception) {
-            logger.warn("외부 API 호출 기록 실패(무시): {}", e.message)
-        }
+        recent.push(metric)
     }
 
-    override fun findRecent(limit: Int): List<ExternalCallMetric> {
-        val snapshot: List<ExternalCallMetric> = synchronized(lock) { metrics.toList() }
-        return snapshot.take(limit.coerceAtLeast(0))
-    }
+    override fun findRecent(limit: Int): List<ExternalCallMetric> =
+        recent.readRecent(limit)
 }

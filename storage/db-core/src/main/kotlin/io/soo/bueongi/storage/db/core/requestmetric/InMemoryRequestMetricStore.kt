@@ -1,31 +1,17 @@
 package io.soo.bueongi.storage.db.core.requestmetric
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import io.soo.bueongi.storage.db.core.InMemoryRecentLog
 
 class InMemoryRequestMetricStore(
-    private val cap: Int = REQUEST_METRIC_CAP,
+    cap: Int = REQUEST_METRIC_CAP,
 ) : RequestMetricStore {
 
-    private val logger: Logger = LoggerFactory.getLogger(InMemoryRequestMetricStore::class.java)
-    private val metrics: ArrayDeque<RequestMetric> = ArrayDeque<RequestMetric>()
-    private val lock = Any()
+    private val recent: InMemoryRecentLog<RequestMetric> = InMemoryRecentLog(cap)
 
     override fun record(metric: RequestMetric) {
-        try {
-            synchronized(lock) {
-                metrics.addFirst(metric)
-                while (metrics.size > cap) {
-                    metrics.removeLast()
-                }
-            }
-        } catch (e: Exception) {
-            logger.warn("수신 요청 메트릭 기록 실패(무시): {}", e.message)
-        }
+        recent.push(metric)
     }
 
-    override fun findRecent(limit: Int): List<RequestMetric> {
-        val snapshot: List<RequestMetric> = synchronized(lock) { metrics.toList() }
-        return snapshot.take(limit.coerceAtLeast(0))
-    }
+    override fun findRecent(limit: Int): List<RequestMetric> =
+        recent.readRecent(limit)
 }
