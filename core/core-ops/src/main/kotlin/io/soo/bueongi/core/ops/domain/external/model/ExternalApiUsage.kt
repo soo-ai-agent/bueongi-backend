@@ -14,7 +14,6 @@ data class ExternalApiUsage(
     val callsLastHour: Int,
     val lastCallAtEpochMs: Long?,
     val lastFailureReason: String?,
-    val lastFailureAtEpochMs: Long?,
     // 호출이 없었으면 true.
     val lastCallOk: Boolean,
     val hourlyCalls: List<HourlyBucket>,

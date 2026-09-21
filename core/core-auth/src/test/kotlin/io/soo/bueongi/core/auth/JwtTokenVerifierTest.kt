@@ -49,7 +49,6 @@ class JwtTokenVerifierTest {
 
         assertThat(verified.userId).isEqualTo(42L)
         assertThat(verified.roles).containsExactly("ROLE_ADMIN")
-        assertThat(verified.nickname).isEqualTo("관리자")
     }
 
     @Test

@@ -7,7 +7,7 @@ data class RegionSafetySpotItemResponse(
     val type: SafetySpotType,
     val lat: Double,
     val lng: Double,
-    val name: String?,
+    val name: String,
 ) {
     companion object {
         fun from(point: SafetySpotPoint): RegionSafetySpotItemResponse =
@@ -15,7 +15,7 @@ data class RegionSafetySpotItemResponse(
                 type = point.type,
                 lat = point.lat,
                 lng = point.lng,
-                name = point.name,
+                name = point.name.orEmpty(),
             )
     }
 }

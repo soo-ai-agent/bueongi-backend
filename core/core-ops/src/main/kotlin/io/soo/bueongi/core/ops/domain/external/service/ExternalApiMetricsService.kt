@@ -66,7 +66,6 @@ class ExternalApiMetricsService(
             callsLastHour = countSince(group, nowMs - ONE_HOUR_MS),
             lastCallAtEpochMs = lastCall?.atEpochMs,
             lastFailureReason = lastFailure?.let { reasonOf(it) },
-            lastFailureAtEpochMs = lastFailure?.atEpochMs,
             lastCallOk = lastCall == null || !isFailure(lastCall),
             hourlyCalls = countByHour(group.map { it.atEpochMs }),
             hourlyFailures = countByHour(failures.map { it.atEpochMs }),

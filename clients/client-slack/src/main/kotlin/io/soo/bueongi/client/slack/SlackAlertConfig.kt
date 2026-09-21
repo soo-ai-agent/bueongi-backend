@@ -39,9 +39,9 @@ class SlackAlertConfig(
         return mutedCategorySet.contains(category)
     }
 
-    fun maskedWebhook(): String? {
+    fun maskedWebhook(): String {
         if (webhook.isEmpty()) {
-            return null
+            return ""
         }
         return maskWebhook(webhook)
     }

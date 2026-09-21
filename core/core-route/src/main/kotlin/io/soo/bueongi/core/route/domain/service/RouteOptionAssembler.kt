@@ -83,11 +83,11 @@ class RouteOptionAssembler(
 
     private fun buildProvenance(): DataProvenance {
         val generatedAt: String? = safetySpotSource.freshness?.generatedAt
-        val basedOn: String? =
+        val basedOn: String =
             if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
                 generatedAt.substring(0, YEAR_MONTH_LENGTH).replace('-', '.')
             } else {
-                null
+                ""
             }
         return DataProvenance(kind = "live", basedOn = basedOn, origin = DATA_ORIGIN)
     }

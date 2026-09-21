@@ -60,7 +60,6 @@ class ExternalApiMetricsServiceTest {
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
 
         assertThat(tmap.lastCallOk).isTrue()
-        assertThat(tmap.lastFailureAtEpochMs).isEqualTo(realNowMs - oneHourMs)
         assertThat(tmap.hourlyFailures.sumOf { it.count }).isEqualTo(1)
         assertThat(tmap.hourlyFailures.last().count).isEqualTo(0)
         assertThat(tmap.hourlyCalls.last().count).isEqualTo(1)
@@ -208,11 +207,10 @@ class ExternalApiMetricsServiceTest {
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
 
         assertThat(tmap.lastCallOk).isFalse()
-        assertThat(tmap.lastFailureAtEpochMs).isEqualTo(nowMs)
     }
 
     @Test
-    fun `실패가 한 번도 없으면 실패 시각은 비어 있다`() {
+    fun `실패가 한 번도 없으면 실패 집계가 0 이고 마지막 호출은 정상이다`() {
         val service =
             ExternalApiMetricsService(
                 storeOf(call(ExternalApiProvider.KAKAO, status = 200, atEpochMs = nowMs)),
@@ -223,7 +221,6 @@ class ExternalApiMetricsServiceTest {
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.KAKAO }
 
         assertThat(kakao.lastCallOk).isTrue()
-        assertThat(kakao.lastFailureAtEpochMs).isNull()
         assertThat(kakao.hourlyFailures.sumOf { it.count }).isZero()
     }
 }

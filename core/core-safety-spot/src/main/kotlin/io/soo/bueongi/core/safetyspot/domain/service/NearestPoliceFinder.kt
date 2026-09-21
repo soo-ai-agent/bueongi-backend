@@ -38,9 +38,9 @@ class NearestPoliceFinder(
             }
             nearest.add(
                 NearestPolice(
-                    name = found.point.name,
-                    address = found.point.address,
-                    tel = found.point.phone,
+                    name = found.point.name.orEmpty(),
+                    address = found.point.address.orEmpty(),
+                    tel = found.point.phone.orEmpty(),
                     lat = found.point.lat,
                     lng = found.point.lng,
                     distanceM = found.distanceMeters.roundToInt(),

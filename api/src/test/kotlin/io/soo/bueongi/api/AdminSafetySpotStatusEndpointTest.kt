@@ -61,7 +61,7 @@ class AdminSafetySpotStatusEndpointTest(
                 jsonPath("$.spots[0].type") { value("cctv") }
                 jsonPath("$.spots[0].lat") { value(37.5) }
                 jsonPath("$.spots[0].lng") { value(127.0) }
-                content { string(containsString("\"name\":null")) }
+                content { string(containsString("\"name\":\"\"")) }
             }
     }
 

@@ -32,7 +32,6 @@ class JwtTokenVerifier(
     data class VerifiedToken(
         val userId: Long,
         val roles: List<String>,
-        val nickname: String?,
     )
 
     fun verify(token: String): VerifiedToken {
@@ -66,7 +65,6 @@ class JwtTokenVerifier(
         return VerifiedToken(
             userId = userId,
             roles = roles,
-            nickname = claims["nickname"] as? String,
         )
     }
 

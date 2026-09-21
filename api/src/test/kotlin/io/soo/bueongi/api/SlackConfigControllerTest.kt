@@ -28,7 +28,7 @@ class SlackConfigControllerTest(
             .andExpect {
                 status { isOk() }
                 jsonPath("$.webhookConfigured") { value(false) }
-                jsonPath("$.webhookMasked") { value(null) }
+                jsonPath("$.webhookMasked") { value("") }
                 jsonPath("$.enabled") { value(false) }
                 jsonPath("$.throttleMinutes") { value(10) }
                 jsonPath("$.categories.length()") { value(5) }

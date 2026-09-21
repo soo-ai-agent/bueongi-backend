@@ -66,13 +66,13 @@ class SlackConfigServiceTest {
     }
 
     @Test
-    fun `view - webhook 미설정이면 configured false 이고 마스킹은 null, enabled false`() {
+    fun `view - webhook 미설정이면 configured false 이고 마스킹은 빈 문자열, enabled false`() {
         val (svc, _) = service(url = "")
 
         val summary = svc.view()
 
         assertThat(summary.webhookConfigured).isFalse()
-        assertThat(summary.webhookMasked).isNull()
+        assertThat(summary.webhookMasked).isEmpty()
         assertThat(summary.enabled).isFalse()
     }
 
