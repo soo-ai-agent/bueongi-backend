@@ -70,16 +70,6 @@ class SafetySpotControllerTest(
     }
 
     @Test
-    fun `위경도 범위 초과는 400을 반환한다`() {
-        mockMvc.get("/api/safety-spots/police/nearest") {
-            param("lat", "123.0")
-            param("lng", "127.0276")
-        }.andExpect {
-            status { isBadRequest() }
-        }
-    }
-
-    @Test
     fun `범위 밖 좌표는 400 INVALID_COORDINATE`() {
         mockMvc.get("/api/safety-spots/police/nearest") {
             param("lat", "999.0")

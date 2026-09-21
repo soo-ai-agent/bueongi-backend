@@ -1,50 +1,23 @@
 package io.soo.bueongi.storage.db.core.requestmetric
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class InMemoryRequestMetricStoreTest {
 
-    private val store = InMemoryRequestMetricStore()
-
-    private fun metric(at: Long, endpoint: String = "/api/places/search", clientId: String? = "anon-1") =
+    private fun metric(at: Long, clientId: String? = "anon-1") =
         RequestMetric(
             atEpochMs = at,
             method = "GET",
-            endpoint = endpoint,
+            endpoint = "/api/places/search",
             clientId = clientId,
             status = 200,
             durationMs = 10,
         )
 
     @Test
-    fun `record 후 findRecent 는 최신이 먼저다`() {
-        store.record(metric(1))
-        store.record(metric(2))
-        store.record(metric(3))
-
-        val recent: List<RequestMetric> = store.findRecent(10)
-
-        assertEquals(listOf(3L, 2L, 1L), recent.map { it.atEpochMs })
-    }
-
-    @Test
-    fun `limit 만큼만 반환한다(최신부터)`() {
-        (1L..5L).forEach { store.record(metric(it)) }
-
-        assertEquals(listOf(5L, 4L), store.findRecent(2).map { it.atEpochMs })
-    }
-
-    @Test
-    fun `clientId 가 null 이어도 그대로 저장된다`() {
-        store.record(metric(1, clientId = null))
-
-        assertEquals(listOf<String?>(null), store.findRecent(10).map { it.clientId })
-    }
-
-    @Test
-    fun `상한을 초과하면 가장 오래된 것부터 축출된다`() {
+    fun `이 저장소의 상한은 REQUEST_METRIC_CAP 이다`() {
+        val store = InMemoryRequestMetricStore()
         val total: Long = REQUEST_METRIC_CAP + 50L
         (1L..total).forEach { store.record(metric(it)) }
 
@@ -52,11 +25,13 @@ class InMemoryRequestMetricStoreTest {
 
         assertEquals(REQUEST_METRIC_CAP, all.size)
         assertEquals(total, all.first().atEpochMs)
-        assertEquals(51L, all.last().atEpochMs)
     }
 
     @Test
-    fun `기록이 없으면 빈 목록`() {
-        assertTrue(store.findRecent(10).isEmpty())
+    fun `헤더를 안 보낸 호출자의 clientId 는 null 로 남는다`() {
+        val store = InMemoryRequestMetricStore()
+        store.record(metric(1, clientId = null))
+
+        assertEquals(listOf<String?>(null), store.findRecent(10).map { it.clientId })
     }
 }

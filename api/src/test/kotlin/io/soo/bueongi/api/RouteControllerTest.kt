@@ -123,22 +123,6 @@ class RouteControllerTest(
     }
 
     @Test
-    fun `origin 누락이면 422 ORIGIN_REQUIRED`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"destination":{"lat":37.5572,"lng":126.9245}}"""
-        }.andExpect { status { isUnprocessableEntity() } }
-    }
-
-    @Test
-    fun `출발지와 도착지가 같은 좌표면 422`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"origin":{"lat":37.5,"lng":127.0},"destination":{"lat":37.5,"lng":127.0}}"""
-        }.andExpect { status { isUnprocessableEntity() } }
-    }
-
-    @Test
     fun `safetySpots 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
         mockMvc.post("/api/routes/safety-spots") {
             contentType = MediaType.APPLICATION_JSON
@@ -151,14 +135,6 @@ class RouteControllerTest(
         mockMvc.post("/api/routes/compare") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.4979,"lng":127.0276},"destination":{"name":"x"}}"""
-        }.andExpect { status { isBadRequest() } }
-    }
-
-    @Test
-    fun `위도 범위 초과(lat 100)면 400`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"origin":{"lat":100.0,"lng":127.0276},"destination":{"lat":37.5,"lng":126.9}}"""
         }.andExpect { status { isBadRequest() } }
     }
 

@@ -194,6 +194,24 @@ class RedisLocationStoreTest {
     }
 
     @Test
+    fun `깨진 route JSON 은 경로만 비우고 공유는 살린다`() {
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn("{깨진 JSON")
+
+        val session = store.findByToken("tok")!!
+
+        assertNull(session.route)
+        assertEquals("sek", session.ownerSecret)
+    }
+
+    @Test
     fun `find 는 route 키가 없으면 route=null`() {
         whenever(hashOps.entries("share:tok")).thenReturn(
             mapOf(
