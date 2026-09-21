@@ -5,8 +5,8 @@ fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
     val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     return when {
-        Epsg5179.inKoreaBounds(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x)
-        Epsg5179.inKoreaBounds(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어
+        isInKorea(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x)
+        isInKorea(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어
         x in UTMK_EASTING_RANGE && y in UTMK_NORTHING_RANGE -> Epsg5179.toWgs84(x, y)
         x in WEB_MERCATOR_KOREA_X_RANGE && y in WEB_MERCATOR_KOREA_Y_RANGE -> Epsg3857.toWgs84(x, y)
         else -> null

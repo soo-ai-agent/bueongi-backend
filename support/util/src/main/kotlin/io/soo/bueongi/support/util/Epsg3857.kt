@@ -21,7 +21,7 @@ object Epsg3857 {
         }
         val lng: Double = Math.toDegrees(x / EARTH_RADIUS_METERS)
         val lat: Double = Math.toDegrees(2 * atan(exp(y / EARTH_RADIUS_METERS)) - PI / 2)
-        return if (Epsg5179.inKoreaBounds(lat, lng)) {
+        return if (isInKorea(lat, lng)) {
             Wgs84Point(lat, lng)
         } else {
             null
