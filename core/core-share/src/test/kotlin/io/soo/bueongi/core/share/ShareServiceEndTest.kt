@@ -29,5 +29,7 @@ class ShareServiceEndTest : ShareServiceTestSupport() {
     @Test
     fun `없는 token end 는 멱등(no-op)`() {
         service.end("nonexistent", "x")
+
+        assertTrue(service.getLocation("nonexistent").expired)
     }
 }

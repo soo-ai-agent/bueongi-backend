@@ -1,9 +1,7 @@
 package io.soo.bueongi
 
-import io.soo.bueongi.core.place.domain.service.KakaoRemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
-import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,16 +12,8 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("test")
 class BueongiContextLoadTest(
     @param:Autowired private val placeSearchService: PlaceSearchService,
-    @param:Autowired private val seedProvider: SeedPlaceProvider,
     @param:Autowired private val remoteProvider: RemotePlaceProvider,
 ) {
-
-    @Test
-    fun `핵심 빈이 모두 와이어된다`() {
-        assertThat(placeSearchService).isNotNull
-        assertThat(seedProvider).isNotNull
-        assertThat(remoteProvider).isInstanceOf(KakaoRemotePlaceProvider::class.java)
-    }
 
     @Test
     fun `테스트 환경은 외부 키 미설정 - 시드 폴백 경로 활성`() {

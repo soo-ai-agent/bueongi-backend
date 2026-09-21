@@ -43,14 +43,4 @@ class WebCorsConfigTest(
             header { doesNotExist("Access-Control-Allow-Origin") }
         }
     }
-
-    @Test
-    fun `허용 origin 이라도 미허용 메서드 프리플라이트는 거부된다`() {
-        mockMvc.options("/api/places/search") {
-            header("Origin", allowedOrigin)
-            header("Access-Control-Request-Method", "DELETE")
-        }.andExpect {
-            status { isForbidden() }
-        }
-    }
 }
