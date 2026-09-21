@@ -134,4 +134,23 @@ class RouteOptionWireContractTest {
             )
         assertThat(mapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(fallback)).isEqualTo(expected)
     }
+
+    @Test
+    fun `카메라 대수를 주지 않는 시설의 cameraCount 는 null 로 나간다`() {
+        val bell = SafetySpotPoi(type = SafetySpotPoiType.BELL, x = 50, y = 50, lat = 37.5, lng = 127.0)
+
+        val json = mapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(bell)
+
+        assertThat(json.get("cameraCount").isNull).isTrue()
+    }
+
+    @Test
+    fun `이름을 주지 않는 시설의 문자열 칸은 빈 문자열로 나간다`() {
+        val bell = SafetySpotPoi(type = SafetySpotPoiType.BELL, x = 50, y = 50, lat = 37.5, lng = 127.0)
+
+        val json = mapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(bell)
+
+        assertThat(json.get("name").asText()).isEmpty()
+        assertThat(json.get("phone").asText()).isEmpty()
+    }
 }

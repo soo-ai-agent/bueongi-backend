@@ -50,7 +50,7 @@ class RouteMarkerBuilder(
                         lng = safetySpot.lng,
                         name = safetySpot.name.orEmpty(),
                         purpose = safetySpot.purpose.orEmpty(),
-                        cameraCount = safetySpot.cameraCount ?: 0,
+                        cameraCount = safetySpot.cameraCount,
                         address = safetySpot.address.orEmpty(),
                         phone = safetySpot.phone.orEmpty(),
                     ),
