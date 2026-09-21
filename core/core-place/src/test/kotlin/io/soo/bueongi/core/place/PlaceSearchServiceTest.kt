@@ -1,21 +1,21 @@
 package io.soo.bueongi.core.place
 
+import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
-import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class PlaceSearchServiceTest {
+    private val disabledRemote =
+        object : RemotePlaceProvider {
+            override val isEnabled: Boolean = false
 
-    private val disabledRemote = object : RemotePlaceProvider {
-        override val isEnabled: Boolean = false
-        override fun search(keyword: String): List<PlaceItem> =
-            throw AssertionError("disabled remote 는 호출되면 안 된다")
-    }
+            override fun search(keyword: String): List<PlaceItem> = throw AssertionError("disabled remote 는 호출되면 안 된다")
+        }
 
     private val service = PlaceSearchService(SeedPlaceProvider(), disabledRemote)
 

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceWatchingTest : ShareServiceTestSupport() {
-
     @Test
     fun `보호자 조회가 있으면 watching=true, 없으면 false`() {
         val s = service.create(null)

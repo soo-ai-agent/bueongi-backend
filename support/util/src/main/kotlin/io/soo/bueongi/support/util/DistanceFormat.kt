@@ -12,5 +12,4 @@ fun formatDistance(meters: Double): String {
     }
 }
 
-fun walkMinutes(meters: Double): Int =
-    max(1, (max(0.0, meters) / 67.0).roundToInt())
+fun walkMinutes(meters: Double): Int = max(1, (max(0.0, meters) / 67.0).roundToInt())

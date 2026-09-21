@@ -13,23 +13,24 @@ import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
 class RedisRouteChoiceStoreTest {
-
     private val listOps: ListOperations<String, String> = mock()
 
-    private val redis: StringRedisTemplate = mock<StringRedisTemplate>().also {
-        whenever(it.opsForList()).thenReturn(listOps)
-    }
+    private val redis: StringRedisTemplate =
+        mock<StringRedisTemplate>().also {
+            whenever(it.opsForList()).thenReturn(listOps)
+        }
 
-    private val log = RouteChoiceLog(
-        atEpochMs = 1L,
-        chosenType = RouteType.SAFE,
-        candidateCount = 3,
-        score = 82,
-        distanceMeters = 1200,
-        durationSeconds = 900,
-        preference = SafetyPreference.SAFE,
-        destinationName = "강남역",
-    )
+    private val log =
+        RouteChoiceLog(
+            atEpochMs = 1L,
+            chosenType = RouteType.SAFE,
+            candidateCount = 3,
+            score = 82,
+            distanceMeters = 1200,
+            durationSeconds = 900,
+            preference = SafetyPreference.SAFE,
+            destinationName = "강남역",
+        )
 
     @Test
     fun `선택 기록은 routechoices 키에 상한만큼 쌓는다`() {

@@ -6,26 +6,28 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
-import java.io.File
-import java.nio.charset.Charset
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import java.nio.charset.Charset
 
 class LampCsvLoadTest {
-
     private val header: String =
         "보안등위치명,설치개수,소재지도로명주소,소재지지번주소,위도,경도,설치연도,설치형태," +
             "관리기관전화번호,관리기관명,데이터기준일자,제공기관코드,제공기관명"
 
     @Test
-    fun `좌표가 빈 행은 건너뛰고 좌표가 있는 행만 적재한다`(@TempDir tmp: File) {
-        val csvDir = csvDirOf(
-            tmp,
-            header,
-            "창녕3219,1,,경남 창녕군,35.5443,128.4923,,,055-000,창녕군청,2026-06-26,5410000,경상남도 창녕군",
-            "도화동 07-08,1,서울 마포구 토정로37길 46,,,,,전용주,02-000,마포구청,2026-06-26,3130000,서울특별시 마포구",
-        )
+    fun `좌표가 빈 행은 건너뛰고 좌표가 있는 행만 적재한다`(
+        @TempDir tmp: File,
+    ) {
+        val csvDir =
+            csvDirOf(
+                tmp,
+                header,
+                "창녕3219,1,,경남 창녕군,35.5443,128.4923,,,055-000,창녕군청,2026-06-26,5410000,경상남도 창녕군",
+                "도화동 07-08,1,서울 마포구 토정로37길 46,,,,,전용주,02-000,마포구청,2026-06-26,3130000,서울특별시 마포구",
+            )
 
         val points = loadLamp(tmp, csvDir)
 
@@ -35,12 +37,15 @@ class LampCsvLoadTest {
     }
 
     @Test
-    fun `제공기관코드를 남긴다 - 이미 가진 자치단체를 API 로 다시 받지 않으려면 필요하다`(@TempDir tmp: File) {
-        val csvDir = csvDirOf(
-            tmp,
-            header,
-            "창녕3219,1,,경남 창녕군,35.5443,128.4923,,,055-000,창녕군청,2026-06-26,5410000,경상남도 창녕군",
-        )
+    fun `제공기관코드를 남긴다 - 이미 가진 자치단체를 API 로 다시 받지 않으려면 필요하다`(
+        @TempDir tmp: File,
+    ) {
+        val csvDir =
+            csvDirOf(
+                tmp,
+                header,
+                "창녕3219,1,,경남 창녕군,35.5443,128.4923,,,055-000,창녕군청,2026-06-26,5410000,경상남도 창녕군",
+            )
 
         val points = loadLamp(tmp, csvDir)
 
@@ -48,7 +53,9 @@ class LampCsvLoadTest {
     }
 
     @Test
-    fun `제공기관코드 컬럼이 없는 지자체 파일도 적재된다`(@TempDir tmp: File) {
+    fun `제공기관코드 컬럼이 없는 지자체 파일도 적재된다`(
+        @TempDir tmp: File,
+    ) {
         val csvDir = csvDirOf(tmp, "경도,위도,보안등위치명", "128.4923,35.5443,고성1")
 
         val points = loadLamp(tmp, csvDir)
@@ -57,7 +64,9 @@ class LampCsvLoadTest {
     }
 
     @Test
-    fun `헤더 순서가 바뀌어도 컬럼 이름으로 찾는다`(@TempDir tmp: File) {
+    fun `헤더 순서가 바뀌어도 컬럼 이름으로 찾는다`(
+        @TempDir tmp: File,
+    ) {
         val csvDir = csvDirOf(tmp, "경도,위도,보안등위치명", "128.4923,35.5443,창녕3219")
 
         val points = loadLamp(tmp, csvDir)
@@ -67,27 +76,36 @@ class LampCsvLoadTest {
     }
 
     @Test
-    fun `위도 경도 컬럼이 없으면 적재하지 않는다`(@TempDir tmp: File) {
+    fun `위도 경도 컬럼이 없으면 적재하지 않는다`(
+        @TempDir tmp: File,
+    ) {
         val csvDir = csvDirOf(tmp, "보안등위치명,주소", "창녕3219,경남 창녕군")
 
         assertThat(loadLamp(tmp, csvDir)).isEmpty()
     }
 
-    private fun csvDirOf(tmp: File, vararg lines: String): File {
+    private fun csvDirOf(
+        tmp: File,
+        vararg lines: String,
+    ): File {
         val dir = File(tmp, "lamp").apply { mkdirs() }
         File(dir, "lamp.csv").writeText(lines.joinToString("\n"), CP949)
         return dir
     }
 
-    private fun loadLamp(tmp: File, csvDir: File): List<SafetySpotPoint> {
+    private fun loadLamp(
+        tmp: File,
+        csvDir: File,
+    ): List<SafetySpotPoint> {
         val uploads = File(tmp, "uploads").apply { mkdirs() }
-        val repo = SafetySpotRepository(
-            "",
-            ObjectMapper(),
-            SafetySpotUploadStore(ObjectMapper(), uploads.absolutePath),
-            "",
-            csvDir.path,
-        )
+        val repo =
+            SafetySpotRepository(
+                "",
+                ObjectMapper(),
+                SafetySpotUploadStore(ObjectMapper(), uploads.absolutePath),
+                "",
+                csvDir.path,
+            )
         repo.load()
         return repo.index(SafetySpotType.SECURITY_LAMP).withinRadius(GeoPoint(35.5443, 128.4923), 2_000.0)
     }

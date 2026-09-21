@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
+import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.core.route.domain.model.RouteCandidate
+import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -17,7 +17,6 @@ class RouteCandidateCollector(
     private val detourPlanner: SafeDetourPlanner,
     private val candidateMerger: RouteCandidateMerger,
 ) {
-
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
     fun collectBase(query: RouteQuery): List<TmapRoute> =
@@ -27,7 +26,10 @@ class RouteCandidateCollector(
             query.destinationName,
         )
 
-    fun collectAll(query: RouteQuery, base: List<TmapRoute>): List<RouteCandidate> {
+    fun collectAll(
+        query: RouteQuery,
+        base: List<TmapRoute>,
+    ): List<RouteCandidate> {
         val detours: List<TmapRoute> = collectSafeDetours(query, base)
 
         return candidateMerger.mergeNearDuplicates(
@@ -35,7 +37,10 @@ class RouteCandidateCollector(
         )
     }
 
-    private fun collectSafeDetours(query: RouteQuery, base: List<TmapRoute>): List<TmapRoute> {
+    private fun collectSafeDetours(
+        query: RouteQuery,
+        base: List<TmapRoute>,
+    ): List<TmapRoute> {
         if (query.reroute) {
             return emptyList()
         }
@@ -48,12 +53,13 @@ class RouteCandidateCollector(
         val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + budget)
         val detours: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {
-            val route: TmapRoute = tmapClient.fetchRouteVia(
-                query.origin.toTmapCoord(),
-                query.destination.toTmapCoord(),
-                waypoints.map { it.toTmapCoord() },
-                destName = query.destinationName,
-            ) ?: continue
+            val route: TmapRoute =
+                tmapClient.fetchRouteVia(
+                    query.origin.toTmapCoord(),
+                    query.destination.toTmapCoord(),
+                    waypoints.map { it.toTmapCoord() },
+                    destName = query.destinationName,
+                ) ?: continue
             if (route.distanceM <= maxDistanceM) {
                 detours.add(route)
             }
@@ -67,20 +73,18 @@ class RouteCandidateCollector(
     }
 
     private companion object {
-
-        val DETOUR_BUDGETS: Map<SafetyPreference, Double> = mapOf(
-            SafetyPreference.BALANCED to 0.2,
-            SafetyPreference.SAFE to 0.35,
-            SafetyPreference.SAFEST to 0.6,
-        )
+        val DETOUR_BUDGETS: Map<SafetyPreference, Double> =
+            mapOf(
+                SafetyPreference.BALANCED to 0.2,
+                SafetyPreference.SAFE to 0.35,
+                SafetyPreference.SAFEST to 0.6,
+            )
     }
 }
 
 private fun TmapRoute.toCandidate(): RouteCandidate =
     RouteCandidate(searchOption = searchOption, path = path.toGeoPoints(), distanceM = distanceM, timeS = timeS, steps = steps)
 
-private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> =
-    map { GeoPoint(it.lat, it.lng) }
+private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
 
-private fun GeoPoint.toTmapCoord(): TmapCoord =
-    TmapCoord(lat, lng)
+private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)

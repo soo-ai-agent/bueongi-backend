@@ -14,9 +14,10 @@ data class KakaoPlaceDocument(
 ) {
     fun toKakaoPlace(): KakaoPlace? {
         val name: String = placeName?.takeIf { it.isNotBlank() } ?: return null
-        val address: String = roadAddressName?.takeIf { it.isNotBlank() }
-            ?: addressName?.takeIf { it.isNotBlank() }
-            ?: return null
+        val address: String =
+            roadAddressName?.takeIf { it.isNotBlank() }
+                ?: addressName?.takeIf { it.isNotBlank() }
+                ?: return null
         val latValue: Double = lat?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -90.0..90.0 } ?: return null
         val lngValue: Double = lng?.toDoubleOrNull()?.takeIf { it.isFinite() && it in -180.0..180.0 } ?: return null
         return KakaoPlace(name = name, address = address, lat = latValue, lng = lngValue)

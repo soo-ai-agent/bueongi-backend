@@ -1,24 +1,25 @@
 package io.soo.bueongi.core.share
 
-import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
-import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
-
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import io.soo.bueongi.storage.db.core.share.model.StoredLocation
+import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
 class MissedArrivalWatchdogTest {
-
     private val now = Instant.parse("2026-07-28T12:00:00Z")
 
-    private fun session(expectedArrivalAt: Instant?, lastLocationAt: Instant? = null): ShareSession =
+    private fun session(
+        expectedArrivalAt: Instant?,
+        lastLocationAt: Instant? = null,
+    ): ShareSession =
         ShareSession(
             token = "tok-abcdef-123456",
             ownerSecret = "sek",
@@ -49,10 +50,11 @@ class MissedArrivalWatchdogTest {
     @Test
     fun `예정 초과 + 위치 정지면 의심한다`() {
         val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
-        val stopped = session(
-            expectedArrivalAt = expected,
-            lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 30),
-        )
+        val stopped =
+            session(
+                expectedArrivalAt = expected,
+                lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 30),
+            )
         assertThat(stopped.isMissedArrivalSuspect(now)).isTrue()
     }
 
@@ -64,13 +66,15 @@ class MissedArrivalWatchdogTest {
 
     @Test
     fun `scan 은 의심 세션만 운영자에게 알린다 — 토큰 마스킹·좌표 비노출`() {
-        val suspect = session(
-            expectedArrivalAt = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 120),
-            lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 60),
-        )
+        val suspect =
+            session(
+                expectedArrivalAt = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 120),
+                lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 60),
+            )
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
         val notifier = RecordingPublisher()
-        val watchdog = MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), ShareEventPublisher(notifier))
+        val watchdog =
+            MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), ShareEventPublisher(notifier))
 
         watchdog.scan()
 
@@ -85,19 +89,28 @@ class MissedArrivalWatchdogTest {
         assertThat(detail).doesNotContain("37.5")
     }
 
-    private fun fixedStore(active: List<ShareSession>): LocationStore = object : LocationStore {
-        override val backend: String = "memory"
-        override fun save(session: ShareSession) = Unit
-        override fun findByToken(token: String): ShareSession? = null
-        override fun deleteByToken(token: String) = Unit
-        override fun markViewed(token: String) = Unit
-        override fun isWatched(token: String): Boolean = false
-        override fun countActiveSessions(): Int = active.size
-        override fun findActiveSessions(): List<ShareSession> = active
-    }
+    private fun fixedStore(active: List<ShareSession>): LocationStore =
+        object : LocationStore {
+            override val backend: String = "memory"
+
+            override fun save(session: ShareSession) = Unit
+
+            override fun findByToken(token: String): ShareSession? = null
+
+            override fun deleteByToken(token: String) = Unit
+
+            override fun markViewed(token: String) = Unit
+
+            override fun isWatched(token: String): Boolean = false
+
+            override fun countActiveSessions(): Int = active.size
+
+            override fun findActiveSessions(): List<ShareSession> = active
+        }
 
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
+
         override fun publishEvent(event: Any) {
             events.add(event)
         }

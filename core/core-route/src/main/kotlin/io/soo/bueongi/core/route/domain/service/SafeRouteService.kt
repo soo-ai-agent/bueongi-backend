@@ -1,14 +1,14 @@
 package io.soo.bueongi.core.route.domain.service
 
+import io.soo.bueongi.client.tmap.TmapRoute
+import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
-import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
 
@@ -21,7 +21,6 @@ class SafeRouteService(
     private val routeEvents: RouteEventPublisher? = null,
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
-
     fun safeCompare(query: RouteQuery): List<RouteOption> {
         routeStatsStore.recordRecommendation("safe-compare", query)
 
@@ -45,11 +44,13 @@ class SafeRouteService(
         val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path, coverage)) }
 
         val safeIdx: Int = scored.indices.maxBy { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
-        val fastIdx: Int? = scored.indices.filter { it != safeIdx }
-            .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
+        val fastIdx: Int? =
+            scored.indices.filter { it != safeIdx }
+                .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
         val used: Set<Int> = setOfNotNull(safeIdx, fastIdx)
-        val mainIdx: Int? = scored.indices.filter { it !in used }
-            .maxByOrNull { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
+        val mainIdx: Int? =
+            scored.indices.filter { it !in used }
+                .maxByOrNull { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
 
         val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap()
         picks[safeIdx] = RouteType.SAFE
@@ -68,7 +69,6 @@ class SafeRouteService(
     }
 
     private companion object {
-
         const val TIE_BREAK_EPSILON: Double = 1e-9
     }
 }

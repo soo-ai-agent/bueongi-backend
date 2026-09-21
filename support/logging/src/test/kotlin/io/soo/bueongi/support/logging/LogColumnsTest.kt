@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class LogColumnsTest {
-
     @Test
     fun `짧은 경로도 대상 칸 폭까지 채운다`() {
         val short: String = padColumn("/wp-login.php", TARGET_COLUMN_WIDTH)

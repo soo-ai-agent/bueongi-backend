@@ -12,7 +12,12 @@ class TmapRouteCache(
 
     private val entries: ConcurrentHashMap<String, Entry> = ConcurrentHashMap<String, Entry>()
 
-    fun get(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?): TmapRoute? {
+    fun get(
+        origin: TmapCoord,
+        dest: TmapCoord,
+        searchOption: String,
+        passList: List<TmapCoord>?,
+    ): TmapRoute? {
         val key: String = key(origin, dest, searchOption, passList)
         val entry: Entry = entries[key] ?: return null
         if (clock() >= entry.expiresAt) {
@@ -22,27 +27,37 @@ class TmapRouteCache(
         return entry.route
     }
 
-    fun put(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?, route: TmapRoute) {
+    fun put(
+        origin: TmapCoord,
+        dest: TmapCoord,
+        searchOption: String,
+        passList: List<TmapCoord>?,
+        route: TmapRoute,
+    ) {
         if (entries.size >= maxEntries) {
             entries.clear()
         }
         entries[key(origin, dest, searchOption, passList)] = Entry(route, clock() + ttlMillis)
     }
 
-    fun size(): Int =
-        entries.size
+    fun size(): Int = entries.size
 
-    private fun key(origin: TmapCoord, dest: TmapCoord, searchOption: String, passList: List<TmapCoord>?): String {
-        val sb = StringBuilder()
-            .append(snap(origin.lat)).append(',').append(snap(origin.lng)).append('>')
-            .append(snap(dest.lat)).append(',').append(snap(dest.lng)).append('#')
-            .append(searchOption)
+    private fun key(
+        origin: TmapCoord,
+        dest: TmapCoord,
+        searchOption: String,
+        passList: List<TmapCoord>?,
+    ): String {
+        val sb =
+            StringBuilder()
+                .append(snap(origin.lat)).append(',').append(snap(origin.lng)).append('>')
+                .append(snap(dest.lat)).append(',').append(snap(dest.lng)).append('#')
+                .append(searchOption)
         passList?.forEach { sb.append('|').append(snap(it.lat)).append(',').append(snap(it.lng)) }
         return sb.toString()
     }
 
-    private fun snap(v: Double): Double =
-        (v * GRID_PER_DEGREE).roundToInt() / GRID_PER_DEGREE
+    private fun snap(v: Double): Double = (v * GRID_PER_DEGREE).roundToInt() / GRID_PER_DEGREE
 
     companion object {
         const val DEFAULT_TTL_MILLIS: Long = 10 * 60 * 1000L

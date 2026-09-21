@@ -1,7 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ops.api.controller.AlertController
-
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -18,10 +18,10 @@ import org.springframework.test.web.servlet.put
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Tag("context")
 class SlackConfigControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @Test
     fun `GET 은 미설정 상태와 5종 카테고리를 반환한다`() {
         mockMvc.get("/api/admin/slack-config")

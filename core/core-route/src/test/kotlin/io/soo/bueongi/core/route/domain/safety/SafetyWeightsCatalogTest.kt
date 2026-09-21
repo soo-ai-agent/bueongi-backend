@@ -11,7 +11,6 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class SafetyWeightsCatalogTest {
-
     private val catalog = SafetyWeightsCatalog()
 
     @Test
@@ -58,6 +57,5 @@ class SafetyWeightsCatalogTest {
         assertThat(catalog.isNight(sameMomentInUtc)).isTrue()
     }
 
-    private fun seoul(localDateTime: String): ZonedDateTime =
-        LocalDateTime.parse(localDateTime).atZone(SERVICE_ZONE)
+    private fun seoul(localDateTime: String): ZonedDateTime = LocalDateTime.parse(localDateTime).atZone(SERVICE_ZONE)
 }

@@ -13,6 +13,5 @@ data class SafetySpotPoint(
     val address: String? = null,
     val phone: String? = null,
 ) {
-    fun toGeoPoint(): GeoPoint =
-        GeoPoint(lat, lng)
+    fun toGeoPoint(): GeoPoint = GeoPoint(lat, lng)
 }

@@ -5,14 +5,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TmapGeoJsonTest {
-
     private val mapper = ObjectMapper()
 
     private fun parse(json: String): TmapRoute? = parseTmapGeoJson(mapper.readTree(json), "0")
 
     @Test
     fun `Point 의 totalDistance 시간과 LineString 좌표를 추출`() {
-        val json: String = """
+        val json: String =
+            """
             {"type":"FeatureCollection","features":[
               {"type":"Feature","geometry":{"type":"Point","coordinates":[127.0,37.5]},
                "properties":{"index":0,"totalDistance":880,"totalTime":700,"pointType":"SP",
@@ -22,7 +22,7 @@ class TmapGeoJsonTest {
               {"type":"Feature","geometry":{"type":"Point","coordinates":[127.01,37.5]},
                "properties":{"index":1,"pointType":"EP","turnType":212,"description":"도착","distance":0,"time":0}}
             ]}
-        """.trimIndent()
+            """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
         assertThat(route!!.distanceM).isEqualTo(880.0)
@@ -36,11 +36,12 @@ class TmapGeoJsonTest {
 
     @Test
     fun `totalDistance 없으면 좌표열 길이로 보정`() {
-        val json: String = """
+        val json: String =
+            """
             {"features":[
               {"geometry":{"type":"LineString","coordinates":[[127.0,37.5],[127.01,37.5]]},"properties":{}}
             ]}
-        """.trimIndent()
+            """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
         assertThat(route!!.distanceM).isGreaterThan(800.0)
@@ -59,11 +60,12 @@ class TmapGeoJsonTest {
 
     @Test
     fun `비유효 좌표(범위 밖)는 경로에서 제외`() {
-        val json: String = """
+        val json: String =
+            """
             {"features":[
               {"geometry":{"type":"LineString","coordinates":[[127.0,37.5],[999.0,37.5],[127.01,37.5]]},"properties":{}}
             ]}
-        """.trimIndent()
+            """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
         assertThat(route!!.path).hasSize(2)

@@ -1,7 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
 object DataGoKrApiSpec {
-
     // numOfRows 를 더 크게 줘도 서버가 100 으로 고정한다(실측).
     const val PAGE_SIZE: Int = 100
 

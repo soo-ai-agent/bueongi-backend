@@ -1,57 +1,61 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
+import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-
-import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteSafetySpotServiceTest {
-
     private val origin = GeoPoint(37.5, 127.000)
     private val destination = GeoPoint(37.5, 127.020)
 
-    private fun request(routeType: String?, source: FakeSafetySpotSource) =
-        RouteSafetySpotService(RouteMarkerBuilder(source)).alongRoute(
-            RouteQuery(
-                origin = origin,
-                destination = destination,
-                destinationName = "목적지",
-                routeType = RouteTypeCatalog().typeOf(routeType),
-                safetyPreference = SafetyPreference.SAFE,
-            ),
-        )
-
-    private fun mixedSource() = FakeSafetySpotSource(
-        mapOf(
-            SafetySpotType.CCTV to listOf(
-                SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.005, name = "CCTV-A"),
-                SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.010, name = "CCTV-B"),
-            ),
-            SafetySpotType.SAFEHOUSE to listOf(
-                SafetySpotPoint(SafetySpotType.SAFEHOUSE, 37.5, 127.008, name = "안심지킴이집-1"),
-            ),
-            SafetySpotType.BELL to listOf(
-                SafetySpotPoint(SafetySpotType.BELL, 37.5, 127.012),
-            ),
-            SafetySpotType.STREET_LAMP to listOf(
-                SafetySpotPoint(SafetySpotType.STREET_LAMP, 37.5, 127.014, name = "가로등-1"),
-            ),
-            SafetySpotType.PEDESTRIAN_SIGNAL to listOf(
-                SafetySpotPoint(SafetySpotType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
-            ),
+    private fun request(
+        routeType: String?,
+        source: FakeSafetySpotSource,
+    ) = RouteSafetySpotService(RouteMarkerBuilder(source)).alongRoute(
+        RouteQuery(
+            origin = origin,
+            destination = destination,
+            destinationName = "목적지",
+            routeType = RouteTypeCatalog().typeOf(routeType),
+            safetyPreference = SafetyPreference.SAFE,
         ),
     )
+
+    private fun mixedSource() =
+        FakeSafetySpotSource(
+            mapOf(
+                SafetySpotType.CCTV to
+                    listOf(
+                        SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.005, name = "CCTV-A"),
+                        SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.010, name = "CCTV-B"),
+                    ),
+                SafetySpotType.SAFEHOUSE to
+                    listOf(
+                        SafetySpotPoint(SafetySpotType.SAFEHOUSE, 37.5, 127.008, name = "안심지킴이집-1"),
+                    ),
+                SafetySpotType.BELL to
+                    listOf(
+                        SafetySpotPoint(SafetySpotType.BELL, 37.5, 127.012),
+                    ),
+                SafetySpotType.STREET_LAMP to
+                    listOf(
+                        SafetySpotPoint(SafetySpotType.STREET_LAMP, 37.5, 127.014, name = "가로등-1"),
+                    ),
+                SafetySpotType.PEDESTRIAN_SIGNAL to
+                    listOf(
+                        SafetySpotPoint(SafetySpotType.PEDESTRIAN_SIGNAL, 37.5, 127.016, name = "보행등"),
+                    ),
+            ),
+        )
 
     @Test
     fun `start 와 end POI 가 항상 포함된다`() {
@@ -100,7 +104,10 @@ class RouteSafetySpotServiceTest {
         val res = request("safe", FakeSafetySpotSource())
         val summary = res.summary
         assertThat(summary.total).isEqualTo(0)
-        assertThat(summary.cctv + summary.bell + summary.convenienceStore + summary.police + summary.safehouse + summary.lamp + summary.pedestrianSignal).isEqualTo(0)
+        assertThat(
+            summary.cctv + summary.bell + summary.convenienceStore + summary.police +
+                summary.safehouse + summary.lamp + summary.pedestrianSignal,
+        ).isEqualTo(0)
         assertThat(res.pois.map { it.type }).containsExactlyInAnyOrder(SafetySpotPoiType.START, SafetySpotPoiType.END)
     }
 
@@ -109,7 +116,10 @@ class RouteSafetySpotServiceTest {
         val res = request("safe", mixedSource())
         val summary = res.summary
         assertThat(summary.total)
-            .isEqualTo(summary.cctv + summary.bell + summary.convenienceStore + summary.police + summary.safehouse + summary.lamp + summary.pedestrianSignal)
+            .isEqualTo(
+                summary.cctv + summary.bell + summary.convenienceStore + summary.police +
+                    summary.safehouse + summary.lamp + summary.pedestrianSignal,
+            )
         assertThat(summary.total).isEqualTo(res.pois.size - 2)
     }
 

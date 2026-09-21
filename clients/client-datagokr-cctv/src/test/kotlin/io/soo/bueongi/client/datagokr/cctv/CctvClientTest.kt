@@ -11,7 +11,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 class CctvClientTest {
-
     @Test
     fun `전국 CCTV 필드(WGS84_LAT·MNG_INST_NM·LCTN_ROAD_NM_ADDR)를 매핑한다`() {
         val (fetcher, server) = bindFetcher()

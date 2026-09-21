@@ -12,7 +12,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 class SafehouseClientTest {
-
     @Test
     fun `표준 영문 필드(storNm·latitude·rdnmadr)를 매핑한다`() {
         val (fetcher, server) = bindFetcher()

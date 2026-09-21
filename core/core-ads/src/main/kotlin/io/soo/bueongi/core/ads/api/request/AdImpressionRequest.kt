@@ -12,5 +12,4 @@ data class AdImpressionRequest(
     val placement: String?,
 )
 
-fun AdImpressionRequest.placementValue(): String =
-    requireNotNull(placement) { "placement 는 @NotBlank 검증을 통과했어야 한다" }
+fun AdImpressionRequest.placementValue(): String = requireNotNull(placement) { "placement 는 @NotBlank 검증을 통과했어야 한다" }

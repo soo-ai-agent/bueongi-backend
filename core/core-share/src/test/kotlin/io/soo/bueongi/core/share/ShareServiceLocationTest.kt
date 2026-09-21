@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceLocationTest : ShareServiceTestSupport() {
-
     @Test
     fun `위치 갱신 후 조회로 같은 좌표 회수(왕복)`() {
         val s = service.create(null)

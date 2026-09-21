@@ -21,17 +21,21 @@ object Epsg5179 {
     private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
     private val M0: Double = meridianArc(LAT0)
 
-    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
+    fun toWgs84(
+        easting: Double,
+        northing: Double,
+    ): Wgs84Point? {
         if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
         val m: Double = M0 + (northing - FALSE_NORTHING) / K0
         val mu: Double = m / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256))
-        val phi1: Double = mu +
-            (3 * E1 / 2 - 27 * E1.pow(3) / 32) * sin(2 * mu) +
-            (21 * E1.pow(2) / 16 - 55 * E1.pow(4) / 32) * sin(4 * mu) +
-            (151 * E1.pow(3) / 96) * sin(6 * mu) +
-            (1097 * E1.pow(4) / 512) * sin(8 * mu)
+        val phi1: Double =
+            mu +
+                (3 * E1 / 2 - 27 * E1.pow(3) / 32) * sin(2 * mu) +
+                (21 * E1.pow(2) / 16 - 55 * E1.pow(4) / 32) * sin(4 * mu) +
+                (151 * E1.pow(3) / 96) * sin(6 * mu) +
+                (1097 * E1.pow(4) / 512) * sin(8 * mu)
 
         val sinPhi1: Double = sin(phi1)
         val cosPhi1: Double = cos(phi1)
@@ -42,15 +46,17 @@ object Epsg5179 {
         val r1: Double = A * (1 - E2) / (1 - E2 * sinPhi1 * sinPhi1).pow(1.5)
         val d: Double = (easting - FALSE_EASTING) / (n1 * K0)
 
-        val lat: Double = phi1 - (n1 * tanPhi1 / r1) * (
-            d * d / 2 -
-                (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * EP2) * d.pow(4) / 24 +
-                (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * EP2 - 3 * c1 * c1) * d.pow(6) / 720
+        val lat: Double =
+            phi1 - (n1 * tanPhi1 / r1) * (
+                d * d / 2 -
+                    (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * EP2) * d.pow(4) / 24 +
+                    (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * EP2 - 3 * c1 * c1) * d.pow(6) / 720
             )
-        val lon: Double = LON0 + (
-            d -
-                (1 + 2 * t1 + c1) * d.pow(3) / 6 +
-                (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * EP2 + 24 * t1 * t1) * d.pow(5) / 120
+        val lon: Double =
+            LON0 + (
+                d -
+                    (1 + 2 * t1 + c1) * d.pow(3) / 6 +
+                    (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * EP2 + 24 * t1 * t1) * d.pow(5) / 120
             ) / cosPhi1
 
         val latDeg: Double = Math.toDegrees(lat)
@@ -62,7 +68,10 @@ object Epsg5179 {
         }
     }
 
-    fun fromWgs84(lat: Double, lng: Double): TmXy {
+    fun fromWgs84(
+        lat: Double,
+        lng: Double,
+    ): TmXy {
         val phi: Double = Math.toRadians(lat)
         val sinPhi: Double = sin(phi)
         val cosPhi: Double = cos(phi)
@@ -72,16 +81,18 @@ object Epsg5179 {
         val c: Double = EP2 * cosPhi * cosPhi
         val aa: Double = (Math.toRadians(lng) - LON0) * cosPhi
 
-        val x: Double = FALSE_EASTING + K0 * n * (
-            aa +
-                (1 - t + c) * aa.pow(3) / 6 +
-                (5 - 18 * t + t * t + 72 * c - 58 * EP2) * aa.pow(5) / 120
+        val x: Double =
+            FALSE_EASTING + K0 * n * (
+                aa +
+                    (1 - t + c) * aa.pow(3) / 6 +
+                    (5 - 18 * t + t * t + 72 * c - 58 * EP2) * aa.pow(5) / 120
             )
-        val y: Double = FALSE_NORTHING + K0 * (
-            meridianArc(phi) - M0 + n * tanPhi * (
-                aa * aa / 2 +
-                    (5 - t + 9 * c + 4 * c * c) * aa.pow(4) / 24 +
-                    (61 - 58 * t + t * t + 600 * c - 330 * EP2) * aa.pow(6) / 720
+        val y: Double =
+            FALSE_NORTHING + K0 * (
+                meridianArc(phi) - M0 + n * tanPhi * (
+                    aa * aa / 2 +
+                        (5 - t + 9 * c + 4 * c * c) * aa.pow(4) / 24 +
+                        (61 - 58 * t + t * t + 600 * c - 330 * EP2) * aa.pow(6) / 720
                 )
             )
         return TmXy(x, y)
@@ -89,9 +100,9 @@ object Epsg5179 {
 
     private fun meridianArc(phi: Double): Double =
         A * (
-        (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256) * phi -
-            (3 * E2 / 8 + 3 * E2 * E2 / 32 + 45 * E2 * E2 * E2 / 1024) * sin(2 * phi) +
-            (15 * E2 * E2 / 256 + 45 * E2 * E2 * E2 / 1024) * sin(4 * phi) -
-            (35 * E2 * E2 * E2 / 3072) * sin(6 * phi)
+            (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256) * phi -
+                (3 * E2 / 8 + 3 * E2 * E2 / 32 + 45 * E2 * E2 * E2 / 1024) * sin(2 * phi) +
+                (15 * E2 * E2 / 256 + 45 * E2 * E2 * E2 / 1024) * sin(4 * phi) -
+                (35 * E2 * E2 * E2 / 3072) * sin(6 * phi)
         )
 }

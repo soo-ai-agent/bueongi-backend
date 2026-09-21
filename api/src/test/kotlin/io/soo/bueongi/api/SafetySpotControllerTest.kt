@@ -1,14 +1,12 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.safetyspot.domain.service.NearestPoliceFinder
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-
-import io.soo.bueongi.core.safetyspot.api.controller.SafetySpotController
-
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.api.controller.SafetySpotController
+import io.soo.bueongi.core.safetyspot.domain.service.NearestPoliceFinder
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -19,24 +17,25 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
+@Tag("context")
 @WebMvcTest(SafetySpotController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class, NearestPoliceFinder::class, SafetySpotControllerTest.FakeSourceConfig::class)
 class SafetySpotControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @TestConfiguration
     class FakeSourceConfig {
         @Bean
         fun safetySpotSpatialSource(): SafetySpotSpatialSource =
             FakeSafetySpotSource(
                 mapOf(
-                    SafetySpotType.POLICE to listOf(
-                        SafetySpotPoint(SafetySpotType.POLICE, 37.5117, 127.0276, name = "먼 지구대", phone = "02-000-0001"),
-                        SafetySpotPoint(SafetySpotType.POLICE, 37.4992, 127.0276, name = "가까운 파출소", phone = "02-000-0002"),
-                        SafetySpotPoint(SafetySpotType.POLICE, 37.9000, 127.0276, name = "반경 밖 파출소"),
-                    ),
+                    SafetySpotType.POLICE to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.POLICE, 37.5117, 127.0276, name = "먼 지구대", phone = "02-000-0001"),
+                            SafetySpotPoint(SafetySpotType.POLICE, 37.4992, 127.0276, name = "가까운 파출소", phone = "02-000-0002"),
+                            SafetySpotPoint(SafetySpotType.POLICE, 37.9000, 127.0276, name = "반경 밖 파출소"),
+                        ),
                 ),
             )
     }

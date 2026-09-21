@@ -1,22 +1,22 @@
 package io.soo.bueongi.core.ops.domain.traffic
 
 import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
-
-import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
+import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 
 class RequestMetricsServiceTest {
+    private fun store(metrics: List<RequestMetric>): RequestMetricStore =
+        object : RequestMetricStore {
+            override fun record(metric: RequestMetric) = Unit
 
-    private fun store(metrics: List<RequestMetric>): RequestMetricStore = object : RequestMetricStore {
-        override fun record(metric: RequestMetric) = Unit
-        override fun findRecent(limit: Int): List<RequestMetric> = metrics.take(limit)
-    }
+            override fun findRecent(limit: Int): List<RequestMetric> = metrics.take(limit)
+        }
 
     private fun metric(
         at: Long = System.currentTimeMillis(),
@@ -37,6 +37,7 @@ class RequestMetricsServiceTest {
     private fun adminStore(metrics: List<RequestMetric> = emptyList()): AdminRequestMetricStore =
         object : AdminRequestMetricStore {
             override fun record(metric: RequestMetric) = Unit
+
             override fun findRecent(limit: Int): List<RequestMetric> = metrics.take(limit)
         }
 
@@ -48,12 +49,13 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `byEndpoint 는 메서드+경로별로 호출수 성공률 평균 고유클라이언트를 집계하고 호출수 내림차순이다`() {
-        val metrics = listOf(
-            metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 100),
-            metric(endpoint = "/api/places/search", clientId = "b", status = 500, durationMs = 200),
-            metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 300),
-            metric(method = "POST", endpoint = "/api/routes/compare", clientId = "c", status = 200, durationMs = 50),
-        )
+        val metrics =
+            listOf(
+                metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 100),
+                metric(endpoint = "/api/places/search", clientId = "b", status = 500, durationMs = 200),
+                metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 300),
+                metric(method = "POST", endpoint = "/api/routes/compare", clientId = "c", status = 200, durationMs = 50),
+            )
 
         val byEndpoint = serviceOf(metrics).summarize().byEndpoint
 
@@ -69,10 +71,11 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `같은 경로라도 메서드가 다르면 별도 집계한다`() {
-        val metrics = listOf(
-            metric(method = "GET", endpoint = "/share/{token}/route"),
-            metric(method = "POST", endpoint = "/share/{token}/route"),
-        )
+        val metrics =
+            listOf(
+                metric(method = "GET", endpoint = "/share/{token}/route"),
+                metric(method = "POST", endpoint = "/share/{token}/route"),
+            )
 
         val byEndpoint = serviceOf(metrics).summarize().byEndpoint
 
@@ -82,11 +85,12 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `정규화된 share 토큰 경로는 하나의 엔드포인트로 묶인다`() {
-        val metrics = listOf(
-            metric(method = "POST", endpoint = "/share/{token}/location", clientId = "a"),
-            metric(method = "POST", endpoint = "/share/{token}/location", clientId = "b"),
-            metric(method = "POST", endpoint = "/share/{token}/location", clientId = "a"),
-        )
+        val metrics =
+            listOf(
+                metric(method = "POST", endpoint = "/share/{token}/location", clientId = "a"),
+                metric(method = "POST", endpoint = "/share/{token}/location", clientId = "b"),
+                metric(method = "POST", endpoint = "/share/{token}/location", clientId = "a"),
+            )
 
         val byEndpoint = serviceOf(metrics).summarize().byEndpoint
 
@@ -98,12 +102,13 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `successRate 는 2xx 와 3xx 를 성공으로 4xx 5xx 를 실패로 본다`() {
-        val metrics = listOf(
-            metric(status = 200),
-            metric(status = 301),
-            metric(status = 404),
-            metric(status = 500),
-        )
+        val metrics =
+            listOf(
+                metric(status = 200),
+                metric(status = 301),
+                metric(status = 404),
+                metric(status = 500),
+            )
 
         val endpoint = serviceOf(metrics).summarize().byEndpoint.single()
 
@@ -114,14 +119,15 @@ class RequestMetricsServiceTest {
     @Test
     fun `estimatedUsers 는 고유 clientId 를 today 7d 30d 로 집계하고 null 호출은 제외 후 별도 노출한다`() {
         val now = System.currentTimeMillis()
-        val metrics = listOf(
-            metric(at = now, clientId = "a"),
-            metric(at = now, clientId = "b"),
-            metric(at = now, clientId = "a"),
-            metric(at = now, clientId = null),
-            metric(at = now - 10 * DAY_MS, clientId = "c"),
-            metric(at = now - 40 * DAY_MS, clientId = "d"),
-        )
+        val metrics =
+            listOf(
+                metric(at = now, clientId = "a"),
+                metric(at = now, clientId = "b"),
+                metric(at = now, clientId = "a"),
+                metric(at = now, clientId = null),
+                metric(at = now - 10 * DAY_MS, clientId = "c"),
+                metric(at = now - 40 * DAY_MS, clientId = "d"),
+            )
 
         val estimated = serviceOf(metrics).summarize().estimatedUsers
 
@@ -143,13 +149,14 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `latency 는 전체 소요시간의 p50 p95 p99 분위수다`() {
-        val metrics = listOf(
-            metric(durationMs = 10),
-            metric(durationMs = 20),
-            metric(durationMs = 30),
-            metric(durationMs = 40),
-            metric(durationMs = 50),
-        )
+        val metrics =
+            listOf(
+                metric(durationMs = 10),
+                metric(durationMs = 20),
+                metric(durationMs = 30),
+                metric(durationMs = 40),
+                metric(durationMs = 50),
+            )
 
         val latency = serviceOf(metrics).summarize().latency
 
@@ -161,13 +168,14 @@ class RequestMetricsServiceTest {
     @Test
     fun `newToday 는 창 내 최초관측이 오늘인 사용자 returningToday 는 오늘 이전부터 본 사용자다`() {
         val now = System.currentTimeMillis()
-        val metrics = listOf(
-            metric(at = now, clientId = "a"),
-            metric(at = now - 2 * DAY_MS, clientId = "b"),
-            metric(at = now, clientId = "b"),
-            metric(at = now - 2 * DAY_MS, clientId = "c"),
-            metric(at = now, clientId = null),
-        )
+        val metrics =
+            listOf(
+                metric(at = now, clientId = "a"),
+                metric(at = now - 2 * DAY_MS, clientId = "b"),
+                metric(at = now, clientId = "b"),
+                metric(at = now - 2 * DAY_MS, clientId = "c"),
+                metric(at = now, clientId = null),
+            )
 
         val estimated = serviceOf(metrics).summarize().estimatedUsers
 
@@ -179,13 +187,14 @@ class RequestMetricsServiceTest {
     @Test
     fun `hourlyErrors 는 24버킷이며 2xx 3xx 가 아닌 요청만 세고 hourlyCalls 와 같은 경계다`() {
         val now = System.currentTimeMillis()
-        val metrics = listOf(
-            metric(at = now, status = 200),
-            metric(at = now, status = 301),
-            metric(at = now, status = 404),
-            metric(at = now, status = 500),
-            metric(at = now - 25 * HOUR_MS, status = 500),
-        )
+        val metrics =
+            listOf(
+                metric(at = now, status = 200),
+                metric(at = now, status = 301),
+                metric(at = now, status = 404),
+                metric(at = now, status = 500),
+                metric(at = now - 25 * HOUR_MS, status = 500),
+            )
 
         val summary = serviceOf(metrics).summarize()
 
@@ -198,10 +207,11 @@ class RequestMetricsServiceTest {
     @Test
     fun `hourlyCalls 는 24버킷 오래된→최신이며 창 밖 호출은 제외한다`() {
         val now = System.currentTimeMillis()
-        val metrics = listOf(
-            metric(at = now),
-            metric(at = now - 25 * HOUR_MS),
-        )
+        val metrics =
+            listOf(
+                metric(at = now),
+                metric(at = now - 25 * HOUR_MS),
+            )
 
         val trend = serviceOf(metrics).summarize().hourlyCalls
 
@@ -213,12 +223,13 @@ class RequestMetricsServiceTest {
     @Test
     fun `dailyActiveUsers 는 7일 오래된→최신이며 각 날 고유 사용자 수다`() {
         val now = System.currentTimeMillis()
-        val metrics = listOf(
-            metric(at = now, clientId = "a"),
-            metric(at = now, clientId = "b"),
-            metric(at = now, clientId = "a"),
-            metric(at = now - 40 * DAY_MS, clientId = "z"),
-        )
+        val metrics =
+            listOf(
+                metric(at = now, clientId = "a"),
+                metric(at = now, clientId = "b"),
+                metric(at = now, clientId = "a"),
+                metric(at = now - 40 * DAY_MS, clientId = "z"),
+            )
 
         val daily = serviceOf(metrics).summarize().dailyActiveUsers
 
@@ -260,14 +271,16 @@ class RequestMetricsServiceTest {
     @Test
     fun `관리자 호출은 사용자 집계에 섞이지 않고 따로 나온다`() {
         val userMetrics = listOf(metric(endpoint = "/api/places/search", clientId = "a"))
-        val adminMetrics = listOf(
-            metric(endpoint = "/api/admin/traffic", clientId = null),
-            metric(endpoint = "/api/admin/traffic", clientId = null),
-            metric(endpoint = "/api/admin/share-sessions/{token}/location", clientId = null),
-        )
+        val adminMetrics =
+            listOf(
+                metric(endpoint = "/api/admin/traffic", clientId = null),
+                metric(endpoint = "/api/admin/traffic", clientId = null),
+                metric(endpoint = "/api/admin/share-sessions/{token}/location", clientId = null),
+            )
 
-        val summary = RequestMetricsService(store(userMetrics), adminStore(adminMetrics), fixedClock)
-            .summarize()
+        val summary =
+            RequestMetricsService(store(userMetrics), adminStore(adminMetrics), fixedClock)
+                .summarize()
 
         assertThat(summary.totalCalls).isEqualTo(1)
         assertThat(summary.byEndpoint.map { it.endpoint }).containsExactly("/api/places/search")
@@ -290,16 +303,17 @@ class RequestMetricsServiceTest {
     fun `관리자 오늘 호출 수는 서비스 시간대의 자정부터 센다`() {
         val nowMs = Instant.parse("2026-08-22T03:00:00Z").toEpochMilli()
         val yesterdayMs = Instant.parse("2026-08-21T13:00:00Z").toEpochMilli()
-        val summary = RequestMetricsService(
-            store(emptyList()),
-            adminStore(
-                listOf(
-                    metric(endpoint = "/api/admin/traffic", clientId = null, at = nowMs),
-                    metric(endpoint = "/api/admin/traffic", clientId = null, at = yesterdayMs),
+        val summary =
+            RequestMetricsService(
+                store(emptyList()),
+                adminStore(
+                    listOf(
+                        metric(endpoint = "/api/admin/traffic", clientId = null, at = nowMs),
+                        metric(endpoint = "/api/admin/traffic", clientId = null, at = yesterdayMs),
+                    ),
                 ),
-            ),
-            fixedClock,
-        ).summarize()
+                fixedClock,
+            ).summarize()
 
         assertThat(summary.adminCalls.totalCalls).isEqualTo(2)
         assertThat(summary.adminCalls.callsToday).isEqualTo(1)
@@ -307,14 +321,15 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `성공 건수와 실패 건수를 함께 낸다`() {
-        val summary = serviceOf(
-            listOf(
-                metric(status = 200),
-                metric(status = 204),
-                metric(status = 500),
-                metric(status = 404),
-            ),
-        ).summarize()
+        val summary =
+            serviceOf(
+                listOf(
+                    metric(status = 200),
+                    metric(status = 204),
+                    metric(status = 500),
+                    metric(status = 404),
+                ),
+            ).summarize()
 
         assertThat(summary.totalCalls).isEqualTo(4)
         assertThat(summary.successCount).isEqualTo(2)
@@ -323,8 +338,9 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `성공 건수와 실패 건수의 합은 총 호출수다`() {
-        val summary = serviceOf(listOf(metric(status = 200), metric(status = 301), metric(status = 500)))
-            .summarize()
+        val summary =
+            serviceOf(listOf(metric(status = 200), metric(status = 301), metric(status = 500)))
+                .summarize()
 
         assertThat(summary.successCount + summary.failureCount).isEqualTo(summary.totalCalls)
         assertThat(summary.successCount).isEqualTo(2)
@@ -332,11 +348,12 @@ class RequestMetricsServiceTest {
 
     @Test
     fun `관리자 호출도 성공 실패 건수를 갖는다`() {
-        val summary = RequestMetricsService(
-            store(emptyList()),
-            adminStore(listOf(metric(status = 200), metric(status = 401))),
-            fixedClock,
-        ).summarize()
+        val summary =
+            RequestMetricsService(
+                store(emptyList()),
+                adminStore(listOf(metric(status = 200), metric(status = 401))),
+                fixedClock,
+            ).summarize()
 
         assertThat(summary.adminCalls.successCount).isEqualTo(1)
         assertThat(summary.adminCalls.failureCount).isEqualTo(1)

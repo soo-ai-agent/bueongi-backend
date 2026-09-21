@@ -11,7 +11,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 class EmergencyBellClientTest {
-
     @Test
     fun `안전비상벨 필드(INSTL_PSTN·lon·sgg_cd)를 매핑한다`() {
         val (fetcher, server) = bindFetcher()

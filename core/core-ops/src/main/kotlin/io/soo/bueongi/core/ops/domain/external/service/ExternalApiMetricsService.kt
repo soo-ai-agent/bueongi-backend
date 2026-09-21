@@ -7,7 +7,6 @@ import io.soo.bueongi.core.ops.domain.external.model.ExternalApiUsage
 import io.soo.bueongi.storage.db.core.externalcall.EXTERNAL_CALL_METRIC_CAP
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
 import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetricStore
-import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.support.util.countByHour
 import io.soo.bueongi.support.util.nearestRankPercentile
 import io.soo.bueongi.support.util.todayStartMs
@@ -20,7 +19,6 @@ class ExternalApiMetricsService(
     private val externalCallMetricStore: ExternalCallMetricStore,
     private val clock: Clock,
 ) {
-
     fun summarize(): ExternalApiSummary {
         val metrics: List<ExternalCallMetric> = externalCallMetricStore.findRecent(EXTERNAL_CALL_METRIC_CAP)
         val nowMs: Long = clock.millis()
@@ -35,7 +33,10 @@ class ExternalApiMetricsService(
         )
     }
 
-    private fun byProvider(metrics: List<ExternalCallMetric>, nowMs: Long): List<ExternalApiUsage> {
+    private fun byProvider(
+        metrics: List<ExternalCallMetric>,
+        nowMs: Long,
+    ): List<ExternalApiUsage> {
         val usages: MutableList<ExternalApiUsage> = mutableListOf()
         for ((provider, group) in metrics.groupBy { it.provider }) {
             usages.add(aggregateProvider(provider, group, nowMs))
@@ -97,11 +98,12 @@ class ExternalApiMetricsService(
         return endpoints.take(TOP_ENDPOINT_LIMIT)
     }
 
-    private fun countSince(metrics: List<ExternalCallMetric>, sinceMs: Long): Int =
-        metrics.count { it.atEpochMs >= sinceMs }
+    private fun countSince(
+        metrics: List<ExternalCallMetric>,
+        sinceMs: Long,
+    ): Int = metrics.count { it.atEpochMs >= sinceMs }
 
-    private fun isFailure(metric: ExternalCallMetric): Boolean =
-        metric.status !in SUCCESS_STATUS_RANGE
+    private fun isFailure(metric: ExternalCallMetric): Boolean = metric.status !in SUCCESS_STATUS_RANGE
 
     private companion object {
         val SUCCESS_STATUS_RANGE: IntRange = 200..299

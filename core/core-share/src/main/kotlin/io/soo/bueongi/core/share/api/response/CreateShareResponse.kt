@@ -14,7 +14,6 @@ data class CreateShareResponse(
     val expiresAt: Instant,
 ) {
     companion object {
-
         fun from(created: ShareCreated): CreateShareResponse =
             CreateShareResponse(
                 token = created.token,

@@ -6,17 +6,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class InMemoryRouteChoiceStoreTest {
-
-    private fun choice(at: Long) = RouteChoiceLog(
-        atEpochMs = at,
-        chosenType = RouteType.SAFE,
-        candidateCount = 3,
-        score = 82,
-        distanceMeters = 1200,
-        durationSeconds = 900,
-        preference = SafetyPreference.SAFE,
-        destinationName = "강남역",
-    )
+    private fun choice(at: Long) =
+        RouteChoiceLog(
+            atEpochMs = at,
+            chosenType = RouteType.SAFE,
+            candidateCount = 3,
+            score = 82,
+            distanceMeters = 1200,
+            durationSeconds = 900,
+            preference = SafetyPreference.SAFE,
+            destinationName = "강남역",
+        )
 
     @Test
     fun `이 저장소의 상한은 ROUTE_CHOICE_CAP 이다`() {

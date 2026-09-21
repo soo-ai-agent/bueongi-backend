@@ -1,32 +1,35 @@
 package io.soo.bueongi.core.ads.domain
 
-import io.soo.bueongi.support.util.HourlyBucket
-
-import io.soo.bueongi.core.ads.domain.service.AdStatsService
 import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
-
+import io.soo.bueongi.core.ads.domain.service.AdStatsService
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
+import io.soo.bueongi.support.util.HourlyBucket
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class AdStatsServiceTest {
-    private fun store(events: List<AdEvent>): AdEventStore = object : AdEventStore {
-        override fun record(event: AdEvent) = Unit
-        override fun findRecent(limit: Int): List<AdEvent> = events.take(limit)
-    }
+    private fun store(events: List<AdEvent>): AdEventStore =
+        object : AdEventStore {
+            override fun record(event: AdEvent) = Unit
 
-    private fun event(at: Long = System.currentTimeMillis(), placement: String = "interstitial") =
-        AdEvent(atEpochMs = at, placement = placement)
+            override fun findRecent(limit: Int): List<AdEvent> = events.take(limit)
+        }
+
+    private fun event(
+        at: Long = System.currentTimeMillis(),
+        placement: String = "interstitial",
+    ) = AdEvent(atEpochMs = at, placement = placement)
 
     @Test
     fun `total 은 창 내 총 노출 수 today 는 Asia_Seoul 자정 이후 노출 수다`() {
         val now: Long = System.currentTimeMillis()
-        val events: List<AdEvent> = listOf(
-            event(at = now),
-            event(at = now),
-            event(at = now - 40 * DAY_MS),
-        )
+        val events: List<AdEvent> =
+            listOf(
+                event(at = now),
+                event(at = now),
+                event(at = now - 40 * DAY_MS),
+            )
 
         val summary: AdStatsSummary = AdStatsService(store(events)).summarize()
 
@@ -36,11 +39,12 @@ class AdStatsServiceTest {
 
     @Test
     fun `byPlacement 는 지면별 노출 수를 집계한다`() {
-        val events: List<AdEvent> = listOf(
-            event(placement = "interstitial"),
-            event(placement = "interstitial"),
-            event(placement = "native"),
-        )
+        val events: List<AdEvent> =
+            listOf(
+                event(placement = "interstitial"),
+                event(placement = "interstitial"),
+                event(placement = "native"),
+            )
 
         val byPlacement: Map<String, Int> = AdStatsService(store(events)).summarize().byPlacement
 
@@ -62,10 +66,11 @@ class AdStatsServiceTest {
     @Test
     fun `hourlyTrend 는 24버킷 오래된→최신이며 창 밖 노출은 제외한다`() {
         val now: Long = System.currentTimeMillis()
-        val events: List<AdEvent> = listOf(
-            event(at = now),
-            event(at = now - 25 * HOUR_MS),
-        )
+        val events: List<AdEvent> =
+            listOf(
+                event(at = now),
+                event(at = now - 25 * HOUR_MS),
+            )
 
         val trend: List<HourlyBucket> = AdStatsService(store(events)).summarize().hourlyTrend
 

@@ -14,7 +14,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.RestClient
 
 class StreetLampClientHttpTest {
-
     private val serviceKey: String = "safetydata%2Fkey"
 
     private val baseUrl: String = "https://www.safetydata.go.kr"
@@ -30,12 +29,13 @@ class StreetLampClientHttpTest {
     fun `정상 - EPSG5179 XMAP·YMAP 를 WGS84 로 변환하고 도로명주소·시군구를 매핑한다`() {
         val (client, server) = bind()
         val (x, y) = Epsg5179.fromWgs84(lat = 37.4981, lng = 127.0276)
-        val body: String = """
+        val body: String =
+            """
             {"header":{"resultCode":"00","resultMsg":"NORMAL SERVICE."},"totalCount":1,
              "body":[{"SN":1,"FCLT_TYPE":"가로등","ADDR":"서울 강남구 역삼동 1",
                       "ROAD_NM_ADDR":"서울 강남구 테헤란로 1","STDG_SGG_CD":"11680",
                       "XMAP_CRTS":$x,"YMAP_CRTS":$y}]}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString("$baseUrl/V2/api/DSSP-IF-00084?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
@@ -53,11 +53,12 @@ class StreetLampClientHttpTest {
     @Test
     fun `정상 - 경위도로 오는 좌표는 그대로 수용하고 좌표불량 행만 버린다`() {
         val (client, server) = bind()
-        val body: String = """
+        val body: String =
+            """
             {"header":{"resultCode":"00"},"totalCount":2,
              "body":[{"SN":1,"XMAP_CRTS":127.03,"YMAP_CRTS":37.50,"ADDR":"지번주소만"},
                      {"SN":2,"XMAP_CRTS":"","YMAP_CRTS":"abc","ADDR":"좌표불량"}]}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString("/V2/api/DSSP-IF-00084")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 

@@ -1,12 +1,11 @@
 package io.soo.bueongi.core.route.domain.safety.service
-import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SegmentProjection
-
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 import kotlin.math.floor
 
@@ -14,14 +13,14 @@ import kotlin.math.floor
 class SafeDetourPlanner(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-
     fun extractSafeAnchors(directPath: List<GeoPoint>): List<SafeAnchor> {
         if (directPath.size < 2) {
             return emptyList()
         }
-        val nearby: List<SafetySpotPoint> = ANCHOR_TYPES.flatMap {
-            safetySpots.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
-        }
+        val nearby: List<SafetySpotPoint> =
+            ANCHOR_TYPES.flatMap {
+                safetySpots.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
+            }
         if (nearby.isEmpty()) {
             return emptyList()
         }
@@ -47,9 +46,10 @@ class SafeDetourPlanner(
                 ),
             )
         }
-        val byDensityThenPosition: Comparator<SafeAnchor> = compareByDescending<SafeAnchor> { it.weight }
-            .thenBy { it.center.lat }
-            .thenBy { it.center.lng }
+        val byDensityThenPosition: Comparator<SafeAnchor> =
+            compareByDescending<SafeAnchor> { it.weight }
+                .thenBy { it.center.lat }
+                .thenBy { it.center.lng }
         anchors.sortWith(byDensityThenPosition)
         if (anchors.size <= MAX_ANCHORS) {
             return anchors
@@ -68,23 +68,25 @@ class SafeDetourPlanner(
         val maxLateralMeters: Double = origin.distanceMetersTo(dest) * DEFAULT_LATERAL_RATIO
 
         data class Placed(val anchor: SafeAnchor, val progress: Double)
-        val placed: List<Placed> = anchors.mapNotNull { anchor ->
-            val projection: SegmentProjection = anchor.center.projectOnto(origin, dest)
-            val progress: Double = projection.t
-            val lateralMeters: Double = projection.distanceMeters
-            val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
-            if (nearEnds || lateralMeters > maxLateralMeters) {
-                return@mapNotNull null
+        val placed: List<Placed> =
+            anchors.mapNotNull { anchor ->
+                val projection: SegmentProjection = anchor.center.projectOnto(origin, dest)
+                val progress: Double = projection.t
+                val lateralMeters: Double = projection.distanceMeters
+                val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
+                if (nearEnds || lateralMeters > maxLateralMeters) {
+                    return@mapNotNull null
+                }
+                Placed(anchor, progress)
             }
-            Placed(anchor, progress)
-        }
         if (placed.isEmpty()) {
             return emptyList()
         }
 
-        val byWeight: List<Placed> = placed.sortedWith(
-            compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
-        )
+        val byWeight: List<Placed> =
+            placed.sortedWith(
+                compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
+            )
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
         val singles: List<Placed> = byWeight.take(SINGLE_ANCHOR_COMBOS)
@@ -104,7 +106,6 @@ class SafeDetourPlanner(
     }
 
     companion object {
-
         const val ANCHOR_RADIUS_METERS: Double = 150.0
 
         const val MAX_ANCHORS: Int = 6
@@ -118,6 +119,7 @@ class SafeDetourPlanner(
 
         const val SINGLE_ANCHOR_COMBOS: Int = 3
 
-        val ANCHOR_TYPES: List<SafetySpotType> = listOf(SafetySpotType.CCTV, SafetySpotType.SAFEHOUSE, SafetySpotType.BELL, SafetySpotType.POLICE)
+        val ANCHOR_TYPES: List<SafetySpotType> =
+            listOf(SafetySpotType.CCTV, SafetySpotType.SAFEHOUSE, SafetySpotType.BELL, SafetySpotType.POLICE)
     }
 }

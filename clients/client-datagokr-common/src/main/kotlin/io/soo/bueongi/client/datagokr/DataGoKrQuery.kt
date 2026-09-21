@@ -1,7 +1,5 @@
 package io.soo.bueongi.client.datagokr
 
-import io.soo.bueongi.client.datagokr.DataGoKrQueryDialect
-
 // 아무 조건도 주지 않으면 전량 수집이라 일일 쿼터(1,000회)를 넘긴다 — CCTV 전국은 3,773회다.
 data class DataGoKrQuery(
     // 전국을 받을 때는 자치단체를 지정하지 않아 null 이 가능함
@@ -26,8 +24,11 @@ data class DataGoKrQuery(
     }
 
     // 대괄호는 질의 문자열에 그대로 못 들어가 퍼센트 인코딩한다(`::` 는 허용 문자라 그대로 둔다).
-    private fun condition(field: String, operator: String, value: String): String =
-        "cond%5B$field::$operator%5D=$value"
+    private fun condition(
+        field: String,
+        operator: String,
+        value: String,
+    ): String = "cond%5B$field::$operator%5D=$value"
 
     private companion object {
         const val FIELD_MUNICIPALITY: String = "OPN_ATMY_GRP_CD"

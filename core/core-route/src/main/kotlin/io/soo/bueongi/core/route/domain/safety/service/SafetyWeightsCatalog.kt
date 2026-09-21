@@ -8,7 +8,6 @@ import java.time.ZonedDateTime
 
 @Component
 class SafetyWeightsCatalog {
-
     fun weightsAt(time: ZonedDateTime): SafetyWeights {
         if (isNight(time)) {
             return NIGHT
@@ -24,41 +23,42 @@ class SafetyWeightsCatalog {
     }
 
     private companion object {
-
         val NIGHT = SafetyWeights(cctv = 0.26, lamp = 0.31, bell = 0.19, safehouse = 0.09, police = 0.12, safePath = 0.03)
 
         val DAY = SafetyWeights(cctv = 0.35, lamp = 0.10, bell = 0.25, safehouse = 0.12, police = 0.15, safePath = 0.03)
 
         // 서울 기준 월 중순 실측 일출 시각(KST, 오차 ±15분).
-        val SUNRISE_BY_MONTH: List<LocalTime> = listOf(
-            LocalTime.of(7, 46),
-            LocalTime.of(7, 20),
-            LocalTime.of(6, 41),
-            LocalTime.of(5, 56),
-            LocalTime.of(5, 23),
-            LocalTime.of(5, 11),
-            LocalTime.of(5, 24),
-            LocalTime.of(5, 48),
-            LocalTime.of(6, 13),
-            LocalTime.of(6, 38),
-            LocalTime.of(7, 8),
-            LocalTime.of(7, 39),
-        )
+        val SUNRISE_BY_MONTH: List<LocalTime> =
+            listOf(
+                LocalTime.of(7, 46),
+                LocalTime.of(7, 20),
+                LocalTime.of(6, 41),
+                LocalTime.of(5, 56),
+                LocalTime.of(5, 23),
+                LocalTime.of(5, 11),
+                LocalTime.of(5, 24),
+                LocalTime.of(5, 48),
+                LocalTime.of(6, 13),
+                LocalTime.of(6, 38),
+                LocalTime.of(7, 8),
+                LocalTime.of(7, 39),
+            )
 
         // 서울 기준 월 중순 실측 일몰 시각(KST, 오차 ±15분).
-        val SUNSET_BY_MONTH: List<LocalTime> = listOf(
-            LocalTime.of(17, 33),
-            LocalTime.of(18, 4),
-            LocalTime.of(18, 32),
-            LocalTime.of(18, 59),
-            LocalTime.of(19, 25),
-            LocalTime.of(19, 50),
-            LocalTime.of(19, 51),
-            LocalTime.of(19, 24),
-            LocalTime.of(18, 43),
-            LocalTime.of(17, 59),
-            LocalTime.of(17, 24),
-            LocalTime.of(17, 15),
-        )
+        val SUNSET_BY_MONTH: List<LocalTime> =
+            listOf(
+                LocalTime.of(17, 33),
+                LocalTime.of(18, 4),
+                LocalTime.of(18, 32),
+                LocalTime.of(18, 59),
+                LocalTime.of(19, 25),
+                LocalTime.of(19, 50),
+                LocalTime.of(19, 51),
+                LocalTime.of(19, 24),
+                LocalTime.of(18, 43),
+                LocalTime.of(17, 59),
+                LocalTime.of(17, 24),
+                LocalTime.of(17, 15),
+            )
     }
 }

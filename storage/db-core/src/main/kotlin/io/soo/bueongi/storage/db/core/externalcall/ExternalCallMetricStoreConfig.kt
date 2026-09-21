@@ -9,14 +9,11 @@ import org.springframework.data.redis.core.StringRedisTemplate
 
 @Configuration
 class ExternalCallMetricStoreConfig {
-
     @Bean
     @Conditional(RedisConfigured::class)
-    fun redisExternalCallMetricStore(template: StringRedisTemplate): ExternalCallMetricStore =
-        RedisExternalCallMetricStore(template)
+    fun redisExternalCallMetricStore(template: StringRedisTemplate): ExternalCallMetricStore = RedisExternalCallMetricStore(template)
 
     @Bean
     @Conditional(RedisNotConfigured::class)
-    fun inMemoryExternalCallMetricStore(): ExternalCallMetricStore =
-        InMemoryExternalCallMetricStore()
+    fun inMemoryExternalCallMetricStore(): ExternalCallMetricStore = InMemoryExternalCallMetricStore()
 }

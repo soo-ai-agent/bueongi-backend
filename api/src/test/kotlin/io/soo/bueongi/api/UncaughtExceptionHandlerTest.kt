@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController
 @WebMvcTest(BoomController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiControllerAdvice::class)
+@Tag("context")
 class UncaughtExceptionHandlerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @Test
     fun `미처리 예외는 500 과 INTERNAL_ERROR 코드를 반환하고 내부 details 를 노출하지 않는다`() {
         mockMvc.get("/test/boom").andExpect {

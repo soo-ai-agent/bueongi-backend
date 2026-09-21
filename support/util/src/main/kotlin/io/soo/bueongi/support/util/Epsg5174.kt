@@ -43,7 +43,10 @@ object Epsg5174 {
 
     private const val BOWRING_ITERATIONS: Int = 5
 
-    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
+    fun toWgs84(
+        easting: Double,
+        northing: Double,
+    ): Wgs84Point? {
         if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
@@ -62,21 +65,28 @@ object Epsg5174 {
     }
 
     // 지오이드고 미상이라 양방향 모두 h=0 으로 둔다 — 수평 왕복 오차는 무시 수준.
-    fun fromWgs84(lat: Double, lng: Double): TmXy {
+    fun fromWgs84(
+        lat: Double,
+        lng: Double,
+    ): TmXy {
         val wgsEcef: Ecef = geodeticToEcef(Math.toRadians(lat), Math.toRadians(lng), A_WGS84, E2_WGS84)
         val besselEcef: Ecef = helmertWgs84ToBessel(wgsEcef)
         val besselGeodetic: Geodetic = ecefToGeodetic(besselEcef, A_BESSEL, E2_BESSEL)
         return forwardTm(besselGeodetic.latRad, besselGeodetic.lngRad)
     }
 
-    private fun inverseTm(x: Double, y: Double): Geodetic {
+    private fun inverseTm(
+        x: Double,
+        y: Double,
+    ): Geodetic {
         val m: Double = M0_BESSEL + (y - FALSE_NORTHING) / K0
         val mu: Double = m / (A_BESSEL * (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256))
-        val phi1: Double = mu +
-            (3 * E1_BESSEL / 2 - 27 * E1_BESSEL.pow(3) / 32) * sin(2 * mu) +
-            (21 * E1_BESSEL.pow(2) / 16 - 55 * E1_BESSEL.pow(4) / 32) * sin(4 * mu) +
-            (151 * E1_BESSEL.pow(3) / 96) * sin(6 * mu) +
-            (1097 * E1_BESSEL.pow(4) / 512) * sin(8 * mu)
+        val phi1: Double =
+            mu +
+                (3 * E1_BESSEL / 2 - 27 * E1_BESSEL.pow(3) / 32) * sin(2 * mu) +
+                (21 * E1_BESSEL.pow(2) / 16 - 55 * E1_BESSEL.pow(4) / 32) * sin(4 * mu) +
+                (151 * E1_BESSEL.pow(3) / 96) * sin(6 * mu) +
+                (1097 * E1_BESSEL.pow(4) / 512) * sin(8 * mu)
 
         val sinPhi1: Double = sin(phi1)
         val cosPhi1: Double = cos(phi1)
@@ -87,20 +97,25 @@ object Epsg5174 {
         val r1: Double = A_BESSEL * (1 - E2_BESSEL) / (1 - E2_BESSEL * sinPhi1 * sinPhi1).pow(1.5)
         val d: Double = (x - FALSE_EASTING) / (n1 * K0)
 
-        val lat: Double = phi1 - (n1 * tanPhi1 / r1) * (
-            d * d / 2 -
-                (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * EP2_BESSEL) * d.pow(4) / 24 +
-                (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * EP2_BESSEL - 3 * c1 * c1) * d.pow(6) / 720
+        val lat: Double =
+            phi1 - (n1 * tanPhi1 / r1) * (
+                d * d / 2 -
+                    (5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * EP2_BESSEL) * d.pow(4) / 24 +
+                    (61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * EP2_BESSEL - 3 * c1 * c1) * d.pow(6) / 720
             )
-        val lng: Double = LON0 + (
-            d -
-                (1 + 2 * t1 + c1) * d.pow(3) / 6 +
-                (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * EP2_BESSEL + 24 * t1 * t1) * d.pow(5) / 120
+        val lng: Double =
+            LON0 + (
+                d -
+                    (1 + 2 * t1 + c1) * d.pow(3) / 6 +
+                    (5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * EP2_BESSEL + 24 * t1 * t1) * d.pow(5) / 120
             ) / cosPhi1
         return Geodetic(lat, lng)
     }
 
-    private fun forwardTm(latRad: Double, lngRad: Double): TmXy {
+    private fun forwardTm(
+        latRad: Double,
+        lngRad: Double,
+    ): TmXy {
         val sinPhi: Double = sin(latRad)
         val cosPhi: Double = cos(latRad)
         val tanPhi: Double = tan(latRad)
@@ -109,22 +124,29 @@ object Epsg5174 {
         val c: Double = EP2_BESSEL * cosPhi * cosPhi
         val aa: Double = (lngRad - LON0) * cosPhi
 
-        val x: Double = FALSE_EASTING + K0 * n * (
-            aa +
-                (1 - t + c) * aa.pow(3) / 6 +
-                (5 - 18 * t + t * t + 72 * c - 58 * EP2_BESSEL) * aa.pow(5) / 120
+        val x: Double =
+            FALSE_EASTING + K0 * n * (
+                aa +
+                    (1 - t + c) * aa.pow(3) / 6 +
+                    (5 - 18 * t + t * t + 72 * c - 58 * EP2_BESSEL) * aa.pow(5) / 120
             )
-        val y: Double = FALSE_NORTHING + K0 * (
-            meridianArc(latRad) - M0_BESSEL + n * tanPhi * (
-                aa * aa / 2 +
-                    (5 - t + 9 * c + 4 * c * c) * aa.pow(4) / 24 +
-                    (61 - 58 * t + t * t + 600 * c - 330 * EP2_BESSEL) * aa.pow(6) / 720
+        val y: Double =
+            FALSE_NORTHING + K0 * (
+                meridianArc(latRad) - M0_BESSEL + n * tanPhi * (
+                    aa * aa / 2 +
+                        (5 - t + 9 * c + 4 * c * c) * aa.pow(4) / 24 +
+                        (61 - 58 * t + t * t + 600 * c - 330 * EP2_BESSEL) * aa.pow(6) / 720
                 )
             )
         return TmXy(x, y)
     }
 
-    private fun geodeticToEcef(latRad: Double, lngRad: Double, a: Double, e2: Double): Ecef {
+    private fun geodeticToEcef(
+        latRad: Double,
+        lngRad: Double,
+        a: Double,
+        e2: Double,
+    ): Ecef {
         val sinLat: Double = sin(latRad)
         val cosLat: Double = cos(latRad)
         val n: Double = a / sqrt(1 - e2 * sinLat * sinLat)
@@ -134,7 +156,11 @@ object Epsg5174 {
         return Ecef(x, y, z)
     }
 
-    private fun ecefToGeodetic(ecef: Ecef, a: Double, e2: Double): Geodetic {
+    private fun ecefToGeodetic(
+        ecef: Ecef,
+        a: Double,
+        e2: Double,
+    ): Geodetic {
         val p: Double = sqrt(ecef.x * ecef.x + ecef.y * ecef.y)
         val lng: Double = atan2(ecef.y, ecef.x)
         var lat: Double = atan2(ecef.z, p * (1 - e2))
@@ -167,10 +193,10 @@ object Epsg5174 {
 
     private fun meridianArc(phi: Double): Double =
         A_BESSEL * (
-        (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256) * phi -
-            (3 * E2_BESSEL / 8 + 3 * E2_BESSEL * E2_BESSEL / 32 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(2 * phi) +
-            (15 * E2_BESSEL * E2_BESSEL / 256 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(4 * phi) -
-            (35 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 3072) * sin(6 * phi)
+            (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256) * phi -
+                (3 * E2_BESSEL / 8 + 3 * E2_BESSEL * E2_BESSEL / 32 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(2 * phi) +
+                (15 * E2_BESSEL * E2_BESSEL / 256 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(4 * phi) -
+                (35 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 3072) * sin(6 * phi)
         )
 
     private data class Geodetic(val latRad: Double, val lngRad: Double)
@@ -178,5 +204,4 @@ object Epsg5174 {
     private data class Ecef(val x: Double, val y: Double, val z: Double)
 }
 
-private fun arcsecToRad(arcsec: Double): Double =
-    Math.toRadians(arcsec / 3600.0)
+private fun arcsecToRad(arcsec: Double): Double = Math.toRadians(arcsec / 3600.0)

@@ -1,12 +1,13 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
+@Tag("context")
 class ShareControllerWatchingTest : ShareControllerTestSupport() {
-
     @Test
     fun `POST watching 은 보호자 GET 전엔 false, 후엔 true (owner_secret 필요)`() {
         val (token, secret) = createSharePair()

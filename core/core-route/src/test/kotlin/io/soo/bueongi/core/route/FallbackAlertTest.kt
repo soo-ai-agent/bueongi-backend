@@ -1,33 +1,33 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.service.RouteEventPublisher
+import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.common.event.OperationEvent
-import org.springframework.context.ApplicationEventPublisher
+import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
+import io.soo.bueongi.core.route.domain.service.RouteEventPublisher
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
-import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.springframework.context.ApplicationEventPublisher
 
 class FallbackAlertTest {
-
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
+
         override fun publishEvent(event: Any) {
             events.add(event)
         }
@@ -35,15 +35,19 @@ class FallbackAlertTest {
 
     private val source = FakeSafetySpotSource()
 
-    private val query = RouteQuery(
-        origin = GeoPoint(37.5, 127.0),
-        destination = GeoPoint(37.5, 127.01),
-        destinationName = "도착",
-        routeType = RouteType.SAFE,
-        safetyPreference = SafetyPreference.SAFE,
-    )
+    private val query =
+        RouteQuery(
+            origin = GeoPoint(37.5, 127.0),
+            destination = GeoPoint(37.5, 127.01),
+            destinationName = "도착",
+            routeType = RouteType.SAFE,
+            safetyPreference = SafetyPreference.SAFE,
+        )
 
-    private fun service(tmap: TmapRouteClient, publisher: RecordingPublisher): SafeRouteService =
+    private fun service(
+        tmap: TmapRouteClient,
+        publisher: RecordingPublisher,
+    ): SafeRouteService =
         SafeRouteService(
             routeService = RouteService(RouteTypeCatalog()),
             collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),

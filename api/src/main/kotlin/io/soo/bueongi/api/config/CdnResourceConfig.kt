@@ -12,15 +12,15 @@ import java.time.Duration
 class CdnResourceConfig(
     @param:Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String,
 ) : WebMvcConfigurer {
-
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         val root: Path = Path.of(dataDir).toAbsolutePath().normalize()
         val rootUri: String = root.toUri().toString()
-        val location: String = if (rootUri.endsWith("/")) {
-            rootUri
-        } else {
-            "$rootUri/"
-        }
+        val location: String =
+            if (rootUri.endsWith("/")) {
+                rootUri
+            } else {
+                "$rootUri/"
+            }
         registry.addResourceHandler("/cdn/**")
             .addResourceLocations(location)
             .setCacheControl(CacheControl.maxAge(Duration.ofMinutes(30)).cachePublic())

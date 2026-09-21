@@ -1,12 +1,12 @@
 package io.soo.bueongi.client.slack
 
-import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
-import io.soo.bueongi.support.monitoring.AlertNotifier
-import io.soo.bueongi.support.monitoring.AlertRecord
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
+import io.soo.bueongi.support.monitoring.AlertNotifier
+import io.soo.bueongi.support.monitoring.AlertRecord
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,7 +29,6 @@ class SlackAlertNotifier internal constructor(
     private val executor: Executor,
     private val nowMs: () -> Long,
 ) : AlertNotifier {
-
     @Autowired
     constructor(
         config: SlackAlertConfig,
@@ -52,7 +51,11 @@ class SlackAlertNotifier internal constructor(
     override val isEnabled: Boolean
         get() = config.sendEnabled()
 
-    override fun notify(key: String, title: String, detail: String) {
+    override fun notify(
+        key: String,
+        title: String,
+        detail: String,
+    ) {
         recordAlert(key, title, detail)
         if (!config.sendEnabled()) {
             log.debug("Slack 알림 비활성(webhook 미설정 또는 토글 off) — 무시: {}", key)
@@ -89,12 +92,13 @@ class SlackAlertNotifier internal constructor(
             return false
         }
         return try {
-            val response: ResponseEntity<Void> = restClient.post()
-                .uri(URI.create(config.webhookUrl()))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(objectMapper.writeValueAsString(mapOf("text" to TEST_MESSAGE)))
-                .retrieve()
-                .toBodilessEntity()
+            val response: ResponseEntity<Void> =
+                restClient.post()
+                    .uri(URI.create(config.webhookUrl()))
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .body(objectMapper.writeValueAsString(mapOf("text" to TEST_MESSAGE)))
+                    .retrieve()
+                    .toBodilessEntity()
             response.statusCode.is2xxSuccessful
         } catch (e: Exception) {
             log.warn(failureLine(e, subject = "발송 시험", action = "시험 실패로 응답(운영 알림은 그대로)"))
@@ -102,7 +106,11 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun recordAlert(key: String, title: String, detail: String) {
+    private fun recordAlert(
+        key: String,
+        title: String,
+        detail: String,
+    ) {
         val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
         synchronized(recentAlerts) {
             recentAlerts.addLast(record)
@@ -112,7 +120,10 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun send(title: String, detail: String) {
+    private fun send(
+        title: String,
+        detail: String,
+    ) {
         try {
             restClient.post()
                 .uri(URI.create(config.webhookUrl()))
@@ -125,13 +136,18 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun failureLine(e: Throwable, subject: String, action: String): String = ExceptionLogLine(
-        kind = IGNORED_EXCEPTION,
-        counterpart = PROVIDER,
-        subject = subject,
-        cause = causeChainOf(e, config.webhookUrl()),
-        action = action,
-    ).format()
+    private fun failureLine(
+        e: Throwable,
+        subject: String,
+        action: String,
+    ): String =
+        ExceptionLogLine(
+            kind = IGNORED_EXCEPTION,
+            counterpart = PROVIDER,
+            subject = subject,
+            cause = causeChainOf(e, config.webhookUrl()),
+            action = action,
+        ).format()
 
     private companion object {
         const val ALERT_HISTORY_CAP: Int = 200
@@ -143,7 +159,7 @@ class SlackAlertNotifier internal constructor(
 
         fun newDaemonSingleThreadExecutor(): Executor =
             Executors.newSingleThreadExecutor { r ->
-            Thread(r, "slack-alert").apply { isDaemon = true }
-        }
+                Thread(r, "slack-alert").apply { isDaemon = true }
+            }
     }
 }

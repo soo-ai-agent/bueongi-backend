@@ -1,8 +1,8 @@
 package io.soo.bueongi.storage.db.core.safetyspot
 
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotRefreshRecord
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.core.enums.SafetySpotType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
@@ -11,7 +11,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class SafetySpotRefreshStatusStoreTest {
-
     @Test
     fun `기록 전에는 어떤 종류도 null 이다`() {
         val store = SafetySpotRefreshStatusStore()

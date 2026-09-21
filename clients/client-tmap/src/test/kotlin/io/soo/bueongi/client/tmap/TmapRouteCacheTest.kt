@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TmapRouteCacheTest {
-
     private val origin = TmapCoord(37.5, 127.0)
     private val dest = TmapCoord(37.51, 127.01)
     private val route = TmapRoute("0", listOf(origin, dest), 880.0, 700, emptyList())

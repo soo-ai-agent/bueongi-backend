@@ -1,11 +1,10 @@
 package io.soo.bueongi.core.auth.api.controller
 
-import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.auth.api.request.AdminLoginRequest
-import io.soo.bueongi.core.auth.api.response.AdminLoginResponse
 import io.soo.bueongi.core.auth.api.request.AdminRefreshRequest
+import io.soo.bueongi.core.auth.api.response.AdminLoginResponse
 import io.soo.bueongi.core.auth.api.response.AdminRefreshResponse
-
+import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import jakarta.validation.Valid
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,10 +19,12 @@ class AdminAuthController(
     private val authService: AdminAuthService,
 ) {
     @PostMapping("/admin/login")
-    fun login(@Valid @RequestBody request: AdminLoginRequest):
-            AdminLoginResponse = authService.login(request)
+    fun login(
+        @Valid @RequestBody request: AdminLoginRequest,
+    ): AdminLoginResponse = authService.login(request)
 
     @PostMapping("/local/token/refresh")
-    fun refresh(@Valid @RequestBody request: AdminRefreshRequest):
-            AdminRefreshResponse = authService.refresh(request)
+    fun refresh(
+        @Valid @RequestBody request: AdminRefreshRequest,
+    ): AdminRefreshResponse = authService.refresh(request)
 }

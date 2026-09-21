@@ -9,7 +9,8 @@ data class SlackConfigUpdateRequest(
     @field:NotNull
     val enabled: Boolean?,
     @field:NotNull
-    @field:Min(1) @field:Max(1440)
+    @field:Min(1)
+    @field:Max(1440)
     val throttleMinutes: Int?,
     val mutedCategories: List<String>? = null,
 ) {

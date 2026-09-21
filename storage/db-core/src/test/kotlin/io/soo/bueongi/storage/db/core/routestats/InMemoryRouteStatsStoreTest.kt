@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class InMemoryRouteStatsStoreTest {
-
     @Test
     fun `이 저장소의 상한은 ROUTE_STATS_CAP 이다`() {
         val store = InMemoryRouteStatsStore()

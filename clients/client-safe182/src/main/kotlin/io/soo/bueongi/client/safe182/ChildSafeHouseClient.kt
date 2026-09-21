@@ -59,15 +59,19 @@ class ChildSafeHouseClient(
     }
 
     // 원천이 비표준 `application/x-json` 으로 응답해 컨버터가 못 받는다 — 문자열로 받아 직접 파싱한다.
-    private fun fetchPage(pageIndex: Int, bounds: MapBounds): Safe182Response? {
+    private fun fetchPage(
+        pageIndex: Int,
+        bounds: MapBounds,
+    ): Safe182Response? {
         return try {
-            val body: String = restClient.post()
-                .uri(endpoint)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formOf(pageIndex, bounds))
-                .retrieve()
-                .body(String::class.java)
-                ?: return null
+            val body: String =
+                restClient.post()
+                    .uri(endpoint)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formOf(pageIndex, bounds))
+                    .retrieve()
+                    .body(String::class.java)
+                    ?: return null
             objectMapper.readValue(body, Safe182Response::class.java)
         } catch (e: Exception) {
             log.warn(failureLine(cause = causeChainOf(e, esntlId, authKey), pageIndex = pageIndex))
@@ -75,7 +79,10 @@ class ChildSafeHouseClient(
         }
     }
 
-    private fun formOf(pageIndex: Int, bounds: MapBounds): MultiValueMap<String, String> {
+    private fun formOf(
+        pageIndex: Int,
+        bounds: MapBounds,
+    ): MultiValueMap<String, String> {
         val form: LinkedMultiValueMap<String, String> = LinkedMultiValueMap()
         form.add("esntlId", esntlId)
         form.add("authKey", authKey)
@@ -113,7 +120,10 @@ class ChildSafeHouseClient(
         return false
     }
 
-    private fun addPoints(rows: List<Safe182Row>, into: MutableList<ChildSafeHousePoint>) {
+    private fun addPoints(
+        rows: List<Safe182Row>,
+        into: MutableList<ChildSafeHousePoint>,
+    ) {
         for (row in rows) {
             val lat: Double = row.lcinfoLa ?: continue
             val lng: Double = row.lcinfoLo ?: continue
@@ -133,7 +143,11 @@ class ChildSafeHouseClient(
     }
 
     // 서버가 pageUnit 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
-    private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
+    private fun isLastPage(
+        rowCount: Int,
+        received: Long,
+        totalCount: Long?,
+    ): Boolean {
         if (rowCount == 0) {
             return true
         }
@@ -143,7 +157,11 @@ class ChildSafeHouseClient(
         return rowCount < PAGE_SIZE
     }
 
-    private fun failureLine(cause: String, pageIndex: Int, action: String = STOPPED_ACTION): String =
+    private fun failureLine(
+        cause: String,
+        pageIndex: Int,
+        action: String = STOPPED_ACTION,
+    ): String =
         ExceptionLogLine(
             kind = IGNORED_EXCEPTION,
             counterpart = PROVIDER,

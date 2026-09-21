@@ -3,7 +3,6 @@ package io.soo.bueongi.storage.db.core
 class InMemoryRecentLog<T : Any>(
     private val cap: Int,
 ) {
-
     private val items: ArrayDeque<T> = ArrayDeque<T>()
     private val lock = Any()
 

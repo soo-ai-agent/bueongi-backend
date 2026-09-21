@@ -1,11 +1,11 @@
 package io.soo.bueongi.storage.db.core.share.store
 
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import io.soo.bueongi.storage.db.core.share.model.StoredLocation
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.storage.db.core.share.model.StoredLocation
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
@@ -21,7 +21,6 @@ class RedisLocationStore(
     private val clock: Clock,
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : LocationStore {
-
     private val log: Logger = LoggerFactory.getLogger(RedisLocationStore::class.java)
 
     override val backend: String = "redis"
@@ -30,24 +29,26 @@ class RedisLocationStore(
         onRedis("save") {
             val ttl: Duration = ttlFrom(session.expiresAt)
             val shareKey: String = shareKey(session.token)
-            val shareFields: Map<String, String> = buildMap {
-                put(FIELD_CREATED_AT, session.createdAt.toString())
-                put(FIELD_EXPIRES_AT, session.expiresAt.toString())
-                put(FIELD_OWNER_SECRET, session.ownerSecret)
-                session.expectedArrivalAt?.let { put(FIELD_EXPECTED_ARRIVAL_AT, it.toString()) }
-            }
+            val shareFields: Map<String, String> =
+                buildMap {
+                    put(FIELD_CREATED_AT, session.createdAt.toString())
+                    put(FIELD_EXPIRES_AT, session.expiresAt.toString())
+                    put(FIELD_OWNER_SECRET, session.ownerSecret)
+                    session.expectedArrivalAt?.let { put(FIELD_EXPECTED_ARRIVAL_AT, it.toString()) }
+                }
             redis.opsForHash<String, String>().putAll(shareKey, shareFields)
             redis.expire(shareKey, ttl)
 
             session.location?.let { loc ->
                 val locKey: String = locationKey(session.token)
-                val fields: Map<String, String> = buildMap {
-                    put(FIELD_LAT, loc.lat.toString())
-                    put(FIELD_LNG, loc.lng.toString())
-                    put(FIELD_UPDATED_AT, loc.updatedAt.toString())
-                    loc.remainingM?.let { put(FIELD_REMAINING_M, it.toString()) }
-                    loc.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
-                }
+                val fields: Map<String, String> =
+                    buildMap {
+                        put(FIELD_LAT, loc.lat.toString())
+                        put(FIELD_LNG, loc.lng.toString())
+                        put(FIELD_UPDATED_AT, loc.updatedAt.toString())
+                        loc.remainingM?.let { put(FIELD_REMAINING_M, it.toString()) }
+                        loc.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
+                    }
                 redis.opsForHash<String, String>().putAll(locKey, fields)
                 redis.expire(locKey, ttl)
             }
@@ -59,26 +60,27 @@ class RedisLocationStore(
         }
     }
 
-    override fun findByToken(token: String): ShareSession? = onRedis("findByToken") {
-        val shareHash: Map<String, String> = redis.opsForHash<String, String>().entries(shareKey(token))
-        if (shareHash.isEmpty()) {
-            return@onRedis null
-        }
-        val createdAt: Instant = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
-        val expiresAt: Instant = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
-        val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null
-        val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
+    override fun findByToken(token: String): ShareSession? =
+        onRedis("findByToken") {
+            val shareHash: Map<String, String> = redis.opsForHash<String, String>().entries(shareKey(token))
+            if (shareHash.isEmpty()) {
+                return@onRedis null
+            }
+            val createdAt: Instant = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return@onRedis null
+            val expiresAt: Instant = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return@onRedis null
+            val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return@onRedis null
+            val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
 
-        ShareSession(
-            token = token,
-            ownerSecret = ownerSecret,
-            createdAt = createdAt,
-            expiresAt = expiresAt,
-            location = readLocation(token),
-            route = readRoute(token),
-            expectedArrivalAt = expectedArrivalAt,
-        )
-    }
+            ShareSession(
+                token = token,
+                ownerSecret = ownerSecret,
+                createdAt = createdAt,
+                expiresAt = expiresAt,
+                location = readLocation(token),
+                route = readRoute(token),
+                expectedArrivalAt = expectedArrivalAt,
+            )
+        }
 
     private fun readLocation(token: String): StoredLocation? {
         val hash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
@@ -125,9 +127,10 @@ class RedisLocationStore(
         }
     }
 
-    override fun isWatched(token: String): Boolean = onRedis("isWatched") {
-        redis.hasKey(viewerKey(token)) == true
-    }
+    override fun isWatched(token: String): Boolean =
+        onRedis("isWatched") {
+            redis.hasKey(viewerKey(token)) == true
+        }
 
     override fun countActiveSessions(): Int {
         var count: Int = 0
@@ -157,7 +160,10 @@ class RedisLocationStore(
     }
 
     // token 은 로깅하지 않는다(추적 방지).
-    private fun <T> onRedis(operation: String, block: () -> T): T =
+    private fun <T> onRedis(
+        operation: String,
+        block: () -> T,
+    ): T =
         try {
             block()
         } catch (e: DataAccessException) {
@@ -177,14 +183,13 @@ class RedisLocationStore(
     private companion object {
         const val SESSION_KEY_PREFIX: String = "share:"
 
-        fun shareKey(token: String) =
-            "$SESSION_KEY_PREFIX$token"
-        fun locationKey(token: String) =
-            "location:$token"
-        fun routeKey(token: String) =
-            "route:$token"
-        fun viewerKey(token: String) =
-            "viewer:$token"
+        fun shareKey(token: String) = "$SESSION_KEY_PREFIX$token"
+
+        fun locationKey(token: String) = "location:$token"
+
+        fun routeKey(token: String) = "route:$token"
+
+        fun viewerKey(token: String) = "viewer:$token"
 
         const val SESSION_KEY_PATTERN: String = "$SESSION_KEY_PREFIX*"
 

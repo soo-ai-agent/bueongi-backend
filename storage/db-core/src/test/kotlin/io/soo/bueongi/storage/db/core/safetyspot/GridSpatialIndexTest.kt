@@ -1,15 +1,16 @@
 package io.soo.bueongi.storage.db.core.safetyspot
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
 import io.soo.bueongi.core.enums.SafetySpotType
-
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class GridSpatialIndexTest {
-
-    private fun cctv(lat: Double, lng: Double) = SafetySpotPoint(SafetySpotType.CCTV, lat, lng)
+    private fun cctv(
+        lat: Double,
+        lng: Double,
+    ) = SafetySpotPoint(SafetySpotType.CCTV, lat, lng)
 
     @Test
     fun `withinRadius - 반경 안만 반환(셀 경계 무관)`() {

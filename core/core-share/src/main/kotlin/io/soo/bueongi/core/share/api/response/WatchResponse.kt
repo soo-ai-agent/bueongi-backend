@@ -17,16 +17,15 @@ data class WatchResponse(
     val remainingS: Double? = null,
 ) {
     companion object {
-
         fun from(status: ShareWatchStatus): WatchResponse =
             WatchResponse(
-            watching = status.watching,
-            lat = status.lat,
-            lng = status.lng,
-            updatedAt = status.updatedAt,
-            expired = status.expired,
-            remainingM = status.remainingM,
-            remainingS = status.remainingS,
-        )
+                watching = status.watching,
+                lat = status.lat,
+                lng = status.lng,
+                updatedAt = status.updatedAt,
+                expired = status.expired,
+                remainingM = status.remainingM,
+                remainingS = status.remainingS,
+            )
     }
 }

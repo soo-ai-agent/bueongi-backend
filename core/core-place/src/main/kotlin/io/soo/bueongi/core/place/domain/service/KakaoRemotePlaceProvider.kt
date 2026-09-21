@@ -1,12 +1,11 @@
 package io.soo.bueongi.core.place.domain.service
 
-import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.client.kakao.KakaoPlaceClient
+import io.soo.bueongi.core.place.domain.model.PlaceItem
 import org.springframework.stereotype.Component
 
 @Component
 class KakaoRemotePlaceProvider(private val client: KakaoPlaceClient) : RemotePlaceProvider {
-
     override val isEnabled: Boolean
         get() = client.isEnabled
 

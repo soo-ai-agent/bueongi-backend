@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class DistanceFormatTest {
-
     @Test
     fun `formatDistance - 1km 미만은 10m 단위 m 표기`() {
         assertThat(formatDistance(0.0)).isEqualTo("0m")

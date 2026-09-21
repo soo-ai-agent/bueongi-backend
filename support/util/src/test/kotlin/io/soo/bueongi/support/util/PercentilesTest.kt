@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class PercentilesTest {
-
     @Test
     fun `빈 목록이면 어떤 분위수든 0 이다`() {
         assertThat(nearestRankPercentile(emptyList(), 50)).isEqualTo(0L)

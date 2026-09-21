@@ -8,7 +8,6 @@ data class AdminIdentityResponse(
     val roles: List<String>,
 ) {
     companion object {
-
         fun from(authentication: Authentication): AdminIdentityResponse {
             val principal: Any? = authentication.principal
             if (principal !is Long) {
@@ -17,6 +16,5 @@ data class AdminIdentityResponse(
             val userId: Long = principal
             return AdminIdentityResponse(userId = userId, roles = authentication.authorities.map { it.authority })
         }
-
     }
 }

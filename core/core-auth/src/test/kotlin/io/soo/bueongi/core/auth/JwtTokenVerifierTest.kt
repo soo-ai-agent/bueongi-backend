@@ -1,12 +1,11 @@
 package io.soo.bueongi.core.auth
 
-import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
+import io.jsonwebtoken.Jwts
+import io.soo.bueongi.core.auth.domain.config.JwtProperties
 import io.soo.bueongi.core.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
-import io.soo.bueongi.core.auth.domain.config.JwtProperties
+import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
-
-import io.jsonwebtoken.Jwts
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -18,7 +17,6 @@ import java.util.Base64
 import java.util.Date
 
 class JwtTokenVerifierTest {
-
     private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
 
     private fun verifierFor(publicKey: RSAPublicKey): JwtTokenVerifier {
@@ -32,12 +30,13 @@ class JwtTokenVerifierTest {
         roles: List<String>? = listOf("ROLE_ADMIN"),
         expiresAt: Date = Date(System.currentTimeMillis() + 60_000),
     ): String {
-        val builder = Jwts.builder()
-            .issuer("bueongi")
-            .subject(subject)
-            .claim("tokenKind", AdminTokenKind.ACCESS.name)
-            .issuedAt(Date())
-            .expiration(expiresAt)
+        val builder =
+            Jwts.builder()
+                .issuer("bueongi")
+                .subject(subject)
+                .claim("tokenKind", AdminTokenKind.ACCESS.name)
+                .issuedAt(Date())
+                .expiration(expiresAt)
         if (roles != null) {
             builder.claim("roles", roles)
         }

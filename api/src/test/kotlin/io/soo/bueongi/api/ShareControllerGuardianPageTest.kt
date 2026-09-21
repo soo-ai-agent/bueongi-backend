@@ -1,11 +1,12 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 
+@Tag("context")
 class ShareControllerGuardianPageTest : ShareControllerTestSupport() {
-
     @Test
     fun `GET 보호자 페이지는 200 text-html 이고 토큰이 주입된다`() {
         val token: String = createShare()

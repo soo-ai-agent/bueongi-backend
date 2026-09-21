@@ -14,10 +14,11 @@ fun writeAuthProblem(
     title: String,
     detail: String,
 ) {
-    val problem: ProblemDetail = ProblemDetail.forStatusAndDetail(status, detail).apply {
-        this.title = title
-        setProperty("code", code)
-    }
+    val problem: ProblemDetail =
+        ProblemDetail.forStatusAndDetail(status, detail).apply {
+            this.title = title
+            setProperty("code", code)
+        }
     response.status = status.value()
     response.characterEncoding = "UTF-8"
     response.contentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE

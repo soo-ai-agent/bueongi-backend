@@ -1,19 +1,18 @@
 package io.soo.bueongi.core.route.domain.safety.service
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
-import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
-import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCounts
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
+import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.model.SafetyScore
+import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCounts
+import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
 import io.soo.bueongi.support.util.zonedAt
-
 import org.springframework.stereotype.Component
 import java.time.Clock
 import kotlin.math.max
@@ -26,7 +25,6 @@ class SafetyScorer(
     private val weightsCatalog: SafetyWeightsCatalog = SafetyWeightsCatalog(),
     private val clock: Clock = Clock.systemUTC(),
 ) {
-
     fun coverageOf(paths: List<List<GeoPoint>>): SafetyDataCoverage {
         val samples: List<GeoPoint> = paths.flatMap { it.sampleEveryMeters(SAMPLE_SPACING_METERS, MAX_SAMPLES) }
         val covered: MutableSet<SafetyAxis> = LinkedHashSet()
@@ -38,17 +36,20 @@ class SafetyScorer(
         return SafetyDataCoverage(covered)
     }
 
-    fun score(path: List<GeoPoint>): SafetyScore =
-        score(path, coverageOf(listOf(path)))
+    fun score(path: List<GeoPoint>): SafetyScore = score(path, coverageOf(listOf(path)))
 
-    fun score(path: List<GeoPoint>, coverage: SafetyDataCoverage): SafetyScore {
+    fun score(
+        path: List<GeoPoint>,
+        coverage: SafetyDataCoverage,
+    ): SafetyScore {
         val lengthM: Double = path.pathLengthMeters()
         val routeKm: Double = lengthM / 1000.0
-        val km: Double = if (routeKm > 0) {
-            routeKm
-        } else {
-            MIN_DIVISOR_KM
-        }
+        val km: Double =
+            if (routeKm > 0) {
+                routeKm
+            } else {
+                MIN_DIVISOR_KM
+            }
 
         val counts: SafetySpotCounts = countNearby(path)
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
@@ -59,23 +60,27 @@ class SafetyScorer(
 
         return SafetyScore(
             score = penalized?.let { (it * 100).roundToInt() },
-            breakdown = SafetyBreakdown(
-                routeKm = round3(routeKm),
-                cctvDensity = round2(counts.cctv / km),
-                lampDensity = round2(counts.lamp / km),
-                bellDensity = round2(counts.bell / km),
-                safehouseCount = counts.safehouse,
-                policeCount = counts.police,
-                safePathOverlap = round3(safePathOverlap),
-                crimeProneAreaCount = counts.crimeProneArea,
-                scoredAxes = coverage.covered.map { it.wireName },
-                unscoredAxes = coverage.missing.map { it.wireName },
-                axisCoverage = round3(coveredWeight(weights, coverage)),
-            ),
+            breakdown =
+                SafetyBreakdown(
+                    routeKm = round3(routeKm),
+                    cctvDensity = round2(counts.cctv / km),
+                    lampDensity = round2(counts.lamp / km),
+                    bellDensity = round2(counts.bell / km),
+                    safehouseCount = counts.safehouse,
+                    policeCount = counts.police,
+                    safePathOverlap = round3(safePathOverlap),
+                    crimeProneAreaCount = counts.crimeProneArea,
+                    scoredAxes = coverage.covered.map { it.wireName },
+                    unscoredAxes = coverage.missing.map { it.wireName },
+                    axisCoverage = round3(coveredWeight(weights, coverage)),
+                ),
         )
     }
 
-    private fun hasDataNear(axis: SafetyAxis, samples: List<GeoPoint>): Boolean {
+    private fun hasDataNear(
+        axis: SafetyAxis,
+        samples: List<GeoPoint>,
+    ): Boolean {
         if (axis == SafetyAxis.SAFE_PATH) {
             return hasSafePathNear(samples)
         }
@@ -105,21 +110,27 @@ class SafetyScorer(
     private fun countNearby(path: List<GeoPoint>): SafetySpotCounts =
         SafetySpotCounts(
             cctv = countWithinCorridor(SafetySpotType.CCTV, path),
-            lamp = countWithinCorridor(SafetySpotType.STREET_LAMP, path) +
-                countWithinCorridor(SafetySpotType.SECURITY_LAMP, path),
+            lamp =
+                countWithinCorridor(SafetySpotType.STREET_LAMP, path) +
+                    countWithinCorridor(SafetySpotType.SECURITY_LAMP, path),
             bell = countWithinCorridor(SafetySpotType.BELL, path),
             safehouse = countWithinCorridor(SafetySpotType.SAFEHOUSE, path),
             police = countWithinCorridor(SafetySpotType.POLICE, path),
             crimeProneArea = countRiskNear(path),
         )
 
-    private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
-        safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+    private fun countWithinCorridor(
+        type: SafetySpotType,
+        path: List<GeoPoint>,
+    ): Int = safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
 
     private fun countRiskNear(path: List<GeoPoint>): Int =
         safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
 
-    private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
+    private fun safePathOverlapRatio(
+        path: List<GeoPoint>,
+        lengthM: Double,
+    ): Double {
         if (lengthM <= 0 || safetySpots.safePaths.isEmpty()) {
             return 0.0
         }
@@ -134,7 +145,11 @@ class SafetyScorer(
         return min(1.0, bestSingleRouteOverlapRatio)
     }
 
-    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> =
+    private fun fillsOf(
+        counts: SafetySpotCounts,
+        km: Double,
+        safePathOverlap: Double,
+    ): Map<SafetyAxis, Double> =
         mapOf(
             SafetyAxis.CCTV to fill(counts.cctv / km, HALF_CCTV_PER_KM),
             SafetyAxis.LAMP to fill(counts.lamp / km, HALF_LAMP_PER_KM),
@@ -163,7 +178,10 @@ class SafetyScorer(
         return weighted / totalWeight
     }
 
-    private fun coveredWeight(weights: SafetyWeights, coverage: SafetyDataCoverage): Double {
+    private fun coveredWeight(
+        weights: SafetyWeights,
+        coverage: SafetyDataCoverage,
+    ): Double {
         var total: Double = 0.0
         for (axis in SafetyAxis.entries) {
             if (coverage.has(axis)) {
@@ -173,10 +191,13 @@ class SafetyScorer(
         return total
     }
 
-    private fun spotTypesOf(axis: SafetyAxis): List<SafetySpotType> =
-        SPOT_TYPES_BY_AXIS.getValue(axis)
+    private fun spotTypesOf(axis: SafetyAxis): List<SafetySpotType> = SPOT_TYPES_BY_AXIS.getValue(axis)
 
-    private fun applyRiskPenalty(normalized: Double, riskCount: Int, km: Double): Double {
+    private fun applyRiskPenalty(
+        normalized: Double,
+        riskCount: Int,
+        km: Double,
+    ): Double {
         if (riskCount <= 0) {
             return normalized
         }
@@ -184,25 +205,29 @@ class SafetyScorer(
         return max(0.0, normalized - penalty)
     }
 
-    private fun fill(value: Double, halfPoint: Double): Double {
+    private fun fill(
+        value: Double,
+        halfPoint: Double,
+    ): Double {
         if (value <= 0 || halfPoint <= 0) {
             return 0.0
         }
         return value / (value + halfPoint)
     }
 
-    private fun saturate(value: Double, saturationCeiling: Double): Double {
+    private fun saturate(
+        value: Double,
+        saturationCeiling: Double,
+    ): Double {
         if (saturationCeiling <= 0) {
             return 0.0
         }
         return max(0.0, min(1.0, value / saturationCeiling))
     }
 
-    private fun round2(v: Double): Double =
-        (v * 100).roundToInt() / 100.0
+    private fun round2(v: Double): Double = (v * 100).roundToInt() / 100.0
 
-    private fun round3(v: Double): Double =
-        (v * 1000).roundToInt() / 1000.0
+    private fun round3(v: Double): Double = (v * 1000).roundToInt() / 1000.0
 
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0
@@ -233,13 +258,14 @@ class SafetyScorer(
 
         const val MAX_RISK_PENALTY: Double = 0.20
 
-        private val SPOT_TYPES_BY_AXIS: Map<SafetyAxis, List<SafetySpotType>> = mapOf(
-            SafetyAxis.CCTV to listOf(SafetySpotType.CCTV),
-            SafetyAxis.LAMP to listOf(SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP),
-            SafetyAxis.BELL to listOf(SafetySpotType.BELL),
-            SafetyAxis.SAFEHOUSE to listOf(SafetySpotType.SAFEHOUSE),
-            SafetyAxis.POLICE to listOf(SafetySpotType.POLICE),
-            SafetyAxis.SAFE_PATH to emptyList(),
-        )
+        private val SPOT_TYPES_BY_AXIS: Map<SafetyAxis, List<SafetySpotType>> =
+            mapOf(
+                SafetyAxis.CCTV to listOf(SafetySpotType.CCTV),
+                SafetyAxis.LAMP to listOf(SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP),
+                SafetyAxis.BELL to listOf(SafetySpotType.BELL),
+                SafetyAxis.SAFEHOUSE to listOf(SafetySpotType.SAFEHOUSE),
+                SafetyAxis.POLICE to listOf(SafetySpotType.POLICE),
+                SafetyAxis.SAFE_PATH to emptyList(),
+            )
     }
 }

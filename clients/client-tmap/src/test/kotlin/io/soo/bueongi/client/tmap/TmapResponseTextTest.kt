@@ -2,7 +2,6 @@ package io.soo.bueongi.client.tmap
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 
 // Tmap 실호출 응답 10,520바이트에 NUL 3개(name·description·nearPoiName)가 들어 있었다.

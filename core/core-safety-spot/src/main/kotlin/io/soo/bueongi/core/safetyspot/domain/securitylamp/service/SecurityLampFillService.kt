@@ -9,10 +9,10 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class SecurityLampFillService(
@@ -27,8 +27,7 @@ class SecurityLampFillService(
 
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
-    fun isFilled(regionCode: String): Boolean =
-        skipReason(regionCode) != null
+    fun isFilled(regionCode: String): Boolean = skipReason(regionCode) != null
 
     private fun skipReason(regionCode: String): String? {
         if (safetySpots.index(SafetySpotType.SECURITY_LAMP).regions.contains(regionCode)) {

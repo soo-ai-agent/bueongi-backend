@@ -1,20 +1,19 @@
 package io.soo.bueongi.core.route.domain.marker.service
 
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
 
 @Component
 class RouteMarkerBuilder(
@@ -80,7 +79,11 @@ class RouteMarkerBuilder(
         return placed
     }
 
-    private fun percentOrCenter(offset: Double, span: Double, drawableRange: Double): Int {
+    private fun percentOrCenter(
+        offset: Double,
+        span: Double,
+        drawableRange: Double,
+    ): Int {
         if (span == 0.0) {
             return MINI_MAP_CENTER
         }
@@ -90,19 +93,26 @@ class RouteMarkerBuilder(
     }
 
     // 보안등 원천이 자치단체(instt_code)당 한 번만 응답해, 경로가 지나는 자치단체를 모두 짚어야 한다.
-    private fun publishVisitedPoints(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>) {
+    private fun publishVisitedPoints(
+        origin: GeoPoint,
+        destination: GeoPoint,
+        path: List<GeoPoint>,
+    ) {
         val publisher: RouteVisitEventPublisher = visitEvents ?: return
-        val route: List<GeoPoint> = if (path.size >= 2) {
-            path
-        } else {
-            listOf(origin, destination)
-        }
+        val route: List<GeoPoint> =
+            if (path.size >= 2) {
+                path
+            } else {
+                listOf(origin, destination)
+            }
         val lengthMeters: Double = route.pathLengthMeters()
         val spanAtDefaultSpacing: Double = FILL_SAMPLE_SPACING_METERS * (MAX_FILL_SAMPLE_POINTS - 1)
         if (lengthMeters > spanAtDefaultSpacing) {
             log.info(
                 "경로가 길어 지연 적재 표본 간격을 넓힙니다: 길이 {}m, 기준 간격 {}m, 표본 상한 {}개",
-                lengthMeters.roundToInt(), FILL_SAMPLE_SPACING_METERS.roundToInt(), MAX_FILL_SAMPLE_POINTS,
+                lengthMeters.roundToInt(),
+                FILL_SAMPLE_SPACING_METERS.roundToInt(),
+                MAX_FILL_SAMPLE_POINTS,
             )
         }
         publisher.routeVisited(route.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
@@ -120,7 +130,10 @@ class RouteMarkerBuilder(
         )
     }
 
-    private fun spreadAlongPath(alongPath: List<SafetySpotPoint>, limit: Int): List<SafetySpotPoint> {
+    private fun spreadAlongPath(
+        alongPath: List<SafetySpotPoint>,
+        limit: Int,
+    ): List<SafetySpotPoint> {
         if (alongPath.size <= limit) {
             return alongPath
         }
@@ -132,15 +145,16 @@ class RouteMarkerBuilder(
     }
 
     private companion object {
-        val MARKER_TYPES: List<Pair<SafetySpotPoiType, SafetySpotType>> = listOf(
-            SafetySpotPoiType.CCTV to SafetySpotType.CCTV,
-            SafetySpotPoiType.SAFEHOUSE to SafetySpotType.SAFEHOUSE,
-            SafetySpotPoiType.BELL to SafetySpotType.BELL,
-            SafetySpotPoiType.POLICE to SafetySpotType.POLICE,
-            SafetySpotPoiType.STREET_LAMP to SafetySpotType.STREET_LAMP,
-            SafetySpotPoiType.SECURITY_LAMP to SafetySpotType.SECURITY_LAMP,
-            SafetySpotPoiType.PEDESTRIAN_SIGNAL to SafetySpotType.PEDESTRIAN_SIGNAL,
-        )
+        val MARKER_TYPES: List<Pair<SafetySpotPoiType, SafetySpotType>> =
+            listOf(
+                SafetySpotPoiType.CCTV to SafetySpotType.CCTV,
+                SafetySpotPoiType.SAFEHOUSE to SafetySpotType.SAFEHOUSE,
+                SafetySpotPoiType.BELL to SafetySpotType.BELL,
+                SafetySpotPoiType.POLICE to SafetySpotType.POLICE,
+                SafetySpotPoiType.STREET_LAMP to SafetySpotType.STREET_LAMP,
+                SafetySpotPoiType.SECURITY_LAMP to SafetySpotType.SECURITY_LAMP,
+                SafetySpotPoiType.PEDESTRIAN_SIGNAL to SafetySpotType.PEDESTRIAN_SIGNAL,
+            )
 
         const val MINI_MAP_MAX: Double = 100.0
         const val MINI_MAP_CENTER: Int = 50

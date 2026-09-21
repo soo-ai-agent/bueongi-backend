@@ -1,16 +1,16 @@
 package io.soo.bueongi.core.safetyspot.domain.streetlamp.service
 
-import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
+import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class StreetLampFillService(
@@ -24,8 +24,7 @@ class StreetLampFillService(
 
     private val inFlight: AtomicBoolean = AtomicBoolean(false)
 
-    fun isFilled(): Boolean =
-        cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)
+    fun isFilled(): Boolean = cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)
 
     fun fill(): Int {
         if (!client.isEnabled) {

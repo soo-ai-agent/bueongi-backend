@@ -6,7 +6,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteCandidateMergerTest {
-
     private val merger = RouteCandidateMerger()
 
     @Test
@@ -19,27 +18,30 @@ class RouteCandidateMergerTest {
 
     @Test
     fun `20m 옆 나란한 골목은 다른 길이다`() {
-        val kept = merger.mergeNearDuplicates(
-            listOf(candidate("0", straight(SEGMENTS)), candidate("4", straight(SEGMENTS, latOffset = TWENTY_METERS_IN_DEGREES))),
-        )
+        val kept =
+            merger.mergeNearDuplicates(
+                listOf(candidate("0", straight(SEGMENTS)), candidate("4", straight(SEGMENTS, latOffset = TWENTY_METERS_IN_DEGREES))),
+            )
 
         assertThat(kept).hasSize(2)
     }
 
     @Test
     fun `88퍼센트 겹치는 길은 따로 남긴다`() {
-        val kept = merger.mergeNearDuplicates(
-            listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(22))),
-        )
+        val kept =
+            merger.mergeNearDuplicates(
+                listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(22))),
+            )
 
         assertThat(kept).hasSize(2)
     }
 
     @Test
     fun `96퍼센트 겹치는 길은 합친다`() {
-        val kept = merger.mergeNearDuplicates(
-            listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(24))),
-        )
+        val kept =
+            merger.mergeNearDuplicates(
+                listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(24))),
+            )
 
         assertThat(kept).hasSize(1)
     }
@@ -52,10 +54,15 @@ class RouteCandidateMergerTest {
         assertThat(kept).hasSize(2)
     }
 
-    private fun candidate(searchOption: String, path: List<GeoPoint>): RouteCandidate =
-        RouteCandidate(searchOption = searchOption, path = path, distanceM = 1.0, timeS = 1, steps = emptyList())
+    private fun candidate(
+        searchOption: String,
+        path: List<GeoPoint>,
+    ): RouteCandidate = RouteCandidate(searchOption = searchOption, path = path, distanceM = 1.0, timeS = 1, steps = emptyList())
 
-    private fun straight(segments: Int, latOffset: Double = 0.0): List<GeoPoint> {
+    private fun straight(
+        segments: Int,
+        latOffset: Double = 0.0,
+    ): List<GeoPoint> {
         val points: MutableList<GeoPoint> = ArrayList()
         for (i in 0..segments) {
             points.add(GeoPoint(BASE_LAT + latOffset, BASE_LNG + i * SEGMENT_DEGREES))
@@ -66,18 +73,18 @@ class RouteCandidateMergerTest {
     private fun divergingAfter(sharedSegments: Int): List<GeoPoint> {
         val points: MutableList<GeoPoint> = ArrayList()
         for (i in 0..SEGMENTS) {
-            val lat: Double = if (i <= sharedSegments) {
-                BASE_LAT
-            } else {
-                BASE_LAT + FAR_AWAY_DEGREES
-            }
+            val lat: Double =
+                if (i <= sharedSegments) {
+                    BASE_LAT
+                } else {
+                    BASE_LAT + FAR_AWAY_DEGREES
+                }
             points.add(GeoPoint(lat, BASE_LNG + i * SEGMENT_DEGREES))
         }
         return points
     }
 
     private companion object {
-
         const val BASE_LAT: Double = 37.5
         const val BASE_LNG: Double = 127.0
 

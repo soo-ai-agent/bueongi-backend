@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class InMemoryAdEventStoreTest {
-
     @Test
     fun `이 저장소의 상한은 AD_EVENT_CAP 이다`() {
         val store = InMemoryAdEventStore()

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
-
     @Test
     fun `listActiveSessions 는 세션이 없으면 빈 목록`() {
         assertTrue(service.listActiveSessions().isEmpty())

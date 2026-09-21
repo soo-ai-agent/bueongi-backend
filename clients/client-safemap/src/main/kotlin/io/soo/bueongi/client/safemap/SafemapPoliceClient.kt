@@ -6,12 +6,12 @@ import io.soo.bueongi.support.logging.causeChainOf
 import io.soo.bueongi.support.logging.maskSecrets
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
-import java.net.URI
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import java.net.URI
 
 // 인증키는 URL-인코딩분 그대로 써야 해 URI 를 문자열로 조립한다.
 @Component
@@ -54,14 +54,16 @@ class SafemapPoliceClient(
     }
 
     private fun fetchPage(pageNo: Int): SafemapResponse? {
-        val url: String = "$endpoint?serviceKey=$serviceKey" +
-            "&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=JSON"
-        val response: SafemapResponse? = try {
-            restClient.get().uri(URI.create(url)).retrieve().body(SafemapResponse::class.java)
-        } catch (e: Exception) {
-            log.warn(failureLine(cause = causeChainOf(e, serviceKey), pageNo = pageNo))
-            return null
-        }
+        val url: String =
+            "$endpoint?serviceKey=$serviceKey" +
+                "&pageNo=$pageNo&numOfRows=$PAGE_SIZE&returnType=JSON"
+        val response: SafemapResponse? =
+            try {
+                restClient.get().uri(URI.create(url)).retrieve().body(SafemapResponse::class.java)
+            } catch (e: Exception) {
+                log.warn(failureLine(cause = causeChainOf(e, serviceKey), pageNo = pageNo))
+                return null
+            }
         if (response == null) {
             log.warn(failureLine(cause = "빈 응답(본문 없음)", pageNo = pageNo))
         }
@@ -83,7 +85,10 @@ class SafemapPoliceClient(
     }
 
     // 좌표를 0 으로 채워 보내는 행은 지도에 찍을 수 없어 버린다(실측).
-    private fun addPoints(rows: List<SafemapPoliceRow>, into: MutableList<SafemapPolicePoint>) {
+    private fun addPoints(
+        rows: List<SafemapPoliceRow>,
+        into: MutableList<SafemapPolicePoint>,
+    ) {
         for (row in rows) {
             val point: Wgs84Point = resolveKoreanWgs84OrNull(row.x, row.y) ?: continue
             into.add(
@@ -100,7 +105,11 @@ class SafemapPoliceClient(
     }
 
     // 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
-    private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
+    private fun isLastPage(
+        rowCount: Int,
+        received: Long,
+        totalCount: Long?,
+    ): Boolean {
         if (rowCount == 0) {
             return true
         }
@@ -110,14 +119,18 @@ class SafemapPoliceClient(
         return rowCount < PAGE_SIZE
     }
 
-    private fun failureLine(cause: String, pageNo: Int): String = ExceptionLogLine(
-        kind = IGNORED_EXCEPTION,
-        counterpart = PROVIDER,
-        subject = PATH,
-        cause = cause,
-        action = "수집 중단(기존 데이터 유지)",
-        paging = if (pageNo > 0) "page=$pageNo" else "",
-    ).format()
+    private fun failureLine(
+        cause: String,
+        pageNo: Int,
+    ): String =
+        ExceptionLogLine(
+            kind = IGNORED_EXCEPTION,
+            counterpart = PROVIDER,
+            subject = PATH,
+            cause = cause,
+            action = "수집 중단(기존 데이터 유지)",
+            paging = if (pageNo > 0) "page=$pageNo" else "",
+        ).format()
 
     private companion object {
         const val PATH: String = "/openapi2/IF_0036"

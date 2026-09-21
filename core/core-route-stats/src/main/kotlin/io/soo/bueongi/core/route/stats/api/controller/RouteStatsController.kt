@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.stats.api.controller
 
-import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
+import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RestController
 class RouteStatsController(
     private val routeStatsService: RouteStatsService,
 ) {
-
     @GetMapping("/api/admin/route-stats")
-    fun routeStats(): RouteStatsSummary =
-        routeStatsService.summarize()
+    fun routeStats(): RouteStatsSummary = routeStatsService.summarize()
 }

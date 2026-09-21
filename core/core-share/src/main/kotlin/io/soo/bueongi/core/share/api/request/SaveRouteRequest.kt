@@ -1,14 +1,13 @@
 package io.soo.bueongi.core.share.api.request
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.soo.bueongi.core.common.request.LatLng
+import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.share.domain.error.InvalidRouteMetaException
 import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_MARKERS
 import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PATH_POINTS
 import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PROVENANCE_LENGTH
 import io.soo.bueongi.core.share.domain.model.ROUTE_TYPE_VALUES
-
-import io.soo.bueongi.core.common.request.LatLng
-import io.soo.bueongi.core.common.request.NamedLatLng
-import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.error.InvalidRouteMetaException
 import io.soo.bueongi.storage.db.core.share.model.StoredCoord
 import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
@@ -42,28 +41,31 @@ data class SaveRouteRequest(
         val dest: NamedLatLng = requireNotNull(destination) { "destination 은 @NotNull 검증을 통과했어야 한다" }
         validateRouteMeta()
         return StoredRoute(
-            destination = StoredRouteDestination(
-                name = dest.name,
-                lat = requireNotNull(dest.lat) { "destination.lat 은 검증을 통과했어야 한다" },
-                lng = requireNotNull(dest.lng) { "destination.lng 도 동일" },
-            ),
-            path = path.orEmpty().map {
-                StoredCoord(lat = requireNotNull(it.lat), lng = requireNotNull(it.lng))
-            },
-            markers = markers.orEmpty().map { marker ->
-                StoredMarker(
-                    type = requireNotNull(marker.type) { "marker.type 은 검증을 통과했어야 한다" },
-                    lat = requireNotNull(marker.lat),
-                    lng = requireNotNull(marker.lng),
-                    x = marker.x,
-                    y = marker.y,
-                    name = marker.name,
-                    purpose = marker.purpose,
-                    cameraCount = marker.cameraCount,
-                    address = marker.address,
-                    phone = marker.phone,
-                )
-            },
+            destination =
+                StoredRouteDestination(
+                    name = dest.name,
+                    lat = requireNotNull(dest.lat) { "destination.lat 은 검증을 통과했어야 한다" },
+                    lng = requireNotNull(dest.lng) { "destination.lng 도 동일" },
+                ),
+            path =
+                path.orEmpty().map {
+                    StoredCoord(lat = requireNotNull(it.lat), lng = requireNotNull(it.lng))
+                },
+            markers =
+                markers.orEmpty().map { marker ->
+                    StoredMarker(
+                        type = requireNotNull(marker.type) { "marker.type 은 검증을 통과했어야 한다" },
+                        lat = requireNotNull(marker.lat),
+                        lng = requireNotNull(marker.lng),
+                        x = marker.x,
+                        y = marker.y,
+                        name = marker.name,
+                        purpose = marker.purpose,
+                        cameraCount = marker.cameraCount,
+                        address = marker.address,
+                        phone = marker.phone,
+                    )
+                },
             totalDistanceM = totalDistanceM,
             totalTimeS = totalTimeS,
             type = type,

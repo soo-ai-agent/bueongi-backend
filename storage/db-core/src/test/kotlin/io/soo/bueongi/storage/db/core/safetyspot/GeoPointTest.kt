@@ -1,14 +1,13 @@
 package io.soo.bueongi.storage.db.core.safetyspot
 
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class GeoPointTest {
-
     @Test
     fun `거리 - 같은 좌표는 0m`() {
         assertThat(GeoPoint(37.5, 127.0).distanceMetersTo(GeoPoint(37.5, 127.0))).isEqualTo(0.0)

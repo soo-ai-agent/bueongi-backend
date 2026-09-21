@@ -6,6 +6,5 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class AdEventStoreConfig {
     @Bean
-    fun adEventStore(): AdEventStore =
-        InMemoryAdEventStore()
+    fun adEventStore(): AdEventStore = InMemoryAdEventStore()
 }

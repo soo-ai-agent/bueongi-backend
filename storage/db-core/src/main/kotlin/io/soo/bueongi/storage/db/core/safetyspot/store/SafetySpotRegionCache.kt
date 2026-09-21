@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotCollectionDto
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -12,10 +16,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
 
 // 저장 계약: `{regionDir}/{종류}/{지역코드}.json` — CDN 컬렉션과 동형이라 재기동 때 그대로 되읽는다.
 @Component
@@ -35,12 +35,18 @@ class SafetySpotRegionCache(
 
     private val savedAtByFile: ConcurrentHashMap<String, Instant> = ConcurrentHashMap()
 
-    fun isCached(type: SafetySpotType, regionCode: String): Boolean {
+    fun isCached(
+        type: SafetySpotType,
+        regionCode: String,
+    ): Boolean {
         val savedAt: Instant = savedAtOf(type, regionCode) ?: return false
         return Duration.between(savedAt, clock.instant()) < Duration.ofDays(ttlDays)
     }
 
-    fun savedAtOf(type: SafetySpotType, regionCode: String): Instant? {
+    fun savedAtOf(
+        type: SafetySpotType,
+        regionCode: String,
+    ): Instant? {
         val remembered: Instant? = savedAtByFile[cacheKey(type, regionCode)]
         if (remembered != null) {
             return remembered
@@ -62,15 +68,20 @@ class SafetySpotRegionCache(
         }
     }
 
-    fun save(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
+    fun save(
+        type: SafetySpotType,
+        regionCode: String,
+        points: List<SafetySpotPoint>,
+    ) {
         val target: File = fileOf(type, regionCode)
         Files.createDirectories(target.parentFile.toPath())
         val savedAt: Instant = clock.instant()
-        val collection = SafetySpotCollectionDto(
-            type = type.cdnType,
-            items = points.map { it.toItemDto() },
-            savedAt = savedAt.toString(),
-        )
+        val collection =
+            SafetySpotCollectionDto(
+                type = type.cdnType,
+                items = points.map { it.toItemDto() },
+                savedAt = savedAt.toString(),
+            )
         val temp: File = File.createTempFile("$regionCode-", ".json.tmp", target.parentFile)
         try {
             writeMapper.writeValue(temp, collection)
@@ -112,11 +123,15 @@ class SafetySpotRegionCache(
             ?.toSet()
             .orEmpty()
 
-    private fun cacheKey(type: SafetySpotType, regionCode: String): String =
-        "${type.cdnType}/$regionCode"
+    private fun cacheKey(
+        type: SafetySpotType,
+        regionCode: String,
+    ): String = "${type.cdnType}/$regionCode"
 
-    private fun fileOf(type: SafetySpotType, regionCode: String): File =
-        File(File(regionDir, type.cdnType), "$regionCode.json")
+    private fun fileOf(
+        type: SafetySpotType,
+        regionCode: String,
+    ): File = File(File(regionDir, type.cdnType), "$regionCode.json")
 
     private companion object {
         // 지자체가 뒤늦게 좌표를 채워 넣는 일이 있어 분기마다 한 번은 다시 받는다.

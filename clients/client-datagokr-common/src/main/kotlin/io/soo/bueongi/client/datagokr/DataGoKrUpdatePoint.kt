@@ -16,7 +16,6 @@ value class DataGoKrUpdatePoint(val value: String) {
         private const val LENGTH: Int = 14
         private val FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
-        fun of(at: LocalDateTime): DataGoKrUpdatePoint =
-            DataGoKrUpdatePoint(at.format(FORMAT))
+        fun of(at: LocalDateTime): DataGoKrUpdatePoint = DataGoKrUpdatePoint(at.format(FORMAT))
     }
 }

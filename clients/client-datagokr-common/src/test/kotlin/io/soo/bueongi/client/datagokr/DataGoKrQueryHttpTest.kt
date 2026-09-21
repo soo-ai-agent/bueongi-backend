@@ -11,16 +11,16 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import java.time.LocalDateTime
 
 class DataGoKrQueryHttpTest {
-
     private val endpoint: String = "https://apis.data.go.kr/1741000/test_resource/info"
 
-    private val fields: DataGoKrFieldNames = DataGoKrFieldNames(
-        lat = listOf("WGS84_LAT"),
-        lng = listOf("WGS84_LOT"),
-        name = listOf("MNG_INST_NM"),
-        address = listOf("LCTN_ROAD_NM_ADDR"),
-        sigungu = emptyList(),
-    )
+    private val fields: DataGoKrFieldNames =
+        DataGoKrFieldNames(
+            lat = listOf("WGS84_LAT"),
+            lng = listOf("WGS84_LOT"),
+            name = listOf("MNG_INST_NM"),
+            address = listOf("LCTN_ROAD_NM_ADDR"),
+            sigungu = emptyList(),
+        )
 
     private val emptyPage: String =
         """{"response":{"header":{"resultCode":"00"},"body":{"items":[],"totalCount":0}}}"""

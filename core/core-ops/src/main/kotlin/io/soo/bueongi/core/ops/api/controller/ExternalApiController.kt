@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RestController
 class ExternalApiController(
     private val externalApiMetricsService: ExternalApiMetricsService,
 ) {
-
     @GetMapping("/api/admin/external-calls")
-    fun externalCalls(): ExternalApiSummary =
-        externalApiMetricsService.summarize()
+    fun externalCalls(): ExternalApiSummary = externalApiMetricsService.summarize()
 }

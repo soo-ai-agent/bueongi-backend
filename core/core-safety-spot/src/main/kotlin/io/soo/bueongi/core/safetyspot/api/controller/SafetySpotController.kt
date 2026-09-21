@@ -1,9 +1,8 @@
 package io.soo.bueongi.core.safetyspot.api.controller
 
-import io.soo.bueongi.core.safetyspot.domain.service.NearestPoliceFinder
 import io.soo.bueongi.core.safetyspot.api.response.NearestPoliceResponse
 import io.soo.bueongi.core.safetyspot.domain.error.InvalidCoordinateException
-
+import io.soo.bueongi.core.safetyspot.domain.service.NearestPoliceFinder
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

@@ -1,17 +1,19 @@
 package io.soo.bueongi.core.share.api.controller
 
 import io.soo.bueongi.core.share.api.request.CreateShareRequest
-import io.soo.bueongi.core.share.api.response.CreateShareResponse
 import io.soo.bueongi.core.share.api.request.EndShareRequest
-import io.soo.bueongi.core.share.domain.model.LocationView
-import io.soo.bueongi.core.share.domain.route.model.RouteView
 import io.soo.bueongi.core.share.api.request.SaveRouteRequest
-import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.core.share.api.request.UpdateLocationRequest
-import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.request.WatchRequest
+import io.soo.bueongi.core.share.api.response.CreateShareResponse
+import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.response.WatchResponse
-
+import io.soo.bueongi.core.share.domain.model.LocationReport
+import io.soo.bueongi.core.share.domain.model.LocationView
+import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
+import io.soo.bueongi.core.share.domain.route.model.RouteView
+import io.soo.bueongi.core.share.domain.service.ShareService
+import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,9 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
-import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
-import io.soo.bueongi.core.share.domain.model.LocationReport
 
 @RestController
 @RequestMapping("/share")
@@ -30,10 +29,10 @@ class ShareController(
     private val service: ShareService,
     private val guardianPage: GuardianPage,
 ) {
-
     @PostMapping("/create")
-    fun create(@Valid @RequestBody(required = false) request: CreateShareRequest?): CreateShareResponse =
-        CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
+    fun create(
+        @Valid @RequestBody(required = false) request: CreateShareRequest?,
+    ): CreateShareResponse = CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
 
     @PostMapping("/{token}/location")
     fun updateLocation(
@@ -46,8 +45,9 @@ class ShareController(
     }
 
     @GetMapping("/{token}/location")
-    fun getLocation(@PathVariable token: String): LocationView =
-        service.getLocation(token)
+    fun getLocation(
+        @PathVariable token: String,
+    ): LocationView = service.getLocation(token)
 
     @PostMapping("/{token}/route")
     fun saveRoute(
@@ -60,8 +60,9 @@ class ShareController(
     }
 
     @GetMapping("/{token}/route")
-    fun getRoute(@PathVariable token: String): RouteView =
-        service.getRoute(token)
+    fun getRoute(
+        @PathVariable token: String,
+    ): RouteView = service.getRoute(token)
 
     @PostMapping("/{token}/end")
     fun end(
@@ -76,7 +77,7 @@ class ShareController(
     ): WatchResponse = WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
-    fun page(@PathVariable token: String): String =
-        guardianPage.render(token)
-
+    fun page(
+        @PathVariable token: String,
+    ): String = guardianPage.render(token)
 }

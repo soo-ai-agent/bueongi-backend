@@ -21,7 +21,6 @@ class RequestMetricsFilter(
     private val requestMetricStore: RequestMetricStore,
     private val adminRequestMetricStore: AdminRequestMetricStore,
 ) : OncePerRequestFilter() {
-
     private val log: Logger = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
 
     override fun doFilterInternal(
@@ -46,10 +45,11 @@ class RequestMetricsFilter(
                     durationMs = durationMs,
                     clientId = clientId,
                     address = clientAddressOf(request),
-                    kind = clientKindOf(
-                        declaredPlatform = request.getHeader(CLIENT_PLATFORM_HEADER),
-                        userAgent = request.getHeader(HttpHeaders.USER_AGENT),
-                    ),
+                    kind =
+                        clientKindOf(
+                            declaredPlatform = request.getHeader(CLIENT_PLATFORM_HEADER),
+                            userAgent = request.getHeader(HttpHeaders.USER_AGENT),
+                        ),
                     caller = caller,
                 ),
             )
@@ -96,10 +96,11 @@ class RequestMetricsFilter(
         log.info(line.format())
     }
 
-    private fun storeFor(caller: RequestCaller): RequestMetricStore = when (caller) {
-        RequestCaller.ADMIN -> adminRequestMetricStore
-        RequestCaller.USER -> requestMetricStore
-    }
+    private fun storeFor(caller: RequestCaller): RequestMetricStore =
+        when (caller) {
+            RequestCaller.ADMIN -> adminRequestMetricStore
+            RequestCaller.USER -> requestMetricStore
+        }
 
     private fun recordSafely(
         caller: RequestCaller,

@@ -1,27 +1,25 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
+import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteService
-import io.soo.bueongi.core.enums.RouteType
-
-import io.soo.bueongi.core.enums.SafetyPreference
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteServiceTest {
-
     private val service = RouteService(RouteTypeCatalog())
 
-    private fun request() = RouteQuery(
-        origin = GeoPoint(37.4979, 127.0276),
-        destination = GeoPoint(37.5572, 126.9245),
-        destinationName = "홍대입구역",
-        routeType = RouteType.SAFE,
-        safetyPreference = SafetyPreference.SAFE,
-    )
+    private fun request() =
+        RouteQuery(
+            origin = GeoPoint(37.4979, 127.0276),
+            destination = GeoPoint(37.5572, 126.9245),
+            destinationName = "홍대입구역",
+            routeType = RouteType.SAFE,
+            safetyPreference = SafetyPreference.SAFE,
+        )
 
     @Test
     fun `항상 safe main fast 3개 경로 반환`() {
@@ -44,6 +42,7 @@ class RouteServiceTest {
     @Test
     fun `안전 경로가 최단 경로보다 거리가 길다(우회 계수)`() {
         val routes = service.compare(request()).associateBy { it.type }
+
         fun meters(dist: String): Double =
             if (dist.endsWith("km")) {
                 dist.removeSuffix("km").toDouble() * 1000

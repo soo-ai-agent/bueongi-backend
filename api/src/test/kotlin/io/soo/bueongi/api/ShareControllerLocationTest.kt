@@ -1,10 +1,12 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
+@Tag("context")
 class ShareControllerLocationTest : ShareControllerTestSupport() {
     @Test
     fun `위치 POST 후 GET location 으로 같은 좌표를 200 으로 회수`() {

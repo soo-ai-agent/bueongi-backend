@@ -1,12 +1,12 @@
 package io.soo.bueongi.storage.db.core
 
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RedisRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RedisRouteStatsStore
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
-import io.soo.bueongi.core.enums.SafetyPreference
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -17,12 +17,12 @@ import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
 class RedisStoreWiringTest {
-
     private val listOps: ListOperations<String, String> = mock()
 
-    private val redis: StringRedisTemplate = mock<StringRedisTemplate>().also {
-        whenever(it.opsForList()).thenReturn(listOps)
-    }
+    private val redis: StringRedisTemplate =
+        mock<StringRedisTemplate>().also {
+            whenever(it.opsForList()).thenReturn(listOps)
+        }
 
     @Test
     fun `추천 통계는 routestats 키에 상한만큼 쌓는다`() {
@@ -55,5 +55,4 @@ class RedisStoreWiringTest {
         verify(listOps).leftPush(eq("requestmetric"), any())
         verify(listOps).trim("requestmetric", 0, (REQUEST_METRIC_CAP - 1).toLong())
     }
-
 }

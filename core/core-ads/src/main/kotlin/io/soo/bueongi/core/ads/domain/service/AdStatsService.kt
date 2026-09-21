@@ -1,21 +1,18 @@
 package io.soo.bueongi.core.ads.domain.service
 
-import io.soo.bueongi.support.util.todayStartMs
 import io.soo.bueongi.core.ads.domain.model.AdStatsSummary
-import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
-import io.soo.bueongi.support.util.countByHour
-
 import io.soo.bueongi.storage.db.core.adevent.AD_EVENT_CAP
 import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.countByHour
+import io.soo.bueongi.support.util.todayStartMs
 import org.springframework.stereotype.Service
 
 @Service
 class AdStatsService(
     private val adEventStore: AdEventStore,
 ) {
-
     fun record(placement: String) {
         adEventStore.record(AdEvent(atEpochMs = System.currentTimeMillis(), placement = placement))
     }

@@ -16,7 +16,11 @@ class RegionSafetySpotStatusServiceSpotsTest {
     private fun service(points: Map<SafetySpotType, List<SafetySpotPoint>>): RegionSafetySpotStatusService =
         RegionSafetySpotStatusService(FakeSafetySpotSource(points), RegionNameCatalog(jacksonObjectMapper()))
 
-    private fun points(type: SafetySpotType, count: Int, region: String = MAPO): List<SafetySpotPoint> {
+    private fun points(
+        type: SafetySpotType,
+        count: Int,
+        region: String = MAPO,
+    ): List<SafetySpotPoint> {
         val made: ArrayList<SafetySpotPoint> = ArrayList(count)
         for (i in 0 until count) {
             made.add(SafetySpotPoint(type, lat = 37.50 + i * 0.001, lng = 127.00, name = "p$i", sigungu = region))
@@ -26,14 +30,16 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `자치단체 이름과 시도를 붙여 그 지역 지점만 내준다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+        val found: RegionSafetySpots =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                        ),
                 ),
-            ),
-        ).findSpotsByCode(MAPO, limit = 100)
+            ).findSpotsByCode(MAPO, limit = 100)
 
         assertThat(found.name).isEqualTo("마포구")
         assertThat(found.sido).isEqualTo("서울특별시")
@@ -43,9 +49,10 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `상한에 걸려 잘려도 전체 건수는 그대로 말한다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 50)),
-        ).findSpotsByCode(MAPO, limit = 10)
+        val found: RegionSafetySpots =
+            service(
+                mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 50)),
+            ).findSpotsByCode(MAPO, limit = 10)
 
         assertThat(found.total).isEqualTo(50)
         assertThat(found.spots).hasSize(10)
@@ -53,13 +60,14 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `종류가 섞여 있으면 상한을 종류별로 나눠 담는다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(
-                SafetySpotType.CCTV to points(SafetySpotType.CCTV, 100),
-                SafetySpotType.BELL to points(SafetySpotType.BELL, 3),
-                SafetySpotType.POLICE to points(SafetySpotType.POLICE, 1),
-            ),
-        ).findSpotsByCode(MAPO, limit = 10)
+        val found: RegionSafetySpots =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to points(SafetySpotType.CCTV, 100),
+                    SafetySpotType.BELL to points(SafetySpotType.BELL, 3),
+                    SafetySpotType.POLICE to points(SafetySpotType.POLICE, 1),
+                ),
+            ).findSpotsByCode(MAPO, limit = 10)
 
         val byType: Map<SafetySpotType, Int> = found.spots.groupingBy { it.type }.eachCount()
         assertThat(found.spots).hasSize(10)
@@ -70,18 +78,20 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `자를 때는 앞에서 자르지 않고 지역 전체에 편다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 10)),
-        ).findSpotsByCode(MAPO, limit = 2)
+        val found: RegionSafetySpots =
+            service(
+                mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 10)),
+            ).findSpotsByCode(MAPO, limit = 2)
 
         assertThat(found.spots.map { it.name }).containsExactly("p0", "p5")
     }
 
     @Test
     fun `상한을 넘겨 요청하면 상한까지만 보낸다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 6_000)),
-        ).findSpotsByCode(MAPO, limit = 9_999)
+        val found: RegionSafetySpots =
+            service(
+                mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 6_000)),
+            ).findSpotsByCode(MAPO, limit = 9_999)
 
         assertThat(found.total).isEqualTo(6_000)
         assertThat(found.spots).hasSize(5_000)
@@ -89,9 +99,10 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `표시 개수가 0 이하면 거부한다`() {
-        val service: RegionSafetySpotStatusService = service(
-            mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
-        )
+        val service: RegionSafetySpotStatusService =
+            service(
+                mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
+            )
 
         assertThatThrownBy { service.findSpotsByCode(MAPO, limit = 0) }
             .isInstanceOf(InvalidSpotLimitException::class.java)
@@ -99,9 +110,10 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `없는 자치단체는 코드를 그대로 돌려주고 빈 목록을 낸다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
-        ).findSpotsByCode("9999999", limit = 100)
+        val found: RegionSafetySpots =
+            service(
+                mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
+            ).findSpotsByCode("9999999", limit = 100)
 
         assertThat(found.code).isEqualTo("9999999")
         assertThat(found.total).isEqualTo(0)
@@ -110,14 +122,16 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `지역을 모르는 지점은 unknown 으로 조회된다`() {
-        val found: RegionSafetySpots = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+        val found: RegionSafetySpots =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).findSpotsByCode("unknown", limit = 100)
+            ).findSpotsByCode("unknown", limit = 100)
 
         assertThat(found.total).isEqualTo(1)
         assertThat(found.spots.single().lat).isEqualTo(37.50)

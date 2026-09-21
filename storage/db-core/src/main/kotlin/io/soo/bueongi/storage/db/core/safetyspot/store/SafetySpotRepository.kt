@@ -1,24 +1,23 @@
 package io.soo.bueongi.storage.db.core.safetyspot.store
-import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotCollectionDto
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
-import io.soo.bueongi.core.enums.SafetySpotType
-
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotCollectionDto
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.io.BufferedReader
 import java.nio.charset.Charset
-import java.util.zip.GZIPInputStream
 import java.util.concurrent.atomic.AtomicReference
+import java.util.zip.GZIPInputStream
 
 @Component
 class SafetySpotRepository(
@@ -46,10 +45,12 @@ class SafetySpotRepository(
 
     override val freshness: SafetySpotFreshness? get() = _freshness
 
-    override fun index(type: SafetySpotType): GridSpatialIndex =
-        indexByType.get()[type] ?: EMPTY_INDEX
+    override fun index(type: SafetySpotType): GridSpatialIndex = indexByType.get()[type] ?: EMPTY_INDEX
 
-    override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+    override fun append(
+        type: SafetySpotType,
+        points: List<SafetySpotPoint>,
+    ): Int {
         if (points.isEmpty()) {
             return index(type).size
         }
@@ -63,7 +64,10 @@ class SafetySpotRepository(
         return total
     }
 
-    override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+    override fun replace(
+        type: SafetySpotType,
+        points: List<SafetySpotPoint>,
+    ): Int {
         val replaced = GridSpatialIndex(points)
         indexByType.updateAndGet { current -> current + (type to replaced) }
         log.info("안심시설 라이브 교체: type={}, count={}", type, points.size)
@@ -118,7 +122,10 @@ class SafetySpotRepository(
         return regions
     }
 
-    private fun readSafetySpotFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
+    private fun readSafetySpotFiles(
+        dir: File,
+        byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>,
+    ): Int {
         var fileCount: Int = 0
         for (type in SafetySpotType.entries) {
             val typeDir = File(dir, type.cdnType)
@@ -138,7 +145,10 @@ class SafetySpotRepository(
         return fileCount
     }
 
-    private fun readSafePathFiles(dir: File, paths: MutableList<SafePath>): Int {
+    private fun readSafePathFiles(
+        dir: File,
+        paths: MutableList<SafePath>,
+    ): Int {
         val safePathDir = File(dir, "safepath")
         if (!safePathDir.isDirectory) {
             return 0
@@ -160,12 +170,13 @@ class SafetySpotRepository(
         if (!manifest.isFile) {
             return null
         }
-        val manifestJson: JsonNode = try {
-            objectMapper.readTree(manifest)
-        } catch (e: IOException) {
-            log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
-            return null
-        }
+        val manifestJson: JsonNode =
+            try {
+                objectMapper.readTree(manifest)
+            } catch (e: IOException) {
+                log.warn("manifest.json 파싱 실패(신선도 표기 생략): {}", e.message)
+                return null
+            }
         return SafetySpotFreshness(
             generatedAt = manifestJson.get("generatedAt")?.asText()?.takeIf { it.isNotBlank() },
             version = manifestJson.get("version")?.asText()?.takeIf { it.isNotBlank() },
@@ -267,14 +278,15 @@ class SafetySpotRepository(
         if (cctvCsvPath.isBlank()) {
             return null
         }
-        val candidates: List<String> = buildList {
-            add(cctvCsvPath)
-            add("$cctvCsvPath.gz")
-            add(DEFAULT_CCTV_CSV)
-            add("$DEFAULT_CCTV_CSV.gz")
-            add("../backend/$DEFAULT_CCTV_CSV")
-            add("backend/$DEFAULT_CCTV_CSV")
-        }
+        val candidates: List<String> =
+            buildList {
+                add(cctvCsvPath)
+                add("$cctvCsvPath.gz")
+                add(DEFAULT_CCTV_CSV)
+                add("$DEFAULT_CCTV_CSV.gz")
+                add("../backend/$DEFAULT_CCTV_CSV")
+                add("backend/$DEFAULT_CCTV_CSV")
+            }
         return candidates
             .map { File(it) }
             .firstOrNull { it.isFile }
@@ -282,24 +294,26 @@ class SafetySpotRepository(
     }
 
     private fun resolveDataDir(): File? {
-        val candidates: List<String> = buildList {
-            add(configuredDir)
-            add("../cdn")
-            add("../../cdn")
-            add("cdn")
-        }
+        val candidates: List<String> =
+            buildList {
+                add(configuredDir)
+                add("../cdn")
+                add("../../cdn")
+                add("cdn")
+            }
         return candidates
             .map { File(it) }
             .firstOrNull { it.isDirectory }
             ?.absoluteFile
     }
 
-    private fun parseCollection(file: File): SafetySpotCollectionDto? = try {
-        objectMapper.readValue(file, SafetySpotCollectionDto::class.java)
-    } catch (e: IOException) {
-        log.warn("안심시설 파일 파싱 실패(건너뜀): {} ({})", file.path, e.message)
-        null
-    }
+    private fun parseCollection(file: File): SafetySpotCollectionDto? =
+        try {
+            objectMapper.readValue(file, SafetySpotCollectionDto::class.java)
+        } catch (e: IOException) {
+            log.warn("안심시설 파일 파싱 실패(건너뜀): {} ({})", file.path, e.message)
+            null
+        }
 
     private fun File.listJsonFiles(): List<File> =
         listFiles { f -> f.isFile && f.name.endsWith(".json") }?.sortedBy { it.name } ?: emptyList()
@@ -321,10 +335,11 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
     if (purpose !in CCTV_SECURITY_PURPOSES) {
         return null
     }
-    val point: GeoPoint = GeoPoint.orNull(
-        lat = parts[parts.size - 6].trim().toDoubleOrNull(),
-        lng = parts[parts.size - 5].trim().toDoubleOrNull(),
-    ) ?: return null
+    val point: GeoPoint =
+        GeoPoint.orNull(
+            lat = parts[parts.size - 6].trim().toDoubleOrNull(),
+            lng = parts[parts.size - 5].trim().toDoubleOrNull(),
+        ) ?: return null
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     val sigungu: String? = parts.firstOrNull()?.trim()?.trim('"')?.takeIf { it.isNotEmpty() }
@@ -343,7 +358,10 @@ private const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
 
 private const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
 
-private fun resolveCsvDir(configured: String, default: String): File? {
+private fun resolveCsvDir(
+    configured: String,
+    default: String,
+): File? {
     if (configured.isBlank()) {
         return null
     }
@@ -355,7 +373,10 @@ private fun File.listCsvFiles(): List<File> =
         ?.sortedBy { it.name }
         .orEmpty()
 
-private fun resolveCsv(configured: String, default: String): File? {
+private fun resolveCsv(
+    configured: String,
+    default: String,
+): File? {
     if (configured.isBlank()) {
         return null
     }
@@ -374,10 +395,11 @@ private class LampCsvColumns(
         if (parts.size <= maxOf(nameAt, latAt, lngAt)) {
             return null
         }
-        val point: GeoPoint = GeoPoint.orNull(
-            lat = parts[latAt].trim().toDoubleOrNull(),
-            lng = parts[lngAt].trim().toDoubleOrNull(),
-        ) ?: return null
+        val point: GeoPoint =
+            GeoPoint.orNull(
+                lat = parts[latAt].trim().toDoubleOrNull(),
+                lng = parts[lngAt].trim().toDoubleOrNull(),
+            ) ?: return null
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
         return SafetySpotPoint(
             type = SafetySpotType.SECURITY_LAMP,
@@ -388,7 +410,10 @@ private class LampCsvColumns(
         )
     }
 
-    private fun valueAt(parts: List<String>, at: Int): String? {
+    private fun valueAt(
+        parts: List<String>,
+        at: Int,
+    ): String? {
         if (at < 0 || at >= parts.size) {
             return null
         }
@@ -424,12 +449,13 @@ private fun openCsv(file: File): BufferedReader {
 
 // 전국 표준데이터는 CP949, 지자체 개별 파일은 UTF-8(BOM) 로 온다.
 private fun detectCharset(file: File): Charset {
-    val head: ByteArray = try {
-        val stream = if (file.name.endsWith(".gz")) GZIPInputStream(file.inputStream()) else file.inputStream()
-        stream.use { it.readNBytes(HEAD_PROBE_BYTES) }
-    } catch (e: Exception) {
-        return CP949
-    }
+    val head: ByteArray =
+        try {
+            val stream = if (file.name.endsWith(".gz")) GZIPInputStream(file.inputStream()) else file.inputStream()
+            stream.use { it.readNBytes(HEAD_PROBE_BYTES) }
+        } catch (e: Exception) {
+            return CP949
+        }
     val decoder = Charsets.UTF_8.newDecoder()
     return try {
         decoder.decode(java.nio.ByteBuffer.wrap(head.dropLastWhile { it.toInt() and 0x80 != 0 }.toByteArray()))
@@ -443,5 +469,4 @@ private const val HEAD_PROBE_BYTES: Int = 4096
 
 private val CP949: Charset = Charset.forName("MS949")
 
-private fun GridSpatialIndex?.pointsOrEmpty(): List<SafetySpotPoint> =
-    this?.all.orEmpty()
+private fun GridSpatialIndex?.pointsOrEmpty(): List<SafetySpotPoint> = this?.all.orEmpty()

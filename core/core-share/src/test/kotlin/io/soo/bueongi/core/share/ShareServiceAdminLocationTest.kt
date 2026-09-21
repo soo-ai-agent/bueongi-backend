@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
-
     @Test
     fun `getLocationForAdmin 은 활성 세션의 위치를 공개 조회와 동일한 뷰로 반환한다`() {
         val s = service.create(null)

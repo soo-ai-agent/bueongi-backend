@@ -1,9 +1,8 @@
 package io.soo.bueongi.core.safetyspot.api.controller
 
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.api.request.toValidatedSafetySpotType
 import io.soo.bueongi.core.safetyspot.api.response.SafetySpotUploadResponse
-
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.csv.model.SafetySpotUploadResult
 import io.soo.bueongi.core.safetyspot.domain.csv.service.SafetySpotUploadService
 import org.springframework.http.MediaType

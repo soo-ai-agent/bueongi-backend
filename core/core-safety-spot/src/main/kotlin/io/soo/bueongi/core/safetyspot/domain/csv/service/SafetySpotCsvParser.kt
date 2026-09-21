@@ -1,24 +1,26 @@
 package io.soo.bueongi.core.safetyspot.domain.csv.service
 
-import io.soo.bueongi.support.util.CP949
-import io.soo.bueongi.support.util.Epsg5179
-import io.soo.bueongi.support.util.Epsg5174
+import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.safetyspot.domain.csv.model.CsvColumns
 import io.soo.bueongi.core.safetyspot.domain.csv.model.SafetySpotCsvParseResult
 import io.soo.bueongi.core.safetyspot.domain.csv.model.SafetySpotCsvSpec
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-
-import io.soo.bueongi.support.util.Wgs84Point
-import io.soo.bueongi.storage.db.core.safetyspot.store.CCTV_SECURITY_PURPOSES
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.CCTV_SECURITY_PURPOSES
+import io.soo.bueongi.support.util.CP949
+import io.soo.bueongi.support.util.Epsg5174
+import io.soo.bueongi.support.util.Epsg5179
+import io.soo.bueongi.support.util.Wgs84Point
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
 
 @Component
 class SafetySpotCsvParser {
-    fun parse(bytes: ByteArray, spec: SafetySpotCsvSpec): SafetySpotCsvParseResult {
+    fun parse(
+        bytes: ByteArray,
+        spec: SafetySpotCsvSpec,
+    ): SafetySpotCsvParseResult {
         val records: List<List<String>> = tokenizeCsv(decode(bytes))
         val headerPos: Int = findHeaderRow(records)
         if (headerPos < 0) {
@@ -45,7 +47,10 @@ class SafetySpotCsvParser {
         return -1
     }
 
-    private fun collectDataRows(records: List<List<String>>, headerPos: Int): List<List<String>> {
+    private fun collectDataRows(
+        records: List<List<String>>,
+        headerPos: Int,
+    ): List<List<String>> {
         val rows: ArrayList<List<String>> = ArrayList()
         for (index in headerPos + 1 until records.size) {
             if (hasContent(records[index])) {
@@ -64,7 +69,11 @@ class SafetySpotCsvParser {
         return false
     }
 
-    private fun toSafetySpotPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): SafetySpotPoint? {
+    private fun toSafetySpotPoint(
+        row: List<String>,
+        columns: CsvColumns,
+        spec: SafetySpotCsvSpec,
+    ): SafetySpotPoint? {
         val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
         val purpose: String? = columns.purpose(row)
         if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
@@ -82,7 +91,11 @@ class SafetySpotCsvParser {
         )
     }
 
-    private fun readGeoPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): GeoPoint? {
+    private fun readGeoPoint(
+        row: List<String>,
+        columns: CsvColumns,
+        spec: SafetySpotCsvSpec,
+    ): GeoPoint? {
         if (columns.useWgs84) {
             return GeoPoint.orNull(
                 columns.latitude(row),
@@ -96,7 +109,11 @@ class SafetySpotCsvParser {
         )
     }
 
-    private fun projectXy(x: Double?, y: Double?, coordSystem: SafetySpotCoordSystem): GeoPoint? {
+    private fun projectXy(
+        x: Double?,
+        y: Double?,
+        coordSystem: SafetySpotCoordSystem,
+    ): GeoPoint? {
         if (x == null || y == null) {
             return null
         }
@@ -104,7 +121,11 @@ class SafetySpotCsvParser {
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
     }
 
-    private fun toWgs84(coordSystem: SafetySpotCoordSystem, x: Double, y: Double): Wgs84Point? {
+    private fun toWgs84(
+        coordSystem: SafetySpotCoordSystem,
+        x: Double,
+        y: Double,
+    ): Wgs84Point? {
         if (coordSystem == SafetySpotCoordSystem.EPSG5179) {
             return Epsg5179.toWgs84(x, y)
         }
@@ -132,15 +153,19 @@ class SafetySpotCsvParser {
         return decodeStrict(bytes, Charsets.UTF_8) ?: String(bytes, CP949)
     }
 
-    private fun decodeStrict(bytes: ByteArray, charset: Charset): String? = try {
-        charset.newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT)
-            .decode(java.nio.ByteBuffer.wrap(bytes))
-            .toString()
-    } catch (_: Exception) {
-        null
-    }
+    private fun decodeStrict(
+        bytes: ByteArray,
+        charset: Charset,
+    ): String? =
+        try {
+            charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(java.nio.ByteBuffer.wrap(bytes))
+                .toString()
+        } catch (_: Exception) {
+            null
+        }
 
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records: ArrayList<List<String>> = ArrayList()

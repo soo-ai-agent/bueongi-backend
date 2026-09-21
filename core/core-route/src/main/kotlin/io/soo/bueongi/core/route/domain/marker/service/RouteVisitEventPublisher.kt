@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 class RouteVisitEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
-
     fun routeVisited(points: List<GeoPoint>) {
         val visited: ArrayList<VisitedPoint> = ArrayList(points.size)
         for (point in points) {

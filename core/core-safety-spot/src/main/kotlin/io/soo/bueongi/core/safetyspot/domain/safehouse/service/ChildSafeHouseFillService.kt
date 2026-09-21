@@ -8,10 +8,10 @@ import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class ChildSafeHouseFillService(
@@ -25,8 +25,7 @@ class ChildSafeHouseFillService(
 
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
-    fun isFilled(tile: MapTile): Boolean =
-        cache.isCached(SafetySpotType.SAFEHOUSE, tile.code)
+    fun isFilled(tile: MapTile): Boolean = cache.isCached(SafetySpotType.SAFEHOUSE, tile.code)
 
     fun fill(tile: MapTile): Int {
         if (!client.isEnabled) {

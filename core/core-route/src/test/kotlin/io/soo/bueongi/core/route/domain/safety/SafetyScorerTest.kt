@@ -1,15 +1,14 @@
 package io.soo.bueongi.core.route.domain.safety
 
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -17,7 +16,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 class SafetyScorerTest {
-
     private val path = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.01))
 
     @Test
@@ -60,13 +58,14 @@ class SafetyScorerTest {
 
         val streetOnly: Int? = scorer(fullyCovered(SafetySpotType.STREET_LAMP to street), NIGHT).score(path).score
         val allAsStreet: Int? = scorer(fullyCovered(SafetySpotType.STREET_LAMP to lamps), NIGHT).score(path).score
-        val split: Int? = scorer(
-            fullyCovered(
-                SafetySpotType.STREET_LAMP to street,
-                SafetySpotType.SECURITY_LAMP to security,
-            ),
-            NIGHT,
-        ).score(path).score
+        val split: Int? =
+            scorer(
+                fullyCovered(
+                    SafetySpotType.STREET_LAMP to street,
+                    SafetySpotType.SECURITY_LAMP to security,
+                ),
+                NIGHT,
+            ).score(path).score
 
         assertThat(split).describedAs("나눠 심으나 몰아 심으나 같은 조명 점수").isEqualTo(allAsStreet)
         assertThat(split).isGreaterThan(streetOnly)
@@ -128,8 +127,10 @@ class SafetyScorerTest {
         }
     }
 
-    private fun scoreWithDense(type: SafetySpotType, clock: Clock): Int? =
-        scorer(fullyCovered(type to denseSpots()), clock).score(path).score
+    private fun scoreWithDense(
+        type: SafetySpotType,
+        clock: Clock,
+    ): Int? = scorer(fullyCovered(type to denseSpots()), clock).score(path).score
 
     private fun denseSpots(): List<GeoPoint> {
         val spots: MutableList<GeoPoint> = ArrayList()
@@ -228,10 +229,11 @@ class SafetyScorerTest {
         val cctv = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
         val withoutRisk: Int? = scorer(fullyCovered(SafetySpotType.CCTV to cctv), NIGHT).score(path).score
 
-        val risky = fullyCovered(
-            SafetySpotType.CCTV to cctv,
-            SafetySpotType.CRIME_PRONE_AREA to listOf(GeoPoint(37.5, 127.002), GeoPoint(37.5, 127.008)),
-        )
+        val risky =
+            fullyCovered(
+                SafetySpotType.CCTV to cctv,
+                SafetySpotType.CRIME_PRONE_AREA to listOf(GeoPoint(37.5, 127.002), GeoPoint(37.5, 127.008)),
+            )
         val result = scorer(risky, NIGHT).score(path)
 
         assertThat(result.breakdown.crimeProneAreaCount).isEqualTo(2)
@@ -248,9 +250,10 @@ class SafetyScorerTest {
 
     @Test
     fun `우범지역만 있으면 점수는 0 아래로 내려가지 않는다`() {
-        val risky = fullyCovered(
-            SafetySpotType.CRIME_PRONE_AREA to listOf(GeoPoint(37.5, 127.002), GeoPoint(37.5, 127.008)),
-        )
+        val risky =
+            fullyCovered(
+                SafetySpotType.CRIME_PRONE_AREA to listOf(GeoPoint(37.5, 127.002), GeoPoint(37.5, 127.008)),
+            )
 
         assertThat(scorer(risky, NIGHT).score(path).score).isZero()
     }
@@ -258,10 +261,11 @@ class SafetyScorerTest {
     @Test
     fun `우범지역은 시설보다 넓은 회랑으로 센다`() {
         val offCorridor = GeoPoint(37.5005, 127.005)
-        val risky = fullyCovered(
-            SafetySpotType.CCTV to listOf(offCorridor),
-            SafetySpotType.CRIME_PRONE_AREA to listOf(offCorridor),
-        )
+        val risky =
+            fullyCovered(
+                SafetySpotType.CCTV to listOf(offCorridor),
+                SafetySpotType.CRIME_PRONE_AREA to listOf(offCorridor),
+            )
         val result = scorer(risky, NIGHT).score(path)
 
         assertThat(result.breakdown.cctvDensity).isZero()
@@ -305,11 +309,12 @@ class SafetyScorerTest {
         return FakeSafetySpotSource(byType, safePaths)
     }
 
-    private fun scorer(source: FakeSafetySpotSource, clock: Clock): SafetyScorer =
-        SafetyScorer(source, SafetyWeightsCatalog(), clock)
+    private fun scorer(
+        source: FakeSafetySpotSource,
+        clock: Clock,
+    ): SafetyScorer = SafetyScorer(source, SafetyWeightsCatalog(), clock)
 
     private companion object {
-
         val NIGHT: Clock = Clock.fixed(Instant.parse("2026-08-15T13:00:00Z"), ZoneOffset.UTC)
         val DAY: Clock = Clock.fixed(Instant.parse("2026-08-15T03:00:00Z"), ZoneOffset.UTC)
 
@@ -328,9 +333,14 @@ class SafetyScorerTest {
         const val HALF_CCTV_PER_KM: Double = SafetyScorer.HALF_CCTV_PER_KM
         const val HALF_LAMP_PER_KM: Double = SafetyScorer.HALF_LAMP_PER_KM
 
-        val WEIGHTED_TYPES: List<SafetySpotType> = listOf(
-            SafetySpotType.CCTV, SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP,
-            SafetySpotType.BELL, SafetySpotType.POLICE, SafetySpotType.SAFEHOUSE,
-        )
+        val WEIGHTED_TYPES: List<SafetySpotType> =
+            listOf(
+                SafetySpotType.CCTV,
+                SafetySpotType.STREET_LAMP,
+                SafetySpotType.SECURITY_LAMP,
+                SafetySpotType.BELL,
+                SafetySpotType.POLICE,
+                SafetySpotType.SAFEHOUSE,
+            )
     }
 }

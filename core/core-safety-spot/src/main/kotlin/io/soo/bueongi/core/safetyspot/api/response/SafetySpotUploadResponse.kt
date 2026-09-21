@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.safetyspot.api.response
 
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.enums.SafetySpotCoordSystem
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.csv.model.SafetySpotUploadResult
 
 data class SafetySpotUploadResponse(
@@ -14,11 +14,11 @@ data class SafetySpotUploadResponse(
     companion object {
         fun from(result: SafetySpotUploadResult): SafetySpotUploadResponse =
             SafetySpotUploadResponse(
-            type = result.type,
-            coordSystem = result.coordSystem,
-            received = result.received,
-            saved = result.saved,
-            skipped = result.skipped,
-        )
+                type = result.type,
+                coordSystem = result.coordSystem,
+                received = result.received,
+                saved = result.saved,
+                skipped = result.skipped,
+            )
     }
 }

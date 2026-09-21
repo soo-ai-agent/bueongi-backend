@@ -7,7 +7,6 @@ data class RegionCenterResponse(
     val lng: Double,
 ) {
     companion object {
-        fun from(center: GeoPoint): RegionCenterResponse =
-            RegionCenterResponse(lat = center.lat, lng = center.lng)
+        fun from(center: GeoPoint): RegionCenterResponse = RegionCenterResponse(lat = center.lat, lng = center.lng)
     }
 }

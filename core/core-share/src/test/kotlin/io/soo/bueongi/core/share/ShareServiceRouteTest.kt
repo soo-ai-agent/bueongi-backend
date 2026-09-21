@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.share
 
+import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import io.soo.bueongi.storage.db.core.share.model.StoredCoord
 import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
-import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -13,19 +13,20 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceRouteTest : ShareServiceTestSupport() {
-
-    private fun route() = StoredRoute(
-        destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
-        path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),
-        markers = listOf(
-            StoredMarker(
-                type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
-                name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
-            ),
-        ),
-        totalDistanceM = 1234,
-        totalTimeS = 900,
-    )
+    private fun route() =
+        StoredRoute(
+            destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
+            path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),
+            markers =
+                listOf(
+                    StoredMarker(
+                        type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
+                        name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
+                    ),
+                ),
+            totalDistanceM = 1234,
+            totalTimeS = 900,
+        )
 
     @Test
     fun `경로 저장 후 조회로 같은 컨텍스트 회수(왕복)`() {

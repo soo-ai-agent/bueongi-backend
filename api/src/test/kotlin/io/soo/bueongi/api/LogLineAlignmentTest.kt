@@ -8,16 +8,26 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class LogLineAlignmentTest {
+    private fun inbound(path: String): String =
+        RequestLogLine(
+            method = "GET",
+            path = path,
+            status = 200,
+            durationMs = 12,
+            clientId = null,
+            address = "127.0.0.1",
+            kind = "curl",
+            caller = RequestCaller.USER,
+        ).format()
 
-    private fun inbound(path: String): String = RequestLogLine(
-        method = "GET", path = path, status = 200, durationMs = 12,
-        clientId = null, address = "127.0.0.1", kind = "curl",
-        caller = RequestCaller.USER,
-    ).format()
-
-    private fun outbound(endpoint: String): String = ExternalCallLogLine(
-        provider = "kakao", method = "GET", endpoint = endpoint, status = 200, durationMs = 12,
-    ).format()
+    private fun outbound(endpoint: String): String =
+        ExternalCallLogLine(
+            provider = "kakao",
+            method = "GET",
+            endpoint = endpoint,
+            status = 200,
+            durationMs = 12,
+        ).format()
 
     private fun columnAfterTarget(line: String): Int {
         val parts: List<String> = line.split(LOG_COLUMN_SEPARATOR)

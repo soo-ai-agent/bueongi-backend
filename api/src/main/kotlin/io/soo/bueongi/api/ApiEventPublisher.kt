@@ -8,12 +8,14 @@ import org.springframework.stereotype.Component
 class ApiEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
-
     fun shareStoreUnavailable(detail: String) {
         events.publishEvent(OperationEvent(key = STORE_UNAVAILABLE_KEY, title = STORE_UNAVAILABLE_TITLE, detail = detail))
     }
 
-    fun unhandledServerError(exceptionName: String, detail: String) {
+    fun unhandledServerError(
+        exceptionName: String,
+        detail: String,
+    ) {
         events.publishEvent(
             OperationEvent(key = "$SERVER_ERROR_KEY_PREFIX$exceptionName", title = SERVER_ERROR_TITLE, detail = detail),
         )

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 class MarkerEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
-
     fun safetySpotIndexEmpty(detail: String) {
         events.publishEvent(OperationEvent(key = INDEX_EMPTY_KEY, title = INDEX_EMPTY_TITLE, detail = detail))
     }

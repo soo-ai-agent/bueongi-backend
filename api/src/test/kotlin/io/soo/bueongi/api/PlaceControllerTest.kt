@@ -1,11 +1,11 @@
 package io.soo.bueongi.api
 
+import io.soo.bueongi.core.place.api.controller.PlaceController
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
-import io.soo.bueongi.core.place.api.controller.PlaceController
-
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
+@Tag("context")
 @WebMvcTest(PlaceController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
@@ -27,7 +28,6 @@ import org.springframework.test.web.servlet.get
 class PlaceControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @Test
     fun `검색어가 일치하면 200 과 PlaceItem 배열을 반환`() {
         mockMvc.get("/api/places/search") { param("keyword", "강남역") }
@@ -79,10 +79,11 @@ class PlaceControllerTest(
     @TestConfiguration
     class DisabledRemoteConfig {
         @Bean
-        fun remotePlaceProvider(): RemotePlaceProvider = object : RemotePlaceProvider {
-            override val isEnabled: Boolean = false
-            override fun search(keyword: String): List<PlaceItem> =
-                throw AssertionError("disabled remote 는 호출되면 안 된다")
-        }
+        fun remotePlaceProvider(): RemotePlaceProvider =
+            object : RemotePlaceProvider {
+                override val isEnabled: Boolean = false
+
+                override fun search(keyword: String): List<PlaceItem> = throw AssertionError("disabled remote 는 호출되면 안 된다")
+            }
     }
 }

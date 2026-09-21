@@ -1,5 +1,6 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -11,10 +12,10 @@ import org.springframework.test.web.servlet.options
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Tag("context")
 class WebCorsConfigTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     private val allowedOrigin: String = "http://localhost:3619"
 
     @Test

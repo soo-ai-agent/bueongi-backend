@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.route.domain.model
 
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class SafetySpotSummary(

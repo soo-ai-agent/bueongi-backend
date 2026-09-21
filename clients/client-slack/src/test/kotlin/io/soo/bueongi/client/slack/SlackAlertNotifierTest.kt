@@ -1,7 +1,7 @@
 package io.soo.bueongi.client.slack
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
-import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
@@ -15,11 +15,9 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
-import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.concurrent.Executor
 
 class SlackAlertNotifierTest {
-
     private val webhook: String = "https://hooks.slack.com/services/T000/B000/XXXX"
 
     private var now: Long = 1_000_000L
@@ -35,13 +33,14 @@ class SlackAlertNotifierTest {
         if (mutedCategories.isNotEmpty()) {
             config.update(enabled = true, throttleMinutes = throttleMinutes, mutedCategories = mutedCategories)
         }
-        val notifier = SlackAlertNotifier(
-            config = config,
-            restClientBuilder = builder,
-            objectMapper = ObjectMapper(),
-            executor = Executor { it.run() },
-            nowMs = { now },
-        )
+        val notifier =
+            SlackAlertNotifier(
+                config = config,
+                restClientBuilder = builder,
+                objectMapper = ObjectMapper(),
+                executor = Executor { it.run() },
+                nowMs = { now },
+            )
         return notifier to server
     }
 

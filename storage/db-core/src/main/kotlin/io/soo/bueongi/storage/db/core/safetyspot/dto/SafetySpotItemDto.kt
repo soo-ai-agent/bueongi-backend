@@ -1,10 +1,9 @@
 package io.soo.bueongi.storage.db.core.safetyspot.dto
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
-import io.soo.bueongi.core.enums.SafetySpotType
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SafetySpotItemDto(

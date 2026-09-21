@@ -1,7 +1,7 @@
 package io.soo.bueongi.client.tmap
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.causeChainOf
@@ -73,19 +73,21 @@ class TmapRouteClient(
         return try {
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
             // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
-            val raw: String? = restClient.post()
-                .uri(PEDESTRIAN_ENDPOINT)
-                .header("appKey", appKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .body<String>()
-            val json: JsonNode? = if (raw == null) {
-                null
-            } else {
-                objectMapper.readTree(sanitizeTmapJson(raw))
-            }
+            val raw: String? =
+                restClient.post()
+                    .uri(PEDESTRIAN_ENDPOINT)
+                    .header("appKey", appKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body<String>()
+            val json: JsonNode? =
+                if (raw == null) {
+                    null
+                } else {
+                    objectMapper.readTree(sanitizeTmapJson(raw))
+                }
             val route: TmapRoute?
             if (json == null) {
                 route = null
@@ -118,17 +120,18 @@ class TmapRouteClient(
         searchOption: String,
         passList: List<TmapCoord>?,
     ): Map<String, String> {
-        val body: LinkedHashMap<String, String> = linkedMapOf(
-            "startX" to origin.lng.toString(),
-            "startY" to origin.lat.toString(),
-            "endX" to dest.lng.toString(),
-            "endY" to dest.lat.toString(),
-            "startName" to "출발",
-            "endName" to (destName?.trim()?.takeIf { it.isNotEmpty() } ?: "목적지"),
-            "reqCoordType" to "WGS84GEO",
-            "resCoordType" to "WGS84GEO",
-            "searchOption" to searchOption,
-        )
+        val body: LinkedHashMap<String, String> =
+            linkedMapOf(
+                "startX" to origin.lng.toString(),
+                "startY" to origin.lat.toString(),
+                "endX" to dest.lng.toString(),
+                "endY" to dest.lat.toString(),
+                "startName" to "출발",
+                "endName" to (destName?.trim()?.takeIf { it.isNotEmpty() } ?: "목적지"),
+                "reqCoordType" to "WGS84GEO",
+                "resCoordType" to "WGS84GEO",
+                "searchOption" to searchOption,
+            )
         if (!passList.isNullOrEmpty()) {
             body["passList"] = passList.joinToString("_") { "${it.lng},${it.lat}" }
         }
@@ -136,7 +139,6 @@ class TmapRouteClient(
     }
 
     companion object {
-
         private const val PEDESTRIAN_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
 
         // 로그 대상 칸은 경로만 적는다 — 송신 줄과 같은 자리에서 같은 값이 보여야 한다.

@@ -9,14 +9,11 @@ import org.springframework.data.redis.core.StringRedisTemplate
 
 @Configuration
 class RouteChoiceStoreConfig {
-
     @Bean
     @Conditional(RedisConfigured::class)
-    fun redisRouteChoiceStore(template: StringRedisTemplate): RouteChoiceStore =
-        RedisRouteChoiceStore(template)
+    fun redisRouteChoiceStore(template: StringRedisTemplate): RouteChoiceStore = RedisRouteChoiceStore(template)
 
     @Bean
     @Conditional(RedisNotConfigured::class)
-    fun inMemoryRouteChoiceStore(): RouteChoiceStore =
-        InMemoryRouteChoiceStore()
+    fun inMemoryRouteChoiceStore(): RouteChoiceStore = InMemoryRouteChoiceStore()
 }

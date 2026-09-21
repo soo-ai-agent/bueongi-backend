@@ -1,50 +1,57 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.api.config.RequestMetricsFilter
-
 import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger as LogbackLogger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.soo.bueongi.api.config.RequestMetricsFilter
 import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.currentTraceId
-import org.slf4j.LoggerFactory
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import ch.qos.logback.classic.Logger as LogbackLogger
 
 class RequestMetricsFilterTest {
-
     private class CapturingStore : RequestMetricStore {
         val recorded: MutableList<RequestMetric> = mutableListOf<RequestMetric>()
+
         override fun record(metric: RequestMetric) {
             recorded += metric
         }
+
         override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
     }
 
     private class CapturingAdminStore : AdminRequestMetricStore {
         val recorded: MutableList<RequestMetric> = mutableListOf<RequestMetric>()
+
         override fun record(metric: RequestMetric) {
             recorded += metric
         }
+
         override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
     }
 
     private fun filterOf(store: RequestMetricStore) = RequestMetricsFilter(store, CapturingAdminStore())
 
-    private fun chainSetting(status: Int) = FilterChain { _, response ->
-        (response as HttpServletResponse).status = status
-    }
+    private fun chainSetting(status: Int) =
+        FilterChain { _, response ->
+            (response as HttpServletResponse).status = status
+        }
 
-    private fun chainWriting(status: Int, body: String, type: String) = FilterChain { _, response ->
+    private fun chainWriting(
+        status: Int,
+        body: String,
+        type: String,
+    ) = FilterChain { _, response ->
         val http = response as HttpServletResponse
         http.status = status
         http.contentType = type
@@ -113,7 +120,8 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/api/admin/share-sessions/abc123/location"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -126,10 +134,11 @@ class RequestMetricsFilterTest {
     fun `관리자 인증 경로도 사용자 트래픽에서 뺀다`() {
         val store = CapturingStore()
         val filter = filterOf(store)
-        val adminAuthPaths: List<String> = listOf(
-            "/api/v1/auth/admin/login",
-            "/api/v1/auth/local/token/refresh",
-        )
+        val adminAuthPaths: List<String> =
+            listOf(
+                "/api/v1/auth/admin/login",
+                "/api/v1/auth/local/token/refresh",
+            )
 
         adminAuthPaths.forEach { path ->
             filter.doFilter(MockHttpServletRequest("POST", path), MockHttpServletResponse(), chainSetting(200))
@@ -146,7 +155,8 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/api/admin/traffic"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         assertThat(store.recorded).isEmpty()
@@ -163,7 +173,8 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/api/places/search"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         assertThat(adminStore.recorded).isEmpty()
@@ -177,7 +188,8 @@ class RequestMetricsFilterTest {
 
         RequestMetricsFilter(store, adminStore).doFilter(
             MockHttpServletRequest("GET", "/wp-login.php"),
-            MockHttpServletResponse(), chainSetting(404),
+            MockHttpServletResponse(),
+            chainSetting(404),
         )
 
         assertThat(store.recorded).isEmpty()
@@ -191,7 +203,8 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("POST", "/api/v1/auth/local/token/refresh"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         assertThat(appender.list.single().formattedMessage).startsWith("[수신] 관리자")
@@ -205,7 +218,8 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/share/abc123/location"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -276,10 +290,11 @@ class RequestMetricsFilterTest {
     fun `요청 주소를 남긴다 - 프록시 뒤에서는 전달 헤더의 맨 앞을 쓴다`() {
         val appender = captureLogs()
         val direct = MockHttpServletRequest("GET", "/api/app-info").apply { remoteAddr = "10.0.0.9" }
-        val behindProxy = MockHttpServletRequest("GET", "/api/app-info").apply {
-            remoteAddr = "10.0.0.9"
-            addHeader("X-Forwarded-For", "203.0.113.7, 70.41.3.18")
-        }
+        val behindProxy =
+            MockHttpServletRequest("GET", "/api/app-info").apply {
+                remoteAddr = "10.0.0.9"
+                addHeader("X-Forwarded-For", "203.0.113.7, 70.41.3.18")
+            }
 
         filterOf(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
         filterOf(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
@@ -313,11 +328,13 @@ class RequestMetricsFilterTest {
 
         filter.doFilter(
             MockHttpServletRequest("GET", "/api/admin/traffic").apply { remoteAddr = "10.0.0.9" },
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
         filter.doFilter(
             MockHttpServletRequest("DELETE", "/api/x").apply { remoteAddr = "203.0.113.7" },
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         val pathStarts: List<Int> = appender.list.map { it.formattedMessage.indexOf("/api/") }
@@ -342,7 +359,8 @@ class RequestMetricsFilterTest {
 
         filterOf(CapturingStore()).doFilter(
             MockHttpServletRequest("GET", "/api/places/search"),
-            MockHttpServletResponse(), chainSetting(200),
+            MockHttpServletResponse(),
+            chainSetting(200),
         )
 
         assertThat(appender.list.single().formattedMessage).containsPattern("🔗 [0-9a-f]{8}")
@@ -352,14 +370,16 @@ class RequestMetricsFilterTest {
     @Test
     fun `왜 불렸는지는 토큰을 가린 경로로 남긴다`() {
         var seenOrigin: String = ""
-        val chain = FilterChain { _, response ->
-            seenOrigin = currentRequestOrigin()
-            (response as HttpServletResponse).status = 200
-        }
+        val chain =
+            FilterChain { _, response ->
+                seenOrigin = currentRequestOrigin()
+                (response as HttpServletResponse).status = 200
+            }
 
         filterOf(CapturingStore()).doFilter(
             MockHttpServletRequest("POST", "/share/abc123/location"),
-            MockHttpServletResponse(), chain,
+            MockHttpServletResponse(),
+            chain,
         )
 
         assertThat(seenOrigin).isEqualTo("POST /share/{token}/location")
@@ -369,15 +389,18 @@ class RequestMetricsFilterTest {
     @Test
     fun `통계 기록 실패는 예외 줄로 남기고 응답은 그대로 나간다`() {
         val appender = captureLogs()
-        val broken = object : RequestMetricStore {
-            override fun record(metric: RequestMetric) =
-                throw IllegalStateException("창이 닫혔다", IllegalArgumentException("연결 없음"))
-            override fun findRecent(limit: Int): List<RequestMetric> = emptyList()
-        }
+        val broken =
+            object : RequestMetricStore {
+                override fun record(metric: RequestMetric) = throw IllegalStateException("창이 닫혔다", IllegalArgumentException("연결 없음"))
+
+                override fun findRecent(limit: Int): List<RequestMetric> = emptyList()
+            }
         val response = MockHttpServletResponse()
 
         RequestMetricsFilter(broken, CapturingAdminStore()).doFilter(
-            MockHttpServletRequest("GET", "/api/places/search"), response, chainSetting(200),
+            MockHttpServletRequest("GET", "/api/places/search"),
+            response,
+            chainSetting(200),
         )
 
         val exceptionLine: String = appender.list.last().formattedMessage
@@ -398,5 +421,4 @@ class RequestMetricsFilterTest {
         assertThat(appender.list.single().formattedMessage).contains("…")
         assertThat(appender.list.single().formattedMessage.length).isLessThan(long.length)
     }
-
 }

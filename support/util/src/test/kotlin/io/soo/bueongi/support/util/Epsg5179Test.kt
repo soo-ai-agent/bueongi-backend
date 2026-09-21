@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class Epsg5179Test {
-
     @Test
     fun `앵커 - 투영 원점(38도, 127_5도)은 정확히 false easting-northing 으로 간다`() {
         val (x, y) = Epsg5179.fromWgs84(lat = 38.0, lng = 127.5)
@@ -15,13 +14,14 @@ class Epsg5179Test {
 
     @Test
     fun `왕복 - 한반도 주요 지점 forward-inverse 오차가 1e-7도(약 1cm) 이내`() {
-        val points: List<Pair<Double, Double>> = listOf(
-            37.5665 to 126.9780,
-            37.4981 to 127.0276,
-            35.1796 to 129.0756,
-            33.4996 to 126.5312,
-            38.2070 to 128.5918,
-        )
+        val points: List<Pair<Double, Double>> =
+            listOf(
+                37.5665 to 126.9780,
+                37.4981 to 127.0276,
+                35.1796 to 129.0756,
+                33.4996 to 126.5312,
+                38.2070 to 128.5918,
+            )
         for ((lat, lng) in points) {
             val (x, y) = Epsg5179.fromWgs84(lat, lng)
             val back: Wgs84Point = Epsg5179.toWgs84(x, y)!!

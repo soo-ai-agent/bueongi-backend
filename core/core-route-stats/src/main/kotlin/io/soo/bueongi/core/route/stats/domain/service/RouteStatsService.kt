@@ -1,16 +1,15 @@
 package io.soo.bueongi.core.route.stats.domain.service
 
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.stats.domain.model.DestinationCount
+import io.soo.bueongi.core.route.stats.domain.model.EndpointCount
 import io.soo.bueongi.core.route.stats.domain.model.PreferenceCount
 import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
-import io.soo.bueongi.core.route.stats.domain.model.EndpointCount
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.countByHour
-
 import io.soo.bueongi.storage.db.core.routestats.ROUTE_STATS_CAP
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.countByHour
 import org.springframework.stereotype.Service
 import java.util.EnumMap
 
@@ -18,7 +17,6 @@ import java.util.EnumMap
 class RouteStatsService(
     private val routeStatsStore: RouteStatsStore,
 ) {
-
     fun summarize(): RouteStatsSummary {
         val logs: List<RouteRecommendationLog> = routeStatsStore.findRecent(ROUTE_STATS_CAP)
         return RouteStatsSummary(

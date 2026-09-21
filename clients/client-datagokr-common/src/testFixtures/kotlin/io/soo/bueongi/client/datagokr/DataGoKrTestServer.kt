@@ -11,8 +11,10 @@ fun bindFetcher(key: String = TEST_SERVICE_KEY): Pair<DataGoKrPagedFetcher, Mock
     return DataGoKrPagedFetcher(serviceKey = key, restClientBuilder = builder) to server
 }
 
-fun envelope(items: String, totalCount: Int): String =
-    """{"response":{"header":{"resultCode":"0","resultMsg":"정상"},"body":{"items":[$items],"totalCount":$totalCount}}}"""
+fun envelope(
+    items: String,
+    totalCount: Int,
+): String = """{"response":{"header":{"resultCode":"0","resultMsg":"정상"},"body":{"items":[$items],"totalCount":$totalCount}}}"""
 
 fun standardEnvelope(item: String): String =
     """{"header":{"resultCode":"00","resultMsg":"NORMAL SERVICE."},"body":{"items":{"item":[$item]},"totalCount":1}}"""

@@ -1,23 +1,24 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.core.enums.RouteType
-
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotCoordSystem
+import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WireEnumRoundTripTest {
-
     private val mapper = jacksonObjectMapper()
 
-    private inline fun <reified T : Enum<T>> roundTrip(value: T, wire: String) {
+    private inline fun <reified T : Enum<T>> roundTrip(
+        value: T,
+        wire: String,
+    ) {
         assertThat(mapper.writeValueAsString(value)).isEqualTo("\"$wire\"")
         assertThat(mapper.readValue<T>("\"$wire\"")).isEqualTo(value)
     }

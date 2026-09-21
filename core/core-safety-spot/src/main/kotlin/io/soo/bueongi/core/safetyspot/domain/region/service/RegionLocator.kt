@@ -13,9 +13,10 @@ class RegionLocator(
     fun regionCodeAt(point: GeoPoint): String? {
         for (radius in SEARCH_RADII_M) {
             val nearby: List<SafetySpotPoint> = safetySpots.index(SafetySpotType.CCTV).withinRadius(point, radius)
-            val nearest: SafetySpotPoint? = nearby
-                .filter { !it.sigungu.isNullOrBlank() }
-                .minByOrNull { point.distanceMetersTo(it.toGeoPoint()) }
+            val nearest: SafetySpotPoint? =
+                nearby
+                    .filter { !it.sigungu.isNullOrBlank() }
+                    .minByOrNull { point.distanceMetersTo(it.toGeoPoint()) }
             if (nearest != null) {
                 return nearest.sigungu
             }

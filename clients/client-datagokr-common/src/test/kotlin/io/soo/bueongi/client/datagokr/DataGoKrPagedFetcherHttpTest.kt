@@ -13,19 +13,22 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 class DataGoKrPagedFetcherHttpTest {
-
     private val endpoint: String = "https://apis.data.go.kr/1741000/test_resource/info"
 
-    private val fields: DataGoKrFieldNames = DataGoKrFieldNames(
-        lat = listOf("WGS84_LAT"),
-        lng = listOf("WGS84_LOT"),
-        name = listOf("MNG_INST_NM"),
-        address = listOf("LCTN_ROAD_NM_ADDR"),
-        sigungu = emptyList(),
-    )
+    private val fields: DataGoKrFieldNames =
+        DataGoKrFieldNames(
+            lat = listOf("WGS84_LAT"),
+            lng = listOf("WGS84_LOT"),
+            name = listOf("MNG_INST_NM"),
+            address = listOf("LCTN_ROAD_NM_ADDR"),
+            sigungu = emptyList(),
+        )
 
-    private fun item(lat: Any = 37.5, lng: Any = 127.0, name: String = "관리기관") =
-        """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
+    private fun item(
+        lat: Any = 37.5,
+        lng: Any = 127.0,
+        name: String = "관리기관",
+    ) = """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
 
     @Test
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑`() {
@@ -78,13 +81,14 @@ class DataGoKrPagedFetcherHttpTest {
     @Test
     fun `정상 - items가 item 래퍼 형태여도 수용하고 좌표 불량 행은 건너뛴다`() {
         val (fetcher, server) = bindFetcher()
-        val body: String = """
+        val body: String =
+            """
             {"response":{"header":{"resultCode":"00"},"body":{"items":{"item":[
               {"WGS84_LAT":"37.51","WGS84_LOT":"127.02","MNG_INST_NM":"강남구청","LCTN_ROAD_NM_ADDR":"강남대로 1"},
               {"WGS84_LAT":"","WGS84_LOT":"127.02","MNG_INST_NM":"좌표없음"},
               {"WGS84_LAT":"not-a-number","WGS84_LOT":"127.02","MNG_INST_NM":"좌표불량"}
             ]},"totalCount":3}}}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString(endpoint)))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 

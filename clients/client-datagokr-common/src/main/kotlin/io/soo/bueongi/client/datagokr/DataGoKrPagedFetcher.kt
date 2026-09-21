@@ -1,6 +1,5 @@
 package io.soo.bueongi.client.datagokr
 
-import io.soo.bueongi.client.datagokr.DataGoKrQueryDialect
 import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
@@ -135,12 +134,18 @@ class DataGoKrPagedFetcher(
     }
 
     // 표준데이터 계열은 `type` 만 받는다 — `returnType` 을 주면 resultCode 10 으로 거부한다(실측).
-    private fun pageUrl(endpoint: String, pageNo: Int, query: DataGoKrQuery, dialect: DataGoKrQueryDialect): String {
-        val responseType: String = if (dialect == DataGoKrQueryDialect.CONDITION) {
-            "&returnType=json&type=json"
-        } else {
-            "&type=json"
-        }
+    private fun pageUrl(
+        endpoint: String,
+        pageNo: Int,
+        query: DataGoKrQuery,
+        dialect: DataGoKrQueryDialect,
+    ): String {
+        val responseType: String =
+            if (dialect == DataGoKrQueryDialect.CONDITION) {
+                "&returnType=json&type=json"
+            } else {
+                "&type=json"
+            }
         return "$endpoint?serviceKey=$serviceKey" +
             "&pageNo=$pageNo&numOfRows=${pageSizeOf(dialect)}" +
             responseType +
@@ -155,19 +160,20 @@ class DataGoKrPagedFetcher(
             DataGoKrApiSpec.STANDARD_PAGE_SIZE
         }
 
-    private fun extractItems(items: JsonNode?): List<JsonNode> = when {
-        items == null -> emptyList()
-        items.isArray -> items.toList()
-        items.isObject && items.has("item") -> {
-            val inner: JsonNode = items.get("item")
-            when {
-                inner.isArray -> inner.toList()
-                inner.isObject -> listOf(inner)
-                else -> emptyList()
+    private fun extractItems(items: JsonNode?): List<JsonNode> =
+        when {
+            items == null -> emptyList()
+            items.isArray -> items.toList()
+            items.isObject && items.has("item") -> {
+                val inner: JsonNode = items.get("item")
+                when {
+                    inner.isArray -> inner.toList()
+                    inner.isObject -> listOf(inner)
+                    else -> emptyList()
+                }
             }
+            else -> emptyList()
         }
-        else -> emptyList()
-    }
 
     private fun failureLine(
         endpoint: String,
@@ -175,15 +181,16 @@ class DataGoKrPagedFetcher(
         paging: String,
         action: String = STOPPED_ACTION,
         result: String = NO_RESPONSE_STATUS,
-    ): String = ExceptionLogLine(
-        kind = IGNORED_EXCEPTION,
-        counterpart = PROVIDER,
-        subject = URI.create(endpoint).path,
-        cause = cause,
-        result = result,
-        action = action,
-        paging = paging,
-    ).format()
+    ): String =
+        ExceptionLogLine(
+            kind = IGNORED_EXCEPTION,
+            counterpart = PROVIDER,
+            subject = URI.create(endpoint).path,
+            cause = cause,
+            result = result,
+            action = action,
+            paging = paging,
+        ).format()
 
     private companion object {
         // 송신 줄의 원천 이름(ExternalApiProvider.DATA_GO_KR)과 같아야 세로로 짝이 보인다.

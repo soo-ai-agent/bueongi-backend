@@ -1,30 +1,31 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
-import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-import io.soo.bueongi.core.route.domain.service.RouteService
-import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.client.tmap.TmapRouteClient
-
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import io.soo.bueongi.core.route.api.controller.RouteController
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
+import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
+import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
+import io.soo.bueongi.core.route.domain.service.RouteService
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
+import io.soo.bueongi.core.route.domain.service.SafeRouteService
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
+@Tag("context")
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
@@ -47,10 +48,11 @@ class RouteControllerTest(
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
-    private val validBody: String = """
+    private val validBody: String =
+        """
         {"origin":{"lat":37.4979,"lng":127.0276},
          "destination":{"lat":37.5572,"lng":126.9245,"name":"홍대입구역"}}
-    """.trimIndent()
+        """.trimIndent()
 
     @Test
     fun `좌표가 빠지면 그 필드를 짚어 400 을 낸다 - 0으로 채워 계산하지 않는다`() {

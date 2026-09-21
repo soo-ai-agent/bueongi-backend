@@ -8,6 +8,7 @@ import io.soo.bueongi.storage.db.core.routestats.RouteChoiceLog
 import io.soo.bueongi.storage.db.core.routestats.RouteChoiceStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -23,6 +24,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
+@Tag("context")
 @WebMvcTest(RouteChoiceController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(RouteChoiceEndpointTest.FakeChoiceStoreConfig::class)
@@ -30,12 +32,13 @@ class RouteChoiceEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,
     @param:Autowired private val store: RouteChoiceStore,
 ) {
-
     class RecordingChoiceStore : RouteChoiceStore {
         val recorded: MutableList<RouteChoiceLog> = mutableListOf()
+
         override fun record(log: RouteChoiceLog) {
             recorded.add(log)
         }
+
         override fun findRecent(limit: Int): List<RouteChoiceLog> = recorded.take(limit)
     }
 
@@ -53,10 +56,11 @@ class RouteChoiceEndpointTest(
         }
     }
 
-    private val validBody: String = """
+    private val validBody: String =
+        """
         {"chosenType":"safe","safetyPreference":"safest","candidateCount":3,
          "distanceMeters":1240,"durationSeconds":930,"score":82,"destinationName":"강남역"}
-    """.trimIndent()
+        """.trimIndent()
 
     private fun recorded(): List<RouteChoiceLog> = (store as RecordingChoiceStore).recorded
 
@@ -104,10 +108,11 @@ class RouteChoiceEndpointTest(
     fun `모르는 경로 종류는 400 이고 기록하지 않는다`() {
         mockMvc.post("/api/route-choices") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {"chosenType":"scenic","safetyPreference":"safe","candidateCount":3,
                  "distanceMeters":1240,"durationSeconds":930}
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("MALFORMED_REQUEST") }
@@ -120,10 +125,11 @@ class RouteChoiceEndpointTest(
     fun `점수 없는 폴백 경로도 접수한다`() {
         mockMvc.post("/api/route-choices") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {"chosenType":"main","safetyPreference":"balanced","candidateCount":3,
                  "distanceMeters":900,"durationSeconds":700}
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect {
             status { isAccepted() }
         }

@@ -1,32 +1,29 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
-import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-import io.soo.bueongi.core.route.domain.model.RouteQuery
-import io.soo.bueongi.core.route.domain.service.RouteService
-import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-import io.soo.bueongi.core.route.domain.model.RouteTag
-import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-
-import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
+import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.route.domain.model.RouteTag
+import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
+import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
+import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteService
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
+import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -35,40 +32,43 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 class SafeRouteServiceTest {
-
     private val origin = GeoPoint(37.5, 127.0)
     private val dest = GeoPoint(37.5, 127.01)
 
-    private val request = RouteQuery(
-        origin = origin,
-        destination = dest,
-        destinationName = "목적지",
-        routeType = RouteType.SAFE,
-        safetyPreference = SafetyPreference.SAFE,
-    )
+    private val request =
+        RouteQuery(
+            origin = origin,
+            destination = dest,
+            destinationName = "목적지",
+            routeType = RouteType.SAFE,
+            safetyPreference = SafetyPreference.SAFE,
+        )
 
-    private val cctv = listOf(127.002, 127.004, 127.006, 127.008).map {
-        SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
-    }
+    private val cctv =
+        listOf(127.002, 127.004, 127.006, 127.008).map {
+            SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
+        }
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer = nightScorer(source)
     private val detourPlanner = SafeDetourPlanner(source)
     private val routeService = RouteService(RouteTypeCatalog())
 
-    private val routeA = TmapRoute(
-        searchOption = "0",
-        path = listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)),
-        distanceM = 880.0,
-        timeS = 700,
-        steps = emptyList(),
-    )
-    private val routeB = TmapRoute(
-        searchOption = "10",
-        path = listOf(TmapCoord(37.51, 127.0), TmapCoord(37.51, 127.01)),
-        distanceM = 900.0,
-        timeS = 600,
-        steps = emptyList(),
-    )
+    private val routeA =
+        TmapRoute(
+            searchOption = "0",
+            path = listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)),
+            distanceM = 880.0,
+            timeS = 700,
+            steps = emptyList(),
+        )
+    private val routeB =
+        TmapRoute(
+            searchOption = "10",
+            path = listOf(TmapCoord(37.51, 127.0), TmapCoord(37.51, 127.01)),
+            distanceM = 900.0,
+            timeS = 600,
+            steps = emptyList(),
+        )
 
     private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, detourPlanner, source)
 
@@ -152,16 +152,18 @@ class SafeRouteServiceTest {
     fun `회랑에 실 지구대가 있으면 추정으로 중복 채우지 않는다`() {
         val police = listOf(SafetySpotPoint(SafetySpotType.POLICE, 37.5, 127.005, name = "역삼지구대"))
         val richSource = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv, SafetySpotType.POLICE to police))
-        val svc = safeRouteService(
-            tmap = mock<TmapRouteClient>().also {
-                whenever(it.isEnabled).thenReturn(true)
-                whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
-                whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
-            },
-            scorer = nightScorer(richSource),
-            detourPlanner = SafeDetourPlanner(richSource),
-            source = richSource,
-        )
+        val svc =
+            safeRouteService(
+                tmap =
+                    mock<TmapRouteClient>().also {
+                        whenever(it.isEnabled).thenReturn(true)
+                        whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA, routeB))
+                        whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(null)
+                    },
+                scorer = nightScorer(richSource),
+                detourPlanner = SafeDetourPlanner(richSource),
+                source = richSource,
+            )
 
         val safe = svc.safeCompare(request).first { it.type == RouteType.SAFE }
         val policeMarkers = safe.markers!!.filter { it.type == SafetySpotPoiType.POLICE }
@@ -189,7 +191,10 @@ class SafeRouteServiceTest {
         assertThat(result.map { it.dist }).contains("1.0km")
     }
 
-    private fun detourAt(lat: Double, distanceM: Double): TmapRoute =
+    private fun detourAt(
+        lat: Double,
+        distanceM: Double,
+    ): TmapRoute =
         TmapRoute(
             searchOption = "2",
             path = listOf(TmapCoord(lat, 127.0), TmapCoord(lat, 127.01)),
@@ -198,11 +203,12 @@ class SafeRouteServiceTest {
             steps = emptyList(),
         )
 
-    private fun tmapReturning(detour: TmapRoute): TmapRouteClient = mock<TmapRouteClient>().also {
-        whenever(it.isEnabled).thenReturn(true)
-        whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA))
-        whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(detour)
-    }
+    private fun tmapReturning(detour: TmapRoute): TmapRouteClient =
+        mock<TmapRouteClient>().also {
+            whenever(it.isEnabled).thenReturn(true)
+            whenever(it.fetchRoutes(any(), any(), anyOrNull())).thenReturn(listOf(routeA))
+            whenever(it.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(detour)
+        }
 
     @Test
     fun `거의 겹치는 후보는 병합되어 유형당 하나씩 정확히 3개로 정규화된다`() {
@@ -227,13 +233,14 @@ class SafeRouteServiceTest {
         val recording = RecordingRouteStatsStore()
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
-        val svc = SafeRouteService(
-            routeService = RouteService(RouteTypeCatalog(), recording),
-            collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
-            scorer = scorer,
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
-            routeStatsStore = recording,
-        )
+        val svc =
+            SafeRouteService(
+                routeService = RouteService(RouteTypeCatalog(), recording),
+                collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+                scorer = scorer,
+                assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+                routeStatsStore = recording,
+            )
 
         svc.safeCompare(request)
 
@@ -247,13 +254,14 @@ class SafeRouteServiceTest {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
-        val svc = SafeRouteService(
-            routeService = RouteService(RouteTypeCatalog(), recording),
-            collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
-            scorer = scorer,
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
-            routeStatsStore = recording,
-        )
+        val svc =
+            SafeRouteService(
+                routeService = RouteService(RouteTypeCatalog(), recording),
+                collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+                scorer = scorer,
+                assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+                routeStatsStore = recording,
+            )
 
         svc.safeCompare(request)
 
@@ -264,6 +272,7 @@ class SafeRouteServiceTest {
     fun `서로 다른 후보가 4개여도 유형당 하나씩 정확히 3개만 반환한다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
+
         fun line(lat: Double) = listOf(TmapCoord(lat, 127.0), TmapCoord(lat, 127.01))
         val r0 = TmapRoute("0", line(37.5), 880.0, 700, emptyList())
         val r1 = TmapRoute("4", line(37.51), 900.0, 600, emptyList())

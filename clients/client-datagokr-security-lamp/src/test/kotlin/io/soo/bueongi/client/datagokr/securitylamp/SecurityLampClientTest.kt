@@ -12,7 +12,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 class SecurityLampClientTest {
-
     @Test
     fun `표준 영문 필드(lmpLcNm·latitude·insttCode)를 매핑한다`() {
         val (fetcher, server) = bindFetcher()
@@ -20,7 +19,10 @@ class SecurityLampClientTest {
             .andRespond(
                 withSuccess(
                     standardEnvelope(
-                        """{"lmpLcNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359","rdnmadr":"테헤란로 1","insttCode":"3210000","institutionNm":"서울특별시 서초구청"}""",
+                        """
+                        {"lmpLcNm":"역삼동 골목 보안등","latitude":"37.5008","longitude":"127.0359",
+                        "rdnmadr":"테헤란로 1","insttCode":"3210000","institutionNm":"서울특별시 서초구청"}
+                        """.trimIndent().replace("\n", ""),
                     ),
                     MediaType.APPLICATION_JSON,
                 ),

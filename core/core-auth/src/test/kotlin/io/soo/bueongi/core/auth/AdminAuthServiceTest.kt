@@ -1,36 +1,37 @@
 package io.soo.bueongi.core.auth
 
-import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
-import io.soo.bueongi.core.auth.domain.service.AdminAuthService
-import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
 import io.soo.bueongi.core.auth.api.request.AdminLoginRequest
-import io.soo.bueongi.core.auth.domain.service.AdminTokenService
-import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
-import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
+import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
 import io.soo.bueongi.core.auth.domain.config.JwtProperties
-import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
+import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
+import io.soo.bueongi.core.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-
+import io.soo.bueongi.core.auth.domain.service.AdminAuthService
+import io.soo.bueongi.core.auth.domain.service.AdminTokenService
+import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
+import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
 import java.util.Base64
 
 class AdminAuthServiceTest {
     private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
-    private val jwt = JwtProperties(
-        publicKey = Base64.getEncoder().encodeToString(keyPair.public.encoded),
-        privateKey = Base64.getEncoder().encodeToString(keyPair.private.encoded),
-    )
-    private val auth = AdminAuthProperties(
-        loginId = "admin",
-        passwordHash = BCryptPasswordEncoder().encode("password"),
-    )
+    private val jwt =
+        JwtProperties(
+            publicKey = Base64.getEncoder().encodeToString(keyPair.public.encoded),
+            privateKey = Base64.getEncoder().encodeToString(keyPair.private.encoded),
+        )
+    private val auth =
+        AdminAuthProperties(
+            loginId = "admin",
+            passwordHash = BCryptPasswordEncoder().encode("password"),
+        )
     private val keys = createJwtKeyMaterial(jwt, false)
     private val tokens = AdminTokenService(keys, auth)
     private val service = AdminAuthService(auth, tokens)
@@ -68,14 +69,15 @@ class AdminAuthServiceTest {
 
     @Test
     fun `발급자가 다른 토큰은 서명이 같아도 재발급할 수 없다`() {
-        val otherIssuer = AdminTokenService(
-            JwtKeyMaterial(
-                publicKey = keyPair.public as RSAPublicKey,
-                privateKey = keyPair.private as RSAPrivateKey,
-                issuer = "someone-else",
-            ),
-            auth,
-        )
+        val otherIssuer =
+            AdminTokenService(
+                JwtKeyMaterial(
+                    publicKey = keyPair.public as RSAPublicKey,
+                    privateKey = keyPair.private as RSAPrivateKey,
+                    issuer = "someone-else",
+                ),
+                auth,
+            )
         val foreign = otherIssuer.issue()
 
         assertThatThrownBy { tokens.refresh(foreign.refreshToken) }

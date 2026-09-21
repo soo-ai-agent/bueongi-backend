@@ -7,11 +7,12 @@ interface RemotePlaceProvider {
 
     // 응답 와이어 라벨 — "live" 또는 "seed".
     val sourceLabel: String
-        get() = if (isEnabled) {
-            "live"
-        } else {
-            "seed"
-        }
+        get() =
+            if (isEnabled) {
+                "live"
+            } else {
+                "seed"
+            }
 
     fun search(keyword: String): List<PlaceItem>
 }

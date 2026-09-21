@@ -10,21 +10,26 @@ import kotlin.math.sqrt
 
 // 프로퍼티명 lat/lng 은 RouteOption.path 로 직렬화되는 프론트 응답 계약 — 리네임 금지.
 data class GeoPoint(val lat: Double, val lng: Double) {
-
     fun distanceMetersTo(other: GeoPoint): Double {
         val dLat: Double = Math.toRadians(other.lat - lat)
         val dLng: Double = Math.toRadians(other.lng - lng)
-        val h: Double = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(lat)) * cos(Math.toRadians(other.lat)) *
-            sin(dLng / 2) * sin(dLng / 2)
+        val h: Double =
+            sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat)) * cos(Math.toRadians(other.lat)) *
+                sin(dLng / 2) * sin(dLng / 2)
         return EARTH_RADIUS_M * 2 * atan2(sqrt(h), sqrt(1 - h))
     }
 
-    fun pointTowards(other: GeoPoint, fraction: Double): GeoPoint =
-        GeoPoint(lat = lat + (other.lat - lat) * fraction, lng = lng + (other.lng - lng) * fraction)
+    fun pointTowards(
+        other: GeoPoint,
+        fraction: Double,
+    ): GeoPoint = GeoPoint(lat = lat + (other.lat - lat) * fraction, lng = lng + (other.lng - lng) * fraction)
 
     // 국소 평면(equirectangular) 근사라 도심 규모(수 km)에서만 유효하다.
-    fun projectOnto(a: GeoPoint, b: GeoPoint): SegmentProjection {
+    fun projectOnto(
+        a: GeoPoint,
+        b: GeoPoint,
+    ): SegmentProjection {
         val self: Planar = toPlanar(lat)
         val pa: Planar = a.toPlanar(lat)
         val pb: Planar = b.toPlanar(lat)
@@ -42,8 +47,10 @@ data class GeoPoint(val lat: Double, val lng: Double) {
         )
     }
 
-    fun distanceMetersToSegment(a: GeoPoint, b: GeoPoint): Double =
-        projectOnto(a, b).distanceMeters
+    fun distanceMetersToSegment(
+        a: GeoPoint,
+        b: GeoPoint,
+    ): Double = projectOnto(a, b).distanceMeters
 
     fun distanceMetersToPath(path: List<GeoPoint>): Double {
         if (path.isEmpty()) {
@@ -71,10 +78,12 @@ data class GeoPoint(val lat: Double, val lng: Double) {
     private data class Planar(val x: Double, val y: Double)
 
     companion object {
-
         private const val EARTH_RADIUS_M: Double = 6_371_000.0
 
-        fun orNull(lat: Double?, lng: Double?): GeoPoint? {
+        fun orNull(
+            lat: Double?,
+            lng: Double?,
+        ): GeoPoint? {
             if (lat == null || !lat.isFinite() || lat !in -90.0..90.0) {
                 return null
             }
@@ -95,7 +104,10 @@ fun List<GeoPoint>.pathLengthMeters(): Double {
 }
 
 // limit 을 넘으면 뒤를 자르지 않고 간격을 넓힌다 — 자르면 목적지 쪽이 통째로 빠진다.
-fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoPoint> {
+fun List<GeoPoint>.sampleEveryMeters(
+    everyMeters: Double,
+    limit: Int,
+): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()
     }
@@ -125,7 +137,10 @@ fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoP
     return picked
 }
 
-fun List<GeoPoint>.overlapMetersWith(other: List<GeoPoint>, withinMeters: Double): Double {
+fun List<GeoPoint>.overlapMetersWith(
+    other: List<GeoPoint>,
+    withinMeters: Double,
+): Double {
     if (size < 2 || other.size < 2) {
         return 0.0
     }

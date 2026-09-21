@@ -12,5 +12,4 @@ fun todayStartMs(nowMs: Long): Long {
     return today.atStartOfDay(SERVICE_ZONE).toInstant().toEpochMilli()
 }
 
-fun zonedAt(nowMs: Long): ZonedDateTime =
-    Instant.ofEpochMilli(nowMs).atZone(SERVICE_ZONE)
+fun zonedAt(nowMs: Long): ZonedDateTime = Instant.ofEpochMilli(nowMs).atZone(SERVICE_ZONE)

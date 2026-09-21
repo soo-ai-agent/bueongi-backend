@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.safetyspot.domain.streetlamp
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
+import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillEventPublisher
@@ -10,11 +10,6 @@ import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillSe
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import java.nio.file.Path
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneOffset
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -24,25 +19,38 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.nio.file.Path
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 
 class StreetLampFillServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
-        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun replace(
+            type: SafetySpotType,
+            points: List<SafetySpotPoint>,
+        ): Int {
             appended.clear()
             appended.addAll(points)
             return points.size
         }
 
-        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun append(
+            type: SafetySpotType,
+            points: List<SafetySpotPoint>,
+        ): Int {
             appended.addAll(points)
             return points.size
         }
     }
 
     @Test
-    fun `키가 없으면 외부 호출을 하지 않는다`(@TempDir dir: Path) {
+    fun `키가 없으면 외부 호출을 하지 않는다`(
+        @TempDir dir: Path,
+    ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(false)
         val liveStore = FakeLiveStore()
@@ -55,7 +63,9 @@ class StreetLampFillServiceTest {
     }
 
     @Test
-    fun `받은 가로등을 인덱스에 더하고 다시 받지 않는다`(@TempDir dir: Path) {
+    fun `받은 가로등을 인덱스에 더하고 다시 받지 않는다`(
+        @TempDir dir: Path,
+    ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetLamps()).thenReturn(
@@ -78,19 +88,22 @@ class StreetLampFillServiceTest {
     }
 
     @Test
-    fun `실패 직후에는 다시 외부를 부르지 않고 냉각이 지나면 다시 시도한다`(@TempDir dir: Path) {
+    fun `실패 직후에는 다시 외부를 부르지 않고 냉각이 지나면 다시 시도한다`(
+        @TempDir dir: Path,
+    ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetLamps()).thenReturn(null)
         val now: Instant = Instant.parse("2026-08-19T00:00:00Z")
         val ticking = TickingClock(now)
-        val service: StreetLampFillService = StreetLampFillService(
-            client = client,
-            cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
-            liveStore = FakeLiveStore(),
-            retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
-            events = mock(),
-        )
+        val service: StreetLampFillService =
+            StreetLampFillService(
+                client = client,
+                cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+                liveStore = FakeLiveStore(),
+                retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
+                events = mock(),
+            )
 
         service.fill()
         service.fill()
@@ -103,12 +116,16 @@ class StreetLampFillServiceTest {
 
     private class TickingClock(var now: Instant) : Clock() {
         override fun instant(): Instant = now
+
         override fun getZone(): ZoneOffset = ZoneOffset.UTC
+
         override fun withZone(zone: java.time.ZoneId): Clock = this
     }
 
     @Test
-    fun `수집이 실패하면 알리고 기존 데이터를 유지한다`(@TempDir dir: Path) {
+    fun `수집이 실패하면 알리고 기존 데이터를 유지한다`(
+        @TempDir dir: Path,
+    ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetLamps()).thenReturn(null)

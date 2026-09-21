@@ -7,7 +7,6 @@ import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.UNHANDLED_EXCEPTION
 import io.soo.bueongi.support.logging.causeChainOf
 import io.soo.bueongi.support.logging.currentRequestOrigin
-
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -18,9 +17,9 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.support.MissingServletRequestPartException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
@@ -29,7 +28,6 @@ class ApiControllerAdvice(
     // 알림 없이도 예외 응답은 나가야 해서 선택 주입이다.
     private val apiEvents: ApiEventPublisher? = null,
 ) {
-
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     @ExceptionHandler(ApiException::class)
@@ -110,13 +108,14 @@ class ApiControllerAdvice(
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
     fun handleMethodNotAllowed(ex: HttpRequestMethodNotSupportedException): ResponseEntity<ProblemDetail> {
-        val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.METHOD_NOT_ALLOWED,
-            "지원하지 않는 요청 메서드입니다.",
-        ).apply {
-            title = "Method Not Allowed"
-            setProperty("code", "METHOD_NOT_ALLOWED")
-        }
+        val body: ProblemDetail =
+            ProblemDetail.forStatusAndDetail(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "지원하지 않는 요청 메서드입니다.",
+            ).apply {
+                title = "Method Not Allowed"
+                setProperty("code", "METHOD_NOT_ALLOWED")
+            }
         val headers = HttpHeaders()
         ex.supportedHttpMethods?.let { headers.allow = it }
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers).body(body)
@@ -153,13 +152,14 @@ class ApiControllerAdvice(
         apiEvents?.shareStoreUnavailable(
             "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
         )
-        val body: ProblemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.SERVICE_UNAVAILABLE,
-            "일시적으로 위치 공유 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
-        ).apply {
-            title = "Service Unavailable"
-            setProperty("code", "SHARE_STORE_UNAVAILABLE")
-        }
+        val body: ProblemDetail =
+            ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "일시적으로 위치 공유 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+            ).apply {
+                title = "Service Unavailable"
+                setProperty("code", "SHARE_STORE_UNAVAILABLE")
+            }
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS.toString())
             .body(body)
@@ -186,15 +186,21 @@ class ApiControllerAdvice(
         }
     }
 
-    private fun logUnhandled(counterpart: String, status: Int, action: String, ex: Exception) {
-        val line: String = ExceptionLogLine(
-            kind = UNHANDLED_EXCEPTION,
-            counterpart = counterpart,
-            subject = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN },
-            cause = causeChainOf(ex),
-            result = status.toString(),
-            action = action,
-        ).format()
+    private fun logUnhandled(
+        counterpart: String,
+        status: Int,
+        action: String,
+        ex: Exception,
+    ) {
+        val line: String =
+            ExceptionLogLine(
+                kind = UNHANDLED_EXCEPTION,
+                counterpart = counterpart,
+                subject = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN },
+                cause = causeChainOf(ex),
+                result = status.toString(),
+                action = action,
+            ).format()
         log.error(line, ex)
     }
 

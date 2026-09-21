@@ -1,20 +1,20 @@
 package io.soo.bueongi.core.safetyspot.domain.fill.service
 
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
+import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFillService
-import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.causeChainOf
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 @Component
 class SafetySpotFillTrigger(
@@ -26,9 +26,10 @@ class SafetySpotFillTrigger(
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotFillTrigger::class.java)
 
-    private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "safety-spot-fill").apply { isDaemon = true }
-    }
+    private val executor: ExecutorService =
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "safety-spot-fill").apply { isDaemon = true }
+        }
 
     fun fillAround(points: List<GeoPoint>) {
         if (points.isEmpty()) {

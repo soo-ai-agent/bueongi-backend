@@ -1,31 +1,32 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
-import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import io.soo.bueongi.client.tmap.TmapRouteClient
+import io.soo.bueongi.core.route.api.controller.RouteController
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
-import io.soo.bueongi.core.route.api.controller.RouteController
-import io.soo.bueongi.core.route.domain.service.RouteService
-import io.soo.bueongi.core.route.domain.service.SafeRouteService
+import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.client.tmap.TmapRouteClient
+import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
+import io.soo.bueongi.core.route.domain.service.RouteService
+import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
+import io.soo.bueongi.core.route.domain.service.SafeRouteService
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
+@Tag("context")
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
@@ -46,7 +47,6 @@ import org.springframework.test.web.servlet.post
 class ApiExceptionHandlerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 

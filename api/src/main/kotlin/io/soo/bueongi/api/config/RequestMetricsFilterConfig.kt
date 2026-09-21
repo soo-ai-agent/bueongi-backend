@@ -11,7 +11,6 @@ import org.springframework.core.Ordered
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class RequestMetricsFilterConfig {
-
     @Bean
     fun requestMetricsFilterRegistration(
         requestMetricStore: RequestMetricStore,

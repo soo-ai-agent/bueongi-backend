@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class CauseChainTest {
-
     @Test
     fun `겉 예외 뒤에 숨은 원인까지 사슬로 적는다`() {
         val root = IllegalArgumentException("Illegal unquoted character ((CTRL-CHAR, code 0))")
@@ -31,9 +30,10 @@ class CauseChainTest {
 
     @Test
     fun `예외 메시지에 실려 온 URL 의 질의 문자열은 통째로 지운다`() {
-        val error = RuntimeException(
-            """I/O error on GET request for "https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY&pageNo=3"""",
-        )
+        val error =
+            RuntimeException(
+                """I/O error on GET request for "https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY&pageNo=3"""",
+            )
 
         val chain: String = causeChainOf(error)
 

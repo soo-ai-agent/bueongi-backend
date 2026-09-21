@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 class OperationEventListener(
     private val alertNotifier: AlertNotifier,
 ) {
-
     @EventListener
     fun onOperationEvent(event: OperationEvent) {
         alertNotifier.notify(key = event.key, title = event.title, detail = event.detail)

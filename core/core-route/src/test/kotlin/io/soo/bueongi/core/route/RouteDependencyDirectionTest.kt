@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 class RouteDependencyDirectionTest {
-
     @Test
     fun `안전 채점과 마커는 경로 본체를 참조하지 않는다`() {
         val violations: MutableList<String> = ArrayList()
@@ -54,16 +53,16 @@ class RouteDependencyDirectionTest {
     }
 
     companion object {
-
         private const val MAIN_SOURCE_ROOT: String = "src/main/kotlin/io/soo/bueongi/core/route/domain"
 
         private val INNER_PACKAGES: List<String> = listOf("safety", "marker")
 
-        private val FORBIDDEN_IMPORTS: List<String> = listOf(
-            "io.soo.bueongi.core.route.api.",
-            "io.soo.bueongi.core.route.domain.service.",
-            "io.soo.bueongi.core.route.domain.model.",
-            "io.soo.bueongi.core.route.domain.error.",
-        )
+        private val FORBIDDEN_IMPORTS: List<String> =
+            listOf(
+                "io.soo.bueongi.core.route.api.",
+                "io.soo.bueongi.core.route.domain.service.",
+                "io.soo.bueongi.core.route.domain.model.",
+                "io.soo.bueongi.core.route.domain.error.",
+            )
     }
 }

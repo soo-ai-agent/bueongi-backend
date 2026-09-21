@@ -9,7 +9,6 @@ data class SafetySpotsResponse(
     val summary: SafetySpotSummary,
 ) {
     companion object {
-
         fun from(safetySpots: RouteSafetySpots): SafetySpotsResponse =
             SafetySpotsResponse(pois = safetySpots.pois, summary = safetySpots.summary)
     }

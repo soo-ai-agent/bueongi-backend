@@ -2,8 +2,7 @@ package io.soo.bueongi.api
 
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.share.domain.service.ShareService
-import java.time.Instant
-import java.util.Properties
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.info.BuildProperties
@@ -16,9 +15,11 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import java.time.Instant
+import java.util.Properties
 
 class AppInfoControllerTest {
-
+    @Tag("context")
     @WebMvcTest(AppInfoController::class)
     @AutoConfigureMockMvc(addFilters = false)
     @Import(AppInfoDefaultTest.Config::class)
@@ -54,6 +55,7 @@ class AppInfoControllerTest {
         }
     }
 
+    @Tag("context")
     @WebMvcTest(AppInfoController::class)
     @AutoConfigureMockMvc(addFilters = false)
     @Import(AppInfoConfiguredTest.Config::class)
@@ -82,7 +84,10 @@ class AppInfoControllerTest {
     }
 }
 
-private fun buildProperties(version: String, builtAt: String): BuildProperties {
+private fun buildProperties(
+    version: String,
+    builtAt: String,
+): BuildProperties {
     val entries = Properties()
     entries["version"] = version
     entries["time"] = Instant.parse(builtAt).toEpochMilli().toString()

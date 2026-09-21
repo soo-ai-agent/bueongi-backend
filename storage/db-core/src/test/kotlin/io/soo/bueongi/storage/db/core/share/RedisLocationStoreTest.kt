@@ -30,14 +30,14 @@ import java.time.Duration
 import java.time.Instant
 
 class RedisLocationStoreTest {
-
     private val clock = MutableTestClock()
     private val hashOps = mock<HashOperations<String, String, String>>()
     private val valueOps = mock<ValueOperations<String, String>>()
-    private val redis = mock<StringRedisTemplate> {
-        on { opsForHash<String, String>() } doReturn hashOps
-        on { opsForValue() } doReturn valueOps
-    }
+    private val redis =
+        mock<StringRedisTemplate> {
+            on { opsForHash<String, String>() } doReturn hashOps
+            on { opsForValue() } doReturn valueOps
+        }
     private val store = RedisLocationStore(redis, clock)
 
     @Test
@@ -304,17 +304,19 @@ class RedisLocationStoreTest {
     }
 
     private companion object {
-        val SAMPLE_ROUTE = StoredRoute(
-            destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
-            path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),
-            markers = listOf(
-                StoredMarker(
-                    type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
-                    name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
-                ),
-            ),
-            totalDistanceM = 1234,
-            totalTimeS = 900,
-        )
+        val SAMPLE_ROUTE =
+            StoredRoute(
+                destination = StoredRouteDestination(name = "집", lat = 37.56, lng = 126.97),
+                path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.55, 127.02)),
+                markers =
+                    listOf(
+                        StoredMarker(
+                            type = "cctv", lat = 37.5, lng = 127.0, x = 50.0, y = 50.0,
+                            name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
+                        ),
+                    ),
+                totalDistanceM = 1234,
+                totalTimeS = 900,
+            )
     }
 }

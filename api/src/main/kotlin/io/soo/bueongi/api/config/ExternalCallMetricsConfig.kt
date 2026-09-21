@@ -8,7 +8,6 @@ import java.time.Clock
 
 @Configuration
 class ExternalCallMetricsConfig {
-
     @Bean
     fun externalCallMetricsCustomizer(
         externalCallMetricStore: ExternalCallMetricStore,

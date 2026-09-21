@@ -1,5 +1,6 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.get
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Tag("context")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -19,11 +21,12 @@ class CdnResourceConfigTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
     companion object {
-        private val cdnDir: Path = Files.createTempDirectory("bueongi-cdn-test").also {
-            Files.createDirectories(it.resolve("police"))
-            Files.writeString(it.resolve("police/all.json"), """{"items":[{"id":"p1"}]}""")
-            Files.writeString(it.resolve("manifest.json"), """{"updated":"2026-07"}""")
-        }
+        private val cdnDir: Path =
+            Files.createTempDirectory("bueongi-cdn-test").also {
+                Files.createDirectories(it.resolve("police"))
+                Files.writeString(it.resolve("police/all.json"), """{"items":[{"id":"p1"}]}""")
+                Files.writeString(it.resolve("manifest.json"), """{"updated":"2026-07"}""")
+            }
 
         @JvmStatic
         @DynamicPropertySource

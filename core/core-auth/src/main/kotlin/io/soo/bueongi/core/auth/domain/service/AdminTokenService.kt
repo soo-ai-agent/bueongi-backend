@@ -1,15 +1,14 @@
 package io.soo.bueongi.core.auth.domain.service
 
-import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
-import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
-import io.soo.bueongi.core.auth.domain.model.AdminTokenBundle
-import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
-import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
-
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
+import io.soo.bueongi.core.auth.domain.config.AdminAuthProperties
+import io.soo.bueongi.core.auth.domain.error.AdminAuthenticationException
+import io.soo.bueongi.core.auth.domain.model.AdminTokenBundle
+import io.soo.bueongi.core.auth.domain.model.AdminTokenKind
+import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Clock
@@ -26,10 +25,11 @@ class AdminTokenService(
     private val publicKey: RSAPublicKey = keyMaterial.publicKey
     private val issuer: String = keyMaterial.issuer
 
-    private val tokenParser: JwtParser = Jwts.parser()
-        .verifyWith(publicKey)
-        .requireIssuer(issuer)
-        .build()
+    private val tokenParser: JwtParser =
+        Jwts.parser()
+            .verifyWith(publicKey)
+            .requireIssuer(issuer)
+            .build()
 
     fun issue(): AdminTokenBundle =
         AdminTokenBundle(
@@ -41,13 +41,14 @@ class AdminTokenService(
         )
 
     fun refresh(refreshToken: String): AdminTokenBundle {
-        val claims: Claims = try {
-            tokenParser.parseSignedClaims(refreshToken).payload
-        } catch (_: JwtException) {
-            throw AdminAuthenticationException()
-        } catch (_: IllegalArgumentException) {
-            throw AdminAuthenticationException()
-        }
+        val claims: Claims =
+            try {
+                tokenParser.parseSignedClaims(refreshToken).payload
+            } catch (_: JwtException) {
+                throw AdminAuthenticationException()
+            } catch (_: IllegalArgumentException) {
+                throw AdminAuthenticationException()
+            }
         val issuedToAdmin: Boolean = claims.subject == ADMIN_ID.toString()
         val isRefreshToken: Boolean = claims[TOKEN_KIND_CLAIM] == AdminTokenKind.REFRESH.name
         if (!issuedToAdmin || !isRefreshToken) {
@@ -56,7 +57,10 @@ class AdminTokenService(
         return issue()
     }
 
-    private fun createToken(kind: AdminTokenKind, lifetimeSeconds: Long): String {
+    private fun createToken(
+        kind: AdminTokenKind,
+        lifetimeSeconds: Long,
+    ): String {
         val issuedAt: Instant = clock.instant()
         return Jwts.builder()
             .issuer(issuer)

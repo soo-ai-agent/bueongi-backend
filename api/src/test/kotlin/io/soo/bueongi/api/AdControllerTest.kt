@@ -6,6 +6,7 @@ import io.soo.bueongi.storage.db.core.adevent.AdEvent
 import io.soo.bueongi.storage.db.core.adevent.AdEventStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -20,10 +21,10 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(AdController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdStatsService::class, ApiControllerAdvice::class, AdControllerTest.CapturingStoreConfig::class)
+@Tag("context")
 class AdControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @BeforeEach
     fun clearRecorded() {
         CapturingStoreConfig.recorded.clear()
@@ -71,13 +72,14 @@ class AdControllerTest(
     @TestConfiguration
     class CapturingStoreConfig {
         @Bean
-        fun adEventStore(): AdEventStore = object : AdEventStore {
-            override fun record(event: AdEvent) {
-                recorded += event
-            }
+        fun adEventStore(): AdEventStore =
+            object : AdEventStore {
+                override fun record(event: AdEvent) {
+                    recorded += event
+                }
 
-            override fun findRecent(limit: Int): List<AdEvent> = recorded
-        }
+                override fun findRecent(limit: Int): List<AdEvent> = recorded
+            }
 
         @Bean
         fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)

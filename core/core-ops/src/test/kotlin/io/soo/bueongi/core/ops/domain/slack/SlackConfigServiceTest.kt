@@ -1,25 +1,29 @@
 package io.soo.bueongi.core.ops.domain.slack
 
-import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
-import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
-
-import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.client.slack.SlackAlertConfig
-
 import io.soo.bueongi.core.ops.domain.error.InvalidSlackCategoryException
+import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
+import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class SlackConfigServiceTest {
-
     private val webhook: String = "https://hooks.slack.com/services/T00000000/B11111111/abcdefghijklmnop"
 
-    private fun notifier(sendTestResult: Boolean = false): AlertNotifier = object : AlertNotifier {
-        override val isEnabled: Boolean = false
-        override fun notify(key: String, title: String, detail: String) = Unit
-        override fun sendTest(): Boolean = sendTestResult
-    }
+    private fun notifier(sendTestResult: Boolean = false): AlertNotifier =
+        object : AlertNotifier {
+            override val isEnabled: Boolean = false
+
+            override fun notify(
+                key: String,
+                title: String,
+                detail: String,
+            ) = Unit
+
+            override fun sendTest(): Boolean = sendTestResult
+        }
 
     private fun service(
         url: String = webhook,
@@ -51,7 +55,11 @@ class SlackConfigServiceTest {
         val categories = svc.view().categories
 
         assertThat(categories.map { it.key }).containsExactly(
-            "api-500", "kakao-place-fallback", "tmap-route-fallback", "safetySpot-index-empty", "safetySpot-refresh",
+            "api-500",
+            "kakao-place-fallback",
+            "tmap-route-fallback",
+            "safetySpot-index-empty",
+            "safetySpot-refresh",
         )
         assertThat(categories.first { it.key == "api-500" }.label).isEqualTo("서버 오류(미처리 500)")
         assertThat(categories.all { !it.muted }).isTrue()
@@ -72,13 +80,14 @@ class SlackConfigServiceTest {
     fun `update - 토글·스로틀·뮤트를 반영한 요약을 돌려준다`() {
         val (svc, config) = service()
 
-        val updated = svc.update(
-            SlackConfigUpdate(
-                enabled = false,
-                throttleMinutes = 30,
-                mutedCategories = setOf("api-500", "safetySpot-refresh"),
-            ),
-        )
+        val updated =
+            svc.update(
+                SlackConfigUpdate(
+                    enabled = false,
+                    throttleMinutes = 30,
+                    mutedCategories = setOf("api-500", "safetySpot-refresh"),
+                ),
+            )
 
         assertThat(updated.enabled).isFalse()
         assertThat(updated.throttleMinutes).isEqualTo(30)

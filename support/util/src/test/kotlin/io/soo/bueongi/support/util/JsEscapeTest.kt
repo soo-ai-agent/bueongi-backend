@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class JsEscapeTest {
-
     @Test
     fun `따옴표는 리터럴을 닫지 못하게 탈출된다`() {
         assertThat(escapeForJs("""a"b""")).isEqualTo("""a\"b""")

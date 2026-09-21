@@ -17,18 +17,20 @@ class RedisJsonLogTest {
 
     private val listOps: ListOperations<String, String> = mock()
 
-    private val redis: StringRedisTemplate = mock<StringRedisTemplate>().also {
-        whenever(it.opsForList()).thenReturn(listOps)
-    }
+    private val redis: StringRedisTemplate =
+        mock<StringRedisTemplate>().also {
+            whenever(it.opsForList()).thenReturn(listOps)
+        }
 
-    private fun log(): RedisJsonLog<Item> = RedisJsonLog(
-        redis = redis,
-        objectMapper = jacksonObjectMapper(),
-        key = "testkey",
-        cap = 10,
-        type = Item::class.java,
-        label = "테스트 기록",
-    )
+    private fun log(): RedisJsonLog<Item> =
+        RedisJsonLog(
+            redis = redis,
+            objectMapper = jacksonObjectMapper(),
+            key = "testkey",
+            cap = 10,
+            type = Item::class.java,
+            label = "테스트 기록",
+        )
 
     @Test
     fun `push 는 JSON 으로 넣고 상한 만큼만 남기도록 자른다`() {

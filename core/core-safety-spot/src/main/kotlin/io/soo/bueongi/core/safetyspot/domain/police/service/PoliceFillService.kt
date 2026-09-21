@@ -7,10 +7,10 @@ import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class PoliceFillService(
@@ -24,8 +24,7 @@ class PoliceFillService(
 
     private val inFlight: AtomicBoolean = AtomicBoolean(false)
 
-    fun isFilled(): Boolean =
-        cache.isCached(SafetySpotType.POLICE, NATIONWIDE)
+    fun isFilled(): Boolean = cache.isCached(SafetySpotType.POLICE, NATIONWIDE)
 
     fun fill(): Int {
         if (!client.isEnabled) {

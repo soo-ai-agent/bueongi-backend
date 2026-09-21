@@ -2,7 +2,9 @@ package io.soo.bueongi.core.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-enum class ExternalApiProvider(@get:JsonValue val wireValue: String) {
+enum class ExternalApiProvider(
+    @get:JsonValue val wireValue: String,
+) {
     TMAP("tmap"),
     KAKAO("kakao"),
     DATA_GO_KR("data_go_kr"),

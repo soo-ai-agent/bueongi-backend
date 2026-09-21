@@ -32,7 +32,10 @@ class RegionSafetySpotStatusService(
         return rows
     }
 
-    fun findSpotsByCode(code: String, limit: Int): RegionSafetySpots {
+    fun findSpotsByCode(
+        code: String,
+        limit: Int,
+    ): RegionSafetySpots {
         if (limit <= 0) {
             throw InvalidSpotLimitException(limit)
         }
@@ -89,7 +92,10 @@ class RegionSafetySpotStatusService(
         return quotas
     }
 
-    private fun spreadEvenly(points: List<SafetySpotPoint>, quota: Int): List<SafetySpotPoint> {
+    private fun spreadEvenly(
+        points: List<SafetySpotPoint>,
+        quota: Int,
+    ): List<SafetySpotPoint> {
         if (quota >= points.size) {
             return points
         }
@@ -113,7 +119,10 @@ class RegionSafetySpotStatusService(
         return known
     }
 
-    private fun rowOf(code: String, tally: RegionTally): RegionSafetySpotCount {
+    private fun rowOf(
+        code: String,
+        tally: RegionTally,
+    ): RegionSafetySpotCount {
         val region: RegionName = regionNameOf(code)
         return RegionSafetySpotCount(
             code = code,
@@ -125,7 +134,10 @@ class RegionSafetySpotStatusService(
         )
     }
 
-    private fun centerOf(code: String, tally: RegionTally): GeoPoint? {
+    private fun centerOf(
+        code: String,
+        tally: RegionTally,
+    ): GeoPoint? {
         if (code == UNKNOWN_REGION) {
             return null
         }
@@ -138,7 +150,10 @@ class RegionSafetySpotStatusService(
         private var lngSum: Double = 0.0
         private var locatedCount: Int = 0
 
-        fun add(type: SafetySpotType, point: SafetySpotPoint) {
+        fun add(
+            type: SafetySpotType,
+            point: SafetySpotPoint,
+        ) {
             countsByType[type] = (countsByType[type] ?: 0) + 1
             if (!isInKorea(point.lat, point.lng)) {
                 return

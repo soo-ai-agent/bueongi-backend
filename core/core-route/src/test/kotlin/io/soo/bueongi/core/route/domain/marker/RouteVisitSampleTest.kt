@@ -16,6 +16,7 @@ class RouteVisitSampleTest {
 
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
+
         override fun publishEvent(event: Any) {
             events.add(event)
         }
@@ -33,7 +34,10 @@ class RouteVisitSampleTest {
         return points
     }
 
-    private fun straightPath(lngSpanDegrees: Double, vertexCount: Int): List<GeoPoint> {
+    private fun straightPath(
+        lngSpanDegrees: Double,
+        vertexCount: Int,
+    ): List<GeoPoint> {
         val points: ArrayList<GeoPoint> = ArrayList(vertexCount)
         for (index in 0 until vertexCount) {
             points.add(GeoPoint(37.5, 127.0 + lngSpanDegrees * index / (vertexCount - 1)))
@@ -68,9 +72,10 @@ class RouteVisitSampleTest {
         val visited: List<GeoPoint> = visitedPoints(path)
 
         val span: Double = path.last().lng - path.first().lng
-        val middle: List<GeoPoint> = visited.filter {
-            it.lng > path.first().lng + span / 3 && it.lng < path.first().lng + span * 2 / 3
-        }
+        val middle: List<GeoPoint> =
+            visited.filter {
+                it.lng > path.first().lng + span / 3 && it.lng < path.first().lng + span * 2 / 3
+            }
         assertThat(middle).isNotEmpty()
         assertThat(visited.last()).isEqualTo(path.last())
     }

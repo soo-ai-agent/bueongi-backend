@@ -22,13 +22,14 @@ class SafehouseClient(
     private companion object {
         const val ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api"
 
-        val FIELDS: DataGoKrFieldNames = DataGoKrFieldNames(
-            lat = listOf("latitude", "위도"),
-            lng = listOf("longitude", "경도"),
-            // institutionNm 은 관리 부서라 이름으로 쓰지 않는다.
-            name = listOf("storNm", "업소명", "점포명"),
-            address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"),
-            sigungu = emptyList(),
-        )
+        val FIELDS: DataGoKrFieldNames =
+            DataGoKrFieldNames(
+                lat = listOf("latitude", "위도"),
+                lng = listOf("longitude", "경도"),
+                // institutionNm 은 관리 부서라 이름으로 쓰지 않는다.
+                name = listOf("storNm", "업소명", "점포명"),
+                address = listOf("rdnmadr", "lnmadr", "소재지도로명주소"),
+                sigungu = emptyList(),
+            )
     }
 }

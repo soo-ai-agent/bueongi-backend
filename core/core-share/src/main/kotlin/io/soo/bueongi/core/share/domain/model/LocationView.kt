@@ -16,7 +16,6 @@ data class LocationView(
     val overdue: Boolean = false,
 ) {
     companion object {
-
         // 좌표 필드는 와이어 계약상 null 로 나간다.
         val EXPIRED = LocationView(lat = null, lng = null, updatedAt = null, expired = true)
 

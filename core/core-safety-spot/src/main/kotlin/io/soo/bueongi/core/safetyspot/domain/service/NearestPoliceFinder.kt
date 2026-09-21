@@ -1,12 +1,12 @@
 package io.soo.bueongi.core.safetyspot.domain.service
 
-import io.soo.bueongi.core.safetyspot.domain.model.SafetySpotWithDistance
-import io.soo.bueongi.core.safetyspot.domain.model.NearestPolice
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.core.safetyspot.domain.model.NearestPolice
+import io.soo.bueongi.core.safetyspot.domain.model.SafetySpotWithDistance
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 
@@ -14,7 +14,11 @@ import kotlin.math.roundToInt
 class NearestPoliceFinder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun findNearest(center: GeoPoint, radiusM: Double?, limit: Int?): List<NearestPolice> {
+    fun findNearest(
+        center: GeoPoint,
+        radiusM: Double?,
+        limit: Int?,
+    ): List<NearestPolice> {
         val radius: Double = (radiusM ?: DEFAULT_RADIUS_M).coerceIn(MIN_RADIUS_M, MAX_RADIUS_M)
         val maxResults: Int = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)
         val policeIndex: GridSpatialIndex = safetySpots.index(SafetySpotType.POLICE)

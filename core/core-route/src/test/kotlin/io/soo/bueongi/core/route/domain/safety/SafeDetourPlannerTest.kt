@@ -1,35 +1,35 @@
 package io.soo.bueongi.core.route.domain.safety
 
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SafeDetourPlannerTest {
-
     private val origin = GeoPoint(37.5, 127.0)
     private val dest = GeoPoint(37.5, 127.01)
     private val directPath = listOf(origin, dest)
 
     @Test
     fun `extractSafeAnchors - 밀집 클러스터를 weight 로 묶고 내림차순 상위 반환`() {
-        val cctvCluster = listOf(
-            GeoPoint(37.50002, 127.00500),
-            GeoPoint(37.50003, 127.00501),
-            GeoPoint(37.50001, 127.00502),
-        )
+        val cctvCluster =
+            listOf(
+                GeoPoint(37.50002, 127.00500),
+                GeoPoint(37.50003, 127.00501),
+                GeoPoint(37.50001, 127.00502),
+            )
         val bell = listOf(GeoPoint(37.5, 127.007))
-        val source = FakeSafetySpotSource(
-            mapOf(
-                SafetySpotType.CCTV to cctvCluster.map { SafetySpotPoint(SafetySpotType.CCTV, it.lat, it.lng) },
-                SafetySpotType.BELL to bell.map { SafetySpotPoint(SafetySpotType.BELL, it.lat, it.lng) },
-            ),
-        )
+        val source =
+            FakeSafetySpotSource(
+                mapOf(
+                    SafetySpotType.CCTV to cctvCluster.map { SafetySpotPoint(SafetySpotType.CCTV, it.lat, it.lng) },
+                    SafetySpotType.BELL to bell.map { SafetySpotPoint(SafetySpotType.BELL, it.lat, it.lng) },
+                ),
+            )
         val anchors = SafeDetourPlanner(source).extractSafeAnchors(directPath)
 
         assertThat(anchors).isNotEmpty

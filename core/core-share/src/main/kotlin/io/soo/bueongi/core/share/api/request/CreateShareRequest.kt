@@ -1,9 +1,8 @@
 package io.soo.bueongi.core.share.api.request
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.share.domain.model.MAX_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.MIN_EXPIRES_HOURS
-
-import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 

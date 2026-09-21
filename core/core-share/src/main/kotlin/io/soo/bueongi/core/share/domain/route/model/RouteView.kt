@@ -5,7 +5,6 @@ data class RouteView(
     val route: RouteContext?,
 ) {
     companion object {
-
         val EXPIRED = RouteView(expired = true, route = null)
     }
 }

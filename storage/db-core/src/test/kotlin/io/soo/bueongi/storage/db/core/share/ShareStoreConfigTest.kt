@@ -12,7 +12,6 @@ import org.springframework.core.type.AnnotatedTypeMetadata
 import org.springframework.mock.env.MockEnvironment
 
 class ShareStoreConfigTest {
-
     private val redisConfigured = RedisConfigured()
     private val redisNotConfigured = RedisNotConfigured()
     private val metadata = mock<AnnotatedTypeMetadata>()

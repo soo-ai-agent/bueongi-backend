@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class InMemoryRecentLogTest {
-
     @Test
     fun `push 후 readRecent 는 최신이 먼저다`() {
         val log = InMemoryRecentLog<Long>(cap = 10)

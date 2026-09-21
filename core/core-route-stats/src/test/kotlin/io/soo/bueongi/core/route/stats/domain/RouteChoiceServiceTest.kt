@@ -14,12 +14,13 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 class RouteChoiceServiceTest {
-
     private class RecordingStore(private val preset: List<RouteChoiceLog> = emptyList()) : RouteChoiceStore {
         val recorded: MutableList<RouteChoiceLog> = mutableListOf()
+
         override fun record(log: RouteChoiceLog) {
             recorded.add(log)
         }
+
         override fun findRecent(limit: Int): List<RouteChoiceLog> = preset.take(limit)
     }
 
@@ -95,8 +96,9 @@ class RouteChoiceServiceTest {
 
     @Test
     fun `byPreference 는 안심강도 3종 고정이고 없는 값은 0 이다`() {
-        val logs = List(2) { log(preference = SafetyPreference.SAFEST) } +
-            List(1) { log(preference = SafetyPreference.BALANCED) }
+        val logs =
+            List(2) { log(preference = SafetyPreference.SAFEST) } +
+                List(1) { log(preference = SafetyPreference.BALANCED) }
 
         val byPreference = RouteChoiceService(RecordingStore(logs), clock).summarize().byPreference
 

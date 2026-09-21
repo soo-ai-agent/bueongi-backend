@@ -28,7 +28,10 @@ class MissedArrivalWatchdog(
         }
     }
 
-    private fun alert(session: ShareSession, now: Instant) {
+    private fun alert(
+        session: ShareSession,
+        now: Instant,
+    ) {
         val expected: Instant = session.expectedArrivalAt ?: return
         val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
         val stoppedSeconds: Long? = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
@@ -42,8 +45,6 @@ class MissedArrivalWatchdog(
     }
 
     private companion object {
-        fun maskToken(token: String): String =
-            token.take(6) + "…"
+        fun maskToken(token: String): String = token.take(6) + "…"
     }
 }
-

@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RestController
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RequestMapping("/api/admin")
 class AdminIdentityController {
-
     @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentityResponse =
-        AdminIdentityResponse.from(authentication)
+    fun me(authentication: Authentication): AdminIdentityResponse = AdminIdentityResponse.from(authentication)
 }

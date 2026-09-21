@@ -15,7 +15,6 @@ class HealthController(
     @Value("\${spring.application.name}")
     private val serviceName: String,
 ) {
-
     @GetMapping
     fun health(): HealthStatus {
         return HealthStatus(

@@ -1,6 +1,5 @@
 package io.soo.bueongi.api
 
-import ch.qos.logback.classic.Logger as LogbackLogger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.api.config.ExternalCallMetricsInterceptor
@@ -26,21 +25,25 @@ import java.net.URI
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import ch.qos.logback.classic.Logger as LogbackLogger
 
 class ExternalCallMetricsInterceptorTest {
-
     private class CapturingStore : ExternalCallMetricStore {
         val recorded: MutableList<ExternalCallMetric> = mutableListOf()
+
         override fun record(metric: ExternalCallMetric) {
             recorded.add(metric)
         }
+
         override fun findRecent(limit: Int): List<ExternalCallMetric> = recorded
     }
 
     private val clock: Clock = Clock.fixed(Instant.parse("2026-08-22T03:00:00Z"), ZoneOffset.UTC)
 
-    private fun requestTo(url: String, method: HttpMethod = HttpMethod.GET): MockClientHttpRequest =
-        MockClientHttpRequest(method, URI.create(url))
+    private fun requestTo(
+        url: String,
+        method: HttpMethod = HttpMethod.GET,
+    ): MockClientHttpRequest = MockClientHttpRequest(method, URI.create(url))
 
     private fun executionReturning(status: HttpStatus): ClientHttpRequestExecution =
         ClientHttpRequestExecution { _, _ -> MockClientHttpResponse(ByteArray(0), status) }
@@ -66,7 +69,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val metric: ExternalCallMetric = store.recorded.single()
@@ -84,7 +88,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE&pageNo=3"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -97,15 +102,16 @@ class ExternalCallMetricsInterceptorTest {
     fun `원천마다 다른 이름으로 갈린다`() {
         val store = CapturingStore()
         val interceptor = ExternalCallMetricsInterceptor(store, clock)
-        val hosts: Map<String, ExternalApiProvider> = mapOf(
-            "https://dapi.kakao.com/v2/local/search/keyword.json" to ExternalApiProvider.KAKAO,
-            "https://www.safetydata.go.kr/V2/api/DSSP-IF-00084" to ExternalApiProvider.SAFETYDATA,
-            "https://www.safemap.go.kr/openApiService/data/getPoliceData.do" to ExternalApiProvider.SAFEMAP,
-            "https://www.safe182.go.kr/api/lcm/openApi.do" to ExternalApiProvider.SAFE182,
-            "https://hooks.slack.com/services/T000/B000/xxx" to ExternalApiProvider.SLACK,
-            "https://apis.data.go.kr/1741000/y" to ExternalApiProvider.DATA_GO_KR,
-            "https://example.invalid/whatever" to ExternalApiProvider.UNKNOWN,
-        )
+        val hosts: Map<String, ExternalApiProvider> =
+            mapOf(
+                "https://dapi.kakao.com/v2/local/search/keyword.json" to ExternalApiProvider.KAKAO,
+                "https://www.safetydata.go.kr/V2/api/DSSP-IF-00084" to ExternalApiProvider.SAFETYDATA,
+                "https://www.safemap.go.kr/openApiService/data/getPoliceData.do" to ExternalApiProvider.SAFEMAP,
+                "https://www.safe182.go.kr/api/lcm/openApi.do" to ExternalApiProvider.SAFE182,
+                "https://hooks.slack.com/services/T000/B000/xxx" to ExternalApiProvider.SLACK,
+                "https://apis.data.go.kr/1741000/y" to ExternalApiProvider.DATA_GO_KR,
+                "https://example.invalid/whatever" to ExternalApiProvider.UNKNOWN,
+            )
 
         for (url in hosts.keys) {
             interceptor.intercept(requestTo(url), ByteArray(0), executionReturning(HttpStatus.OK))
@@ -138,7 +144,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://dapi.kakao.com/v2/local/search/keyword.json"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -158,7 +165,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://dapi.kakao.com/v2/local/search/keyword.json"),
-            ByteArray(0), executionReturning(HttpStatus.TOO_MANY_REQUESTS),
+            ByteArray(0),
+            executionReturning(HttpStatus.TOO_MANY_REQUESTS),
         )
 
         assertThat(appender.list.single().level.toString()).isEqualTo("WARN")
@@ -172,12 +180,14 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
         beginTrace("POST /api/routes")
         interceptor.intercept(
             requestTo("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         assertThat(appender.list[0].formattedMessage).contains("↩ 배치")
@@ -193,7 +203,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE&pageNo=3&numOfRows=1000"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -209,7 +220,8 @@ class ExternalCallMetricsInterceptorTest {
 
         interceptor.intercept(
             requestTo("https://apis.data.go.kr/1741000/x?pageNo=SECRET-KEY-VALUE"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val line: String = appender.list.single().formattedMessage
@@ -220,16 +232,18 @@ class ExternalCallMetricsInterceptorTest {
     @Test
     fun `실패 사유는 원인 사슬로 적되 URL 의 질의 문자열은 지운다`() {
         val appender = captureLogs()
-        val hidden = IOException(
-            """connect timed out: https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE""",
-            IllegalStateException("소켓이 닫혔다"),
-        )
+        val hidden =
+            IOException(
+                """connect timed out: https://apis.data.go.kr/1741000/x?serviceKey=SECRET-KEY-VALUE""",
+                IllegalStateException("소켓이 닫혔다"),
+            )
         val interceptor = ExternalCallMetricsInterceptor(CapturingStore(), clock)
 
         assertThrows<IOException> {
             interceptor.intercept(
                 requestTo("https://apis.data.go.kr/1741000/x"),
-                ByteArray(0), ClientHttpRequestExecution { _, _ -> throw hidden },
+                ByteArray(0),
+                ClientHttpRequestExecution { _, _ -> throw hidden },
             )
         }
 
@@ -242,14 +256,17 @@ class ExternalCallMetricsInterceptorTest {
     @Test
     fun `계측 저장 실패는 예외 줄로 남긴다`() {
         val appender = captureLogs()
-        val brokenStore = object : ExternalCallMetricStore {
-            override fun record(metric: ExternalCallMetric) = throw IllegalStateException("저장 불가")
-            override fun findRecent(limit: Int): List<ExternalCallMetric> = emptyList()
-        }
+        val brokenStore =
+            object : ExternalCallMetricStore {
+                override fun record(metric: ExternalCallMetric) = throw IllegalStateException("저장 불가")
+
+                override fun findRecent(limit: Int): List<ExternalCallMetric> = emptyList()
+            }
 
         ExternalCallMetricsInterceptor(brokenStore, clock).intercept(
             requestTo("https://apis.openapi.sk.com/tmap/x"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
+            ByteArray(0),
+            executionReturning(HttpStatus.OK),
         )
 
         val exceptionLine: String = appender.list.last().formattedMessage
@@ -259,16 +276,20 @@ class ExternalCallMetricsInterceptorTest {
 
     @Test
     fun `계측 저장이 실패해도 외부 호출 결과는 그대로 돌려준다`() {
-        val brokenStore = object : ExternalCallMetricStore {
-            override fun record(metric: ExternalCallMetric) = throw IllegalStateException("저장 불가")
-            override fun findRecent(limit: Int): List<ExternalCallMetric> = emptyList()
-        }
+        val brokenStore =
+            object : ExternalCallMetricStore {
+                override fun record(metric: ExternalCallMetric) = throw IllegalStateException("저장 불가")
+
+                override fun findRecent(limit: Int): List<ExternalCallMetric> = emptyList()
+            }
         val interceptor = ExternalCallMetricsInterceptor(brokenStore, clock)
 
-        val response: ClientHttpResponse = interceptor.intercept(
-            requestTo("https://apis.openapi.sk.com/tmap/x"),
-            ByteArray(0), executionReturning(HttpStatus.OK),
-        )
+        val response: ClientHttpResponse =
+            interceptor.intercept(
+                requestTo("https://apis.openapi.sk.com/tmap/x"),
+                ByteArray(0),
+                executionReturning(HttpStatus.OK),
+            )
 
         assertThat(response.statusCode.value()).isEqualTo(200)
     }

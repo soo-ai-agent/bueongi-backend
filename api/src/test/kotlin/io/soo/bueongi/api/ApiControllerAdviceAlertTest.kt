@@ -1,20 +1,18 @@
 package io.soo.bueongi.api
 
-
 import io.soo.bueongi.core.common.event.OperationEvent
-import org.springframework.context.ApplicationEventPublisher
-
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 
 class ApiControllerAdviceAlertTest {
-
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
+
         override fun publishEvent(event: Any) {
             events.add(event)
         }
@@ -45,9 +43,10 @@ class ApiControllerAdviceAlertTest {
         val notifier = RecordingPublisher()
         val advice = ApiControllerAdvice(ApiEventPublisher(notifier))
 
-        val response = advice.handleShareStoreUnavailable(
-            LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
-        )
+        val response =
+            advice.handleShareStoreUnavailable(
+                LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
+            )
 
         assertThat(notifier.events).hasSize(1)
         assertThat((notifier.events[0] as OperationEvent).key).isEqualTo("share-store-unavailable")

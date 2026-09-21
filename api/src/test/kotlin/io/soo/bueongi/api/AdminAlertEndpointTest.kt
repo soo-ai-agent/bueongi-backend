@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ops.api.controller.AlertController
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.get
 @WebMvcTest(AlertController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Tag("context")
 class AdminAlertEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {

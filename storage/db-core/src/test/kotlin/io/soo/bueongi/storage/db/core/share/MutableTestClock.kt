@@ -10,7 +10,9 @@ class MutableTestClock(
     private val zone: ZoneId = ZoneOffset.UTC,
 ) : Clock() {
     override fun instant(): Instant = now
+
     override fun getZone(): ZoneId = zone
+
     override fun withZone(z: ZoneId): Clock = MutableTestClock(now, z)
 
     fun advanceSeconds(seconds: Long) {

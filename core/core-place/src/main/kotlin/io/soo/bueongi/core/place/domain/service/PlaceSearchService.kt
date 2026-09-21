@@ -1,8 +1,7 @@
 package io.soo.bueongi.core.place.domain.service
 
-import io.soo.bueongi.core.place.domain.model.PlaceItem
-
 import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
+import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.causeChainOf

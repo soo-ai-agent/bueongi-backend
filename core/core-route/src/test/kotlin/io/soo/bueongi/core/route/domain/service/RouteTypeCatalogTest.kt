@@ -1,13 +1,10 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.enums.RouteType
-
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteTypeCatalogTest {
-
     private val catalog = RouteTypeCatalog()
 
     @Test

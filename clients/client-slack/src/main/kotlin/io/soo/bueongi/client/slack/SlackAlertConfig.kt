@@ -8,7 +8,6 @@ class SlackAlertConfig(
     @Value("\${bueongi.alert.slack-webhook-url:}") webhookUrl: String,
     @Value("\${bueongi.alert.throttle-minutes:10}") throttleMinutes: Int,
 ) {
-
     private val webhook: String = webhookUrl.trim()
 
     @Volatile
@@ -20,27 +19,20 @@ class SlackAlertConfig(
     @Volatile
     private var mutedCategorySet: Set<String> = emptySet()
 
-    fun webhookConfigured(): Boolean =
-        webhook.isNotEmpty()
+    fun webhookConfigured(): Boolean = webhook.isNotEmpty()
 
-    fun enabled(): Boolean =
-        masterEnabled
+    fun enabled(): Boolean = masterEnabled
 
-    fun throttleMinutes(): Int =
-        throttleMinutesValue
+    fun throttleMinutes(): Int = throttleMinutesValue
 
-    fun mutedCategories(): Set<String> =
-        mutedCategorySet
+    fun mutedCategories(): Set<String> = mutedCategorySet
 
-    fun sendEnabled(): Boolean =
-        webhookConfigured() && masterEnabled
+    fun sendEnabled(): Boolean = webhookConfigured() && masterEnabled
 
-    fun throttleMillis(): Long =
-        throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
+    fun throttleMillis(): Long = throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
 
     // 발송 전용 원문 — 응답·로그·예외 어디에도 노출 금지.
-    fun webhookUrl(): String =
-        webhook
+    fun webhookUrl(): String = webhook
 
     fun isMuted(key: String): Boolean {
         val category: String = key.substringBefore(DELIMITER)
@@ -54,7 +46,11 @@ class SlackAlertConfig(
         return maskWebhook(webhook)
     }
 
-    fun update(enabled: Boolean, throttleMinutes: Int, mutedCategories: Set<String>) {
+    fun update(
+        enabled: Boolean,
+        throttleMinutes: Int,
+        mutedCategories: Set<String>,
+    ) {
         require(throttleMinutes in MIN_THROTTLE_MINUTES..MAX_THROTTLE_MINUTES) {
             "throttleMinutes 는 $MIN_THROTTLE_MINUTES..$MAX_THROTTLE_MINUTES 여야 합니다."
         }
@@ -69,24 +65,25 @@ class SlackAlertConfig(
             return conservativeMask(url)
         }
         val prefix: String = url.take(markerIndex + SERVICES_MARKER.length)
-        val segments: List<String> = url.drop(markerIndex + SERVICES_MARKER.length)
-            .split("/")
-            .filter { it.isNotEmpty() }
+        val segments: List<String> =
+            url.drop(markerIndex + SERVICES_MARKER.length)
+                .split("/")
+                .filter { it.isNotEmpty() }
         if (segments.isEmpty()) {
             return conservativeMask(url)
         }
-        val maskedSegments: List<String> = segments.mapIndexed { index, segment ->
-            if (index == segments.lastIndex) {
-                MASK
-            } else {
-                segment.take(1) + MASK
+        val maskedSegments: List<String> =
+            segments.mapIndexed { index, segment ->
+                if (index == segments.lastIndex) {
+                    MASK
+                } else {
+                    segment.take(1) + MASK
+                }
             }
-        }
         return prefix + maskedSegments.joinToString("/")
     }
 
-    private fun conservativeMask(url: String): String =
-        url.take(CONSERVATIVE_PREFIX_LENGTH) + MASK
+    private fun conservativeMask(url: String): String = url.take(CONSERVATIVE_PREFIX_LENGTH) + MASK
 
     companion object {
         // 요청 DTO 의 @Min/@Max 와 같은 경계를 유지해야 한다.

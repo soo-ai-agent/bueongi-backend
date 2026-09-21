@@ -1,8 +1,7 @@
 package io.soo.bueongi.core.share.api.request
 
-import io.soo.bueongi.core.share.domain.model.LocationReport
-
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.soo.bueongi.core.share.domain.model.LocationReport
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
@@ -10,10 +9,12 @@ import jakarta.validation.constraints.NotNull
 
 data class UpdateLocationRequest(
     @field:NotNull
-    @field:DecimalMin("-90.0") @field:DecimalMax("90.0")
+    @field:DecimalMin("-90.0")
+    @field:DecimalMax("90.0")
     val lat: Double?,
     @field:NotNull
-    @field:DecimalMin("-180.0") @field:DecimalMax("180.0")
+    @field:DecimalMin("-180.0")
+    @field:DecimalMax("180.0")
     val lng: Double?,
     @field:NotBlank
     @param:JsonProperty("owner_secret")

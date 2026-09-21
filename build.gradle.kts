@@ -5,6 +5,7 @@ plugins {
     kotlin("plugin.spring") apply false
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1" apply false
 }
 
 java.sourceCompatibility = JavaVersion.valueOf("VERSION_${property("javaVersion")}")
@@ -23,6 +24,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -46,5 +48,12 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+    }
+
+    // 스프링 컨텍스트 없이 도는 것만 — 태그 붙은 것은 제외한다
+    tasks.register<Test>("unitTest") {
+        useJUnitPlatform {
+            excludeTags("context")
+        }
     }
 }

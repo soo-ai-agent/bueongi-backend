@@ -14,7 +14,6 @@ class RedisJsonLog<T : Any>(
     private val type: Class<T>,
     private val label: String,
 ) {
-
     private val log: Logger = LoggerFactory.getLogger(RedisJsonLog::class.java)
 
     fun push(item: T) {
@@ -27,12 +26,13 @@ class RedisJsonLog<T : Any>(
     }
 
     fun readRecent(): List<T> {
-        val raw: List<String> = try {
-            redis.opsForList().range(key, 0, -1).orEmpty()
-        } catch (e: Exception) {
-            log.warn("{} 조회 실패: {}", label, e.message)
-            return emptyList()
-        }
+        val raw: List<String> =
+            try {
+                redis.opsForList().range(key, 0, -1).orEmpty()
+            } catch (e: Exception) {
+                log.warn("{} 조회 실패: {}", label, e.message)
+                return emptyList()
+            }
         val parsed: ArrayList<T> = ArrayList()
         for (json in raw) {
             try {

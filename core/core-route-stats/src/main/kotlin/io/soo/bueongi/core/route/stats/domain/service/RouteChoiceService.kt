@@ -18,7 +18,6 @@ class RouteChoiceService(
     private val routeChoiceStore: RouteChoiceStore,
     private val clock: Clock,
 ) {
-
     fun record(choice: RouteChoice) {
         routeChoiceStore.record(
             RouteChoiceLog(

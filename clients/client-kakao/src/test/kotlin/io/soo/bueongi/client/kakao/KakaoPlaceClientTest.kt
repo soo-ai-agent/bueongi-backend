@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.web.client.RestClient
 
 class KakaoPlaceClientTest {
-
-    private fun provider(apiKey: String) =
-        KakaoPlaceClient(apiKey = apiKey, restClientBuilder = RestClient.builder())
+    private fun provider(apiKey: String) = KakaoPlaceClient(apiKey = apiKey, restClientBuilder = RestClient.builder())
 
     @Test
     fun `키 미설정이면 isEnabled=false`() {
@@ -29,26 +27,28 @@ class KakaoPlaceClientTest {
 
     @Test
     fun `문서 매핑 - 도로명주소 우선`() {
-        val doc = KakaoPlaceDocument(
-            placeName = "강남역",
-            roadAddressName = "서울 강남구 강남대로 396",
-            addressName = "서울 강남구 역삼동 858",
-            lng = "127.0276",
-            lat = "37.4979",
-        )
+        val doc =
+            KakaoPlaceDocument(
+                placeName = "강남역",
+                roadAddressName = "서울 강남구 강남대로 396",
+                addressName = "서울 강남구 역삼동 858",
+                lng = "127.0276",
+                lat = "37.4979",
+            )
         assertThat(doc.toKakaoPlace())
             .isEqualTo(KakaoPlace("강남역", "서울 강남구 강남대로 396", 37.4979, 127.0276))
     }
 
     @Test
     fun `문서 매핑 - 도로명주소 없으면 지번주소로 폴백`() {
-        val doc = KakaoPlaceDocument(
-            placeName = "어떤장소",
-            roadAddressName = "",
-            addressName = "서울 강남구 역삼동 858",
-            lng = "127.0",
-            lat = "37.5",
-        )
+        val doc =
+            KakaoPlaceDocument(
+                placeName = "어떤장소",
+                roadAddressName = "",
+                addressName = "서울 강남구 역삼동 858",
+                lng = "127.0",
+                lat = "37.5",
+            )
         assertThat(doc.toKakaoPlace()?.address).isEqualTo("서울 강남구 역삼동 858")
     }
 

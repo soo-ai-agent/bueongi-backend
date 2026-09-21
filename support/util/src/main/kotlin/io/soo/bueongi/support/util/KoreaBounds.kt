@@ -1,6 +1,9 @@
 package io.soo.bueongi.support.util
 
-fun isInKorea(lat: Double, lng: Double): Boolean {
+fun isInKorea(
+    lat: Double,
+    lng: Double,
+): Boolean {
     val bothFinite: Boolean = lat.isFinite() && lng.isFinite()
     val inLatitudeRange: Boolean = lat in MIN_LAT..MAX_LAT
     val inLongitudeRange: Boolean = lng in MIN_LNG..MAX_LNG

@@ -11,12 +11,13 @@ data class ExceptionLogLine(
     val paging: String = "",
 ) {
     fun format(): String {
-        val columns: MutableList<String> = mutableListOf(
-            padColumn("$EXCEPTION_DIRECTION $kind", DIRECTION_COLUMN_WIDTH),
-            padColumn(counterpart, COUNTERPART_COLUMN_WIDTH),
-            padColumn(result, STATUS_COLUMN_WIDTH),
-            padColumn(subject, TARGET_COLUMN_WIDTH),
-        )
+        val columns: MutableList<String> =
+            mutableListOf(
+                padColumn("$EXCEPTION_DIRECTION $kind", DIRECTION_COLUMN_WIDTH),
+                padColumn(counterpart, COUNTERPART_COLUMN_WIDTH),
+                padColumn(result, STATUS_COLUMN_WIDTH),
+                padColumn(subject, TARGET_COLUMN_WIDTH),
+            )
         val trace: String = traceColumn()
         if (trace.isNotEmpty()) {
             columns.add(trace)

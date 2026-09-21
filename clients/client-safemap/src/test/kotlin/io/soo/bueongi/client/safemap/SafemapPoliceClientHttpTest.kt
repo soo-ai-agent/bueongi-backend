@@ -14,7 +14,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.RestClient
 
 class SafemapPoliceClientHttpTest {
-
     private val serviceKey: String = "safemap%2Fkey"
 
     private val baseUrl: String = "https://safemap.go.kr"
@@ -30,13 +29,14 @@ class SafemapPoliceClientHttpTest {
     fun `정상 - EPSG3857 x·y 를 WGS84 로 변환하고 관서명·주소·전화·시군구를 매핑한다`() {
         val (client, server) = bind()
         val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
-        val body: String = """
+        val body: String =
+            """
             {"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
              "body":{"totalCount":1,"items":{"item":[
                {"objt_id":"1.0","fclty_ty":"지구대","fclty_nm":"역삼지구대",
                 "rn_adres":"서울 강남구 테헤란로 1","telno":"02-000-0000","sgg_cd":"11680",
                 "adres":"-","tmp_x":"0.0","tmp_y":"0.0","x":"$x","y":"$y"}]}}}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString("$baseUrl/openapi2/IF_0036?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
@@ -57,12 +57,13 @@ class SafemapPoliceClientHttpTest {
     fun `정상 - 좌표를 0 으로 채워 보낸 행은 버린다`() {
         val (client, server) = bind()
         val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
-        val body: String = """
+        val body: String =
+            """
             {"header":{"resultCode":"00"},
              "body":{"totalCount":2,"items":{"item":[
                {"fclty_nm":"좌표없음파출소","rn_adres":"전북 김제시 지평선로 1748","x":"0.0","y":"0.0"},
                {"fclty_nm":"역삼지구대","rn_adres":"서울 강남구 테헤란로 1","x":"$x","y":"$y"}]}}}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
@@ -76,12 +77,13 @@ class SafemapPoliceClientHttpTest {
     fun `정상 - 값 없음을 뜻하는 하이픈은 null 로 정규화한다`() {
         val (client, server) = bind()
         val (x, y) = Epsg3857.fromWgs84(lat = 37.4981, lng = 127.0276)
-        val body: String = """
+        val body: String =
+            """
             {"header":{"resultCode":"00"},
              "body":{"totalCount":1,"items":{"item":[
                {"fclty_nm":"무인치안센터","rn_adres":"서울 강남구 테헤란로 1","telno":"-",
                 "adres":"-","sgg_cd":"-","x":"$x","y":"$y"}]}}}
-        """.trimIndent()
+            """.trimIndent()
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 

@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.share.api.controller.ShareAdminController
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.get
 @WebMvcTest(ShareAdminController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Tag("context")
 class AdminShareEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
@@ -23,6 +25,7 @@ class AdminShareEndpointTest(
                 jsonPath("$.activeSessions") { value(3) }
             }
     }
+
     @Test
     fun `share-sessions 는 활성 공유 목록을 계약 형태로 반환한다`() {
         mockMvc.get("/api/admin/share-sessions")
@@ -45,6 +48,7 @@ class AdminShareEndpointTest(
                 jsonPath("$.sessions[0].route") { doesNotExist() }
             }
     }
+
     @Test
     fun `share-sessions token location 은 200 과 snake_case LocationView 를 반환한다`() {
         mockMvc.get("/api/admin/share-sessions/tok0/location")
@@ -60,6 +64,7 @@ class AdminShareEndpointTest(
                 jsonPath("$.updatedAt") { doesNotExist() }
             }
     }
+
     @Test
     fun `share-sessions token location 반복 열람은 viewerActive 를 올리지 않는다(비집계)`() {
         repeat(3) {
@@ -72,6 +77,7 @@ class AdminShareEndpointTest(
                 jsonPath("$.sessions[0].viewerActive") { value(false) }
             }
     }
+
     @Test
     fun `없는 token 의 share-sessions location 은 200 expired=true(공개 조회와 동일 규약)`() {
         mockMvc.get("/api/admin/share-sessions/does-not-exist/location")

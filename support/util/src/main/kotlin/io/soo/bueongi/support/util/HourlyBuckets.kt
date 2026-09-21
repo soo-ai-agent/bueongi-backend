@@ -5,9 +5,10 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 fun countByHour(timestampsMs: List<Long>): List<HourlyBucket> {
-    val currentHour: ZonedDateTime = Instant.ofEpochMilli(System.currentTimeMillis())
-        .atZone(SERVICE_ZONE)
-        .truncatedTo(ChronoUnit.HOURS)
+    val currentHour: ZonedDateTime =
+        Instant.ofEpochMilli(System.currentTimeMillis())
+            .atZone(SERVICE_ZONE)
+            .truncatedTo(ChronoUnit.HOURS)
     val buckets: ArrayList<HourlyBucket> = ArrayList()
     for (hoursAgo in HOURLY_BUCKET_COUNT - 1 downTo 0) {
         val bucketStart: ZonedDateTime = currentHour.minusHours(hoursAgo.toLong())

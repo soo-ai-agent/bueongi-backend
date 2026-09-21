@@ -8,8 +8,8 @@ import io.soo.bueongi.support.logging.LOG_COLUMN_SEPARATOR
 import io.soo.bueongi.support.logging.NO_RESPONSE_STATUS
 import io.soo.bueongi.support.logging.OUTBOUND_DIRECTION
 import io.soo.bueongi.support.logging.STATUS_COLUMN_WIDTH
-import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.TARGET_COLUMN_WIDTH
+import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.padColumn
 import io.soo.bueongi.support.logging.traceColumn
 
@@ -23,13 +23,14 @@ data class ExternalCallLogLine(
     val paging: String = "",
 ) {
     fun format(): String {
-        val columns: MutableList<String> = mutableListOf(
-            padColumn(OUTBOUND_DIRECTION, DIRECTION_COLUMN_WIDTH),
-            padColumn(provider, COUNTERPART_COLUMN_WIDTH),
-            padColumn(statusText(), STATUS_COLUMN_WIDTH),
-            padColumn(endpoint, TARGET_COLUMN_WIDTH),
-            "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
-        )
+        val columns: MutableList<String> =
+            mutableListOf(
+                padColumn(OUTBOUND_DIRECTION, DIRECTION_COLUMN_WIDTH),
+                padColumn(provider, COUNTERPART_COLUMN_WIDTH),
+                padColumn(statusText(), STATUS_COLUMN_WIDTH),
+                padColumn(endpoint, TARGET_COLUMN_WIDTH),
+                "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
+            )
         val trace: String = traceColumn()
         if (trace.isNotEmpty()) {
             columns.add(trace)

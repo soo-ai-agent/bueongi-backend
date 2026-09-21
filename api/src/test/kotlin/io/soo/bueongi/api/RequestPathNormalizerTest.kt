@@ -1,12 +1,10 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.api.config.normalizeRequestPath
-
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RequestPathNormalizerTest {
-
     @Test
     fun `share 토큰과 하위 액션의 토큰 세그먼트를 치환한다`() {
         assertThat(normalizeRequestPath("/share/abc123")).isEqualTo("/share/{token}")

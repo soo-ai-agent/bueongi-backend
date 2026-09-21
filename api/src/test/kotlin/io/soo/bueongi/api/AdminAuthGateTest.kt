@@ -2,6 +2,7 @@ package io.soo.bueongi.api
 
 import io.jsonwebtoken.Jwts
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -18,14 +19,17 @@ import java.util.Base64
 import java.util.Date
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Tag("context")
 class AdminAuthGateTest(
     @param:Autowired private val restTemplate: TestRestTemplate,
     @param:LocalServerPort private val port: Int,
 ) {
-
     private fun url(path: String) = "http://localhost:$port$path"
 
-    private fun get(path: String, token: String? = null): org.springframework.http.ResponseEntity<String> {
+    private fun get(
+        path: String,
+        token: String? = null,
+    ): org.springframework.http.ResponseEntity<String> {
         val headers = HttpHeaders()
         if (token != null) {
             headers.setBearerAuth(token)
@@ -80,7 +84,10 @@ class AdminAuthGateTest(
             }
         }
 
-        private fun token(subject: String = "1", roles: List<String>): String =
+        private fun token(
+            subject: String = "1",
+            roles: List<String>,
+        ): String =
             Jwts.builder()
                 .issuer("bueongi")
                 .subject(subject)

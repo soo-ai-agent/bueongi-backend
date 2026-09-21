@@ -18,7 +18,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.RestClient
 
 class KakaoPlaceClientHttpTest {
-
     private val apiKey: String = "test-rest-key"
 
     private fun bind(): Pair<KakaoPlaceClient, MockRestServiceServer> {

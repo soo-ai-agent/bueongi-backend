@@ -12,7 +12,6 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-import java.nio.file.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -21,25 +20,34 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.nio.file.Path
 
 class SecurityLampFillServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
-        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun replace(
+            type: SafetySpotType,
+            points: List<SafetySpotPoint>,
+        ): Int {
             appended.clear()
             appended.addAll(points)
             return points.size
         }
 
-        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun append(
+            type: SafetySpotType,
+            points: List<SafetySpotPoint>,
+        ): Int {
             appended.addAll(points)
             return points.size
         }
     }
 
     @Test
-    fun `CSV 로 이미 적재된 자치단체는 API 를 부르지 않는다`(@TempDir dir: Path) {
+    fun `CSV 로 이미 적재된 자치단체는 API 를 부르지 않는다`(
+        @TempDir dir: Path,
+    ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
 
@@ -50,7 +58,9 @@ class SecurityLampFillServiceTest {
     }
 
     @Test
-    fun `없는 자치단체는 받아서 인덱스에 더한다`(@TempDir dir: Path) {
+    fun `없는 자치단체는 받아서 인덱스에 더한다`(
+        @TempDir dir: Path,
+    ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetch(any())).thenReturn(

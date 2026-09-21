@@ -15,13 +15,14 @@ fun providerOfHost(host: String?): ExternalApiProvider {
     return ExternalApiProvider.UNKNOWN
 }
 
-private val HOST_MARKERS_IN_MATCH_ORDER: List<Pair<String, ExternalApiProvider>> = listOf(
-    // Tmap 의 실제 호스트에는 tmap 이 들어가지 않는다.
-    "openapi.sk.com" to ExternalApiProvider.TMAP,
-    "kakao" to ExternalApiProvider.KAKAO,
-    "safetydata" to ExternalApiProvider.SAFETYDATA,
-    "safemap" to ExternalApiProvider.SAFEMAP,
-    "safe182" to ExternalApiProvider.SAFE182,
-    "slack" to ExternalApiProvider.SLACK,
-    "data.go.kr" to ExternalApiProvider.DATA_GO_KR,
-)
+private val HOST_MARKERS_IN_MATCH_ORDER: List<Pair<String, ExternalApiProvider>> =
+    listOf(
+        // Tmap 의 실제 호스트에는 tmap 이 들어가지 않는다.
+        "openapi.sk.com" to ExternalApiProvider.TMAP,
+        "kakao" to ExternalApiProvider.KAKAO,
+        "safetydata" to ExternalApiProvider.SAFETYDATA,
+        "safemap" to ExternalApiProvider.SAFEMAP,
+        "safe182" to ExternalApiProvider.SAFE182,
+        "slack" to ExternalApiProvider.SLACK,
+        "data.go.kr" to ExternalApiProvider.DATA_GO_KR,
+    )

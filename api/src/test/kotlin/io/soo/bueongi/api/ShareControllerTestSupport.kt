@@ -1,12 +1,12 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.share.MutableTestClock
-import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.core.share.api.controller.GuardianPage
 import io.soo.bueongi.core.share.api.controller.ShareController
-
+import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
 import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import org.junit.jupiter.api.Tag
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -22,8 +22,8 @@ import org.springframework.test.web.servlet.post
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ShareControllerTestSupport.ShareTestConfig::class, GuardianPage::class)
 @ActiveProfiles("test")
+@Tag("context")
 abstract class ShareControllerTestSupport {
-
     @Autowired
     protected lateinit var mockMvc: MockMvc
 
@@ -31,18 +31,20 @@ abstract class ShareControllerTestSupport {
     protected lateinit var clock: MutableTestClock
 
     protected fun createShare(body: String = "{}"): String {
-        val response: String = mockMvc.post("/share/create") {
-            contentType = MediaType.APPLICATION_JSON
-            content = body
-        }.andReturn().response.contentAsString
+        val response: String =
+            mockMvc.post("/share/create") {
+                contentType = MediaType.APPLICATION_JSON
+                content = body
+            }.andReturn().response.contentAsString
         return Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
     }
 
     protected fun createSharePair(body: String = "{}"): Pair<String, String> {
-        val response: String = mockMvc.post("/share/create") {
-            contentType = MediaType.APPLICATION_JSON
-            content = body
-        }.andReturn().response.contentAsString
+        val response: String =
+            mockMvc.post("/share/create") {
+                contentType = MediaType.APPLICATION_JSON
+                content = body
+            }.andReturn().response.contentAsString
         val token: String = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
         val secret: String = Regex("\"owner_secret\"\\s*:\\s*\"([^\"]+)\"").find(response)!!.groupValues[1]
         return token to secret
@@ -57,7 +59,9 @@ abstract class ShareControllerTestSupport {
         fun locationStore(clock: MutableTestClock): LocationStore = InMemoryLocationStore(clock)
 
         @Bean
-        fun shareService(store: LocationStore, clock: MutableTestClock): ShareService =
-            ShareService(store, clock, "http://localhost:8119")
+        fun shareService(
+            store: LocationStore,
+            clock: MutableTestClock,
+        ): ShareService = ShareService(store, clock, "http://localhost:8119")
     }
 }

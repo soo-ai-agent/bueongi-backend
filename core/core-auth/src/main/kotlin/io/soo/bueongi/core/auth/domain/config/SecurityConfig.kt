@@ -1,18 +1,18 @@
 package io.soo.bueongi.core.auth.domain.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.auth.domain.model.JwtKeyMaterial
 import io.soo.bueongi.core.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.auth.domain.service.AdminTokenService
-import io.soo.bueongi.core.auth.domain.service.writeAuthProblem
-import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
 import io.soo.bueongi.core.auth.domain.service.JwtTokenVerifier
-import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.auth.domain.service.createJwtKeyMaterial
+import io.soo.bueongi.core.auth.domain.service.writeAuthProblem
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.env.Environment
 import org.springframework.core.annotation.Order
+import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -28,28 +28,36 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig(
     private val objectMapper: ObjectMapper,
 ) {
-
     @Bean
-    fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
+    fun jwtKeyMaterial(
+        props: JwtProperties,
+        environment: Environment,
+    ): JwtKeyMaterial {
         val isLocalProfile: Boolean = environment.activeProfiles.contains("local")
         return createJwtKeyMaterial(props, isLocalProfile)
     }
 
     @Bean
-    fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier =
-        JwtTokenVerifier(keys.publicKey, keys.issuer)
+    fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier = JwtTokenVerifier(keys.publicKey, keys.issuer)
 
     @Bean
-    fun adminTokenService(keys: JwtKeyMaterial, auth: AdminAuthProperties): AdminTokenService =
-        AdminTokenService(keys, auth)
+    fun adminTokenService(
+        keys: JwtKeyMaterial,
+        auth: AdminAuthProperties,
+    ): AdminTokenService = AdminTokenService(keys, auth)
 
     @Bean
-    fun adminAuthService(auth: AdminAuthProperties, tokens: AdminTokenService): AdminAuthService =
-        AdminAuthService(auth, tokens)
+    fun adminAuthService(
+        auth: AdminAuthProperties,
+        tokens: AdminTokenService,
+    ): AdminAuthService = AdminAuthService(auth, tokens)
 
     @Bean
     @Order(0)
-    fun adminSecurityFilterChain(http: HttpSecurity, verifier: JwtTokenVerifier): SecurityFilterChain {
+    fun adminSecurityFilterChain(
+        http: HttpSecurity,
+        verifier: JwtTokenVerifier,
+    ): SecurityFilterChain {
         http
             .securityMatcher("/api/admin/**")
             .csrf { it.disable() }
@@ -79,25 +87,25 @@ class SecurityConfig(
 
     private fun unauthorizedEntryPoint() =
         AuthenticationEntryPoint { _, response, _ ->
-        writeAuthProblem(
-            response = response,
-            objectMapper = objectMapper,
-            status = HttpStatus.UNAUTHORIZED,
-            code = "UNAUTHORIZED",
-            title = "Unauthorized",
-            detail = "인증 토큰이 필요합니다.",
-        )
-    }
+            writeAuthProblem(
+                response = response,
+                objectMapper = objectMapper,
+                status = HttpStatus.UNAUTHORIZED,
+                code = "UNAUTHORIZED",
+                title = "Unauthorized",
+                detail = "인증 토큰이 필요합니다.",
+            )
+        }
 
     private fun forbiddenHandler() =
         AccessDeniedHandler { _, response, _ ->
-        writeAuthProblem(
-            response = response,
-            objectMapper = objectMapper,
-            status = HttpStatus.FORBIDDEN,
-            code = "FORBIDDEN",
-            title = "Forbidden",
-            detail = "관리자 권한이 필요합니다.",
-        )
-    }
+            writeAuthProblem(
+                response = response,
+                objectMapper = objectMapper,
+                status = HttpStatus.FORBIDDEN,
+                code = "FORBIDDEN",
+                title = "Forbidden",
+                detail = "관리자 권한이 필요합니다.",
+            )
+        }
 }

@@ -11,11 +11,10 @@ data class UpdateLocationResponse(
     val expiresAt: Instant,
 ) {
     companion object {
-
         fun from(updated: ShareLocationUpdated): UpdateLocationResponse =
             UpdateLocationResponse(
-            updatedAt = updated.updatedAt,
-            expiresAt = updated.expiresAt,
-        )
+                updatedAt = updated.updatedAt,
+                expiresAt = updated.expiresAt,
+            )
     }
 }

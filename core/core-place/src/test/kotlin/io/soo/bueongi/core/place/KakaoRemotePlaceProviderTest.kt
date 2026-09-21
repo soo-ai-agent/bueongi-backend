@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.place
 
-import io.soo.bueongi.core.place.domain.service.KakaoRemotePlaceProvider
-import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.client.kakao.KakaoPlace
 import io.soo.bueongi.client.kakao.KakaoPlaceClient
+import io.soo.bueongi.core.place.domain.model.PlaceItem
+import io.soo.bueongi.core.place.domain.service.KakaoRemotePlaceProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock

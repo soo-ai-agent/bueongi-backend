@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.core.ops.api.controller.TrafficController
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
+@Tag("context")
 @WebMvcTest(TrafficController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)

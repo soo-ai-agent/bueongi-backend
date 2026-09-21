@@ -7,7 +7,10 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
+fun parseTmapGeoJson(
+    root: JsonNode,
+    searchOption: String,
+): TmapRoute? {
     val features: JsonNode = root.get("features") ?: return null
     if (!features.isArray) {
         return null
@@ -75,7 +78,11 @@ private fun appendLineString(
 }
 
 // 구간 거리·시간은 뒤따르는 LineString 이 채운다.
-private fun appendPoint(geom: JsonNode, props: JsonNode?, steps: MutableList<NavStep>) {
+private fun appendPoint(
+    geom: JsonNode,
+    props: JsonNode?,
+    steps: MutableList<NavStep>,
+) {
     val pointCoords: JsonNode = geom.get("coordinates") ?: return
     val point: TmapCoord = parseLngLat(pointCoords) ?: return
     steps.add(
@@ -92,7 +99,10 @@ private fun appendPoint(geom: JsonNode, props: JsonNode?, steps: MutableList<Nav
     )
 }
 
-private fun numberOf(props: JsonNode?, field: String): Double? {
+private fun numberOf(
+    props: JsonNode?,
+    field: String,
+): Double? {
     val node: JsonNode = props?.get(field) ?: return null
     if (!node.isNumber) {
         return null
@@ -125,10 +135,14 @@ private fun pathLengthMeters(path: List<TmapCoord>): Double {
 
 private const val EARTH_RADIUS_M: Double = 6_371_000.0
 
-private fun haversineMeters(a: TmapCoord, b: TmapCoord): Double {
+private fun haversineMeters(
+    a: TmapCoord,
+    b: TmapCoord,
+): Double {
     val dLat: Double = Math.toRadians(b.lat - a.lat)
     val dLng: Double = Math.toRadians(b.lng - a.lng)
-    val h: Double = sin(dLat / 2) * sin(dLat / 2) +
-        cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sin(dLng / 2) * sin(dLng / 2)
+    val h: Double =
+        sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sin(dLng / 2) * sin(dLng / 2)
     return EARTH_RADIUS_M * 2 * atan2(sqrt(h), sqrt(1 - h))
 }

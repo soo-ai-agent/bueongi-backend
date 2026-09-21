@@ -4,7 +4,6 @@ import io.soo.bueongi.core.share.domain.route.model.RouteContext
 import io.soo.bueongi.core.share.domain.route.model.RouteDestination
 import io.soo.bueongi.core.share.domain.route.model.RouteMarker
 import io.soo.bueongi.core.share.domain.route.model.RoutePoint
-
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 
 const val MIN_EXPIRES_HOURS: Int = 1
@@ -26,25 +25,27 @@ const val MAX_ROUTE_PROVENANCE_LENGTH: Int = 200
 
 const val MISSED_ARRIVAL_GRACE_SECONDS: Long = 60L
 
-fun StoredRoute.toRouteContext(): RouteContext = RouteContext(
-    destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),
-    path = path.map { RoutePoint(lat = it.lat, lng = it.lng) },
-    markers = markers.map { marker ->
-        RouteMarker(
-            type = marker.type,
-            lat = marker.lat,
-            lng = marker.lng,
-            x = marker.x,
-            y = marker.y,
-            name = marker.name,
-            purpose = marker.purpose,
-            cameraCount = marker.cameraCount,
-            address = marker.address,
-            phone = marker.phone,
-        )
-    },
-    totalDistanceM = totalDistanceM,
-    totalTimeS = totalTimeS,
-    type = type,
-    provenance = provenance,
-)
+fun StoredRoute.toRouteContext(): RouteContext =
+    RouteContext(
+        destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),
+        path = path.map { RoutePoint(lat = it.lat, lng = it.lng) },
+        markers =
+            markers.map { marker ->
+                RouteMarker(
+                    type = marker.type,
+                    lat = marker.lat,
+                    lng = marker.lng,
+                    x = marker.x,
+                    y = marker.y,
+                    name = marker.name,
+                    purpose = marker.purpose,
+                    cameraCount = marker.cameraCount,
+                    address = marker.address,
+                    phone = marker.phone,
+                )
+            },
+        totalDistanceM = totalDistanceM,
+        totalTimeS = totalTimeS,
+        type = type,
+        provenance = provenance,
+    )

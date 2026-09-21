@@ -13,7 +13,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 class ExternalApiMetricsServiceTest {
-
     // 2026-08-22 12:00 KST — 같은 날 03:00 KST 는 오늘이고, 전날 23:00 KST 는 어제다.
     private val nowMs: Long = Instant.parse("2026-08-22T03:00:00Z").toEpochMilli()
     private val clock: Clock = Clock.fixed(Instant.ofEpochMilli(nowMs), ZoneOffset.UTC)
@@ -21,6 +20,7 @@ class ExternalApiMetricsServiceTest {
     private fun storeOf(vararg metrics: ExternalCallMetric): ExternalCallMetricStore =
         object : ExternalCallMetricStore {
             override fun record(metric: ExternalCallMetric) = Unit
+
             override fun findRecent(limit: Int): List<ExternalCallMetric> = metrics.toList()
         }
 
@@ -31,23 +31,30 @@ class ExternalApiMetricsServiceTest {
         atEpochMs: Long = nowMs,
         endpoint: String = "/x",
         failureReason: String? = null,
-    ): ExternalCallMetric = ExternalCallMetric(
-        atEpochMs = atEpochMs, provider = provider, method = "GET", endpoint = endpoint,
-        status = status, durationMs = durationMs, failureReason = failureReason,
-    )
+    ): ExternalCallMetric =
+        ExternalCallMetric(
+            atEpochMs = atEpochMs,
+            provider = provider,
+            method = "GET",
+            endpoint = endpoint,
+            status = status,
+            durationMs = durationMs,
+            failureReason = failureReason,
+        )
 
     @Test
     fun `실패 뒤 회복하면 마지막 호출 성공으로 답하고 실패는 시간대별로 따로 센다`() {
         val oneHourMs: Long = 60 * 60 * 1000L
         // 시간대 버킷은 벽시계(countByHour)로 나뉜다 — 고정 시계 시각을 쓰면 24칸 밖으로 벗어난다.
         val realNowMs: Long = System.currentTimeMillis()
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.TMAP, status = 500, atEpochMs = realNowMs - oneHourMs),
-                call(ExternalApiProvider.TMAP, status = 200, atEpochMs = realNowMs),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.TMAP, status = 500, atEpochMs = realNowMs - oneHourMs),
+                    call(ExternalApiProvider.TMAP, status = 200, atEpochMs = realNowMs),
+                ),
+                clock,
+            )
 
         val tmap: ExternalApiUsage =
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
@@ -61,14 +68,15 @@ class ExternalApiMetricsServiceTest {
 
     @Test
     fun `원천별로 호출 수와 성공률을 낸다`() {
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.TMAP),
-                call(ExternalApiProvider.TMAP, status = 500),
-                call(ExternalApiProvider.KAKAO),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.TMAP),
+                    call(ExternalApiProvider.TMAP, status = 500),
+                    call(ExternalApiProvider.KAKAO),
+                ),
+                clock,
+            )
 
         val summary: ExternalApiSummary = service.summarize()
 
@@ -82,15 +90,16 @@ class ExternalApiMetricsServiceTest {
 
     @Test
     fun `많이 부른 원천이 앞에 온다`() {
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.KAKAO),
-                call(ExternalApiProvider.TMAP),
-                call(ExternalApiProvider.TMAP),
-                call(ExternalApiProvider.TMAP),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.KAKAO),
+                    call(ExternalApiProvider.TMAP),
+                    call(ExternalApiProvider.TMAP),
+                    call(ExternalApiProvider.TMAP),
+                ),
+                clock,
+            )
 
         assertThat(service.summarize().byProvider.map { it.provider })
             .containsExactly(ExternalApiProvider.TMAP, ExternalApiProvider.KAKAO)
@@ -99,13 +108,14 @@ class ExternalApiMetricsServiceTest {
     @Test
     fun `오늘 호출 수는 서비스 시간대의 자정부터 센다`() {
         val yesterdayMs: Long = Instant.parse("2026-08-21T13:00:00Z").toEpochMilli()
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.SAFE182),
-                call(ExternalApiProvider.SAFE182, atEpochMs = yesterdayMs),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.SAFE182),
+                    call(ExternalApiProvider.SAFE182, atEpochMs = yesterdayMs),
+                ),
+                clock,
+            )
 
         val summary: ExternalApiSummary = service.summarize()
         assertThat(summary.totalCalls).isEqualTo(2)
@@ -115,13 +125,14 @@ class ExternalApiMetricsServiceTest {
     @Test
     fun `최근 한 시간 호출 수는 한 시간 밖을 빼고 센다`() {
         val twoHoursAgoMs: Long = nowMs - 2 * 60 * 60 * 1000L
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.TMAP),
-                call(ExternalApiProvider.TMAP, atEpochMs = twoHoursAgoMs),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.TMAP),
+                    call(ExternalApiProvider.TMAP, atEpochMs = twoHoursAgoMs),
+                ),
+                clock,
+            )
 
         assertThat(service.summarize().callsLastHour).isEqualTo(1)
     }
@@ -129,14 +140,15 @@ class ExternalApiMetricsServiceTest {
     @Test
     fun `마지막 실패 사유를 남긴다 - 연결 실패면 예외 종류 응답이 왔으면 상태 코드`() {
         val earlierMs: Long = nowMs - 60_000
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.KAKAO, status = 0, failureReason = "IOException", atEpochMs = earlierMs),
-                call(ExternalApiProvider.KAKAO, status = 429),
-                call(ExternalApiProvider.TMAP, status = 0, failureReason = "IOException"),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.KAKAO, status = 0, failureReason = "IOException", atEpochMs = earlierMs),
+                    call(ExternalApiProvider.KAKAO, status = 429),
+                    call(ExternalApiProvider.TMAP, status = 0, failureReason = "IOException"),
+                ),
+                clock,
+            )
 
         val summary: ExternalApiSummary = service.summarize()
         assertThat(summary.byProvider.first { it.provider == ExternalApiProvider.KAKAO }.lastFailureReason)
@@ -154,14 +166,15 @@ class ExternalApiMetricsServiceTest {
 
     @Test
     fun `많이 부른 경로를 원천 안에서 추린다`() {
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.DATA_GO_KR, endpoint = "/a"),
-                call(ExternalApiProvider.DATA_GO_KR, endpoint = "/a"),
-                call(ExternalApiProvider.DATA_GO_KR, endpoint = "/b", status = 500),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.DATA_GO_KR, endpoint = "/a"),
+                    call(ExternalApiProvider.DATA_GO_KR, endpoint = "/a"),
+                    call(ExternalApiProvider.DATA_GO_KR, endpoint = "/b", status = 500),
+                ),
+                clock,
+            )
 
         val endpoints = service.summarize().byProvider.single().topEndpoints
         assertThat(endpoints.first().endpoint).isEqualTo("/a")
@@ -182,13 +195,14 @@ class ExternalApiMetricsServiceTest {
     @Test
     fun `마지막 호출이 실패면 회복하지 않은 것으로 본다`() {
         val oneHourMs: Long = 60 * 60 * 1000L
-        val service = ExternalApiMetricsService(
-            storeOf(
-                call(ExternalApiProvider.TMAP, status = 200, atEpochMs = nowMs - oneHourMs),
-                call(ExternalApiProvider.TMAP, status = 500, atEpochMs = nowMs),
-            ),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(
+                    call(ExternalApiProvider.TMAP, status = 200, atEpochMs = nowMs - oneHourMs),
+                    call(ExternalApiProvider.TMAP, status = 500, atEpochMs = nowMs),
+                ),
+                clock,
+            )
 
         val tmap: ExternalApiUsage =
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.TMAP }
@@ -199,10 +213,11 @@ class ExternalApiMetricsServiceTest {
 
     @Test
     fun `실패가 한 번도 없으면 실패 시각은 비어 있다`() {
-        val service = ExternalApiMetricsService(
-            storeOf(call(ExternalApiProvider.KAKAO, status = 200, atEpochMs = nowMs)),
-            clock,
-        )
+        val service =
+            ExternalApiMetricsService(
+                storeOf(call(ExternalApiProvider.KAKAO, status = 200, atEpochMs = nowMs)),
+                clock,
+            )
 
         val kakao: ExternalApiUsage =
             service.summarize().byProvider.first { it.provider == ExternalApiProvider.KAKAO }

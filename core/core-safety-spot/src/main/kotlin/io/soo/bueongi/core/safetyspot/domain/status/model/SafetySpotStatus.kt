@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.safetyspot.domain.status.model
 
 import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
-
 import io.soo.bueongi.core.enums.SafetySpotType
 
 data class SafetySpotStatus(

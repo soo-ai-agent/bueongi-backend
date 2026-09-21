@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.domain.marker
 
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteMarkerSpreadTest {
-
     private val origin = GeoPoint(37.5, 127.000)
     private val destination = GeoPoint(37.5, 127.200)
 

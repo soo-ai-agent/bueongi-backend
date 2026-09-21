@@ -13,8 +13,7 @@ class RegionNameCatalog(objectMapper: ObjectMapper) {
 
     private val names: Map<String, RegionName> = load(objectMapper)
 
-    fun findByCode(code: String): RegionName? =
-        names[code] ?: standardCodeRegion(code) ?: sidoOnlyRegion(code)
+    fun findByCode(code: String): RegionName? = names[code] ?: standardCodeRegion(code) ?: sidoOnlyRegion(code)
 
     private fun sidoOnlyRegion(code: String): RegionName? {
         val sido: String = SIDO_ONLY_CODES[code] ?: return null
@@ -47,8 +46,9 @@ class RegionNameCatalog(objectMapper: ObjectMapper) {
             return emptyMap()
         }
         return try {
-            val type = objectMapper.typeFactory
-                .constructMapType(LinkedHashMap::class.java, String::class.java, RegionName::class.java)
+            val type =
+                objectMapper.typeFactory
+                    .constructMapType(LinkedHashMap::class.java, String::class.java, RegionName::class.java)
             val loaded: Map<String, RegionName> = resource.inputStream.use { objectMapper.readValue(it, type) }
             withCurrentSidoNames(loaded)
         } catch (e: Exception) {
@@ -87,49 +87,52 @@ class RegionNameCatalog(objectMapper: ObjectMapper) {
         const val SIDO_CODE_LENGTH: Int = 2
 
         // 강원(42→51)·전북(45→52)은 특별자치도 개편으로 코드가 바뀌어 원천마다 옛/새 코드가 섞여 온다.
-        val STANDARD_SIDO_CODES: Map<String, String> = mapOf(
-            "11" to "서울특별시",
-            "26" to "부산광역시",
-            "27" to "대구광역시",
-            "28" to "인천광역시",
-            "29" to "광주광역시",
-            "30" to "대전광역시",
-            "31" to "울산광역시",
-            "36" to "세종특별자치시",
-            "41" to "경기도",
-            "42" to "강원특별자치도",
-            "51" to "강원특별자치도",
-            "43" to "충청북도",
-            "44" to "충청남도",
-            "45" to "전북특별자치도",
-            "52" to "전북특별자치도",
-            "46" to "전라남도",
-            "47" to "경상북도",
-            "48" to "경상남도",
-            "50" to "제주특별자치도",
-        )
+        val STANDARD_SIDO_CODES: Map<String, String> =
+            mapOf(
+                "11" to "서울특별시",
+                "26" to "부산광역시",
+                "27" to "대구광역시",
+                "28" to "인천광역시",
+                "29" to "광주광역시",
+                "30" to "대전광역시",
+                "31" to "울산광역시",
+                "36" to "세종특별자치시",
+                "41" to "경기도",
+                "42" to "강원특별자치도",
+                "51" to "강원특별자치도",
+                "43" to "충청북도",
+                "44" to "충청남도",
+                "45" to "전북특별자치도",
+                "52" to "전북특별자치도",
+                "46" to "전라남도",
+                "47" to "경상북도",
+                "48" to "경상남도",
+                "50" to "제주특별자치도",
+            )
 
         // 행정표준코드에 없는 `12` 블록은 광주 5구 + 전남 22시군을 묶어 쓰던 코드다.
         const val MERGED_BLOCK_PREFIX: String = "12"
         val MERGED_BLOCK_GWANGJU: Set<String> = setOf("12210", "12240", "12270", "12300", "12330")
 
         // 비상벨 원천만 쓰는 7자리 코드 — 앞자리가 시도와 1:1이 아니라 지점 좌표 중심으로 시도를 확인해 적었다.
-        val SIDO_ONLY_CODES: Map<String, String> = buildMap {
-            for (code in listOf("3490000", "3500000", "3560000")) {
-                put(code, "인천광역시")
+        val SIDO_ONLY_CODES: Map<String, String> =
+            buildMap {
+                for (code in listOf("3490000", "3500000", "3560000")) {
+                    put(code, "인천광역시")
+                }
+                for (code in listOf("3590000", "3600000", "3610000", "3620000", "3630000")) {
+                    put(code, "광주광역시")
+                }
+                for (code in 480..500) {
+                    put("${code}0000", "전라남도")
+                }
             }
-            for (code in listOf("3590000", "3600000", "3610000", "3620000", "3630000")) {
-                put(code, "광주광역시")
-            }
-            for (code in 480..500) {
-                put("${code}0000", "전라남도")
-            }
-        }
 
         // 강원 2023-06-11, 전북 2024-01-18 개편으로 바뀐 법정 이름.
-        val SIDO_RENAMES: Map<String, String> = mapOf(
-            "강원도" to "강원특별자치도",
-            "전라북도" to "전북특별자치도",
-        )
+        val SIDO_RENAMES: Map<String, String> =
+            mapOf(
+                "강원도" to "강원특별자치도",
+                "전라북도" to "전북특별자치도",
+            )
     }
 }

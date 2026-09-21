@@ -1,11 +1,12 @@
 package io.soo.bueongi.api
 
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.post
 
+@Tag("context")
 class ShareControllerCreateTest : ShareControllerTestSupport() {
-
     @Test
     fun `POST create 는 200 과 token·share_url·expires_at 을 돌려준다`() {
         mockMvc.post("/share/create") {

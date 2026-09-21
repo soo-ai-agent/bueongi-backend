@@ -11,18 +11,17 @@ class RedisRequestMetricStore(
     cap: Int = REQUEST_METRIC_CAP,
     objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : RequestMetricStore {
+    private val entries: RedisJsonLog<RequestMetric> =
+        RedisJsonLog(
+            redis = redis,
+            objectMapper = objectMapper,
+            key = key,
+            cap = cap,
+            type = RequestMetric::class.java,
+            label = "수신 요청 메트릭",
+        )
 
-    private val entries: RedisJsonLog<RequestMetric> = RedisJsonLog(
-        redis = redis,
-        objectMapper = objectMapper,
-        key = key,
-        cap = cap,
-        type = RequestMetric::class.java,
-        label = "수신 요청 메트릭",
-    )
-
-    override fun record(metric: RequestMetric) =
-        entries.push(metric)
+    override fun record(metric: RequestMetric) = entries.push(metric)
 
     override fun findRecent(limit: Int): List<RequestMetric> {
         val safeLimit: Int = limit.coerceAtLeast(0)

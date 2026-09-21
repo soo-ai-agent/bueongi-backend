@@ -24,11 +24,12 @@ data class RegionSafetySpotResponse(
                 name = count.name,
                 counts = counts,
                 total = count.total,
-                center = if (center == null) {
-                    null
-                } else {
-                    RegionCenterResponse.from(center)
-                },
+                center =
+                    if (center == null) {
+                        null
+                    } else {
+                        RegionCenterResponse.from(center)
+                    },
             )
         }
     }

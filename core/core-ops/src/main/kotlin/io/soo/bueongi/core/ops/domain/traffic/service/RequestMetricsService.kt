@@ -1,23 +1,21 @@
 package io.soo.bueongi.core.ops.domain.traffic.service
 
-import io.soo.bueongi.support.util.todayStartMs
-import io.soo.bueongi.support.util.SERVICE_ZONE
 import io.soo.bueongi.core.ops.domain.traffic.model.AdminTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.DailyActive
 import io.soo.bueongi.core.ops.domain.traffic.model.EndpointTraffic
 import io.soo.bueongi.core.ops.domain.traffic.model.EstimatedUsers
-import io.soo.bueongi.core.ops.domain.traffic.model.TrafficSummary
-import io.soo.bueongi.support.util.HourlyBucket
-import io.soo.bueongi.support.util.HOURLY_BUCKET_COUNT
-import io.soo.bueongi.support.util.countByHour
 import io.soo.bueongi.core.ops.domain.traffic.model.LatencyPercentiles
-import io.soo.bueongi.support.util.nearestRankPercentile
-
+import io.soo.bueongi.core.ops.domain.traffic.model.TrafficSummary
 import io.soo.bueongi.storage.db.core.requestmetric.ADMIN_REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.REQUEST_METRIC_CAP
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
+import io.soo.bueongi.support.util.HourlyBucket
+import io.soo.bueongi.support.util.SERVICE_ZONE
+import io.soo.bueongi.support.util.countByHour
+import io.soo.bueongi.support.util.nearestRankPercentile
+import io.soo.bueongi.support.util.todayStartMs
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Instant
@@ -31,7 +29,6 @@ class RequestMetricsService(
     private val adminRequestMetricStore: AdminRequestMetricStore,
     private val clock: Clock,
 ) {
-
     fun summarize(): TrafficSummary {
         val metrics: List<RequestMetric> = requestMetricStore.findRecent(REQUEST_METRIC_CAP)
         return TrafficSummary(
@@ -64,8 +61,7 @@ class RequestMetricsService(
         )
     }
 
-    private fun isSuccess(metric: RequestMetric): Boolean =
-        metric.status in SUCCESS_STATUS_RANGE
+    private fun isSuccess(metric: RequestMetric): Boolean = metric.status in SUCCESS_STATUS_RANGE
 
     private fun latency(metrics: List<RequestMetric>): LatencyPercentiles {
         val sortedDurations: List<Long> = metrics.map { it.durationMs }.sorted()
@@ -81,7 +77,10 @@ class RequestMetricsService(
             .map { (key, group) -> aggregateEndpoint(key, group) }
             .sortedByDescending { it.count }
 
-    private fun aggregateEndpoint(key: EndpointKey, group: List<RequestMetric>): EndpointTraffic {
+    private fun aggregateEndpoint(
+        key: EndpointKey,
+        group: List<RequestMetric>,
+    ): EndpointTraffic {
         val count: Int = group.size
         val successCount: Int = group.count { it.status in SUCCESS_STATUS_RANGE }
         val successRate: Double = successCount.toDouble() / count
@@ -112,16 +111,21 @@ class RequestMetricsService(
         )
     }
 
-    private fun newVsReturningToday(metrics: List<RequestMetric>, todayStartMs: Long): NewVsReturning {
+    private fun newVsReturningToday(
+        metrics: List<RequestMetric>,
+        todayStartMs: Long,
+    ): NewVsReturning {
         val firstSeenByClient: Map<String, Long> = firstSeenByClient(metrics)
-        val activeTodayClients: List<String> = metrics
-            .filter { it.atEpochMs >= todayStartMs }
-            .mapNotNull { it.clientId }
-            .distinct()
-        val newCount: Int = activeTodayClients.count { clientId ->
-            val firstSeen: Long = firstSeenByClient[clientId] ?: todayStartMs
-            firstSeen >= todayStartMs
-        }
+        val activeTodayClients: List<String> =
+            metrics
+                .filter { it.atEpochMs >= todayStartMs }
+                .mapNotNull { it.clientId }
+                .distinct()
+        val newCount: Int =
+            activeTodayClients.count { clientId ->
+                val firstSeen: Long = firstSeenByClient[clientId] ?: todayStartMs
+                firstSeen >= todayStartMs
+            }
         return NewVsReturning(newToday = newCount, returningToday = activeTodayClients.size - newCount)
     }
 
@@ -137,17 +141,18 @@ class RequestMetricsService(
         return firstSeen
     }
 
-    private fun distinctClientsSince(metrics: List<RequestMetric>, sinceMs: Long): Int =
-        distinctClients(metrics.filter { it.atEpochMs >= sinceMs })
+    private fun distinctClientsSince(
+        metrics: List<RequestMetric>,
+        sinceMs: Long,
+    ): Int = distinctClients(metrics.filter { it.atEpochMs >= sinceMs })
 
-    private fun distinctClients(metrics: List<RequestMetric>): Int =
-        metrics.mapNotNull { it.clientId }.distinct().size
-
+    private fun distinctClients(metrics: List<RequestMetric>): Int = metrics.mapNotNull { it.clientId }.distinct().size
 
     private fun hourlyErrors(metrics: List<RequestMetric>): List<HourlyBucket> {
-        val errorTimestampsMs: List<Long> = metrics
-            .filter { it.status !in SUCCESS_STATUS_RANGE }
-            .map { it.atEpochMs }
+        val errorTimestampsMs: List<Long> =
+            metrics
+                .filter { it.status !in SUCCESS_STATUS_RANGE }
+                .map { it.atEpochMs }
         return countByHour(errorTimestampsMs)
     }
 

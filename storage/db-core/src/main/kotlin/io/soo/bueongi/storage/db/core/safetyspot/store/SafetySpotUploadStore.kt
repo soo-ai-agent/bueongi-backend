@@ -1,20 +1,20 @@
 package io.soo.bueongi.storage.db.core.safetyspot.store
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotCollectionDto
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemDto
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemPropertiesDto
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.core.enums.SafetySpotType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
 import java.nio.file.Files
-import java.time.Clock
 import java.nio.file.StandardCopyOption
+import java.time.Clock
 
 // 저장 계약: `{uploadDir}/{cdnType}.json` — CDN 컬렉션과 동형 JSON 이라 DTO 필드 리네임 금지.
 @Component
@@ -27,15 +27,19 @@ class SafetySpotUploadStore(
 
     private val writeMapper: ObjectMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-    fun save(type: SafetySpotType, points: List<SafetySpotPoint>) {
+    fun save(
+        type: SafetySpotType,
+        points: List<SafetySpotPoint>,
+    ) {
         val dir = File(uploadDir)
         Files.createDirectories(dir.toPath())
         val target = File(dir, "${type.cdnType}.json")
-        val collection = SafetySpotCollectionDto(
-            type = type.cdnType,
-            items = points.map { it.toItemDto() },
-            savedAt = clock.instant().toString(),
-        )
+        val collection =
+            SafetySpotCollectionDto(
+                type = type.cdnType,
+                items = points.map { it.toItemDto() },
+                savedAt = clock.instant().toString(),
+            )
         val temp: File = File.createTempFile("${type.cdnType}-", ".json.tmp", dir)
         try {
             writeMapper.writeValue(temp, collection)
@@ -66,16 +70,18 @@ class SafetySpotUploadStore(
     }
 }
 
-internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto = SafetySpotItemDto(
-    name = name,
-    lat = lat,
-    lng = lng,
-    sigunguCode = sigungu,
-    address = address,
-    phone = phone,
-    properties = if (purpose != null || cameraCount != null) {
-        SafetySpotItemPropertiesDto(purpose = purpose, cameraCount = cameraCount)
-    } else {
-        null
-    },
-)
+internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto =
+    SafetySpotItemDto(
+        name = name,
+        lat = lat,
+        lng = lng,
+        sigunguCode = sigungu,
+        address = address,
+        phone = phone,
+        properties =
+            if (purpose != null || cameraCount != null) {
+                SafetySpotItemPropertiesDto(purpose = purpose, cameraCount = cameraCount)
+            } else {
+                null
+            },
+    )

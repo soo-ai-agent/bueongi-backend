@@ -1,20 +1,19 @@
 package io.soo.bueongi.core.place
 
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
 import io.soo.bueongi.core.place.domain.model.PlaceItem
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.place.domain.service.SeedPlaceProvider
-import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
-import ch.qos.logback.classic.Logger as LogbackLogger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.Logger as LogbackLogger
 
 class PlaceSearchServiceSourceTest {
-
     private val seed = SeedPlaceProvider()
 
     private class FakeRemote(
@@ -22,6 +21,7 @@ class PlaceSearchServiceSourceTest {
         private val behavior: (String) -> List<PlaceItem>,
     ) : RemotePlaceProvider {
         var calledWith: String? = null
+
         override fun search(keyword: String): List<PlaceItem> {
             calledWith = keyword
             return behavior(keyword)

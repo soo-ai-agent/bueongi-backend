@@ -18,18 +18,21 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `자치단체별로 종류를 나눠 세고 많은 곳부터 보여 준다`() {
-        val summary: List<RegionSafetySpotCount> = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+        val summary: List<RegionSafetySpotCount> =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                        ),
+                    SafetySpotType.BELL to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.BELL, 37.52, 127.02, sigungu = MAPO),
+                        ),
                 ),
-                SafetySpotType.BELL to listOf(
-                    SafetySpotPoint(SafetySpotType.BELL, 37.52, 127.02, sigungu = MAPO),
-                ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.map { it.code }).containsExactly(MAPO, CHANGNYEONG)
         val mapo: RegionSafetySpotCount = summary.first()
@@ -40,9 +43,10 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `이름표에 있는 코드는 사람이 읽는 이름으로 바꾼다`() {
-        val summary = service(
-            mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = MAPO))),
-        ).summarize()
+        val summary =
+            service(
+                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = MAPO))),
+            ).summarize()
 
         assertThat(summary.single().sido).isEqualTo("서울특별시")
         assertThat(summary.single().name).isEqualTo("마포구")
@@ -50,14 +54,16 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `옛 시도 이름은 현재 이름으로 모은다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 38.1, 127.7, sigungu = HWACHEON),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.7, 128.8, sigungu = GANGNEUNG),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 38.1, 127.7, sigungu = HWACHEON),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.7, 128.8, sigungu = GANGNEUNG),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.map { it.sido }.toSet()).containsExactly("강원특별자치도")
         assertThat(summary.map { it.name }).containsExactlyInAnyOrder("화천군", "강릉시")
@@ -65,9 +71,10 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `모르는 코드는 코드를 그대로 보여 주고 시도는 비운다 - 추측하지 않는다`() {
-        val summary = service(
-            mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "9999999"))),
-        ).summarize()
+        val summary =
+            service(
+                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "9999999"))),
+            ).summarize()
 
         assertThat(summary.single().name).isEqualTo("9999999")
         assertThat(summary.single().sido).isEmpty()
@@ -75,14 +82,16 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `지역을 모르는 지점도 한 줄로 모아 합계를 맞춘다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.6, 127.1, sigungu = MAPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.6, 127.1, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.sumOf { it.total }).isEqualTo(2)
         assertThat(summary.map { it.code }).contains("unknown")
@@ -90,14 +99,16 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `묶어 적은 광주 전남은 자치단체로 갈라 제 시도로 돌린다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.1, 126.9, sigungu = GWANGJU_BUKGU),
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.8, 126.4, sigungu = MOKPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.1, 126.9, sigungu = GWANGJU_BUKGU),
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.8, 126.4, sigungu = MOKPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["북구"]).isEqualTo("광주광역시")
@@ -107,28 +118,32 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `묶어 적은 이름은 어느 줄에도 남지 않는다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.9, 127.5, sigungu = SUNCHEON),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.9, 127.5, sigungu = SUNCHEON),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.single().sido).isEqualTo("전라남도")
     }
 
     @Test
     fun `기관명이 시도를 안 밝힌 자치단체도 소재지 기준으로 시도를 갖는다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.4, 126.9, sigungu = GEUMCHEON),
-                    SafetySpotPoint(SafetySpotType.CCTV, 36.6, 127.4, sigungu = CHEONGJU),
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.7, 127.7, sigungu = YEOSU),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.4, 126.9, sigungu = GEUMCHEON),
+                            SafetySpotPoint(SafetySpotType.CCTV, 36.6, 127.4, sigungu = CHEONGJU),
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.7, 127.7, sigungu = YEOSU),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["금천구"]).isEqualTo("서울특별시")
@@ -139,15 +154,17 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `행정표준코드는 앞 2자리로 시도를 채운다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "11110"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 33.4, 126.5, sigungu = "50110"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.8, 127.7, sigungu = "42110"),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "11110"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 33.4, 126.5, sigungu = "50110"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.8, 127.7, sigungu = "42110"),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["11110"]).isEqualTo("서울특별시")
@@ -157,14 +174,16 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `묶어 쓰던 코드 블록도 광주와 전남으로 갈라 채운다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.19, 126.91, sigungu = "12300"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "12110"),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.19, 126.91, sigungu = "12300"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "12110"),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["12300"]).isEqualTo("광주광역시")
@@ -173,13 +192,15 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `표준에 없는 코드는 시도를 비워 둔다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "99999"),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "99999"),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.single().name).isEqualTo("99999")
         assertThat(summary.single().sido).isEmpty()
@@ -187,16 +208,18 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `이름표에 없는 비상벨 코드도 시도는 채운다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.48, 126.58, sigungu = "3490000"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.14, 126.93, sigungu = "3590000"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "4800000"),
-                    SafetySpotPoint(SafetySpotType.CCTV, 34.46, 126.25, sigungu = "5000000"),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.48, 126.58, sigungu = "3490000"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.14, 126.93, sigungu = "3590000"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "4800000"),
+                            SafetySpotPoint(SafetySpotType.CCTV, 34.46, 126.25, sigungu = "5000000"),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["3490000"]).isEqualTo("인천광역시")
@@ -208,14 +231,16 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `지역 중심은 그 지역 지점들의 평균 좌표다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.60, 127.20, sigungu = MAPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.60, 127.20, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val center: GeoPoint = summary.single().center ?: error("중심 좌표가 있어야 한다")
         assertThat(center.lat).isCloseTo(37.55, within(1e-9))
@@ -224,15 +249,17 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `한반도 밖 좌표는 중심 계산에서 뺀다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
-                    SafetySpotPoint(SafetySpotType.CCTV, Double.NaN, 127.0, sigungu = MAPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                            SafetySpotPoint(SafetySpotType.CCTV, Double.NaN, 127.0, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val row: RegionSafetySpotCount = summary.single()
         assertThat(row.total).isEqualTo(3)
@@ -243,28 +270,32 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `쓸 수 있는 좌표가 하나도 없으면 중심을 비운다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         assertThat(summary.single().center).isNull()
     }
 
     @Test
     fun `지역을 모르는 줄에는 중심 좌표를 주지 않는다`() {
-        val summary = service(
-            mapOf(
-                SafetySpotType.CCTV to listOf(
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = null),
-                    SafetySpotPoint(SafetySpotType.CCTV, 35.1, 129.0, sigungu = null),
-                    SafetySpotPoint(SafetySpotType.CCTV, 37.56, 126.91, sigungu = MAPO),
+        val summary =
+            service(
+                mapOf(
+                    SafetySpotType.CCTV to
+                        listOf(
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = null),
+                            SafetySpotPoint(SafetySpotType.CCTV, 35.1, 129.0, sigungu = null),
+                            SafetySpotPoint(SafetySpotType.CCTV, 37.56, 126.91, sigungu = MAPO),
+                        ),
                 ),
-            ),
-        ).summarize()
+            ).summarize()
 
         val unknown = summary.single { it.code == "unknown" }
         assertThat(unknown.total).isEqualTo(2)

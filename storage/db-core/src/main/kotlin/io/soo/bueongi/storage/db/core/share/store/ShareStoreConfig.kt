@@ -13,7 +13,6 @@ import java.time.Clock
 // RedisAutoConfiguration 은 BueongiApplication 에서 제외돼 있다 — URL 미지정 시 localhost:6379 자동 연결을 막으려는 것.
 @Configuration
 class ShareStoreConfig {
-
     @Configuration
     @Conditional(RedisConfigured::class)
     class RedisShareStore(
@@ -22,11 +21,12 @@ class ShareStoreConfig {
         @Bean(destroyMethod = "destroy")
         fun shareRedisConnectionFactory(): LettuceConnectionFactory {
             val uri = URI(redisUrl)
-            val port: Int = if (uri.port > 0) {
-                uri.port
-            } else {
-                DEFAULT_REDIS_PORT
-            }
+            val port: Int =
+                if (uri.port > 0) {
+                    uri.port
+                } else {
+                    DEFAULT_REDIS_PORT
+                }
             val config = RedisStandaloneConfiguration(uri.host ?: "localhost", port)
             val password: String = uri.userInfo?.substringAfter(':', "").orEmpty()
             if (password.isNotEmpty()) {
@@ -40,16 +40,17 @@ class ShareStoreConfig {
             StringRedisTemplate(factory).apply { afterPropertiesSet() }
 
         @Bean
-        fun locationStore(template: StringRedisTemplate, clock: Clock): LocationStore =
-            RedisLocationStore(template, clock)
+        fun locationStore(
+            template: StringRedisTemplate,
+            clock: Clock,
+        ): LocationStore = RedisLocationStore(template, clock)
     }
 
     @Configuration
     @Conditional(RedisNotConfigured::class)
     class InMemoryShareStore {
         @Bean
-        fun locationStore(clock: Clock): LocationStore =
-            InMemoryLocationStore(clock)
+        fun locationStore(clock: Clock): LocationStore = InMemoryLocationStore(clock)
     }
 
     private companion object {

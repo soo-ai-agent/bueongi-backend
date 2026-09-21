@@ -1,7 +1,6 @@
 package io.soo.bueongi.api
 
 import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger as LogbackLogger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
@@ -12,9 +11,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.Logger as LogbackLogger
 
 class ApiControllerAdviceLogTest {
-
     @AfterEach
     fun clearTrace() {
         endTrace()

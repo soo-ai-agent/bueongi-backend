@@ -18,7 +18,10 @@ class SecurityLampFillEventPublisher(
         )
     }
 
-    fun regionHadNoCoordinates(regionCode: String, fetched: Int) {
+    fun regionHadNoCoordinates(
+        regionCode: String,
+        fetched: Int,
+    ) {
         events.publishEvent(
             OperationEvent(
                 key = NO_COORDINATES_KEY,

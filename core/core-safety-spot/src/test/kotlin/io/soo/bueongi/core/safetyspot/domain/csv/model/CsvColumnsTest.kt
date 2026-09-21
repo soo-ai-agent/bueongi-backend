@@ -5,19 +5,20 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class CsvColumnsTest {
-    private val columns = CsvColumns(
-        useWgs84 = true,
-        coordSystem = SafetySpotCoordSystem.WGS84,
-        latIndex = 0,
-        lngIndex = 1,
-        xIndex = null,
-        yIndex = null,
-        nameIndex = 2,
-        addressIndex = null,
-        purposeIndex = null,
-        cameraCountIndex = 3,
-        phoneIndex = null,
-    )
+    private val columns =
+        CsvColumns(
+            useWgs84 = true,
+            coordSystem = SafetySpotCoordSystem.WGS84,
+            latIndex = 0,
+            lngIndex = 1,
+            xIndex = null,
+            yIndex = null,
+            nameIndex = 2,
+            addressIndex = null,
+            purposeIndex = null,
+            cameraCountIndex = 3,
+            phoneIndex = null,
+        )
 
     @Test
     fun `정상 행은 값을 그대로 읽는다`() {

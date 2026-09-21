@@ -12,12 +12,13 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class InMemoryLocationStoreTest {
-
     private val clock = MutableTestClock()
     private val store = InMemoryLocationStore(clock)
 
-    private fun session(token: String, expiresAt: Instant) =
-        ShareSession(token = token, ownerSecret = "secret-$token", createdAt = clock.now, expiresAt = expiresAt)
+    private fun session(
+        token: String,
+        expiresAt: Instant,
+    ) = ShareSession(token = token, ownerSecret = "secret-$token", createdAt = clock.now, expiresAt = expiresAt)
 
     @Test
     fun `backend 라벨은 memory`() {

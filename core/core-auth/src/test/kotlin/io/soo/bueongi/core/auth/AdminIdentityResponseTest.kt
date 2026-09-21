@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 class AdminIdentityResponseTest {
-
     private fun authentication(principal: Any): Authentication =
         UsernamePasswordAuthenticationToken(principal, null, listOf(SimpleGrantedAuthority("ROLE_ADMIN")))
 

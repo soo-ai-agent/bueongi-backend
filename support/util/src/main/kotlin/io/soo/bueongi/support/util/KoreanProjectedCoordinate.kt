@@ -1,6 +1,9 @@
 package io.soo.bueongi.support.util
 
-fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
+fun resolveKoreanWgs84OrNull(
+    xText: String?,
+    yText: String?,
+): Wgs84Point? {
     val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     return when {

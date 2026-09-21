@@ -4,7 +4,6 @@ data class SafetyScore(
     val score: Int?,
     val breakdown: SafetyBreakdown,
 ) {
-
     val rank: Int
         get() = score ?: 0
 }

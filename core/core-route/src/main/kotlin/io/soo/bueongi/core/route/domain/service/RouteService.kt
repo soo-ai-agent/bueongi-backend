@@ -1,14 +1,13 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.core.route.domain.model.RouteTypeDisplay
+import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.RouteQuery
-import io.soo.bueongi.support.util.formatDistance
-import io.soo.bueongi.support.util.walkMinutes
-import io.soo.bueongi.core.enums.RouteType
-
+import io.soo.bueongi.core.route.domain.model.RouteTypeDisplay
 import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
+import io.soo.bueongi.support.util.formatDistance
+import io.soo.bueongi.support.util.walkMinutes
 import org.springframework.stereotype.Service
 
 @Service
@@ -16,7 +15,6 @@ class RouteService(
     private val routeTypeCatalog: RouteTypeCatalog,
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
-
     fun compare(query: RouteQuery): List<RouteOption> {
         routeStatsStore.recordRecommendation("compare", query)
         return buildStraightLineRoutes(query)
@@ -44,7 +42,10 @@ class RouteService(
     }
 }
 
-internal fun RouteStatsStore?.recordRecommendation(endpoint: String, query: RouteQuery) {
+internal fun RouteStatsStore?.recordRecommendation(
+    endpoint: String,
+    query: RouteQuery,
+) {
     if (this == null || query.reroute) {
         return
     }

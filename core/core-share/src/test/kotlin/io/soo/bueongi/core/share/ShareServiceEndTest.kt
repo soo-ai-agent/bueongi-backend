@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceEndTest : ShareServiceTestSupport() {
-
     @Test
     fun `올바른 secret 으로 end 하면 이후 조회는 expired`() {
         val s = service.create(null)

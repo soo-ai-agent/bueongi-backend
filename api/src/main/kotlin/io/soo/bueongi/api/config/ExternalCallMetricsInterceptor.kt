@@ -18,7 +18,6 @@ class ExternalCallMetricsInterceptor(
     private val externalCallMetricStore: ExternalCallMetricStore,
     private val clock: java.time.Clock,
 ) : ClientHttpRequestInterceptor {
-
     private val log: Logger = LoggerFactory.getLogger(ExternalCallMetricsInterceptor::class.java)
 
     override fun intercept(
@@ -37,7 +36,12 @@ class ExternalCallMetricsInterceptor(
         }
     }
 
-    private fun finish(request: HttpRequest, startedAt: Long, status: Int, cause: Throwable?) {
+    private fun finish(
+        request: HttpRequest,
+        startedAt: Long,
+        status: Int,
+        cause: Throwable?,
+    ) {
         val durationMs: Long = clock.millis() - startedAt
         val provider: ExternalApiProvider = providerOfHost(request.uri.host)
         val endpoint: String = request.uri.path
@@ -107,8 +111,7 @@ class ExternalCallMetricsInterceptor(
         return shown.joinToString(" ")
     }
 
-    private fun reasonOf(e: Throwable): String =
-        e::class.simpleName ?: "IOException"
+    private fun reasonOf(e: Throwable): String = e::class.simpleName ?: "IOException"
 
     private companion object {
         val PAGING_PARAMS: Set<String> = setOf("pageno", "pageindex", "page", "numofrows", "pageunit", "perpage")
