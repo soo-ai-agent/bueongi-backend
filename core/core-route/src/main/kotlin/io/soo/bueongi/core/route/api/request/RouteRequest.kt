@@ -14,14 +14,11 @@ import jakarta.validation.constraints.NotNull
 import kotlin.math.roundToInt
 
 data class RouteRequest(
-    /** origin 은 의도적으로 @NotNull 미적용 — 누락은 400 이 아니라 [toValidatedQuery] 의 422 ORIGIN_REQUIRED. */
+    // @NotNull 을 일부러 빼 둔다 — origin 누락은 400 이 아니라 toValidatedQuery 의 422 ORIGIN_REQUIRED 로 답한다.
     @field:Valid val origin: LatLng?,
     @field:Valid @field:NotNull val destination: NamedLatLng?,
-    // 고르지 않으면 null 이 가능함 — 기본 종류로 읽는다
     val routeType: String? = null,
-    // 고르지 않으면 null 이 가능함 — 가장 안전한 쪽으로 읽는다
     val safetyPreference: String? = null,
-    /** 안내 중 경로 이탈로 다시 찾는 요청. 안 보내면 처음 찾는 요청으로 본다. */
     val reroute: Boolean = false,
 )
 

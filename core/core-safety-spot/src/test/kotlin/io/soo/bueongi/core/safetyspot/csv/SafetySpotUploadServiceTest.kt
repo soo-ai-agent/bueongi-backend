@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.file.Path
 
 class SafetySpotUploadServiceTest {
-
     private val mapper = ObjectMapper()
 
     private class FakeLiveStore : SafetySpotLiveStore {

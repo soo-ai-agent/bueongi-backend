@@ -4,9 +4,7 @@ import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 
 import io.soo.bueongi.core.enums.SafetySpotType
 
-/**
- * 헤더 후보·좌표계 값은 pipeline sources.yaml 의 keyColumns 와 일치시킨다 — 위도/경도 헤더가 있으면 WGS84 우선.
- */
+// 헤더 후보·좌표계 값은 pipeline sources.yaml 의 keyColumns 와 일치시킨다.
 data class SafetySpotCsvSpec(
     val type: SafetySpotType,
     val coordSystem: SafetySpotCoordSystem,
@@ -21,7 +19,6 @@ data class SafetySpotCsvSpec(
     val phoneHeaders: List<String> = emptyList(),
     val securityPurposeFilter: Boolean = false,
 ) {
-    /** 헤더 이름표에서 이 규격의 열 위치를 찾는다. 위도/경도 헤더가 있으면 좌표계를 WGS84 로 본다. */
     fun locateColumns(headerIndex: Map<String, Int>): CsvColumns {
         val latIdx: Int? = headerIndex.firstIndexOf(latHeaders)
         val lngIdx: Int? = headerIndex.firstIndexOf(lngHeaders)

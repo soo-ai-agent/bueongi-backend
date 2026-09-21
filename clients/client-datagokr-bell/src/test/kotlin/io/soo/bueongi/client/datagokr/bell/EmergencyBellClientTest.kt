@@ -10,7 +10,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
-/** 이 자원의 엔드포인트·필드 매핑만 검증한다 — 페이징·재시도는 전송 모듈 테스트가 맡는다. */
 class EmergencyBellClientTest {
 
     @Test

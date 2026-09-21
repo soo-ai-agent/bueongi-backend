@@ -15,13 +15,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SafetySpotStatusServiceTest {
-
     private class FakeSource(
         counts: Map<SafetySpotType, Int>,
         override val freshness: SafetySpotFreshness?,
     ) : SafetySpotSpatialSource {
         private val indices = counts.mapValues { (type, n) ->
-            // 인덱스가 같은 좌표를 하나로 세므로 지점을 달리한다.
             GridSpatialIndex((1..n).map { i -> SafetySpotPoint(type = type, lat = 37.5 + i * 0.001, lng = 127.0) })
         }
         override fun index(type: SafetySpotType): GridSpatialIndex = indices[type] ?: GridSpatialIndex(emptyList())

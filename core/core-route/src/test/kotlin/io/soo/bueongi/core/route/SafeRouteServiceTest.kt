@@ -171,7 +171,6 @@ class SafeRouteServiceTest {
 
     @Test
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
-        // 기준 880m · SAFE 선호(예산 +35%) → 상한 1188m. 병합에 먹히지 않도록 경로를 멀리 둔다.
         val overBudget = detourAt(lat = 37.53, distanceM = 2000.0)
 
         val result = service(tmapReturning(detour = overBudget)).safeCompare(request)

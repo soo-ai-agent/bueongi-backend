@@ -23,7 +23,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class SecurityLampFillServiceTest {
-
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 

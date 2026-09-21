@@ -6,7 +6,6 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
-/** 경로 조회가 밖에 알릴 일. 사건을 발행만 한다. */
 @Component
 class RouteVisitEventPublisher(
     private val events: ApplicationEventPublisher,

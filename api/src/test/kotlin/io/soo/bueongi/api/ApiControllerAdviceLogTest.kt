@@ -28,10 +28,6 @@ class ApiControllerAdviceLogTest {
         return appender
     }
 
-    /**
-     * 겉 예외만 남기면 진짜 원인이 사라진다 — Tmap 이 폴백만 내던 원인(응답 본문의 NUL)이
-     * 그렇게 오래 숨었다. 미처리 예외는 사슬을 반드시 한 줄에 적는다.
-     */
     @Test
     fun `미처리 예외는 예외 줄로 남기고 원인 사슬을 끝까지 적는다`() {
         val appender = captureLogs()
@@ -48,7 +44,6 @@ class ApiControllerAdviceLogTest {
         assertThat(event.formattedMessage).contains("↳ 500 INTERNAL_ERROR 응답")
     }
 
-    /** 줄 번호까지 봐야 고칠 수 있는 우리 쪽 결함이라, 500·503 에서만 스택도 함께 남긴다. */
     @Test
     fun `미처리 예외는 스택도 함께 남긴다`() {
         val appender = captureLogs()
@@ -72,7 +67,6 @@ class ApiControllerAdviceLogTest {
         assertThat(line).contains("RuntimeException: redis down")
     }
 
-    /** 어느 요청에서 터졌는지가 보여야 한다 — 수신 줄과 같은 표식으로 잇는다. */
     @Test
     fun `어느 요청에서 터졌는지 짝 표식과 함께 적는다`() {
         val appender = captureLogs()

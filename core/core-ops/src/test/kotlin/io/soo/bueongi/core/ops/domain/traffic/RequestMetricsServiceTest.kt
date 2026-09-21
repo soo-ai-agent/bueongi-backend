@@ -43,7 +43,6 @@ class RequestMetricsServiceTest {
     private val fixedClock: Clock =
         Clock.fixed(Instant.parse("2026-08-22T03:00:00Z"), ZoneOffset.UTC)
 
-    /** 사용자 창만 보는 시험 — 관리자 창은 비워 둔다. */
     private fun serviceOf(metrics: List<RequestMetric>): RequestMetricsService =
         RequestMetricsService(store(metrics), adminStore(), fixedClock)
 
@@ -258,10 +257,6 @@ class RequestMetricsServiceTest {
         const val DAY_MS: Long = 86_400_000L
     }
 
-    /**
-     * 관리자 미리보기는 5초마다 폴링한다 — 사용자 표에 섞이면 호출량·사용자 수가 부풀어 보인다.
-     * 버리지도 않는다: 누가 무엇을 얼마나 열람했는지는 따로 볼 수 있어야 한다.
-     */
     @Test
     fun `관리자 호출은 사용자 집계에 섞이지 않고 따로 나온다`() {
         val userMetrics = listOf(metric(endpoint = "/api/places/search", clientId = "a"))
@@ -291,7 +286,6 @@ class RequestMetricsServiceTest {
         assertThat(summary.adminCalls.hourlyCalls).hasSize(24)
     }
 
-    /** 일일 한도가 아니라 "오늘 관리자가 얼마나 봤나"를 읽는 칸이다 — 어제 것이 섞이면 안 된다. */
     @Test
     fun `관리자 오늘 호출 수는 서비스 시간대의 자정부터 센다`() {
         val nowMs = Instant.parse("2026-08-22T03:00:00Z").toEpochMilli()
@@ -311,10 +305,6 @@ class RequestMetricsServiceTest {
         assertThat(summary.adminCalls.callsToday).isEqualTo(1)
     }
 
-    /**
-     * 성공률(0.98)만으로는 "몇 건이 실패했나"를 못 읽는다 — 건수로도 낸다.
-     * 성공 기준은 기존 성공률과 같은 200..399 다(3xx 포함).
-     */
     @Test
     fun `성공 건수와 실패 건수를 함께 낸다`() {
         val summary = serviceOf(
@@ -337,8 +327,6 @@ class RequestMetricsServiceTest {
             .summarize()
 
         assertThat(summary.successCount + summary.failureCount).isEqualTo(summary.totalCalls)
-        // 3xx 는 성공으로 센다 — 기존 성공률·시간대별 에러가 쓰는 기준(200..399)과 같아야
-        // 화면의 두 수가 서로 어긋나지 않는다.
         assertThat(summary.successCount).isEqualTo(2)
     }
 

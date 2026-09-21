@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController
 class SafetySpotController(
     private val nearestPoliceFinder: NearestPoliceFinder,
 ) {
-
     @GetMapping("/police/nearest")
     fun nearestPolice(
         @RequestParam lat: Double,

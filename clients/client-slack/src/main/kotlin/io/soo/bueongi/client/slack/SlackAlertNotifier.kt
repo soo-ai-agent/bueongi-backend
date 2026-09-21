@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-/** webhook URL(시크릿)은 로그·예외 메시지에 싣지 않는다. */
+// webhook URL 은 경로에 토큰이 든 시크릿이라 로그·예외 메시지에 싣지 않는다.
 @Component
 class SlackAlertNotifier internal constructor(
     private val config: SlackAlertConfig,
@@ -125,10 +125,6 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    /**
-     * webhook URL 자체가 시크릿이라(경로에 토큰이 들어 있다) 대상 칸에 URL 을 적지 않고,
-     * 예외 메시지에 섞여 온 URL 도 함께 넘겨 지운다.
-     */
     private fun failureLine(e: Throwable, subject: String, action: String): String = ExceptionLogLine(
         kind = IGNORED_EXCEPTION,
         counterpart = PROVIDER,
@@ -140,7 +136,7 @@ class SlackAlertNotifier internal constructor(
     private companion object {
         const val ALERT_HISTORY_CAP: Int = 200
 
-        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        // 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "slack"
 
         const val TEST_MESSAGE: String = ":white_check_mark: bueongi 운영 알림 테스트 — 이 메시지가 보이면 Slack 연동이 정상입니다."

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/** 스플래시 화면이 한 번 호출로 앱·서버 정보를 얻는 창구. 값이 없으면 빈 문자열로 내린다. */
 @RestController
 @RequestMapping("/api/app-info")
 class AppInfoController(

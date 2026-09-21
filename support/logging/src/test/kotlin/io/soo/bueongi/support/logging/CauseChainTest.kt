@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 
 class CauseChainTest {
 
-    /** 겉 예외만 남겨 Tmap 의 진짜 원인(NUL 문자)이 오래 숨었다 — 사슬이 보여야 한다. */
     @Test
     fun `겉 예외 뒤에 숨은 원인까지 사슬로 적는다`() {
         val root = IllegalArgumentException("Illegal unquoted character ((CTRL-CHAR, code 0))")
@@ -30,7 +29,6 @@ class CauseChainTest {
         assertThat(causeChainOf(SelfCaused())).isEqualTo("SelfCaused: 반복")
     }
 
-    /** 인증키는 질의 문자열에 실린다 — 경로까지만 남는다. */
     @Test
     fun `예외 메시지에 실려 온 URL 의 질의 문자열은 통째로 지운다`() {
         val error = RuntimeException(
@@ -55,7 +53,6 @@ class CauseChainTest {
         assertThat(chain).contains("pageIndex=1")
     }
 
-    /** 키를 안 넘겨도 이름으로 알아보는 항목은 지운다 — 새 클라이언트가 넘기기를 잊어도 새지 않는다. */
     @Test
     fun `인증 파라미터는 값을 몰라도 이름만으로 지운다`() {
         val masked: String = maskSecrets("body: serviceKey=RAW-KEY&appKey=OTHER-KEY&numOfRows=100")
@@ -65,10 +62,7 @@ class CauseChainTest {
         assertThat(masked).contains("numOfRows=100")
     }
 
-    /**
-     * 실측(2026-08-23): Kakao 는 401 본문에 우리가 보낸 키를 그대로 담아 돌려준다 —
-     * `=` 가 아니라 괄호라 이름만 보고 지워야 잡힌다.
-     */
+    // Kakao 는 401 본문에 키를 괄호로 담아 돌려준다(실측).
     @Test
     fun `원천이 되돌려 준 응답 본문 속 인증키도 지운다`() {
         val body = """401 Unauthorized: {"message":"appKey(0000000000000000000000000000dead) does not exist"}"""

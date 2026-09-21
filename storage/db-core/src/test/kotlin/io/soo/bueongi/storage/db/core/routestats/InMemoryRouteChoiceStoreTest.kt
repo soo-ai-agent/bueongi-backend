@@ -42,7 +42,6 @@ class InMemoryRouteChoiceStoreTest {
         assertEquals(51L, all.last().atEpochMs)
     }
 
-    /** 창 분리의 핵심 — 추천이 아무리 쌓여도 선택 기록은 한 건도 밀려나지 않는다. */
     @Test
     fun `추천 기록을 상한 넘게 쌓아도 선택 기록은 그대로 남는다`() {
         val recommendations = InMemoryRouteStatsStore()

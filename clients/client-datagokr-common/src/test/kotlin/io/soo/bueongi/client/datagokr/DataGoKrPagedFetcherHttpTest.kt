@@ -12,7 +12,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
-/** 전송 계층만 검증한다 — 자원별 필드 매핑은 각 자원 모듈의 테스트가 맡는다. */
 class DataGoKrPagedFetcherHttpTest {
 
     private val endpoint: String = "https://apis.data.go.kr/1741000/test_resource/info"

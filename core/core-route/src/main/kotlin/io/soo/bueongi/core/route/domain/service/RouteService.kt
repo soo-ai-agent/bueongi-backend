@@ -11,11 +11,9 @@ import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
 
-/** 실제 길이 아니라 직선거리 추정치라 점수·좌표·마커를 담지 않는다. */
 @Service
 class RouteService(
     private val routeTypeCatalog: RouteTypeCatalog,
-    // 통계 없이도 경로 생성은 돌아야 해서 선택 주입이다.
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
@@ -46,12 +44,6 @@ class RouteService(
     }
 }
 
-/** 추천 집계. 저장소가 없으면(Redis 미설정) 조용히 건너뛴다 — 집계 실패가 경로 응답을 막지 않는다. */
-/**
- * 재탐색은 추천으로 세지 않는다. 걷던 길에서 벗어나 되돌아가는 것이라 **같은 여정의 이어짐**이지
- * 새로 고른 경로가 아니다. 세면 이탈이 잦은 한 번의 이동이 선호 분포를 통째로 기울인다
- * (실측: 요청 1건 + 재탐색 3건 = 추천 4건, 전부 같은 강도).
- */
 internal fun RouteStatsStore?.recordRecommendation(endpoint: String, query: RouteQuery) {
     if (this == null || query.reroute) {
         return

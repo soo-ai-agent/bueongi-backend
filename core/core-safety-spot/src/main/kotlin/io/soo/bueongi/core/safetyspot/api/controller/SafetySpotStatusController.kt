@@ -11,13 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-/** 경로가 /api/admin 아래인 것은 프론트 계약이다 — 시설 데이터의 현황이라 시설 모듈이 답한다. */
 @RestController
 class SafetySpotStatusController(
     private val safetySpotStatusService: SafetySpotStatusService,
     private val regionStatusService: RegionSafetySpotStatusService,
 ) {
-
     @GetMapping("/api/admin/safety-spot-status")
     fun safetySpotStatus(): SafetySpotStatusSummary =
         safetySpotStatusService.summarize()

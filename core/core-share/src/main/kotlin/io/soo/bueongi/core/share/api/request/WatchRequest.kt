@@ -6,6 +6,5 @@ import jakarta.validation.constraints.NotBlank
 data class WatchRequest(
     @field:NotBlank
     @param:JsonProperty("owner_secret")
-    // 보호자는 비밀키가 없어 null 이 가능함
     val ownerSecret: String? = null,
 )

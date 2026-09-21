@@ -15,12 +15,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import java.net.URI
 
-/**
- * data.go.kr 공통 전송 — 페이징·재시도·봉투 해석을 한곳에서 맡는다.
- * 자원별 클라이언트(cctv·bell·safehouse·lamp)는 엔드포인트와 필드 매핑만 갖고 이것을 부른다.
- *
- * 인증키는 Encoding(URL-인코딩) 형태 그대로 사용 — 재인코딩하면 키가 거부돼 URI 를 문자열로 조립한다.
- */
+// 인증키는 Encoding(URL-인코딩) 형태 그대로 써야 한다 — 재인코딩하면 거부돼 URI 를 문자열로 조립한다.
 @Component
 class DataGoKrPagedFetcher(
     @Value("\${bueongi.datagokr.service-key:}") serviceKey: String,
@@ -34,7 +29,7 @@ class DataGoKrPagedFetcher(
 
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    /** 계약: null = 수집 실패(부분 실패 포함) — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
+    // null = 수집 실패(부분 실패 포함), 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetchAll(
         endpoint: String,
         fields: DataGoKrFieldNames,
@@ -89,12 +84,7 @@ class DataGoKrPagedFetcher(
         return points
     }
 
-    /**
-     * 페이지 1건을 받는다. 일시 장애(5xx·타임아웃·연결 실패)는 백오프 후 재시도하고,
-     * 인증 오류 같은 영구 실패(4xx)는 즉시 포기한다. 재시도까지 실패하면 null(=갱신 중단).
-     *
-     * 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 사실상 성공하지 못한다.
-     */
+    // 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 성립하지 않는다.
     private fun fetchPage(
         endpoint: String,
         pageNo: Int,
@@ -109,7 +99,6 @@ class DataGoKrPagedFetcher(
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
-                // 예외 메시지에 URL(serviceKey 포함)이 섞일 수 있어 causeChainOf 가 마스킹한다.
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
@@ -145,10 +134,7 @@ class DataGoKrPagedFetcher(
         }
     }
 
-    /**
-     * 응답 타입 파라미터 이름이 계열마다 다르다 — 1741000 은 `returnType`(과 `type`)을 받고,
-     * 표준데이터는 `type` 만 받으며 `returnType` 을 주면 `resultCode 10` 으로 거부한다(실측).
-     */
+    // 표준데이터 계열은 `type` 만 받는다 — `returnType` 을 주면 resultCode 10 으로 거부한다(실측).
     private fun pageUrl(endpoint: String, pageNo: Int, query: DataGoKrQuery, dialect: DataGoKrQueryDialect): String {
         val responseType: String = if (dialect == DataGoKrQueryDialect.CONDITION) {
             "&returnType=json&type=json"
@@ -161,7 +147,7 @@ class DataGoKrPagedFetcher(
             query.toQueryParams(dialect)
     }
 
-    /** 표준데이터 계열은 한 번에 1,000건까지 준다 — 100 으로 부르면 호출이 10배가 된다(실측). */
+    // 표준데이터 계열은 한 번에 1,000건까지 준다(실측).
     private fun pageSizeOf(dialect: DataGoKrQueryDialect): Int =
         if (dialect == DataGoKrQueryDialect.CONDITION) {
             DataGoKrApiSpec.PAGE_SIZE
@@ -183,10 +169,6 @@ class DataGoKrPagedFetcher(
         else -> emptyList()
     }
 
-    /**
-     * 실패 한 건을 예외 줄 규격으로 옮긴다 — 바로 위의 송신 줄과 같은 자리에서 원천·경로가 보인다.
-     * 대상 칸에는 경로만 적는다(엔드포인트는 전체 URL 로 들어온다).
-     */
     private fun failureLine(
         endpoint: String,
         cause: String,
@@ -204,7 +186,7 @@ class DataGoKrPagedFetcher(
     ).format()
 
     private companion object {
-        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다([ExternalApiProvider.DATA_GO_KR]). */
+        // 송신 줄의 원천 이름(ExternalApiProvider.DATA_GO_KR)과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "data_go_kr"
         const val STOPPED_ACTION: String = "갱신 중단(기존 데이터 유지)"
     }

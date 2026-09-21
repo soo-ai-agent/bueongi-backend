@@ -2,7 +2,7 @@ package io.soo.bueongi.client.safetydata.streetlamp
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-/** 외부 응답 규격 — DSSP-IF-00084 봉투. totalCount 가 header 가 아닌 최상위에 있다(실측). */
+// totalCount 가 header 가 아닌 최상위에 있다(실측).
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class StreetLampResponse(
     // 원천이 헤더를 생략하는 응답이 있어 null 이 가능함

@@ -17,12 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
-/**
- * 필요할 때 받아 온 지역 데이터를 지역 단위로 남긴다.
- *
- * 저장 계약: `{regionDir}/{종류}/{지역코드}.json` — CDN 컬렉션과 동형이라 재기동 때 그대로 되읽는다.
- * 파일을 지역마다 나누는 이유는 한 지역을 다시 받아도 다른 지역이 영향을 받지 않게 하기 위해서다.
- */
+// 저장 계약: `{regionDir}/{종류}/{지역코드}.json` — CDN 컬렉션과 동형이라 재기동 때 그대로 되읽는다.
 @Component
 class SafetySpotRegionCache(
     objectMapper: ObjectMapper,
@@ -38,25 +33,13 @@ class SafetySpotRegionCache(
 
     private val readMapper: ObjectMapper = objectMapper
 
-    /**
-     * 파일에서 한 번 읽은 저장 시각을 기억한다.
-     * 이 값은 우리가 [save] 할 때만 바뀌므로, 매번 파일을 다시 파싱할 이유가 없다 —
-     * 지연 적재는 요청마다 만료를 확인하는데 파일이 수 MB 라 그 비용이 그대로 요청에 실렸다.
-     */
     private val savedAtByFile: ConcurrentHashMap<String, Instant> = ConcurrentHashMap()
 
-    /**
-     * 이미 받아 뒀고 아직 안 낡았는지. 낡았으면 false 라 다시 받는다.
-     *
-     * 만료를 두는 이유는 지자체가 나중에 좌표를 채워 넣어도 우리가 모르기 때문이다 —
-     * 좌표 0% 라 빈 파일로 남긴 지역이 특히 그렇다.
-     */
     fun isCached(type: SafetySpotType, regionCode: String): Boolean {
         val savedAt: Instant = savedAtOf(type, regionCode) ?: return false
         return Duration.between(savedAt, clock.instant()) < Duration.ofDays(ttlDays)
     }
 
-    /** 저장 시각. 파일이 없거나 시각을 못 읽으면 null — 그때는 안 받은 것으로 본다. */
     fun savedAtOf(type: SafetySpotType, regionCode: String): Instant? {
         val remembered: Instant? = savedAtByFile[cacheKey(type, regionCode)]
         if (remembered != null) {
@@ -104,7 +87,6 @@ class SafetySpotRegionCache(
         }
     }
 
-    /** 재기동 때 전 지역을 되읽는다. 깨진 파일은 건너뛰고 나머지를 살린다. */
     fun loadAll(type: SafetySpotType): List<SafetySpotPoint> {
         val dir = File(regionDir, type.cdnType)
         val files: List<File> = dir.listFiles()?.filter { it.isFile && it.name.endsWith(".json") }.orEmpty()
@@ -137,7 +119,7 @@ class SafetySpotRegionCache(
         File(File(regionDir, type.cdnType), "$regionCode.json")
 
     private companion object {
-        /** 보안등 원천은 갱신이 드물지만, 지자체가 좌표를 채워 넣는 일이 있어 분기마다 한 번은 다시 본다. */
+        // 지자체가 뒤늦게 좌표를 채워 넣는 일이 있어 분기마다 한 번은 다시 받는다.
         const val DEFAULT_TTL_DAYS: Long = 90
     }
 }

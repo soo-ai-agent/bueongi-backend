@@ -72,7 +72,7 @@ class TmapRouteClient(
         cache.get(origin, dest, searchOption, passList)?.let { return it }
         return try {
             val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
-            // Tmap 응답에는 NUL 이 섞여 오므로 문자열로 받아 다듬은 뒤 파싱한다(sanitizeTmapJson 주석 참고).
+            // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
             val raw: String? = restClient.post()
                 .uri(PEDESTRIAN_ENDPOINT)
                 .header("appKey", appKey)
@@ -97,7 +97,6 @@ class TmapRouteClient(
             }
             route
         } catch (e: Exception) {
-            // 시크릿(appKey) 비노출 — 스택 대신 원인 사슬만 남긴다.
             log.warn(
                 ExceptionLogLine(
                     kind = IGNORED_EXCEPTION,
@@ -140,15 +139,14 @@ class TmapRouteClient(
 
         private const val PEDESTRIAN_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1"
 
-        /** 로그 대상 칸은 경로만 적는다 — 송신 줄과 같은 자리에서 같은 값이 보여야 한다. */
+        // 로그 대상 칸은 경로만 적는다 — 송신 줄과 같은 자리에서 같은 값이 보여야 한다.
         private const val PEDESTRIAN_PATH: String = "/tmap/routes/pedestrian"
 
         private const val PROVIDER: String = "tmap"
 
-        /** Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10. 세 갈래를 비교 후보로 쓴다. */
+        // Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10.
         private val DEFAULT_SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
 
-        /** 경유지 경로는 추천(0) 하나만 쓴다 — 경유지가 이미 경로를 규정한다. */
         private const val VIA_SEARCH_OPTION: String = "0"
     }
 }

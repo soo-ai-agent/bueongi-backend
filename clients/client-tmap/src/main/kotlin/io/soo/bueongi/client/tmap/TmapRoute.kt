@@ -9,7 +9,7 @@ data class TmapRoute(
     val timeS: Int,
     val steps: List<NavStep>,
 ) {
-    /** 중복 제거 키 — 좌표수가 PATH_SIZE_SLOT(1000) 미만 전제, 초과 시 키 충돌. */
+    // 좌표수가 PATH_SIZE_SLOT 미만이라는 전제다 — 넘으면 키가 충돌한다.
     val identityKey: Long
         get() = (distanceM.roundToLong() * PATH_SIZE_SLOT) + path.size
 

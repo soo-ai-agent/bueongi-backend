@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
-/** 재난안전데이터 공유플랫폼 가로등(DSSP-IF-00084). 인증키는 URL-인코딩분 그대로 써야 해 URI 를 문자열로 조립한다. */
+// 인증키는 URL-인코딩분 그대로 써야 해 URI 를 문자열로 조립한다.
 @Component
 class StreetLampClient(
     @Value("\${bueongi.safetydata.service-key:}") serviceKey: String,
@@ -28,7 +28,7 @@ class StreetLampClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
-    /** 계약: null = 수집 실패 — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
+    // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetchStreetLamps(): List<StreetLampPoint>? {
         check(isEnabled) { "재난안전데이터 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<StreetLampPoint> = ArrayList()
@@ -96,7 +96,7 @@ class StreetLampClient(
         }
     }
 
-    /** 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않고 totalCount 도 함께 본다. */
+    // 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
     private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
         if (rowCount == 0) {
             return true
@@ -119,13 +119,12 @@ class StreetLampClient(
     private companion object {
         const val PATH: String = "/V2/api/DSSP-IF-00084"
 
-        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        // 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "safetydata"
 
-        /** data.go.kr(100) 과 달리 1,000 을 받아 호출 수가 훨씬 적다. */
+        // 원천이 한 번에 1,000건까지 준다(실측).
         const val PAGE_SIZE: Int = 1000
 
-        /** 무한 루프 방지 — 원천 전량이 1,500건이라 두 자리면 충분하다. */
         const val MAX_PAGES: Int = 50
 
         val SUCCESS_CODES: Set<String> = setOf("0", "00")

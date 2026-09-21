@@ -10,7 +10,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import java.time.LocalDateTime
 
-/** 수집 범위를 좁히는 조건이 실제 요청 URL 에 규격대로 실리는지 본다 — 쿼터가 여기에 달려 있다. */
 class DataGoKrQueryHttpTest {
 
     private val endpoint: String = "https://apis.data.go.kr/1741000/test_resource/info"

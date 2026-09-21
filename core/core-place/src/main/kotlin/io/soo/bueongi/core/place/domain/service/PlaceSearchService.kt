@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service
 class PlaceSearchService(
     private val seedProvider: SeedPlaceProvider,
     private val remoteProvider: RemotePlaceProvider,
-    // 알림 없이도 검색은 돌아야 해서 선택 주입이다.
     private val placeEvents: PlaceEventPublisher? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)

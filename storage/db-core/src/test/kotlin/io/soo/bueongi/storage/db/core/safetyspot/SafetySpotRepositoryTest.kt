@@ -207,7 +207,6 @@ class SafetySpotRepositoryTest {
         val types: List<SafetySpotType> = SafetySpotType.entries
         val pool: ExecutorService = Executors.newFixedThreadPool(types.size)
 
-        // 한 번의 최종 상태만 보면 유실이 드러나지 않는다 — 매 시행마다 새 저장소에 전 종류를 동시에 1회씩 쓴다.
         repeat(TRIALS) {
             val repo = SafetySpotRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
             repo.load()

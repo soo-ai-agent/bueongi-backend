@@ -20,7 +20,6 @@ class ExceptionLogLineTest {
         paging = "page=3 시도=2회",
     )
 
-    /** 세 종류가 맨 앞 낱말로 갈려야 로그를 세로로 훑을 수 있다. */
     @Test
     fun `예외 줄은 방향 표식으로 시작해 수신 송신과 갈린다`() {
         val formatted: String = line().format()
@@ -42,7 +41,6 @@ class ExceptionLogLineTest {
         assertThat(columns[6]).isEqualTo("↳ 갱신 중단(기존 데이터 유지)")
     }
 
-    /** 값이 짧아도 같은 자리에서 끝나야 눈이 세로로 훑는다. */
     @Test
     fun `앞의 세 칸은 값이 짧아도 폭을 채운다`() {
         val short: String = ExceptionLogLine(

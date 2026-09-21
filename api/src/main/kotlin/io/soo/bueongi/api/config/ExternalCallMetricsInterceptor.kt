@@ -14,12 +14,6 @@ import org.springframework.http.client.ClientHttpRequestInterceptor
 import org.springframework.http.client.ClientHttpResponse
 import java.io.IOException
 
-/**
- * 외부 API 호출을 한 줄로 남기고 기록한다.
- *
- * 클라이언트마다 거는 대신 공용 `RestClient.Builder` 에 한 번 건다 — 모든 clients 모듈이
- * 그 빌더를 주입받으므로 새 클라이언트도 자동으로 걸린다([ExternalCallMetricsConfig]).
- */
 class ExternalCallMetricsInterceptor(
     private val externalCallMetricStore: ExternalCallMetricStore,
     private val clock: java.time.Clock,
@@ -38,7 +32,6 @@ class ExternalCallMetricsInterceptor(
             finish(request, startedAt, response.statusCode.value(), cause = null)
             return response
         } catch (e: IOException) {
-            // 연결 실패·타임아웃은 응답 코드가 없다. 기록만 남기고 예외는 그대로 올려보낸다.
             finish(request, startedAt, status = 0, cause = e)
             throw e
         }
@@ -56,7 +49,6 @@ class ExternalCallMetricsInterceptor(
                 endpoint = endpoint,
                 status = status,
                 durationMs = durationMs,
-                // 원인 사슬이라야 "왜 실패했는지"가 보인다 — 마스킹은 causeChainOf 가 한다.
                 failureReason = if (cause == null) "" else causeChainOf(cause),
                 paging = pagingOf(request.uri.rawQuery),
             ),
@@ -98,10 +90,6 @@ class ExternalCallMetricsInterceptor(
         }
     }
 
-    /**
-     * 적재 계열은 몇 페이지째에서 멈췄는지가 진단의 첫 단서다. 다만 질의 문자열에는 인증키가
-     * 실리므로 이름이 허용 목록에 있고 값이 숫자뿐인 항목만 통과시킨다 — 키 값은 숫자가 아니다.
-     */
     private fun pagingOf(rawQuery: String?): String {
         if (rawQuery.isNullOrEmpty()) {
             return ""
@@ -119,7 +107,6 @@ class ExternalCallMetricsInterceptor(
         return shown.joinToString(" ")
     }
 
-    /** 기록에는 종류만 남긴다 — 관리자 화면에 그대로 보이는 값이라 짧아야 한다. */
     private fun reasonOf(e: Throwable): String =
         e::class.simpleName ?: "IOException"
 

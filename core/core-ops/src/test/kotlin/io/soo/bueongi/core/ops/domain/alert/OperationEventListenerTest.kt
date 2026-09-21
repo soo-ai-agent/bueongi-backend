@@ -5,7 +5,6 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/** 도메인이 발행한 사건이 알림 수단까지 닿는지 — 이 연결이 끊기면 장애가 조용해진다. */
 class OperationEventListenerTest {
 
     private class RecordingNotifier : AlertNotifier {

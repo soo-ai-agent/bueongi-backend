@@ -47,7 +47,7 @@
 | `VALIDATION_FAILED` | 400 | Validation Failed | ✅ field별 | `@Valid` 좌표 범위 위반(lat ±90·lng ±180 초과), 좌표 오버플로(`1e400`→±Infinity). 좌표 입력 인라인 에러 표시. |
 | `MALFORMED_REQUEST` | 400 | Malformed Request | ❌ | 빈 본문·깨진 JSON·타입 불일치·`NaN`/`Infinity` 비숫자 리터럴(Jackson 거부). |
 | `INVALID_KEYWORD` | 400 | Invalid Keyword | ✅ `keyword`(rejectedValue=입력 길이) | 검색어가 트림 후 100자 초과. 검색어 줄이도록 안내. |
-| `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/safetySpots 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
+| `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/safety-spots 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
 | `SAME_ORIGIN_DESTINATION` | 422 | Same Origin And Destination | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 < 1m(사실상 같은 지점). 도착지 재선택 유도. |
 | `TRIP_TOO_FAR` | 422 | Trip Too Far | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 > 100km(도착지 오선택/위경도 뒤바뀜 추정). 도착지 재선택 유도("100km 이내" 안내). |
 | `INVALID_SLACK_CATEGORY` | 422 | Invalid Slack Category | ✅ `mutedCategories`(rejectedValue=알 수 없는 key 목록) | 관리자 Slack 설정 편집(PUT `/api/admin/slack-config`)의 `mutedCategories` 에 알려진 5종 밖 key. 허용 카테고리만 뮤트하도록 안내. |
@@ -146,7 +146,7 @@
 
 - `origin` (`{lat,lng}`): **누락 가능**(위치 권한 거부/미지원). 누락 → 422 `ORIGIN_REQUIRED`. 값이 있으면 좌표 범위 검증(범위 초과 → 400 `VALIDATION_FAILED`).
 - `destination` (`{lat,lng,name?}`): **필수**(누락 → 400 `VALIDATION_FAILED`, `destination` @NotNull). `name` 은 optional 표시명.
-- `routeType` (optional): compare 에서는 **무시됨**(항상 3개 경로 반환). safetySpots 전용.
+- `routeType` (optional): compare 에서는 **무시됨**(항상 3개 경로 반환). safety-spots 전용.
 
 **200 응답** (`List<RouteOption>`, 항상 safe→main→fast 순):
 
@@ -176,7 +176,31 @@
 
 ---
 
-## `POST /api/routes/safetySpots` — 경로상 안심시설
+## `POST /api/routes/safe-compare` — 실경로 비교 (앱이 실제로 쓰는 경로 탐색)
+
+Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 요청 본문은 `compare` 와 같은 `RouteRequest` 이고, 앱은 이 경로만 호출한다. 출처: `core-route/api/controller/RouteController.kt`, `domain/service/SafeRouteService.kt`.
+
+- `safetyPreference` (optional): `balanced`/`safe`/`safest`. 생략하면 백엔드 기본 성향.
+- `reroute` (optional, 기본 `false`): 경로 이탈 재탐색이면 `true`. 외부 호출 예산을 달리 쓴다(`RouteCandidateCollector`).
+
+**200 응답** (`List<RouteOption>`): `compare` 의 7개 필드에 더해 실경로일 때만 `path`·`steps`·`score`·`markers`·`breakdown`·`provenance` 여섯이 **함께** 실린다. 폴백(키 미설정/Tmap 전면 실패) 응답은 여섯을 하나도 담지 않으며, `@JsonInclude(NON_NULL)` 이라 키 자체가 빠진다.
+
+- `score`: 0~100. 주변에 어떤 안심시설 자료도 없으면 `null`(0점이 아니라 '없음').
+- `breakdown.scoredAxes`/`unscoredAxes`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 축은 빼고 남은 축의 가중치로 다시 나눈다.
+
+---
+
+## `POST /api/ads/impression` — 광고 노출 기록
+
+**요청 본문** (`AdImpressionRequest`): `{ "placement": "banner" }`
+
+- `placement`: **필수**, `interstitial`/`native`/`banner` 만 허용(그 밖 → 400 `VALIDATION_FAILED`).
+
+**204 No Content**, 본문 없음. 집계는 `GET /api/admin/ad-stats` 가 세 지면 모두를 키로 돌려준다.
+
+---
+
+## `POST /api/routes/safety-spots` — 경로상 안심시설
 
 선택 경로(routeType) 위의 안심시설 POI + 집계. 출처: `routes/RouteController.kt`, `routes/SafetySpotService.kt`, `routes/SafetySpotDtos.kt`.
 
@@ -210,7 +234,7 @@
 
 | 필드 | 의미 |
 |------|------|
-| `type` | `start`/`end`/`cctv`/`bell`/`store`/`police`. (`start`/`end` 는 summary 집계 제외) |
+| `type` | `start`/`end`/`cctv`/`bell`/`store`/`police`/`safehouse`/`lamp`/`security_lamp`/`pedestrian_signal`. (`start`/`end` 는 summary 집계 제외) |
 | `x`,`y` | 정규화 표시 좌표(0~100). 좌하단(출발)→우상단(도착) 대각선 + 유형별 측면 분리. |
 | `lat`,`lng` | 실 지리 좌표. **출발-도착 직선 경로 위**에 결정론적 배치(선형 보간). |
 | `name` | optional. |
@@ -240,21 +264,24 @@
 **요청 본문** (`CreateShareRequest`, **본문 전체 optional**):
 
 ```json
-{ "expires_in_hours": 2 }
+{ "expires_in_hours": 2, "eta_seconds": 1500 }
 ```
 
 - `expires_in_hours` (optional): 만료까지의 시간(시). **1·2·3 만 허용**(범위 밖 → 400 `VALIDATION_FAILED`). 생략(빈 POST 포함) → 1시간(`DEFAULT_EXPIRES_HOURS`, 가장 보수적).
+- `eta_seconds` (optional, 1 이상): 예상 도착까지 남은 시간(초). 미도착 감시(`MissedArrivalWatchdog`)의 기준이며 앱은 ETA 를 아는 경우에만 보낸다.
 
 **200 응답** (`CreateShareResponse`):
 
 ```json
 {
   "token": "qZ3kP...(128-bit URL-safe 토큰)",
+  "owner_secret": "8Hf2v...(소유자만 갖는 비밀값)",
   "share_url": "http://localhost:8119/share/qZ3kP...",
   "expires_at": "2026-06-19T14:00:00Z"
 }
 ```
 
+- `owner_secret`: 공유를 끝내거나 경로를 올릴 때 소유자임을 증명하는 값. 공유 URL 에도 조회 응답에도 실리지 않으므로 앱이 단말에 보관한다.
 - `share_url`: 앱이 OS 공유 시트로 넘겨 사용자가 카카오톡/문자 등으로 직접 공유. base 는 `BUEONGI_SHARE_BASE_URL`(운영은 공개 도메인).
 
 ### `POST /share/{token}/location` — 위치 갱신 (사용자 단말, 5초마다)
@@ -262,10 +289,12 @@
 **요청 본문** (`UpdateLocationRequest`):
 
 ```json
-{ "lat": 37.4979, "lng": 127.0276 }
+{ "lat": 37.4979, "lng": 127.0276, "owner_secret": "8Hf2v...", "remaining_m": 820, "remaining_s": 610 }
 ```
 
 - `lat`/`lng`: **필수**. 좌표 규약(lat ±90·lng ±180) + 비유한(`NaN`/±`Infinity`) 거부. 범위 위반 → 400 `VALIDATION_FAILED`, 비숫자 리터럴 → 400 `MALFORMED_REQUEST`.
+- `owner_secret`: **필수**. 생성 응답의 값과 다르면 404(불투명 응답).
+- `remaining_m`/`remaining_s` (optional, 0 이상): 목적지까지 남은 거리·시간. 백그라운드 위치 태스크는 둘 다 없이 보낸다.
 - `token` 없음/만료 → **404 `SHARE_SESSION_NOT_FOUND`**.
 
 **200 응답** (`UpdateLocationResponse`):
@@ -283,6 +312,25 @@
 | `{ "lat":37.4, "lng":127.0, "updated_at":"...", "expired":false }` | 위치 1건 이상 갱신됨 | 지도에 위치 표시 |
 | `{ "lat":null, "lng":null, "updated_at":null, "expired":false }` | 공유는 살아있으나 **첫 위치 갱신 전** | "위치 수신 대기 중" 표시, 폴링 지속 |
 | `{ "lat":null, "lng":null, "updated_at":null, "expired":true }` | 토큰 없음 또는 TTL 만료 | "공유가 종료/만료되었습니다" 안내, 폴링 중단 |
+
+### `POST /share/{token}/end` — 공유 종료 (사용자 단말)
+
+**요청 본문** (`EndShareRequest`): `{ "owner_secret": "8Hf2v..." }` — `owner_secret` 필수.
+
+**200**. 토큰이 없거나 이미 만료면 404 지만, 앱은 종료 의도가 이미 이뤄진 것으로 보고 404 를 성공처럼 다룬다.
+
+### `POST /share/{token}/watching` — 보호자 시청 여부 (사용자 단말)
+
+**요청 본문** (`WatchRequest`): `{ "owner_secret": "8Hf2v..." }` — `owner_secret` 필수.
+
+**200 응답** (`WatchResponse`):
+
+```json
+{ "watching": true, "lat": 37.4979, "lng": 127.0276, "updated_at": "...", "expired": false, "remaining_m": 820, "remaining_s": 610 }
+```
+
+- `watching` 외 모든 칸은 값이 없으면 null 로 나간다(`expired` 는 기본 `false`).
+- 보호자가 최근에 조회했는지를 사용자 화면에 보여주는 용도라, 판정 창은 보호자 웹의 폴링 주기(5초)에 맞춰져 있다.
 
 ### `GET /share/{token}` — 보호자 지도 페이지 (HTML)
 

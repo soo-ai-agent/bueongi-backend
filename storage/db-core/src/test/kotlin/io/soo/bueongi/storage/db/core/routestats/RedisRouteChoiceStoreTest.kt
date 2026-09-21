@@ -12,7 +12,6 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
-/** 선택 기록이 추천 기록과 같은 Redis 키를 쓰면 서로를 밀어낸다 — 키와 상한을 여기서 고정한다. */
 class RedisRouteChoiceStoreTest {
 
     private val listOps: ListOperations<String, String> = mock()

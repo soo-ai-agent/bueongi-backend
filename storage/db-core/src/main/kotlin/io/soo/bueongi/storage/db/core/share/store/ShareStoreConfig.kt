@@ -10,7 +10,7 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import java.net.URI
 import java.time.Clock
 
-/** RedisAutoConfiguration 은 BueongiApplication 에서 제외됨 — URL 미지정 시 localhost:6379 자동 연결을 막으려 접속 팩토리는 여기서만 만든다. */
+// RedisAutoConfiguration 은 BueongiApplication 에서 제외돼 있다 — URL 미지정 시 localhost:6379 자동 연결을 막으려는 것.
 @Configuration
 class ShareStoreConfig {
 

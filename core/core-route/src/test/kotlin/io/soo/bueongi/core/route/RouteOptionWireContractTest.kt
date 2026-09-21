@@ -31,7 +31,12 @@ class RouteOptionWireContractTest {
         steps = listOf(NavStep(index = 0, lat = 37.5, lng = 127.0, description = "출발", turnType = 200, distanceM = 10, timeS = 8, pointType = "SP")),
         score = 80,
         markers = listOf(SafetySpotPoi(type = SafetySpotPoiType.CCTV, x = 50, y = 50, lat = 37.5, lng = 127.0)),
-        breakdown = SafetyBreakdown(routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0, policeCount = 0, safePathOverlap = 0.0, crimeProneAreaCount = 0),
+        breakdown = SafetyBreakdown(
+            routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0,
+            policeCount = 0, safePathOverlap = 0.0, crimeProneAreaCount = 0,
+            scoredAxes = listOf("cctv", "bell"), unscoredAxes = listOf("lamp", "safehouse", "police", "safePath"),
+            axisCoverage = 0.45,
+        ),
         provenance = DataProvenance(kind = "live", basedOn = "2026.06", origin = "공공데이터포털"),
     )
 
@@ -51,7 +56,10 @@ class RouteOptionWireContractTest {
         assertThat(json.at("/breakdown").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "routeKm", "cctvDensity", "lampDensity", "bellDensity", "safehouseCount", "policeCount", "safePathOverlap",
             "crimeProneAreaCount",
+            "scoredAxes", "unscoredAxes", "axisCoverage",
         )
+        assertThat(json.at("/breakdown/scoredAxes").map { it.asText() }).containsExactly("cctv", "bell")
+        assertThat(json.at("/breakdown/axisCoverage").asDouble()).isEqualTo(0.45)
         assertThat(json.at("/provenance").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("kind", "basedOn", "origin")
     }
 

@@ -9,7 +9,6 @@ data class AdminIdentityResponse(
 ) {
     companion object {
 
-        /** principal 은 JwtAuthenticationFilter 가 넣은 userId(Long) 다. 아니면 인증 배선이 깨진 것이라 401 로 돌린다. */
         fun from(authentication: Authentication): AdminIdentityResponse {
             val principal: Any? = authentication.principal
             if (principal !is Long) {

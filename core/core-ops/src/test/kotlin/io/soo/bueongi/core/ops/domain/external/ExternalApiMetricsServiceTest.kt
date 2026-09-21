@@ -36,7 +36,6 @@ class ExternalApiMetricsServiceTest {
         status = status, durationMs = durationMs, failureReason = failureReason,
     )
 
-    /** 실패가 남아 있어도 마지막 호출이 성공이면 "지금은 정상"이 읽혀야 한다. */
     @Test
     fun `실패 뒤 회복하면 마지막 호출 성공으로 답하고 실패는 시간대별로 따로 센다`() {
         val oneHourMs: Long = 60 * 60 * 1000L
@@ -97,7 +96,6 @@ class ExternalApiMetricsServiceTest {
             .containsExactly(ExternalApiProvider.TMAP, ExternalApiProvider.KAKAO)
     }
 
-    /** 일일 한도가 있는 원천을 볼 때 "오늘 몇 번"이 판단 근거다 — 어제 것이 섞이면 안 된다. */
     @Test
     fun `오늘 호출 수는 서비스 시간대의 자정부터 센다`() {
         val yesterdayMs: Long = Instant.parse("2026-08-21T13:00:00Z").toEpochMilli()
@@ -181,10 +179,6 @@ class ExternalApiMetricsServiceTest {
         assertThat(summary.hourlyCalls).hasSize(24)
     }
 
-    /**
-     * 회복했는지를 한 값으로 답하는 칸이라 **실패로 끝난 경우가 반대로 나와야** 뜻이 있다.
-     * `true` 만 확인하면 항상 true 를 돌려줘도 통과한다.
-     */
     @Test
     fun `마지막 호출이 실패면 회복하지 않은 것으로 본다`() {
         val oneHourMs: Long = 60 * 60 * 1000L
@@ -203,7 +197,6 @@ class ExternalApiMetricsServiceTest {
         assertThat(tmap.lastFailureAtEpochMs).isEqualTo(nowMs)
     }
 
-    /** 호출이 아예 없던 원천을 '실패 중'으로 보이게 하면 안 된다. */
     @Test
     fun `실패가 한 번도 없으면 실패 시각은 비어 있다`() {
         val service = ExternalApiMetricsService(

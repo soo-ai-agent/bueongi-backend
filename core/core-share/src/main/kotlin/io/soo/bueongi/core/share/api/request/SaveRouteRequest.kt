@@ -20,30 +20,22 @@ import jakarta.validation.constraints.Size
 
 data class SaveRouteRequest(
     @param:JsonProperty("owner_secret")
-    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
     val ownerSecret: String? = null,
     @field:NotNull @field:Valid
-    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
     val destination: NamedLatLng?,
     @field:Valid
     @field:Size(max = MAX_ROUTE_PATH_POINTS)
-    // 목적지만 저장하면 null 이 가능함
     val path: List<@Valid LatLng>? = null,
     @field:Valid
     @field:Size(max = MAX_ROUTE_MARKERS)
-    // 경로 주변에 안심시설이 없으면 null 이 가능함
     val markers: List<@Valid RouteMarkerRequest>? = null,
     @field:Min(0)
     @param:JsonProperty("total_distance_m")
-    // 프론트가 아직 계산하지 않았으면 null 이 가능함
     val totalDistanceM: Int? = null,
     @field:Min(0)
     @param:JsonProperty("total_time_s")
-    // 프론트가 아직 계산하지 않았으면 null 이 가능함
     val totalTimeS: Int? = null,
-    // 경로 종류를 고르지 않으면 null 이 가능함
     val type: String? = null,
-    // 데이터 출처를 모르면 null 이 가능함
     val provenance: String? = null,
 ) {
     fun toStoredRoute(): StoredRoute {

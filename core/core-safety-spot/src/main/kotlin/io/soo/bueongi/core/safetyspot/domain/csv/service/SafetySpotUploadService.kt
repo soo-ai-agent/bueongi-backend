@@ -17,7 +17,6 @@ class SafetySpotUploadService(
     private val parser: SafetySpotCsvParser,
     private val uploadStore: SafetySpotUploadStore,
     private val liveStore: SafetySpotLiveStore,
-    // 갱신 이력 기록 없이도 업로드는 돌아야 해서 선택 주입이다.
     private val refreshStatusStore: SafetySpotRefreshStatusStore? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadService::class.java)

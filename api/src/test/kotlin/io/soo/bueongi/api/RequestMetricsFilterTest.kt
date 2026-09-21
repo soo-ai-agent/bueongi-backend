@@ -38,7 +38,6 @@ class RequestMetricsFilterTest {
         override fun findRecent(limit: Int): List<RequestMetric> = recorded.take(limit)
     }
 
-    /** 관리자 창을 안 볼 때 쓰는 기본 조립 — 사용자 창만 단언하는 시험에서 잡음을 줄인다. */
     private fun filterOf(store: RequestMetricStore) = RequestMetricsFilter(store, CapturingAdminStore())
 
     private fun chainSetting(status: Int) = FilterChain { _, response ->
@@ -106,10 +105,6 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
-    /**
-     * 관리자 미리보기는 5초마다 폴링한다 — 통계에 넣으면 사용자 수·호출량이 부풀지만,
-     * 누가 무엇을 열람했는지는 남아야 해서 로그에는 넣는다.
-     */
     @Test
     fun `관리자 조회는 로그에 남기되 사용자 트래픽과 갈라 적는다`() {
         val appender = captureLogs()
@@ -127,10 +122,6 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
-    /**
-     * 관리자 로그인·토큰 갱신은 /api/admin 밖에 있어 사용자 트래픽으로 세지고 있었다.
-     * 갱신은 토큰 수명(15분)마다 나가 관리자가 화면을 열어둔 동안 계속 쌓인다.
-     */
     @Test
     fun `관리자 인증 경로도 사용자 트래픽에서 뺀다`() {
         val store = CapturingStore()
@@ -147,10 +138,6 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
-    /**
-     * 버리지 않는다 — 관리자가 무엇을 얼마나 열람했는지도 볼 수 있어야 한다.
-     * 다만 창을 갈라 담아, 5초 폴링이 사용자 기록을 밀어내지 않게 한다.
-     */
     @Test
     fun `관리자 호출은 관리자 창에만 담는다`() {
         val store = CapturingStore()
@@ -183,7 +170,6 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded.single().caller).isEqualTo(RequestCaller.USER)
     }
 
-    /** 우리 API 밖(스캐너)은 어느 창에도 안 담는다 — 로그에만 남는다. */
     @Test
     fun `우리 API 밖 경로는 관리자 창에도 안 담는다`() {
         val store = CapturingStore()
@@ -303,10 +289,6 @@ class RequestMetricsFilterTest {
         assertThat(appender.list[1].formattedMessage).doesNotContain("10.0.0.9")
     }
 
-    /**
-     * 로그를 볼 때 우리가 받은 요청인지 우리가 보낸 호출인지가 맨 앞에서 갈려야 한다.
-     * 상대(IP)·상태+메서드 칸도 외부 송신 줄과 같은 자리에 온다.
-     */
     @Test
     fun `수신 요청은 방향을 맨 앞에 두고 상대 상태 경로 순으로 적는다`() {
         val appender = captureLogs()
@@ -324,7 +306,6 @@ class RequestMetricsFilterTest {
         assertThat(columns[4]).endsWith("ms")
     }
 
-    /** 폭이 들쭉날쭉하면 세로로 훑을 수 없다 — 방향·상대·상태 칸은 값이 달라도 같은 자리에서 끝난다. */
     @Test
     fun `앞의 세 칸은 값이 짧아도 폭을 채운다`() {
         val appender = captureLogs()
@@ -355,10 +336,6 @@ class RequestMetricsFilterTest {
         assertThat(store.recorded).isEmpty()
     }
 
-    /**
-     * 이 요청이 낳은 송신·예외 줄과 짝을 맞추는 표식이다 — 요청이 끝나면 지워야
-     * 스레드를 물려받은 다음 요청이 남의 표식을 달고 나가지 않는다.
-     */
     @Test
     fun `요청마다 짝 표식을 심고 끝나면 지운다`() {
         val appender = captureLogs()
@@ -372,7 +349,6 @@ class RequestMetricsFilterTest {
         assertThat(currentTraceId()).isEmpty()
     }
 
-    /** 송신 줄이 "왜 불렸는지"로 그대로 적는 값이다 — 공유 토큰이 여기로 새면 안 된다. */
     @Test
     fun `왜 불렸는지는 토큰을 가린 경로로 남긴다`() {
         var seenOrigin: String = ""
@@ -390,7 +366,6 @@ class RequestMetricsFilterTest {
         assertThat(seenOrigin).doesNotContain("abc123")
     }
 
-    /** 통계가 깨지는 것과 요청이 깨지는 것은 다른 사건이다 — 예외 줄로 갈라 적고 원인은 사슬로 남긴다. */
     @Test
     fun `통계 기록 실패는 예외 줄로 남기고 응답은 그대로 나간다`() {
         val appender = captureLogs()

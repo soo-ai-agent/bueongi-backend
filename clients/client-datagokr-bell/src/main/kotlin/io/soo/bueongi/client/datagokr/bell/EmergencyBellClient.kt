@@ -6,7 +6,7 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import org.springframework.stereotype.Component
 
-/** 전국 안전비상벨(행안부 조회서비스). */
+// 전국 안전비상벨(행안부 조회서비스).
 @Component
 class EmergencyBellClient(
     private val fetcher: DataGoKrPagedFetcher,
@@ -14,7 +14,7 @@ class EmergencyBellClient(
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 
-    /** 계약: null = 수집 실패(호출자는 기존 데이터 유지), 빈 목록과 다르다. 조건 없이 부르면 전량이라 쿼터를 크게 먹는다. */
+    // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetch(query: DataGoKrQuery = DataGoKrQuery()): List<DataGoKrPoint>? =
         fetcher.fetchAll(ENDPOINT, FIELDS, query)
 

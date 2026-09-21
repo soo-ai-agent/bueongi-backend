@@ -20,7 +20,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class PoliceFillServiceTest {
-
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
@@ -74,7 +73,6 @@ class PoliceFillServiceTest {
         assertThat(stored.name).isEqualTo("역삼지구대")
         assertThat(stored.phone).isEqualTo("02-000-0000")
 
-        // 두 번째 호출은 캐시가 막는다 — 갱신주기 1년짜리 원천을 매번 받을 이유가 없다.
         assertThat(service.fill()).isZero()
         verify(client).fetchPoliceFacilities()
     }
@@ -92,7 +90,6 @@ class PoliceFillServiceTest {
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
         verify(events).fetchFailed()
-        // 실패는 캐시로 남기지 않는다 — 다음 요청에서 다시 시도해야 한다.
         verify(events, never()).hadNoCoordinates(any())
     }
 

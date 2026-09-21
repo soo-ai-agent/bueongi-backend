@@ -28,15 +28,11 @@ class SafetySpotRepository(
     @param:Value("\${bueongi.facility.cctv-csv:data/source/cctv/CCTV정보.csv}") private val cctvCsvPath: String = DEFAULT_CCTV_CSV,
     @param:Value("\${bueongi.facility.lamp-csv-dir:data/source/lamp}")
     private val lampCsvDir: String = DEFAULT_LAMP_CSV_DIR,
-    // 지역 채우기를 안 쓰는 구성(테스트 등)에서 null 이 가능함
     private val regionCache: SafetySpotRegionCache? = null,
 ) : SafetySpotSpatialSource, SafetySpotLiveStore {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotRepository::class.java)
 
-    /**
-     * 종류별 공간색인. 기록자가 둘이라(라이브 갱신 스케줄러 · 관리자 업로드 요청) 원자적으로 바꾼다.
-     * @Volatile 변수에 `map + (k to v)` 를 쓰면 읽기-수정-쓰기가 겹칠 때 한쪽 교체가 유실된다.
-     */
+    // 기록자가 둘이라(라이브 갱신 스케줄러 · 관리자 업로드) @Volatile 교체는 한쪽이 유실된다.
     private val indexByType: AtomicReference<Map<SafetySpotType, GridSpatialIndex>> =
         AtomicReference<Map<SafetySpotType, GridSpatialIndex>>(emptyMap())
 
@@ -44,12 +40,10 @@ class SafetySpotRepository(
     private var _safePaths: List<SafePath> = emptyList()
 
     @Volatile
-    // 적재 전이거나 manifest 가 없는 원천은 기준일을 모른다.
     private var _freshness: SafetySpotFreshness? = null
 
     override val safePaths: List<SafePath> get() = _safePaths
 
-    // 적재 전이거나 manifest 가 없으면 null 이 가능함
     override val freshness: SafetySpotFreshness? get() = _freshness
 
     override fun index(type: SafetySpotType): GridSpatialIndex =
@@ -110,7 +104,6 @@ class SafetySpotRepository(
         logLoaded(dir, fileCount, uploadedTypes, csvCctv.size, csvLamp.size, cachedRegions, paths.size)
     }
 
-    /** 요청 때 받아 저장해 둔 지역 데이터를 되읽는다. 반환 = 되읽은 지역 수. */
     private fun addRegionCache(byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var regions: Int = 0
         val cache: SafetySpotRegionCache = regionCache ?: return 0
@@ -125,7 +118,6 @@ class SafetySpotRepository(
         return regions
     }
 
-    /** 종류별 CDN 컬렉션 파일을 읽어 [byType] 에 누적한다. 반환 = 읽은 파일 수. */
     private fun readSafetySpotFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var fileCount: Int = 0
         for (type in SafetySpotType.entries) {
@@ -146,7 +138,6 @@ class SafetySpotRepository(
         return fileCount
     }
 
-    /** 안심귀갓길(safepath) 파일을 읽어 [paths] 에 누적한다. 반환 = 읽은 파일 수. */
     private fun readSafePathFiles(dir: File, paths: MutableList<SafePath>): Int {
         val safePathDir = File(dir, "safepath")
         if (!safePathDir.isDirectory) {
@@ -164,7 +155,6 @@ class SafetySpotRepository(
         return fileCount
     }
 
-    /** manifest.json 의 생성 시각·버전. 없거나 깨졌으면 신선도 표기를 생략한다. */
     private fun readFreshness(dir: File): SafetySpotFreshness? {
         val manifest = File(dir, "manifest.json")
         if (!manifest.isFile) {
@@ -182,7 +172,6 @@ class SafetySpotRepository(
         )
     }
 
-    /** 관리자 업로드분은 CDN 적재분을 대체한다(같은 종류면 업로드가 이긴다). 반환 = 대체된 종류 수. */
     private fun overwriteWithUploads(byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var uploadedTypes: Int = 0
         for (type in SafetySpotType.entries) {
@@ -241,11 +230,7 @@ class SafetySpotRepository(
         }
     }
 
-    /**
-     * 보안등 표준데이터 CSV 를 적재한다. **좌표가 빈 행은 건너뛴다** — 지자체마다 좌표 제공률이 달라
-     * 서울처럼 주소만 올린 곳이 있다(실측: 마포구 표본 100건 중 좌표 0건). 주소를 좌표로 바꾸는 일은
-     * 이 자리가 아니라 요청이 온 지역에 대해 따로 한다.
-     */
+    // 지자체마다 좌표 제공률이 달라 주소만 올린 원천이 있다 — 좌표 없는 행은 여기서 버린다.
     private fun loadLampCsv(): List<SafetySpotPoint> {
         val dir: File = resolveCsvDir(lampCsvDir, DEFAULT_LAMP_CSV_DIR) ?: return emptyList()
         val points: ArrayList<SafetySpotPoint> = ArrayList()
@@ -324,10 +309,9 @@ class SafetySpotRepository(
     }
 }
 
-/** 전국 CCTV 표준데이터 설치목적구분 10종 중 방범 성격 4종만 적재 — 부팅 CSV·관리자 업로드 공용 단일 기준. */
 val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
 
-/** 주소 콤마로 컬럼이 밀리는 행(~8.5%) 때문에 뒤에서 고정 오프셋으로 읽는다(후행 12컬럼은 콤마 없음) — N-13=설치목적, N-12=카메라대수, N-6=위도, N-5=경도. */
+// 주소 콤마로 컬럼이 밀려 뒤에서 센다: 0=자치단체코드, N-13=설치목적, N-12=카메라대수, N-6=위도, N-5=경도.
 internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
     val parts: List<String> = line.split(',')
     if (parts.size < 13) {
@@ -341,11 +325,8 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
         lat = parts[parts.size - 6].trim().toDoubleOrNull(),
         lng = parts[parts.size - 5].trim().toDoubleOrNull(),
     ) ?: return null
-    // 원천에 값이 없으면 null 이 가능함
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
-    // CCTV 가 아닌 시설은 null 이 가능함
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
-    // 첫 컬럼이 개방자치단체코드다 — 좌표로 자치단체를 되찾는 데 쓰인다(지역 단위 수집).
     val sigungu: String? = parts.firstOrNull()?.trim()?.trim('"')?.takeIf { it.isNotEmpty() }
     return SafetySpotPoint(
         type = SafetySpotType.CCTV,
@@ -358,12 +339,10 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
     )
 }
 
-// 자립 계층 원칙상 support:util 을 참조하지 않는 의도적 중복(clients 의 EARTH_RADIUS_M 와 같은 이유).
 private const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
 
 private const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
 
-/** 여러 지자체 파일을 한 폴더에 모아 두고 통째로 읽는다 — 파일이 늘어도 코드를 안 고친다. */
 private fun resolveCsvDir(configured: String, default: String): File? {
     if (configured.isBlank()) {
         return null
@@ -376,7 +355,6 @@ private fun File.listCsvFiles(): List<File> =
         ?.sortedBy { it.name }
         .orEmpty()
 
-/** 설정 경로 → 같은 경로의 .gz → 기본 경로 → 기본 경로의 .gz 순으로 찾는다. */
 private fun resolveCsv(configured: String, default: String): File? {
     if (configured.isBlank()) {
         return null
@@ -385,10 +363,6 @@ private fun resolveCsv(configured: String, default: String): File? {
     return candidates.map { File(it) }.firstOrNull { it.isFile }
 }
 
-/**
- * 보안등 CSV 는 헤더로 컬럼 자리를 잡는다 — 원천이 컬럼을 늘리거나 순서를 바꿔도 견딘다.
- * (CCTV 는 주소 콤마로 컬럼이 밀려 뒤에서 세는 방식을 쓰는데, 보안등은 따옴표·콤마가 없어 헤더로 충분하다.)
- */
 private class LampCsvColumns(
     private val nameAt: Int,
     private val latAt: Int,
@@ -404,7 +378,6 @@ private class LampCsvColumns(
             lat = parts[latAt].trim().toDoubleOrNull(),
             lng = parts[lngAt].trim().toDoubleOrNull(),
         ) ?: return null
-        // 원천에 위치명이 없는 행이 있어 null 이 가능함
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
         return SafetySpotPoint(
             type = SafetySpotType.SECURITY_LAMP,
@@ -415,7 +388,6 @@ private class LampCsvColumns(
         )
     }
 
-    /** 지자체 개별 CSV 처럼 그 컬럼이 없는 원천이 있어 null 이 가능함. */
     private fun valueAt(parts: List<String>, at: Int): String? {
         if (at < 0 || at >= parts.size) {
             return null
@@ -435,14 +407,13 @@ private class LampCsvColumns(
                 nameAt = columns.indexOf("보안등위치명").coerceAtLeast(0),
                 latAt = latAt,
                 lngAt = lngAt,
-                // 이 코드가 곧 API 의 instt_code 다 — 이미 CSV 로 가진 자치단체를 다시 받지 않으려면 꼭 남겨야 한다.
+                // 제공기관코드가 곧 지역 수집 API 의 instt_code 다.
                 sigunguAt = columns.indexOf("제공기관코드"),
             )
         }
     }
 }
 
-/** 원본 CSV 는 수십 MB 라 저장소에 gzip 으로 둔다 — 확장자로 갈라 투명하게 읽는다. */
 private fun openCsv(file: File): BufferedReader {
     val charset: Charset = detectCharset(file)
     if (file.name.endsWith(".gz")) {
@@ -451,10 +422,7 @@ private fun openCsv(file: File): BufferedReader {
     return file.bufferedReader(charset)
 }
 
-/**
- * 원천마다 인코딩이 다르다 — 전국 표준데이터는 CP949, 지자체 개별 파일은 UTF-8(BOM) 이었다.
- * 앞부분을 UTF-8 로 읽어 보고 깨지면 CP949 로 본다. BOM 은 reader 가 걷어낸다.
- */
+// 전국 표준데이터는 CP949, 지자체 개별 파일은 UTF-8(BOM) 로 온다.
 private fun detectCharset(file: File): Charset {
     val head: ByteArray = try {
         val stream = if (file.name.endsWith(".gz")) GZIPInputStream(file.inputStream()) else file.inputStream()

@@ -20,7 +20,7 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
 
     for (feature in features) {
         val props: JsonNode? = feature.get("properties")
-        // 총거리·총시간은 첫 피처에만 실려 온다. 이미 받았으면 덮어쓰지 않는다.
+        // 총거리·총시간은 첫 피처에만 실려 온다(실측).
         if (distanceM == 0.0) {
             distanceM = numberOf(props, "totalDistance") ?: 0.0
         }
@@ -51,7 +51,6 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
     )
 }
 
-/** 선분 좌표를 경로에 잇고, 그 구간의 거리·시간을 직전 안내지점에 채운다. */
 private fun appendLineString(
     geom: JsonNode,
     props: JsonNode?,
@@ -75,7 +74,7 @@ private fun appendLineString(
     steps[lastIndex] = steps[lastIndex].copy(distanceM = segDistance, timeS = segTime)
 }
 
-/** 안내지점(회전·직진 등)을 추가한다. 구간 거리·시간은 뒤따르는 LineString 이 채운다. */
+// 구간 거리·시간은 뒤따르는 LineString 이 채운다.
 private fun appendPoint(geom: JsonNode, props: JsonNode?, steps: MutableList<NavStep>) {
     val pointCoords: JsonNode = geom.get("coordinates") ?: return
     val point: TmapCoord = parseLngLat(pointCoords) ?: return
@@ -101,7 +100,7 @@ private fun numberOf(props: JsonNode?, field: String): Double? {
     return node.asDouble()
 }
 
-/** GeoJSON 좌표는 [lng, lat] 순서. */
+// GeoJSON 좌표는 [lng, lat] 순서다.
 private fun parseLngLat(node: JsonNode): TmapCoord? {
     if (!node.isArray || node.size() < 2) {
         return null

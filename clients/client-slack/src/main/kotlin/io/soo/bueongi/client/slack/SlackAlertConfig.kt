@@ -3,7 +3,6 @@ package io.soo.bueongi.client.slack
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
-/** webhook URL 은 시크릿 — 원문은 [webhookUrl](발송 전용)로만 나가고, 조회 표면엔 [maskedWebhook] 마스킹만 노출한다. */
 @Component
 class SlackAlertConfig(
     @Value("\${bueongi.alert.slack-webhook-url:}") webhookUrl: String,
@@ -39,7 +38,7 @@ class SlackAlertConfig(
     fun throttleMillis(): Long =
         throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
 
-    /** 발송 전용 원문 — 응답·로그·예외 어디에도 노출 금지. */
+    // 발송 전용 원문 — 응답·로그·예외 어디에도 노출 금지.
     fun webhookUrl(): String =
         webhook
 
@@ -90,7 +89,7 @@ class SlackAlertConfig(
         url.take(CONSERVATIVE_PREFIX_LENGTH) + MASK
 
     companion object {
-        /** 요청 DTO @Min/@Max 와 동일 경계를 유지해야 한다. */
+        // 요청 DTO 의 @Min/@Max 와 같은 경계를 유지해야 한다.
         const val MIN_THROTTLE_MINUTES: Int = 1
         const val MAX_THROTTLE_MINUTES: Int = 1440
 

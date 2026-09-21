@@ -24,10 +24,6 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-/**
- * Tmap 이 죽으면 사용자는 200 과 "추천 경로"를 받지만 그건 **실제 길이 아니라 직선거리 추정치**다.
- * 호출 계측 대시보드를 걷어낸 뒤로 이 알림이 그 사실을 아는 **유일한 창구**라, 여기서 고정한다.
- */
 class FallbackAlertTest {
 
     private class RecordingPublisher : ApplicationEventPublisher {

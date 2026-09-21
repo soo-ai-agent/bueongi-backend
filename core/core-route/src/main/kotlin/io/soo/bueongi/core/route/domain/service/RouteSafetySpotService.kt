@@ -10,10 +10,6 @@ import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Service
 
-/**
- * 경로와 무관하게 "출발지–도착지 사이"의 시설만 훑어 주는 가벼운 조회.
- * 경로 비교 전에 화면이 먼저 시설을 보여줄 때 쓴다(Tmap 호출 없음).
- */
 @Service
 class RouteSafetySpotService(
     private val markerBuilder: RouteMarkerBuilder,
@@ -23,10 +19,9 @@ class RouteSafetySpotService(
         val origin: GeoPoint = query.origin
         val destination: GeoPoint = query.destination
 
-        // 경로를 모르므로 출발–도착 두 점을 잇는 직선을 경로로 삼는다.
-        val pois: List<SafetySpotPoi> = markerBuilder.buildMarkers(origin, destination, listOf(origin, destination))
+        val straightLinePath: List<GeoPoint> = listOf(origin, destination)
+        val pois: List<SafetySpotPoi> = markerBuilder.buildMarkers(origin, destination, straightLinePath)
 
-        // 요약은 마커를 다시 세어 만든다 — 지도에 찍힌 것과 숫자가 어긋나지 않게.
         val summary = SafetySpotSummary(
             cctv = pois.count { it.type == SafetySpotPoiType.CCTV },
             bell = pois.count { it.type == SafetySpotPoiType.BELL },

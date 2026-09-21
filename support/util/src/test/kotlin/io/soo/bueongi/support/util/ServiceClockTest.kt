@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
-/** "오늘"의 경계는 한국 자정이다. UTC 자정으로 밀리면 대시보드의 하루가 9시간 어긋난다. */
 class ServiceClockTest {
 
     private fun ms(iso: String): Long = Instant.parse(iso).toEpochMilli()

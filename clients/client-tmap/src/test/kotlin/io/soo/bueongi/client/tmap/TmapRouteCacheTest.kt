@@ -28,10 +28,6 @@ class TmapRouteCacheTest {
         assertThat(cache.get(origin, dest, "0", null)).isNull()
     }
 
-    /**
-     * 소수 5자리(약 1.1m)로 잡았더니 **제자리에 서 있어도** GPS 가 그만큼 흔들려 재요청이
-     * 매번 캐시를 빗나갔다(실측: 출발지 3.3m 이동에 경로 호출 7회 전량 재발생).
-     */
     @Test
     fun `서 있을 때의 GPS 흔들림은 같은 격자로 본다`() {
         val cache = TmapRouteCache(clock = { 0L })
@@ -44,7 +40,6 @@ class TmapRouteCacheTest {
         assertThat(cache.get(threeMeters, dest, "0", null)).isEqualTo(route)
     }
 
-    /** 격자를 더 키우면 안내 시작점이 눈에 띄게 어긋난다 — 걸어서 벗어난 거리는 갈라야 한다. */
     @Test
     fun `격자를 벗어나면 다른 요청으로 본다`() {
         val cache = TmapRouteCache(clock = { 0L })

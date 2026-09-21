@@ -43,24 +43,22 @@ class AdControllerTest(
     }
 
     @Test
-    fun `placement 가 없으면 400 VALIDATION_FAILED 이고 기록하지 않는다`() {
+    fun `배너 placement 로 노출을 기록하면 204 와 저장소에 1건 기록`() {
         mockMvc.post("/api/ads/impression") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{}"
+            content = """{"placement":"banner"}"""
         }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-            jsonPath("$.errors[0].field") { value("placement") }
+            status { isNoContent() }
         }
 
-        assertThat(CapturingStoreConfig.recorded).isEmpty()
+        assertThat(CapturingStoreConfig.recorded.map { it.placement }).containsExactly("banner")
     }
 
     @Test
     fun `허용값이 아닌 placement 는 400 VALIDATION_FAILED 이고 기록하지 않는다`() {
         mockMvc.post("/api/ads/impression") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"placement":"banner"}"""
+            content = """{"placement":"popup"}"""
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }

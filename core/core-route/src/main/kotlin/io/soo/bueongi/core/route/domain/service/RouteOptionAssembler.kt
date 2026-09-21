@@ -25,8 +25,7 @@ class RouteOptionAssembler(
 
     internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {
         val provenance: DataProvenance = buildProvenance()
-        // 프론트는 받은 순서대로 그린다.
-        val ordered: List<ScoredRoute> = scoredRoutes.sortedByDescending { it.score.score }
+        val ordered: List<ScoredRoute> = scoredRoutes.sortedByDescending { it.score.rank }
         return ordered
             .mapIndexed { index, scoredRoute ->
                 val candidate: RouteCandidate = scoredRoute.candidate
@@ -36,7 +35,7 @@ class RouteOptionAssembler(
                     name = routeTypeCatalog.displayOf(scoredRoute.type).scoredName,
                     time = "${max(1, (candidate.timeS / 60.0).roundToInt())}분",
                     dist = formatDistance(candidate.distanceM),
-                    desc = "안전 점수 ${scoredRoute.score.score}점 · CCTV ${breakdown.cctvDensity}/km",
+                    desc = describe(scoredRoute.score.score, breakdown),
                     tags = buildTags(scoredRoute),
                     type = scoredRoute.type,
                     path = candidate.path,
@@ -47,6 +46,13 @@ class RouteOptionAssembler(
                     provenance = provenance,
                 )
             }
+    }
+
+    private fun describe(score: Int?, breakdown: SafetyBreakdown): String {
+        if (score == null) {
+            return NO_DATA_DESC
+        }
+        return "안전 점수 ${score}점 · CCTV ${breakdown.cctvDensity}/km"
     }
 
     private fun buildTags(scoredRoute: ScoredRoute): List<RouteTag> = buildList {
@@ -82,6 +88,8 @@ class RouteOptionAssembler(
     private companion object {
 
         const val DATA_ORIGIN: String = "공공데이터포털·서울 열린데이터광장"
+
+        const val NO_DATA_DESC: String = "이 지역 안심시설 자료가 없어 안전 점수를 낼 수 없습니다"
 
         const val YEAR_MONTH_LENGTH: Int = 7
 

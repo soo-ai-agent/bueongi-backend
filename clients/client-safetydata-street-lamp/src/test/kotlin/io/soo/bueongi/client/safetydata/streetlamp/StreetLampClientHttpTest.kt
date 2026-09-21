@@ -13,7 +13,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
-/** 봉투 모양(`header.resultCode` · 최상위 `totalCount` · `body` 배열)은 실응답을 그대로 옮긴 것이다. */
 class StreetLampClientHttpTest {
 
     private val serviceKey: String = "safetydata%2Fkey"

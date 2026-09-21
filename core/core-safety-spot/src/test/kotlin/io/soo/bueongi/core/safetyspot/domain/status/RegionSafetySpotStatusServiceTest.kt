@@ -13,7 +13,6 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class RegionSafetySpotStatusServiceTest {
-
     private fun service(points: Map<SafetySpotType, List<SafetySpotPoint>>): RegionSafetySpotStatusService =
         RegionSafetySpotStatusService(FakeSafetySpotSource(points), RegionNameCatalog(jacksonObjectMapper()))
 
@@ -49,10 +48,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().name).isEqualTo("마포구")
     }
 
-    /**
-     * 원천 CSV 가 기관마다 갱신 시점이 달라 화천군만 옛 이름('강원도')으로 남아 있었다.
-     * 그대로 두면 같은 도가 화면에서 두 줄로 갈린다.
-     */
     @Test
     fun `옛 시도 이름은 현재 이름으로 모은다`() {
         val summary = service(
@@ -78,7 +73,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().sido).isEmpty()
     }
 
-    /** 빼 버리면 합계가 전체 적재량과 안 맞아 "왜 적은가"를 다시 조사하게 된다. */
     @Test
     fun `지역을 모르는 지점도 한 줄로 모아 합계를 맞춘다`() {
         val summary = service(
@@ -94,10 +88,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.map { it.code }).contains("unknown")
     }
 
-    /**
-     * '전남광주통합특별시' 는 통합 논의 때 쓰던 이름이라 현행 법정 시도가 아니다.
-     * 개명이 아니라 두 시도를 묶은 것이라, 이름표만 바꿔서는 못 풀고 자치단체로 갈라야 한다.
-     */
     @Test
     fun `묶어 적은 광주 전남은 자치단체로 갈라 제 시도로 돌린다`() {
         val summary = service(
@@ -128,10 +118,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().sido).isEqualTo("전라남도")
     }
 
-    /**
-     * 원천 기관명이 부서명이거나("평생교육과") 시도를 안 붙인 자치단체가 34곳 있었다.
-     * 소재지 주소가 시도를 말해 주므로 그걸로 채웠다 — 이름으로 짐작한 것이 아니다.
-     */
     @Test
     fun `기관명이 시도를 안 밝힌 자치단체도 소재지 기준으로 시도를 갖는다`() {
         val summary = service(
@@ -147,16 +133,10 @@ class RegionSafetySpotStatusServiceTest {
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["금천구"]).isEqualTo("서울특별시")
         assertThat(bySido["청주시"]).isEqualTo("충청북도")
-        // 여수는 주소마저 묶인 이름으로 와서, 채우기와 갈라내기가 이어 붙어야 제자리에 온다.
         assertThat(bySido["여수시"]).isEqualTo("전라남도")
         assertThat(summary.map { it.sido }).doesNotContain("")
     }
 
-    /**
-     * 재난안전데이터·생활안전지도는 5자리 행정표준코드(시군구코드)를 준다 — 이름표가 쓰는
-     * 7자리 개방자치단체코드와 다른 체계라 표에 없었고, 284곳이 시도 없이 코드만 떠 있었다.
-     * 표준이 앞 2자리를 시도로 정해 놓았으니 이름은 몰라도 시도는 채운다.
-     */
     @Test
     fun `행정표준코드는 앞 2자리로 시도를 채운다`() {
         val summary = service(
@@ -172,14 +152,9 @@ class RegionSafetySpotStatusServiceTest {
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["11110"]).isEqualTo("서울특별시")
         assertThat(bySido["50110"]).isEqualTo("제주특별자치도")
-        // 강원은 특별자치도로 바뀌며 코드가 42→51 로 늘었다. 옛 코드도 같은 시도로 본다.
         assertThat(bySido["42110"]).isEqualTo("강원특별자치도")
     }
 
-    /**
-     * `12` 는 표준에 없는 코드인데, 광주·전남을 묶어 쓰던 블록이다(27개 = 전남 22시군 + 광주 5구).
-     * 좌표 중심이 광주 안인 다섯 개만 광주로 돌린다.
-     */
     @Test
     fun `묶어 쓰던 코드 블록도 광주와 전남으로 갈라 채운다`() {
         val summary = service(
@@ -196,7 +171,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(bySido["12110"]).isEqualTo("전라남도")
     }
 
-    /** 모르는 코드까지 억지로 채우지 않는다 — 표준에 없는 시도 번호는 비워 둔다. */
     @Test
     fun `표준에 없는 코드는 시도를 비워 둔다`() {
         val summary = service(
@@ -211,10 +185,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().sido).isEmpty()
     }
 
-    /**
-     * 비상벨 원천만 쓰는 7자리 코드 29개가 이름표에도 표준코드에도 없어 시도 없이 떠 있었다.
-     * 7자리는 접두로 시도를 못 가려(2자리가 여러 시도에 걸친다) 지점 좌표로 확인해 적었다.
-     */
     @Test
     fun `이름표에 없는 비상벨 코드도 시도는 채운다`() {
         val summary = service(
@@ -233,11 +203,9 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(bySido["3590000"]).isEqualTo("광주광역시")
         assertThat(bySido["4800000"]).isEqualTo("전라남도")
         assertThat(bySido["5000000"]).isEqualTo("전라남도")
-        // 자치단체 이름은 원천이 주지 않아 코드를 그대로 보여 준다.
         assertThat(summary.map { it.name }).contains("3490000")
     }
 
-    /** 지도가 이 지역을 가리킬 한 점 — 지점들의 평균이다. */
     @Test
     fun `지역 중심은 그 지역 지점들의 평균 좌표다`() {
         val summary = service(
@@ -254,7 +222,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(center.lng).isCloseTo(127.10, within(1e-9))
     }
 
-    /** 원천 좌표가 0 이거나 다른 좌표계로 온 지점이 섞이면 중심이 바다로 끌려간다. */
     @Test
     fun `한반도 밖 좌표는 중심 계산에서 뺀다`() {
         val summary = service(
@@ -287,10 +254,6 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(summary.single().center).isNull()
     }
 
-    /**
-     * '지역 미상' 줄의 평균 좌표는 전국에 흩어진 점들의 무게중심이라 국토 한가운데를 가리킨다.
-     * 그 자리에 아무것도 없는데 지도에는 가장 큰 원으로 찍힌다 — 중심을 주지 않는다.
-     */
     @Test
     fun `지역을 모르는 줄에는 중심 좌표를 주지 않는다`() {
         val summary = service(
@@ -306,23 +269,19 @@ class RegionSafetySpotStatusServiceTest {
         val unknown = summary.single { it.code == "unknown" }
         assertThat(unknown.total).isEqualTo(2)
         assertThat(unknown.center).isNull()
-        // 지역을 아는 줄은 그대로 중심을 갖는다.
         assertThat(summary.single { it.name == "마포구" }.center).isNotNull()
     }
 
     private companion object {
         const val MAPO: String = "3130000"
 
-        /** 이름표에 옛 이름('강원도')으로 남아 있던 유일한 자치단체. */
         const val HWACHEON: String = "4311000"
         const val GANGNEUNG: String = "4201000"
 
-        /** 원천이 '전남광주통합특별시' 로 묶어 적어 둔 자치단체들. */
         const val GWANGJU_BUKGU: String = "5820000"
         const val MOKPO: String = "5780000"
         const val SUNCHEON: String = "5790000"
 
-        /** 원천 기관명이 시도를 안 밝혀 '지역 미상' 이던 자치단체들. */
         const val GEUMCHEON: String = "3170000"
         const val CHEONGJU: String = "5710000"
         const val YEOSU: String = "5785000"

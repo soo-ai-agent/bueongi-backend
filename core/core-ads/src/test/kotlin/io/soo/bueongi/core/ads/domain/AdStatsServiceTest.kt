@@ -64,7 +64,7 @@ class AdStatsServiceTest {
 
         val byPlacement: Map<String, Int> = AdStatsService(store(events)).summarize().byPlacement
 
-        assertThat(byPlacement).containsOnlyKeys("interstitial", "native")
+        assertThat(byPlacement).containsOnlyKeys("interstitial", "native", "banner")
         assertThat(byPlacement["interstitial"]).isEqualTo(2)
         assertThat(byPlacement["native"]).isEqualTo(1)
     }
@@ -75,7 +75,7 @@ class AdStatsServiceTest {
 
         val byPlacement: Map<String, Int> = AdStatsService(store(events)).summarize().byPlacement
 
-        assertThat(byPlacement).containsOnlyKeys("interstitial", "native")
+        assertThat(byPlacement).containsOnlyKeys("interstitial", "native", "banner")
         assertThat(byPlacement["native"]).isEqualTo(0)
     }
 
@@ -95,12 +95,12 @@ class AdStatsServiceTest {
     }
 
     @Test
-    fun `빈 기록이면 total today 0 지면 2키 0 시간대 24개 0`() {
+    fun `빈 기록이면 total today 0 지면 3키 0 시간대 24개 0`() {
         val summary: AdStatsSummary = AdStatsService(store(emptyList())).summarize()
 
         assertThat(summary.total).isEqualTo(0)
         assertThat(summary.today).isEqualTo(0)
-        assertThat(summary.byPlacement).containsOnlyKeys("interstitial", "native")
+        assertThat(summary.byPlacement).containsOnlyKeys("interstitial", "native", "banner")
         assertThat(summary.byPlacement.values).allMatch { it == 0 }
         assertThat(summary.hourlyTrend).hasSize(24)
         assertThat(summary.hourlyTrend.sumOf { it.count }).isEqualTo(0)

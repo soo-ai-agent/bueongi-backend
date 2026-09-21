@@ -10,7 +10,6 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SegmentProjection
 import org.springframework.stereotype.Component
 import kotlin.math.floor
 
-/** 시설 하나하나를 경유지로 쓰면 Tmap 호출이 폭발한다 — 격자로 뭉친 거점 몇 개로 줄여 쓴다. */
 @Component
 class SafeDetourPlanner(
     private val safetySpots: SafetySpotSpatialSource,
@@ -48,7 +47,6 @@ class SafeDetourPlanner(
                 ),
             )
         }
-        // 같은 수면 좌표 순으로 갈라 같은 입력에 같은 결과가 나오게 한다.
         val byDensityThenPosition: Comparator<SafeAnchor> = compareByDescending<SafeAnchor> { it.weight }
             .thenBy { it.center.lat }
             .thenBy { it.center.lng }
@@ -59,7 +57,6 @@ class SafeDetourPlanner(
         return anchors.subList(0, MAX_ANCHORS)
     }
 
-    /** 조합 하나가 Tmap 호출 한 번이라 개수를 좁게 잡는다. */
     fun pickDetourWaypoints(
         origin: GeoPoint,
         dest: GeoPoint,
@@ -95,7 +92,6 @@ class SafeDetourPlanner(
             combos.add(listOf(single.anchor.center))
         }
         if (byWeight.size >= 2) {
-            // 2개 경유 조합은 경로 진행 순으로 정렬해야 왔던 길을 되돌아가지 않는다.
             val topTwo: List<Placed> = byWeight.take(2)
             val inTravelOrder: List<Placed> = topTwo.sortedBy { it.progress }
             val pair: ArrayList<GeoPoint> = ArrayList()
@@ -109,23 +105,17 @@ class SafeDetourPlanner(
 
     companion object {
 
-        /** 경로에서 이만큼 떨어진 시설까지 거점 재료로 본다(도보로 체감되는 거리). */
         const val ANCHOR_RADIUS_METERS: Double = 150.0
 
-        /** 거점 상한. 늘리면 아래 조합 수와 Tmap 호출이 함께 늘어난다. */
         const val MAX_ANCHORS: Int = 6
 
-        /** 거점 격자 한 칸(약 90m). 이보다 촘촘하면 같은 골목이 여러 거점으로 쪼개진다. */
         const val CLUSTER_CELL_DEG: Double = 0.0008
 
-        /** 옆으로 벗어나도 되는 한계 = 직선거리의 이 비율. 넘으면 "돌아가는 길"로 느껴진다. */
         const val DEFAULT_LATERAL_RATIO: Double = 0.25
 
-        /** 경유지는 경로 중간 구간에서만 고른다 — 출발·도착 근처 경유는 우회 효과가 없다. */
         const val MIDDLE_MIN_PROGRESS: Double = 0.2
         const val MIDDLE_MAX_PROGRESS: Double = 0.8
 
-        /** 거점 1개짜리 조합 수 = Tmap 추가 호출 수. */
         const val SINGLE_ANCHOR_COMBOS: Int = 3
 
         val ANCHOR_TYPES: List<SafetySpotType> = listOf(SafetySpotType.CCTV, SafetySpotType.SAFEHOUSE, SafetySpotType.BELL, SafetySpotType.POLICE)

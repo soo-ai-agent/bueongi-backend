@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class Epsg5174Test {
 
-    /** 파이프라인 proj4(동일 +towgs84 정의, h=0)로 뽑은 기준값 — (설명, wgs84Lat, wgs84Lng, epsg5174X, epsg5174Y). */
+    // 파이프라인 proj4(같은 +towgs84 정의, h=0)로 뽑은 기준값이다.
     private val anchors: List<Anchor> = listOf(
         Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),
         Anchor("강남역", 37.4981, 127.0276, 202370.8770, 443988.3369),

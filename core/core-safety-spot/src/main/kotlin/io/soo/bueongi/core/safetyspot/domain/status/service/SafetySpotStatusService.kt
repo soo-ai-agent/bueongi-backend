@@ -11,17 +11,11 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusSt
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Service
 
-/**
- * 안심시설 데이터 현황. 시설 데이터는 파이프라인이 만든 CDN 파일이 원천이고,
- * 백엔드는 그 파일과 관리자 CSV 업로드분만 적재한다(외부 API 를 직접 부르지 않는다).
- * 그래서 갱신 기록이 있는 종류는 업로드분이고, 없으면 CDN 파일 그대로다.
- */
 @Service
 class SafetySpotStatusService(
     private val safetySpotSource: SafetySpotSpatialSource,
     private val refreshStatusStore: SafetySpotRefreshStatusStore,
 ) {
-
     fun summarize(): SafetySpotStatusSummary {
         val freshness: SafetySpotFreshness? = safetySpotSource.freshness
         val safetySpots: ArrayList<SafetySpotStatus> = ArrayList()

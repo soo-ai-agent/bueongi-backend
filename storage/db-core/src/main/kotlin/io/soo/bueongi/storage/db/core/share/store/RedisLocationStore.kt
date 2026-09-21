@@ -15,7 +15,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-/** 저장 계약: `share:/location:/route:/viewer:{token}` 키와 snake_case HASH 필드는 배포를 넘어 살아남는다 — 리네임 금지. */
+// 저장 계약: `share:/location:/route:/viewer:{token}` 키와 snake_case HASH 필드는 리네임 금지.
 class RedisLocationStore(
     private val redis: StringRedisTemplate,
     private val clock: Clock,
@@ -80,7 +80,6 @@ class RedisLocationStore(
         )
     }
 
-    /** 위치는 세션과 별도 키에 있고 아직 한 번도 보고되지 않았을 수 있다. 좌표 셋 중 하나라도 없으면 없는 것으로 본다. */
     private fun readLocation(token: String): StoredLocation? {
         val hash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
         val lat: Double = hash[FIELD_LAT]?.toDoubleOrNull() ?: return null
@@ -95,7 +94,7 @@ class RedisLocationStore(
         )
     }
 
-    /** 경로 JSON 이 깨져도 공유 자체는 살린다 — 보호자에게 위치는 계속 보여야 한다. */
+    // 경로 JSON 이 깨져도 공유 자체는 살린다 — 보호자에게 위치는 계속 보여야 한다.
     private fun readRoute(token: String): StoredRoute? =
         redis.opsForValue().get(routeKey(token))?.let { json ->
             try {
@@ -145,7 +144,7 @@ class RedisLocationStore(
         return sessions
     }
 
-    /** KEYS 금지 — SCAN 비차단 순회만 허용. */
+    // KEYS 금지 — 운영 Redis 를 막는다.
     private fun forEachSessionKey(action: (String) -> Unit) {
         onRedis("scanSessions") {
             redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
@@ -157,7 +156,7 @@ class RedisLocationStore(
         }
     }
 
-    /** token 은 로깅하지 않는다(추적 방지). */
+    // token 은 로깅하지 않는다(추적 방지).
     private fun <T> onRedis(operation: String, block: () -> T): T =
         try {
             block()

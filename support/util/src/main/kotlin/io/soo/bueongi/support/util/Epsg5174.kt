@@ -7,7 +7,8 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-/** EPSG:5174 — proj4 `+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43` 과 동일 파라미터, datum shift 는 위치벡터(Position Vector) 회전 규약. */
+// proj4 `+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel
+// +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43` 과 같은 파라미터, datum shift 는 위치벡터 회전 규약.
 object Epsg5174 {
     // Bessel 1841 타원체(원천 좌표계).
     private const val A_BESSEL: Double = 6377397.155
@@ -42,12 +43,11 @@ object Epsg5174 {
 
     private const val BOWRING_ITERATIONS: Int = 5
 
-    /** x=동(easting), y=북(northing). */
-    fun toWgs84(x: Double, y: Double): Wgs84Point? {
-        if (!x.isFinite() || !y.isFinite()) {
+    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
+        if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
-        val besselGeodetic: Geodetic = inverseTm(x, y)
+        val besselGeodetic: Geodetic = inverseTm(easting, northing)
         val besselEcef: Ecef = geodeticToEcef(besselGeodetic.latRad, besselGeodetic.lngRad, A_BESSEL, E2_BESSEL)
         val wgsEcef: Ecef = helmertBesselToWgs84(besselEcef)
         val wgsGeodetic: Geodetic = ecefToGeodetic(wgsEcef, A_WGS84, E2_WGS84)
@@ -61,7 +61,7 @@ object Epsg5174 {
         }
     }
 
-    /** 지오이드고 미상이라 양방향 모두 h=0 가정 — 수평 왕복 오차는 무시 수준. */
+    // 지오이드고 미상이라 양방향 모두 h=0 으로 둔다 — 수평 왕복 오차는 무시 수준.
     fun fromWgs84(lat: Double, lng: Double): TmXy {
         val wgsEcef: Ecef = geodeticToEcef(Math.toRadians(lat), Math.toRadians(lng), A_WGS84, E2_WGS84)
         val besselEcef: Ecef = helmertWgs84ToBessel(wgsEcef)

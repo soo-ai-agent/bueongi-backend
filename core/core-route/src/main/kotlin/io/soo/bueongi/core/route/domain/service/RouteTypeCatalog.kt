@@ -6,18 +6,12 @@ import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteTypeDisplay
 import org.springframework.stereotype.Component
 
-/** 경로 종류별 표시 값을 한곳에서 답한다. 문구·계수를 고칠 일이 생기면 이 파일만 본다. */
 @Component
 class RouteTypeCatalog {
 
     fun displayOf(type: RouteType): RouteTypeDisplay =
         DISPLAYS.getValue(type)
 
-    /**
-     * 요청이 보낸 문자열을 종류로 읽는다. apiType("safe")과 id("1") 둘 다 받는다.
-     * 모르는 값·빈 값은 거절하지 않고 가장 안전한 SAFE 로 읽는다 —
-     * 안심 앱에서 종류를 못 알아들었다고 길 안내를 막는 것보다 안전한 길을 주는 편이 낫다.
-     */
     fun typeOf(value: String?): RouteType {
         val normalized: String = value?.trim()?.lowercase().orEmpty()
         for (type in RouteType.entries) {

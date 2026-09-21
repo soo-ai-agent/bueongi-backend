@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Pattern
 
 data class AdImpressionRequest(
     @field:NotBlank
-    @field:Pattern(regexp = "interstitial|native", message = "placement 는 interstitial 또는 native 여야 합니다.")
-    // 안 보내면 null 이 가능함 — 그래야 어느 필드가 빠졌는지 알려준다
+    @field:Pattern(
+        regexp = "interstitial|native|banner",
+        message = "placement 는 interstitial, native, banner 중 하나여야 합니다.",
+    )
     val placement: String?,
 )
 

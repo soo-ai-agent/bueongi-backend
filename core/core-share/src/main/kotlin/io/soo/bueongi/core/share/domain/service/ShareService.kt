@@ -171,7 +171,7 @@ class ShareService(
         )
     }
 
-    /** 쓰기 비밀 검증 — 상수 시간 비교([MessageDigest.isEqual])로 타이밍 누출을 피하고, 누락/불일치는 404(불투명 응답). */
+    // 상수 시간 비교로 타이밍 누출을 피하고, 누락/불일치는 404(불투명 응답).
     private fun requireOwner(session: ShareSession, providedSecret: String?) {
         val provided: String = providedSecret ?: throw ShareSessionNotFoundException()
         val matches: Boolean = MessageDigest.isEqual(

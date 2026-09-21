@@ -2,20 +2,15 @@ package io.soo.bueongi.storage.db.core.share.model
 
 import java.time.Instant
 
-/**
- * PII(계정·전화번호 등)는 저장하지 않는다 — 비식별 토큰 URL 공유 모델.
- */
+// PII(계정·전화번호 등)는 저장하지 않는다 — 비식별 토큰 URL 공유 모델.
 data class ShareSession(
     val token: String,
-    /** 쓰기/종료 권한 비밀(앱만 보유) — 공유 URL·조회 응답에 절대 포함 금지(읽기/쓰기 분리). */
+    // 공유 URL·조회 응답에 절대 포함 금지 — 앱만 보유하는 쓰기/종료 권한 비밀.
     val ownerSecret: String,
     val createdAt: Instant,
     val expiresAt: Instant,
-    // 첫 위치 보고 전에는 null 이 가능함
     val location: StoredLocation? = null,
-    // 경로를 저장하기 전에는 null 이 가능함
     val route: StoredRoute? = null,
-    // 도착 예정을 넣지 않으면 null 이 가능함
     val expectedArrivalAt: Instant? = null,
 ) {
     fun withLocation(location: StoredLocation): ShareSession =
@@ -27,13 +22,11 @@ data class ShareSession(
     fun isExpired(now: Instant): Boolean =
         !now.isBefore(expiresAt)
 
-    /** 예정 도착 시간을 유예 이상 넘겼는가. 도착 예정이 없으면 판단 대상이 아니다. */
     fun isOverdue(now: Instant): Boolean {
         val expected: Instant = expectedArrivalAt ?: return false
         return now.isAfter(expected.plusSeconds(OVERDUE_SECONDS))
     }
 
-    /** 위치 보고가 끊겼는가. 한 번도 보고가 없으면 끊긴 것으로 본다. */
     fun isLocationStopped(now: Instant): Boolean {
         val reported: StoredLocation = location ?: return true
         return now.isAfter(reported.updatedAt.plusSeconds(LOCATION_STOPPED_SECONDS))

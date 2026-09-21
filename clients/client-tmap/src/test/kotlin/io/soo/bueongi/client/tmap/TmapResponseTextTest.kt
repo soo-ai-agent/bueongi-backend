@@ -5,10 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 
-/**
- * Tmap 이 실제로 보내는 모양을 고정한다 — 문자열 값 안에 NUL 이 들어온다.
- * 2026-08-15 실호출로 확인: 10,520바이트 응답에 NUL 3개(name·description·nearPoiName).
- */
+// Tmap 실호출 응답 10,520바이트에 NUL 3개(name·description·nearPoiName)가 들어 있었다.
 class TmapResponseTextTest {
 
     private val nul: String = "\u0000"

@@ -18,7 +18,6 @@ import java.nio.charset.CodingErrorAction
 
 @Component
 class SafetySpotCsvParser {
-
     fun parse(bytes: ByteArray, spec: SafetySpotCsvSpec): SafetySpotCsvParseResult {
         val records: List<List<String>> = tokenizeCsv(decode(bytes))
         val headerPos: Int = findHeaderRow(records)
@@ -37,7 +36,6 @@ class SafetySpotCsvParser {
         return SafetySpotCsvParseResult(columns.coordSystem, received = dataRows.size, points = points)
     }
 
-    /** 헤더가 없으면 -1. */
     private fun findHeaderRow(records: List<List<String>>): Int {
         for (index in records.indices) {
             if (hasContent(records[index])) {
@@ -66,7 +64,6 @@ class SafetySpotCsvParser {
         return false
     }
 
-    /** 좌표가 없거나 방범 목적이 아니면 null. */
     private fun toSafetySpotPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): SafetySpotPoint? {
         val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
         val purpose: String? = columns.purpose(row)
@@ -107,7 +104,6 @@ class SafetySpotCsvParser {
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
     }
 
-    /** WGS84 는 이미 위경도라 변환이 없다 — null 을 돌린다. */
     private fun toWgs84(coordSystem: SafetySpotCoordSystem, x: Double, y: Double): Wgs84Point? {
         if (coordSystem == SafetySpotCoordSystem.EPSG5179) {
             return Epsg5179.toWgs84(x, y)
@@ -146,15 +142,6 @@ class SafetySpotCsvParser {
         null
     }
 
-    /**
-     * CSV 를 행×열로 쪼갠다(RFC 4180 기본형).
-     *
-     * 라이브러리를 쓰지 않는 이유: 공공데이터 CSV 는 **주소에 콤마가 들어간 따옴표 필드**와
-     * CRLF/LF/CR 이 섞인 줄바꿈이 함께 나오는데, 이 두 가지만 처리하면 되고
-     * 인코딩 판별([decode])은 이미 우리가 하고 있어 의존성을 늘릴 이유가 없다.
-     *
-     * 처리 규칙: `"` 안에서는 콤마·줄바꿈이 글자로 취급되고, `""` 는 따옴표 한 글자다.
-     */
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records: ArrayList<List<String>> = ArrayList()
         var record: ArrayList<String> = ArrayList()
@@ -204,13 +191,10 @@ class SafetySpotCsvParser {
             }
             cursor++
         }
-        // 마지막 줄에 줄바꿈이 없는 파일이 흔하다 — 남은 내용을 마지막 행으로 넣는다.
         if (field.isNotEmpty() || record.isNotEmpty()) {
             record.add(field.toString())
             records.add(record)
         }
         return records
     }
-
 }
-

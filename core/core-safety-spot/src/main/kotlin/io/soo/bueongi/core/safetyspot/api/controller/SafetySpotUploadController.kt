@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile
 class SafetySpotUploadController(
     private val uploadService: SafetySpotUploadService,
 ) {
-
     @PostMapping("/{type}/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         @PathVariable type: String,
@@ -29,5 +28,4 @@ class SafetySpotUploadController(
         val result: SafetySpotUploadResult = uploadService.upload(safetySpotType, file.bytes)
         return SafetySpotUploadResponse.from(result)
     }
-
 }

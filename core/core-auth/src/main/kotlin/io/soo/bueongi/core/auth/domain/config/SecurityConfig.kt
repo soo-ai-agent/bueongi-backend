@@ -21,7 +21,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
-/** 필터체인 2개 — @Order(1) 전 경로 permitAll 체인이 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다. */
+// 필터체인 2개 — @Order(1) 전 경로 permitAll 체인이 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다.
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(JwtProperties::class, AdminAuthProperties::class)

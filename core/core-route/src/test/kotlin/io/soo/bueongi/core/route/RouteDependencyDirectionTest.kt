@@ -4,12 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.File
 
-/**
- * 안전 채점(`domain/safety`)과 마커(`domain/marker`)는 경로 본체를 몰라야 한다.
- *
- * 이 방향은 원래 gradle 모듈 경계가 강제했다. 세 모듈을 하나로 합치면서 그 방어가
- * 사라지므로, 같은 규칙을 여기서 지킨다 — 어겨도 컴파일은 되기 때문에 테스트가 필요하다.
- */
 class RouteDependencyDirectionTest {
 
     @Test

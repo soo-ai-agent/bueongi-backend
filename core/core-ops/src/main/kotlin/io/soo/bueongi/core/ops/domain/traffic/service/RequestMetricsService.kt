@@ -49,7 +49,6 @@ class RequestMetricsService(
         )
     }
 
-    /** 관리자 호출은 따로 센다 — 사용자 수 추정은 뜻이 없어 넣지 않는다(관리자는 한 사람이다). */
     private fun adminCalls(): AdminTraffic {
         val metrics: List<RequestMetric> = adminRequestMetricStore.findRecent(ADMIN_REQUEST_METRIC_CAP)
         val todayStartMs: Long = todayStartMs(clock.millis())

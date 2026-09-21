@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
-/** 생활안전지도 치안시설(IF_0036). 인증키는 URL-인코딩분 그대로 써야 해 URI 를 문자열로 조립한다. */
+// 인증키는 URL-인코딩분 그대로 써야 해 URI 를 문자열로 조립한다.
 @Component
 class SafemapPoliceClient(
     @Value("\${bueongi.safemap.service-key:}") serviceKey: String,
@@ -28,7 +28,7 @@ class SafemapPoliceClient(
     val isEnabled: Boolean
         get() = serviceKey.isNotEmpty()
 
-    /** 계약: null = 수집 실패 — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
+    // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetchPoliceFacilities(): List<SafemapPolicePoint>? {
         check(isEnabled) { "생활안전지도 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<SafemapPolicePoint> = ArrayList()
@@ -82,7 +82,7 @@ class SafemapPoliceClient(
         return false
     }
 
-    /** 좌표를 0 으로 채워 보내는 행은 지도에 찍을 수 없어 버린다 — 주소만 있는 시설은 지오코딩이 따로 필요하다. */
+    // 좌표를 0 으로 채워 보내는 행은 지도에 찍을 수 없어 버린다(실측).
     private fun addPoints(rows: List<SafemapPoliceRow>, into: MutableList<SafemapPolicePoint>) {
         for (row in rows) {
             val point: Wgs84Point = resolveKoreanWgs84OrNull(row.x, row.y) ?: continue
@@ -99,7 +99,7 @@ class SafemapPoliceClient(
         }
     }
 
-    /** 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않고 totalCount 도 함께 본다. */
+    // 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
     private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
         if (rowCount == 0) {
             return true
@@ -122,22 +122,18 @@ class SafemapPoliceClient(
     private companion object {
         const val PATH: String = "/openapi2/IF_0036"
 
-        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        // 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "safemap"
 
         const val PAGE_SIZE: Int = 1000
 
-        /** 무한 루프 방지 — 전국 전량이 3,064건이라 두 자리면 충분하다. */
         const val MAX_PAGES: Int = 50
 
         val SUCCESS_CODES: Set<String> = setOf("0", "00")
     }
 }
 
-/**
- * 이 원천은 값이 없을 때 빈 칸이 아니라 `-` 를 적는다(실측 2,947건 중 전화 967건).
- * 그대로 두면 앱에 "-" 가 전화번호로 찍혀 눌러도 걸리지 않는다.
- */
+// 이 원천은 값이 없을 때 빈 칸이 아니라 `-` 를 적는다(실측).
 private fun String?.valueOrNull(): String? {
     val text: String = this?.trim() ?: return null
     if (text.isEmpty() || text == "-" || text == "null") {

@@ -6,6 +6,7 @@ import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.client.tmap.TmapRoute
+import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
@@ -17,14 +18,11 @@ class SafeRouteService(
     private val collector: RouteCandidateCollector,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    // Tmap·통계가 없는 조립에서도 경로 비교는 돌아야 해서 선택 주입이다.
     private val routeEvents: RouteEventPublisher? = null,
-    // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val routeStatsStore: RouteStatsStore? = null,
 ) {
 
     fun safeCompare(query: RouteQuery): List<RouteOption> {
-        // 폴백으로 빠지더라도 추천 집계는 남긴다.
         routeStatsStore.recordRecommendation("safe-compare", query)
 
         if (!collector.isEnabled) {
@@ -43,14 +41,15 @@ class SafeRouteService(
         if (candidates.isEmpty()) {
             return emptyList()
         }
-        val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path)) }
+        val coverage: SafetyDataCoverage = scorer.coverageOf(candidates.map { it.path })
+        val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path, coverage)) }
 
-        val safeIdx: Int = scored.indices.maxBy { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
+        val safeIdx: Int = scored.indices.maxBy { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
         val fastIdx: Int? = scored.indices.filter { it != safeIdx }
             .minByOrNull { scored[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
         val used: Set<Int> = setOfNotNull(safeIdx, fastIdx)
         val mainIdx: Int? = scored.indices.filter { it !in used }
-            .maxByOrNull { scored[it].score.score.toDouble() - it * TIE_BREAK_EPSILON }
+            .maxByOrNull { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
 
         val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap()
         picks[safeIdx] = RouteType.SAFE
@@ -70,7 +69,6 @@ class SafeRouteService(
 
     private companion object {
 
-        /** 동점이면 앞선 후보가 이기게 하는 기울기 — 같은 입력에 같은 결과를 보장한다. */
         const val TIE_BREAK_EPSILON: Double = 1e-9
     }
 }

@@ -12,21 +12,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-/**
- * **가로등**(간선도로·차도 도로 조명)을 처음 필요할 때 한 번 받아 저장한다.
- * 보안등은 원천도 받는 방식도 달라 [io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService] 가 따로 맡는다.
- *
- * | | |
- * |---|---|
- * | 원천 | 재난안전데이터 공유플랫폼 `DSSP-IF-00084` |
- * | 받는 단위 | **전국 한 덩이** — 이 API 는 지역 조건을 받지 않는다 |
- * | 한 번에 | 1,000건 — 전량이 1,500건이라 2페이지로 끝난다 |
- *
- * 지역으로 나눌 수 없는 대신 전량이 싸다. 그래서 지역 코드 자리에 [NATIONWIDE] 하나를 쓰고,
- * 저장·만료 규칙은 보안등과 똑같이 캐시에 맡긴다.
- *
- * 기동 때 받지 않는 이유는 부팅을 외부 API 지연에 묶지 않기 위해서다.
- */
 @Service
 class StreetLampFillService(
     private val client: StreetLampClient,
@@ -37,13 +22,11 @@ class StreetLampFillService(
 ) {
     private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
 
-    /** 동시에 두 번 받지 않게 막는다. */
     private val inFlight: AtomicBoolean = AtomicBoolean(false)
 
     fun isFilled(): Boolean =
         cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)
 
-    /** 아직 안 받았으면 받아서 저장하고 인덱스에 더한다. 반환 = 이번에 더한 건수. */
     fun fill(): Int {
         if (!client.isEnabled) {
             return 0
@@ -100,7 +83,7 @@ class StreetLampFillService(
     }
 
     private companion object {
-        /** 이 원천은 전국을 한 덩이로만 주므로 지역 코드 자리에 이 값을 쓴다. */
+        // 재난안전데이터 DSSP-IF-00084 는 지역 조건을 받지 않아 전국 한 덩이로만 준다.
         const val NATIONWIDE: String = "nationwide"
     }
 }

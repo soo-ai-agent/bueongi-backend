@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service
 import java.time.Clock
 import kotlin.math.roundToLong
 
-/** 외부 API 를 얼마나·얼마나 자주 부르고 있는지. 쿼터가 있는 원천을 볼 때의 근거다. */
 @Service
 class ExternalApiMetricsService(
     private val externalCallMetricStore: ExternalCallMetricStore,
@@ -74,7 +73,6 @@ class ExternalApiMetricsService(
         )
     }
 
-    /** 무엇이 잘못됐는지 한 줄로 — 연결 실패면 예외 종류, 응답이 왔으면 상태 코드. */
     private fun reasonOf(metric: ExternalCallMetric): String {
         val reason: String? = metric.failureReason
         if (reason != null) {
@@ -102,7 +100,6 @@ class ExternalApiMetricsService(
     private fun countSince(metrics: List<ExternalCallMetric>, sinceMs: Long): Int =
         metrics.count { it.atEpochMs >= sinceMs }
 
-    /** 응답이 아예 없었거나(0) 2xx 가 아니면 실패로 센다. */
     private fun isFailure(metric: ExternalCallMetric): Boolean =
         metric.status !in SUCCESS_STATUS_RANGE
 

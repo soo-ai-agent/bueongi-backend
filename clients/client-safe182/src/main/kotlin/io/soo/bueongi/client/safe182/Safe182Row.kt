@@ -2,7 +2,7 @@ package io.soo.bueongi.client.safe182
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-/** 외부 응답 규격 — 안전지도 한 행. 좌표가 WGS84 경위도로 그대로 온다(변환 불필요). */
+// 좌표가 WGS84 경위도로 그대로 온다 — 변환이 필요 없다.
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class Safe182Row(
     // 원천이 좌표를 비워 보내는 행이 있어 null 이 가능함

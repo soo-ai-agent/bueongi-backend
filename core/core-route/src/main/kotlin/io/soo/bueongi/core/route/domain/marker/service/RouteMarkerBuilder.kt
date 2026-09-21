@@ -16,19 +16,10 @@ import org.springframework.stereotype.Component
 import kotlin.math.roundToInt
 import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
 
-/**
- * 경로 주변 안심시설을 지도 마커로 만든다.
- *
- * 마커의 [SafetySpotPoi.x]·[SafetySpotPoi.y] 는 위경도가 아니라 **미니맵 안 0~100 백분율 위치**다.
- * 프론트가 지도 SDK 없이도 경로 미리보기를 그릴 수 있어야 해서, 마커 전체의 위경도 범위를
- * 정사각형에 맞춰 늘린 값을 서버가 계산해 준다.
- */
 @Component
 class RouteMarkerBuilder(
     private val safetySpots: SafetySpotSpatialSource,
-    // 이것 없이도 본 기능이 돌아야 해서 null 이 가능함
     private val markerEvents: MarkerEventPublisher? = null,
-    // 사건을 받을 쪽이 없는 구성(테스트 등)에서 null 이 가능함
     private val visitEvents: RouteVisitEventPublisher? = null,
 ) {
     private val log: Logger = LoggerFactory.getLogger(RouteMarkerBuilder::class.java)
@@ -42,7 +33,6 @@ class RouteMarkerBuilder(
         publishVisitedPoints(origin, destination, path)
 
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
-        // x·y 는 전체 마커 범위를 알아야 정해지므로 여기서는 0 으로 두고 마지막에 한 번에 채운다.
         val raw: ArrayList<SafetySpotPoi> = ArrayList()
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
@@ -72,7 +62,6 @@ class RouteMarkerBuilder(
         return raw.toMiniMapPercent()
     }
 
-    /** 마커들의 위경도 범위를 미니맵 0~100 좌표로 늘린다. 모든 마커가 한 점이면 가운데(50)에 둔다. */
     private fun List<SafetySpotPoi>.toMiniMapPercent(): List<SafetySpotPoi> {
         val minLat: Double = minOf { it.lat }
         val maxLat: Double = maxOf { it.lat }
@@ -83,9 +72,9 @@ class RouteMarkerBuilder(
         val drawableRange: Double = MINI_MAP_MAX - 2 * MARKER_PADDING
         val placed: ArrayList<SafetySpotPoi> = ArrayList()
         for (marker in this) {
-            // 화면 y 는 아래로 증가하므로 위도는 뒤집어 넣는다(북쪽이 위).
             val x: Int = percentOrCenter(marker.lng - minLng, spanLng, drawableRange)
-            val y: Int = percentOrCenter(maxLat - marker.lat, spanLat, drawableRange)
+            val northFlippedOffset: Double = maxLat - marker.lat
+            val y: Int = percentOrCenter(northFlippedOffset, spanLat, drawableRange)
             placed.add(marker.copy(x = x, y = y))
         }
         return placed
@@ -100,13 +89,7 @@ class RouteMarkerBuilder(
         return percent.roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
     }
 
-    /**
-     * 지연 적재를 부르는 사건. 출발·목적지 두 점만 보내면 **그 사이 자치단체가 영원히 안 채워진다** —
-     * 보안등은 자치단체(instt_code)당 한 번 받는 원천이라, 강남→마포 경로에서 서초·용산·중구가
-     * 통째로 빠져 "보안등이 출발지 주변에만 있다"가 됐다. 경로를 일정 간격으로 훑어 함께 보낸다.
-     *
-     * 채우기는 뒤에서 돌아 이번 응답에는 안 잡힌다. 다음 요청부터 보인다.
-     */
+    // 보안등 원천이 자치단체(instt_code)당 한 번만 응답해, 경로가 지나는 자치단체를 모두 짚어야 한다.
     private fun publishVisitedPoints(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>) {
         val publisher: RouteVisitEventPublisher = visitEvents ?: return
         val route: List<GeoPoint> = if (path.size >= 2) {
@@ -137,11 +120,6 @@ class RouteMarkerBuilder(
         )
     }
 
-    /**
-     * 경로 앞에서부터 자르면 출발지 쪽에서 예산을 다 쓴다 — `withinCorridor` 가 경로 순서로
-     * 돌려주기 때문이다. 실측(강남역→홍대입구 13.4km)에서 가로등 12개가 전부 첫 1/3 구간,
-     * 그것도 가로 150m 안에 몰려 목적지 쪽이 0개였다. 등간격으로 골라 경로 전체에 편다.
-     */
     private fun spreadAlongPath(alongPath: List<SafetySpotPoint>, limit: Int): List<SafetySpotPoint> {
         if (alongPath.size <= limit) {
             return alongPath
@@ -167,19 +145,13 @@ class RouteMarkerBuilder(
         const val MINI_MAP_MAX: Double = 100.0
         const val MINI_MAP_CENTER: Int = 50
 
-        /** 미니맵 가장자리 여백(%) — 테두리에 붙은 마커가 잘려 보이지 않게 한다. */
         const val MARKER_PADDING: Double = 12.0
 
-        /** 종류당 마커 상한. 응답 크기와 지도 가독성 때문에 자른다. */
         const val MAX_MARKERS_PER_TYPE: Int = 12
 
-        /** 지연 적재를 부를 표본 간격. 자치단체 하나를 건너뛰지 않을 만큼 촘촘하면 된다. */
         const val FILL_SAMPLE_SPACING_METERS: Double = 2_000.0
 
-        /**
-         * 한 요청이 발행하는 표본 점 상한. 점 하나가 최악의 경우 자치단체 하나(보안등 약 8회 호출)라
-         * 상한 없이는 긴 경로 한 건이 외부 쿼터를 크게 먹는다. 넘으면 간격을 넓혀 목적지까지 덮는다.
-         */
+        // 점 하나가 최악의 경우 보안등 약 8회 외부 호출이라 한 요청의 쿼터 소모를 이 상한으로 막는다.
         const val MAX_FILL_SAMPLE_POINTS: Int = 12
     }
 }

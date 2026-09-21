@@ -73,14 +73,12 @@ class LampCsvLoadTest {
         assertThat(loadLamp(tmp, csvDir)).isEmpty()
     }
 
-    /** 적재기는 폴더 안 CSV 를 전부 읽으므로 파일이 아니라 폴더를 만든다. */
     private fun csvDirOf(tmp: File, vararg lines: String): File {
         val dir = File(tmp, "lamp").apply { mkdirs() }
         File(dir, "lamp.csv").writeText(lines.joinToString("\n"), CP949)
         return dir
     }
 
-    /** 적재 결과는 좌표(창녕 근처)로 조회해 확인한다 — 인덱스는 반경 조회만 열려 있다. */
     private fun loadLamp(tmp: File, csvDir: File): List<SafetySpotPoint> {
         val uploads = File(tmp, "uploads").apply { mkdirs() }
         val repo = SafetySpotRepository(

@@ -4,7 +4,7 @@ import io.soo.bueongi.support.util.escapeForJs
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
 
-/** 보호자 페이지 HTML 을 만든다. 토큰은 스크립트 안 문자열 리터럴에 들어가므로 JS 문맥으로 이스케이프한다. */
+// 토큰이 스크립트 안 문자열 리터럴에 들어가므로 JS 문맥으로 이스케이프한다.
 @Component
 class GuardianPage {
 

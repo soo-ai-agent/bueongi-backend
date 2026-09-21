@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import io.soo.bueongi.core.share.domain.model.ActiveShareView
 
-/** 관리자용 공유 조회. 경로가 /api/admin 아래인 것은 프론트 계약이다. */
 @RestController
 @RequestMapping("/api/admin")
 class ShareAdminController(

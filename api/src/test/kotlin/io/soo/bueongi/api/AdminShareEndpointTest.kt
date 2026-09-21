@@ -82,10 +82,6 @@ class AdminShareEndpointTest(
             }
     }
 
-    /**
-     * 관리자 미리보기는 보호자 화면을 재사용하는데, 경로를 보호자 엔드포인트로 받으면
-     * 공유 서버 base URL 이 필요해 목적지·경로선·잔여 표기가 조용히 빠졌다. 같은 오리진에서 받는다.
-     */
     @Test
     fun `share-sessions token route 는 등록된 경로를 보호자와 같은 와이어로 반환한다`() {
         mockMvc.get("/api/admin/share-sessions/tok0/route")

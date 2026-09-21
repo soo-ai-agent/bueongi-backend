@@ -9,17 +9,11 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/**
- * 마커 상한(종류당 12개)을 경로 앞에서부터 채우면 출발지 쪽에서 예산을 다 쓴다.
- * 실측(강남역→홍대입구 13.4km)에서 가로등 12개가 전부 첫 1/3 구간, 가로 150m 안에 몰렸고
- * 목적지 쪽은 0개였다. 경로 전체에 고르게 펴져야 한다.
- */
 class RouteMarkerSpreadTest {
 
     private val origin = GeoPoint(37.5, 127.000)
     private val destination = GeoPoint(37.5, 127.200)
 
-    /** 출발지에서 목적지까지 경도만 늘려 [count] 개를 고르게 깐다. */
     private fun lampsAlongPath(count: Int): List<SafetySpotPoint> {
         val points: ArrayList<SafetySpotPoint> = ArrayList(count)
         for (index in 0 until count) {
@@ -47,7 +41,6 @@ class RouteMarkerSpreadTest {
         val nearMiddle: Int = lngs.count { it >= origin.lng + span / 3 && it < origin.lng + span * 2 / 3 }
         val nearDestination: Int = lngs.count { it >= origin.lng + span * 2 / 3 }
 
-        // 앞에서부터 자르면 목적지 쪽이 0이 된다 — 세 구간 모두 마커가 있어야 한다.
         assertThat(nearOrigin).isPositive()
         assertThat(nearMiddle).isPositive()
         assertThat(nearDestination).isPositive()
@@ -61,7 +54,6 @@ class RouteMarkerSpreadTest {
         assertThat(lngs.max()).isGreaterThan(origin.lng + span / 2)
     }
 
-    /** 상한보다 적으면 솎아낼 이유가 없다 — 있는 대로 다 보여 준다. */
     @Test
     fun `시설이 적으면 전부 그대로 보여 준다`() {
         assertThat(lampMarkerLngs(5)).hasSize(5)

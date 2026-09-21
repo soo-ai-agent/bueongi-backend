@@ -62,6 +62,6 @@ class AdStatsService(
     }
 
     companion object {
-        val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native")
+        val TRACKED_PLACEMENTS: List<String> = listOf("interstitial", "native", "banner")
     }
 }

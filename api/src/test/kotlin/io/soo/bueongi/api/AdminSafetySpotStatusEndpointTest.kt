@@ -41,7 +41,6 @@ class AdminSafetySpotStatusEndpointTest(
                 jsonPath("$[0].name") { value("마포구") }
                 jsonPath("$[0].total") { value(2) }
                 jsonPath("$[0].counts.cctv") { value(2) }
-                // 지도가 이 지역을 가리킬 한 점 — 지점 두 개(37.500·37.501)의 평균.
                 jsonPath("$[0].center.lat") { value(37.5005) }
                 jsonPath("$[0].center.lng") { value(127.0) }
             }
@@ -60,7 +59,6 @@ class AdminSafetySpotStatusEndpointTest(
                 jsonPath("$.spots[0].type") { value("cctv") }
                 jsonPath("$.spots[0].lat") { value(37.5) }
                 jsonPath("$.spots[0].lng") { value(127.0) }
-                // 원천이 이름을 안 주는 시설도 키는 그대로 나가야 프론트가 자리를 비울 수 있다.
                 content { string(containsString("\"name\":null")) }
             }
     }

@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.route.domain.safety.model
 
-/** 안전 점수 항목별 가중치. 합이 1.0 이어야 점수가 0~100 계약을 지킨다. */
 data class SafetyWeights(
     val cctv: Double,
     val lamp: Double,
@@ -10,6 +9,15 @@ data class SafetyWeights(
     val safePath: Double,
 ) {
 
+    val byAxis: Map<SafetyAxis, Double> = mapOf(
+        SafetyAxis.CCTV to cctv,
+        SafetyAxis.LAMP to lamp,
+        SafetyAxis.BELL to bell,
+        SafetyAxis.SAFEHOUSE to safehouse,
+        SafetyAxis.POLICE to police,
+        SafetyAxis.SAFE_PATH to safePath,
+    )
+
     val sum: Double
-        get() = cctv + lamp + bell + safehouse + police + safePath
+        get() = byAxis.values.sum()
 }

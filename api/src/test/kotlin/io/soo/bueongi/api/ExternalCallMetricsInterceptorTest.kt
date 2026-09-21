@@ -76,7 +76,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(metric.failureReason).isNull()
     }
 
-    /** 인증키는 질의 문자열에 실린다 — 경로만 남겨야 로그·저장 어디에도 새지 않는다. */
     @Test
     fun `질의 문자열은 기록하지도 남기지도 않는다`() {
         val appender = captureLogs()
@@ -132,10 +131,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(appender.list.single().formattedMessage).contains("--- GET", "✖ IOException")
     }
 
-    /**
-     * 로그를 볼 때 우리가 보낸 호출인지가 맨 앞에서 갈려야 한다.
-     * 상대(원천)·상태+메서드 칸은 수신 요청 줄([RequestLogLine])과 같은 자리에 온다.
-     */
     @Test
     fun `외부 호출은 방향을 맨 앞에 두고 원천 상태 경로 순으로 적는다`() {
         val appender = captureLogs()
@@ -170,10 +165,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(appender.list.single().formattedMessage).contains("429 GET")
     }
 
-    /**
-     * 경로 요청 한 건이 Tmap 을 일곱 번 부른다 — 표식이 없으면 그 일곱 줄이 한 요청인지
-     * 일곱 요청인지 못 가른다. 수신 요청 밖(스케줄러·비동기 적재)은 `배치` 로 갈린다.
-     */
     @Test
     fun `왜 불렀는지를 남긴다 - 수신 요청에서 갈라졌으면 그 요청을 배치면 배치라고 적는다`() {
         val appender = captureLogs()
@@ -195,7 +186,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(appender.list[1].formattedMessage).contains("🔗 ${currentTraceId()}")
     }
 
-    /** 적재가 몇 페이지째에서 멈췄는지는 진단의 첫 단서다 — 다만 인증키는 같은 질의 문자열에 실린다. */
     @Test
     fun `페이징 항목만 남기고 나머지 질의 문자열은 버린다`() {
         val appender = captureLogs()
@@ -212,7 +202,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(line).doesNotContain("serviceKey")
     }
 
-    /** 숫자가 아닌 값은 통과시키지 않는다 — 인증키가 페이징 이름을 달고 와도 새지 않는다. */
     @Test
     fun `페이징 이름이라도 값이 숫자가 아니면 버린다`() {
         val appender = captureLogs()
@@ -228,7 +217,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(line).doesNotContain("📄")
     }
 
-    /** 겉 예외만 남기면 진짜 원인이 사라진다 — 실패 줄은 사슬로 적는다. */
     @Test
     fun `실패 사유는 원인 사슬로 적되 URL 의 질의 문자열은 지운다`() {
         val appender = captureLogs()
@@ -251,7 +239,6 @@ class ExternalCallMetricsInterceptorTest {
         assertThat(line).doesNotContain("SECRET-KEY-VALUE")
     }
 
-    /** 계측이 깨지는 것과 외부 호출이 깨지는 것은 다른 사건이다 — 예외 줄로 갈라 적는다. */
     @Test
     fun `계측 저장 실패는 예외 줄로 남긴다`() {
         val appender = captureLogs()

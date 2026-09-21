@@ -86,7 +86,6 @@ class SafetySpotRegionCacheTest {
             .save(SafetySpotType.STREET_LAMP, "3210000", listOf(lamp("서초1", 37.48, 127.01)))
         val expired = cacheOf(tmp, Clock.fixed(saved.plus(Duration.ofDays(TTL_DAYS + 1)), ZoneOffset.UTC))
 
-        // 낡았다고 지우지 않는다 — 새로 받기 전까지는 있는 데이터로 답하는 편이 낫다.
         assertThat(expired.loadAll(SafetySpotType.STREET_LAMP)).hasSize(1)
     }
 

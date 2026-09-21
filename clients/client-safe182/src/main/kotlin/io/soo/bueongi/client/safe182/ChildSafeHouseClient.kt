@@ -14,15 +14,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestClient
 
-/**
- * 안전Dream 아동안전지킴이집(안전지도 `cl=09`). 위급할 때 뛰어 들어갈 수 있는 가게라
- * 여성안심지킴이집과 같은 쓸모로 본다.
- *
- * **범위를 주고 부른다.** 전국은 10,716건(108회)이고 이 API 는 일일 조회 한도가 있어
- * (`result=80`) 전량을 받는 것은 위험하다. 사각 범위를 주면 그만큼만 준다(실측: 11km 칸 216건).
- *
- * 자료 출처 표기(경찰청)가 이용약관상 의무다.
- */
+// 일일 조회 한도(result=80)가 있어 전량 대신 사각 범위를 주고 부른다. 자료 출처 표기(경찰청)가 약관상 의무다.
 @Component
 class ChildSafeHouseClient(
     @Value("\${bueongi.safe182.esntl-id:}") esntlId: String,
@@ -37,11 +29,11 @@ class ChildSafeHouseClient(
     private val endpoint: String = "${baseUrl.trimEnd('/')}$PATH"
     private val restClient: RestClient = restClientBuilder.clone().build()
 
-    /** 둘 다 있어야 한다 — 한쪽만 주면 원천이 `result=99` 로 거절한다(실측). */
+    // 한쪽만 주면 원천이 result=99 로 거절한다(실측).
     val isEnabled: Boolean
         get() = esntlId.isNotEmpty() && authKey.isNotEmpty()
 
-    /** 계약: null = 수집 실패 — 호출자는 기존 데이터를 유지한다. 빈 목록과 다르다. */
+    // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetchWithin(bounds: MapBounds): List<ChildSafeHousePoint>? {
         check(isEnabled) { "안전Dream 자격증명 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<ChildSafeHousePoint> = ArrayList()
@@ -66,7 +58,7 @@ class ChildSafeHouseClient(
         return points
     }
 
-    /** 원천이 비표준 `application/x-json` 으로 응답해 컨버터가 못 받는다 — 문자열로 받아 직접 파싱한다. */
+    // 원천이 비표준 `application/x-json` 으로 응답해 컨버터가 못 받는다 — 문자열로 받아 직접 파싱한다.
     private fun fetchPage(pageIndex: Int, bounds: MapBounds): Safe182Response? {
         return try {
             val body: String = restClient.post()
@@ -140,7 +132,7 @@ class ChildSafeHouseClient(
         }
     }
 
-    /** 서버가 pageUnit 보다 적게 줄 수 있어 건수만으로 끊지 않고 totalCount 도 함께 본다. */
+    // 서버가 pageUnit 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
     private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
         if (rowCount == 0) {
             return true
@@ -151,7 +143,6 @@ class ChildSafeHouseClient(
         return rowCount < PAGE_SIZE
     }
 
-    /** 예외 메시지에 본문(자격증명 포함)이 섞일 수 있어 esntlId·authKey 를 함께 넘겨 지운다. */
     private fun failureLine(cause: String, pageIndex: Int, action: String = STOPPED_ACTION): String =
         ExceptionLogLine(
             kind = IGNORED_EXCEPTION,
@@ -165,17 +156,16 @@ class ChildSafeHouseClient(
     private companion object {
         const val PATH: String = "/api/lcm/safeMap.do"
 
-        /** 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다. */
+        // 송신 줄의 원천 이름과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "safe182"
 
         const val STOPPED_ACTION: String = "수집 중단(기존 데이터 유지)"
 
         const val CHILD_SAFE_HOUSE_CODE: String = "09"
 
-        /** 원천이 정한 상한이다 — 더 크게 줘도 100 으로 자른다. */
+        // 원천이 정한 상한 — 더 크게 줘도 100 으로 자른다(실측).
         const val PAGE_SIZE: Int = 100
 
-        /** 무한 루프 방지 — 한 칸에 수백 건이라 이 정도면 넉넉하다. */
         const val MAX_PAGES: Int = 50
 
         const val SUCCESS_CODE: String = "00"

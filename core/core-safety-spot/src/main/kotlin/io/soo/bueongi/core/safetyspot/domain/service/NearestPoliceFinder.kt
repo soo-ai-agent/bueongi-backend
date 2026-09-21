@@ -14,7 +14,6 @@ import kotlin.math.roundToInt
 class NearestPoliceFinder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-
     fun findNearest(center: GeoPoint, radiusM: Double?, limit: Int?): List<NearestPolice> {
         val radius: Double = (radiusM ?: DEFAULT_RADIUS_M).coerceIn(MIN_RADIUS_M, MAX_RADIUS_M)
         val maxResults: Int = (limit ?: DEFAULT_LIMIT).coerceIn(1, MAX_LIMIT)

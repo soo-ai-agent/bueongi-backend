@@ -2,10 +2,9 @@ package io.soo.bueongi.core.ops.domain.traffic.model
 
 import io.soo.bueongi.support.util.HourlyBucket
 
-/** [totalCalls] 이하 모든 칸은 **사용자 호출만** 센다. 관리자 호출은 [adminCalls] 에 따로 있다. */
+// totalCalls 이하 모든 칸은 **사용자 호출만** 센다. 관리자 호출은 adminCalls 에 따로 있다.
 data class TrafficSummary(
     val totalCalls: Int,
-    /** 2xx 응답 수. 성공률만으로는 "몇 건이 실패했나"를 못 읽는다. */
     val successCount: Int,
     val failureCount: Int,
     val windowSize: Int,

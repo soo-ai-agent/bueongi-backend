@@ -73,7 +73,6 @@ class PlaceSearchServiceSourceTest {
         assertThat(result.map { it.name }).contains("강남역 2번 출구")
     }
 
-    /** 사용자가 어디로 가려 했는지가 로그에 쌓이면 안 된다 — 실패해도 검색어는 남기지 않는다. */
     @Test
     fun `폴백 로그에 검색어를 남기지 않고 원인 사슬만 적는다`() {
         val logger: LogbackLogger = LoggerFactory.getLogger(PlaceSearchService::class.java) as LogbackLogger

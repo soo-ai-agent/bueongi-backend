@@ -43,7 +43,6 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
 
-/** 관리자 조회 엔드포인트들이 공유하는 가짜 저장소. 각 테스트는 자기 컨트롤러만 띄우고 이것을 @Import 한다. */
 class AdminEndpointFixtures {
     @TestConfiguration
     class FakeStoreConfig {
@@ -234,7 +233,6 @@ class AdminEndpointFixtures {
 
             const val SHARE_BASE_URL: String = "http://localhost:3619"
 
-            /** 관리자 미리보기가 보호자 화면과 같은 경로선·목적지를 그리는지 보려면 세션에 경로가 있어야 한다. */
             val FIXTURE_ROUTE: StoredRoute = StoredRoute(
                 destination = StoredRouteDestination(name = "삼성역", lat = 37.5089, lng = 127.0631),
                 path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.5089, 127.0631)),

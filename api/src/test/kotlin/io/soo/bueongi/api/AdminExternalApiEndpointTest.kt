@@ -34,7 +34,6 @@ class AdminExternalApiEndpointTest(
             }
     }
 
-    /** 쿼터 소진(429)은 실패로 세고 사유를 남겨야 관리자가 원인을 바로 안다. */
     @Test
     fun `쿼터 소진은 실패로 세고 마지막 사유를 남긴다`() {
         mockMvc.get("/api/admin/external-calls")

@@ -2,7 +2,6 @@ package io.soo.bueongi.client.safemap
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-/** 외부 응답 규격 — IF_0036 봉투. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class SafemapResponse(
     // 통신이 잘린 응답에는 헤더가 없어 null 이 가능함

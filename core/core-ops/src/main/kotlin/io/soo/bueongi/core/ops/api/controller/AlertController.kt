@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController
 import io.soo.bueongi.support.monitoring.AlertRecord
 import io.soo.bueongi.core.ops.domain.slack.model.SlackConfigUpdate
 
-/** 운영 알림 — 이력 조회와 Slack 설정. 경로가 /api/admin 아래인 것은 프론트 계약이다. */
 @RestController
 @RequestMapping("/api/admin")
 class AlertController(

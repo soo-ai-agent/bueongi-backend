@@ -1,6 +1,5 @@
 package io.soo.bueongi.support.util
 
-/** 좌표계 미명시 x/y 를 값 범위로 자동판별 — 경위도면 그대로(뒤바뀜 교정), UTM-K·Web Mercator 미터 범위면 역변환. 자릿수가 달라 범위가 겹치지 않는다. */
 fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
     val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
     val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
@@ -13,7 +12,6 @@ fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
     }
 }
 
-/** EPSG:5179 false easting/northing(1,000,000/2,000,000m) 기준 한반도 유효 미터 범위. */
 private val UTMK_EASTING_RANGE: ClosedFloatingPointRange<Double> = 400_000.0..1_600_000.0
 private val UTMK_NORTHING_RANGE: ClosedFloatingPointRange<Double> = 1_100_000.0..2_900_000.0
 private val WEB_MERCATOR_KOREA_X_RANGE: ClosedFloatingPointRange<Double> = 13_800_000.0..14_700_000.0

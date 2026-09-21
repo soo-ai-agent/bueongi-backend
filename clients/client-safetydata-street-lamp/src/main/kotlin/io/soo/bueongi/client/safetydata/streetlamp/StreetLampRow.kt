@@ -3,10 +3,7 @@ package io.soo.bueongi.client.safetydata.streetlamp
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
-/**
- * 외부 응답 규격 — 가로등 한 행. 좌표계는 문서 미명시라 값 범위로 자동판별한다.
- * 좌표를 문자열로 받는 이유는 값이 깨진 행이 와도 그 행만 버리기 위해서다(Double 이면 페이지 전체가 깨진다).
- */
+// 좌표계가 문서에 없어 값 범위로 자동판별한다. 깨진 행만 버리려고 문자열로 받는다(Double 이면 페이지 전체가 깨진다).
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class StreetLampRow(
     // 좌표를 비워 보내는 행이 있어 null 이 가능함

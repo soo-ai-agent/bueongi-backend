@@ -20,7 +20,6 @@ class RouteCandidateCollector(
 
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    /** 전멸하면 빈 목록 — 폴백 여부는 호출부가 정한다. */
     fun collectBase(query: RouteQuery): List<TmapRoute> =
         tmapClient.fetchRoutes(
             query.origin.toTmapCoord(),
@@ -31,15 +30,12 @@ class RouteCandidateCollector(
     fun collectAll(query: RouteQuery, base: List<TmapRoute>): List<RouteCandidate> {
         val detours: List<TmapRoute> = collectSafeDetours(query, base)
 
-        // Tmap 은 옵션만 다르면 사실상 같은 길을 준다 — 완전 일치와 근사 겹침을 따로 걸러야 한다.
         return candidateMerger.mergeNearDuplicates(
             dedupeByIdentity(base + detours).map { it.toCandidate() },
         )
     }
 
-    /** 예산을 넘는 후보는 버린다 — 너무 멀리 도는 길은 안전해도 쓰지 않는다. */
     private fun collectSafeDetours(query: RouteQuery, base: List<TmapRoute>): List<TmapRoute> {
-        // 재탐색은 걷던 종류 하나만 쓰고 나머지를 버린다 — 우회 호출(최대 4회)이 통째로 낭비였다.
         if (query.reroute) {
             return emptyList()
         }
@@ -51,7 +47,6 @@ class RouteCandidateCollector(
         val budget: Double = DETOUR_BUDGETS.getValue(query.safetyPreference)
         val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + budget)
         val detours: ArrayList<TmapRoute> = ArrayList()
-        // 조합 하나가 Tmap 호출 한 번이라, 받아 본 뒤에야 예산 초과를 안다.
         for (waypoints in waypointCombos) {
             val route: TmapRoute = tmapClient.fetchRouteVia(
                 query.origin.toTmapCoord(),

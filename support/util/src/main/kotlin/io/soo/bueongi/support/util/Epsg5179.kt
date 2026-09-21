@@ -6,7 +6,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 
-/** EPSG:5179(UTM-K) — proj4 `+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80` 과 동일 파라미터의 Snyder 급수 구현. */
+// proj4 `+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80` 과 같은 파라미터의 Snyder 급수 구현.
 object Epsg5179 {
     private const val A: Double = 6378137.0 // GRS80 장반경(m)
     private const val F: Double = 1.0 / 298.257222101 // GRS80 편평률
@@ -21,12 +21,11 @@ object Epsg5179 {
     private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
     private val M0: Double = meridianArc(LAT0)
 
-    /** x=동(easting), y=북(northing). */
-    fun toWgs84(x: Double, y: Double): Wgs84Point? {
-        if (!x.isFinite() || !y.isFinite()) {
+    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
+        if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
-        val m: Double = M0 + (y - FALSE_NORTHING) / K0
+        val m: Double = M0 + (northing - FALSE_NORTHING) / K0
         val mu: Double = m / (A * (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256))
         val phi1: Double = mu +
             (3 * E1 / 2 - 27 * E1.pow(3) / 32) * sin(2 * mu) +
@@ -41,7 +40,7 @@ object Epsg5179 {
         val t1: Double = tanPhi1 * tanPhi1
         val n1: Double = A / sqrt(1 - E2 * sinPhi1 * sinPhi1)
         val r1: Double = A * (1 - E2) / (1 - E2 * sinPhi1 * sinPhi1).pow(1.5)
-        val d: Double = (x - FALSE_EASTING) / (n1 * K0)
+        val d: Double = (easting - FALSE_EASTING) / (n1 * K0)
 
         val lat: Double = phi1 - (n1 * tanPhi1 / r1) * (
             d * d / 2 -

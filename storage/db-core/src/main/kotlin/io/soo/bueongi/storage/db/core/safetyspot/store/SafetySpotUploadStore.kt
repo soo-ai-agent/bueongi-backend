@@ -16,7 +16,7 @@ import java.nio.file.Files
 import java.time.Clock
 import java.nio.file.StandardCopyOption
 
-/** 저장 계약: `{uploadDir}/{cdnType}.json` — CDN 컬렉션과 동형 JSON 이 재기동을 넘어 되읽히므로 DTO 필드 리네임 금지. */
+// 저장 계약: `{uploadDir}/{cdnType}.json` — CDN 컬렉션과 동형 JSON 이라 DTO 필드 리네임 금지.
 @Component
 class SafetySpotUploadStore(
     objectMapper: ObjectMapper,

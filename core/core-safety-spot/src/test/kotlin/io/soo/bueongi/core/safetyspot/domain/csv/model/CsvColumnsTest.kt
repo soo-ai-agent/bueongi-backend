@@ -4,9 +4,7 @@ import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-/** 공공데이터 CSV 는 빈칸·0·짧은 행이 섞여 들어온다. 그 경계에서 무엇을 "없음"으로 볼지 고정한다. */
 class CsvColumnsTest {
-
     private val columns = CsvColumns(
         useWgs84 = true,
         coordSystem = SafetySpotCoordSystem.WGS84,

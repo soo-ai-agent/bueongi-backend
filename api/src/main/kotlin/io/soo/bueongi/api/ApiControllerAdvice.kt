@@ -32,7 +32,6 @@ class ApiControllerAdvice(
 
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
-    /** 응답 내용은 예외가 안다. 여기서는 종류를 확인하지 않고 옮겨 담기만 한다. */
     @ExceptionHandler(ApiException::class)
     fun handleApi(ex: ApiException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(ex.status, ex.detail).apply {
@@ -43,7 +42,6 @@ class ApiControllerAdvice(
             }
         }
 
-    /** 경로변수·쿼리 값이 선언 타입으로 안 바뀔 때(`?lat=abc`). 핸들러가 없으면 500 으로 샌다. */
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
@@ -188,11 +186,6 @@ class ApiControllerAdvice(
         }
     }
 
-    /**
-     * 우리가 못 잡은 예외는 우리 쪽 결함이다 — 한 줄에는 원인 사슬을(겉 예외만 남기면 진짜
-     * 원인이 사라진다), 뒤에는 예외 자체를 함께 넘겨 스택의 줄 번호까지 남긴다. 500·503 은
-     * 드물어야 하는 사건이라 이때만 스택을 감수한다.
-     */
     private fun logUnhandled(counterpart: String, status: Int, action: String, ex: Exception) {
         val line: String = ExceptionLogLine(
             kind = UNHANDLED_EXCEPTION,
@@ -208,7 +201,6 @@ class ApiControllerAdvice(
     private companion object {
         const val RETRY_AFTER_SECONDS: Int = 5
 
-        /** 수신 필터를 안 거친 경로(actuator·정적 자원)는 무슨 요청이었는지 표식이 없다. */
         const val UNKNOWN_ORIGIN: String = "요청 미상"
     }
 }

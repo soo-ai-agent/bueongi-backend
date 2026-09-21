@@ -31,7 +31,6 @@ class RouteStatsService(
         )
     }
 
-    /** 추적 대상 엔드포인트를 고정 순서로 모두 낸다 — 0건도 대시보드에 자리를 지킨다. */
     private fun byEndpoint(logs: List<RouteRecommendationLog>): List<EndpointCount> {
         val counts: MutableMap<String, Int> = HashMap()
         for (log in logs) {
@@ -44,7 +43,6 @@ class RouteStatsService(
         return rows
     }
 
-    /** [byEndpoint] 와 같은 규칙 — 안심강도 전 종류를 enum 순서로 내고 없는 값은 0. */
     private fun byPreference(logs: List<RouteRecommendationLog>): List<PreferenceCount> {
         val counts: MutableMap<SafetyPreference, Int> = EnumMap(SafetyPreference::class.java)
         for (log in logs) {
@@ -57,7 +55,6 @@ class RouteStatsService(
         return rows
     }
 
-    /** 이름 없는 목적지(좌표만 찍은 경우)는 셀 수 없으니 뺀다. */
     private fun topDestinations(logs: List<RouteRecommendationLog>): List<DestinationCount> {
         val counts: HashMap<String, Int> = HashMap()
         for (log in logs) {

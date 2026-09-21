@@ -60,7 +60,6 @@ class RouteChoiceEndpointTest(
 
     private fun recorded(): List<RouteChoiceLog> = (store as RecordingChoiceStore).recorded
 
-    /** 스프링이 테스트 메서드 사이에 컨텍스트를 재사용해서 기록이 누적된다 — 매번 비운다. */
     @BeforeEach
     fun clearRecords() {
         (store as RecordingChoiceStore).recorded.clear()
@@ -87,10 +86,6 @@ class RouteChoiceEndpointTest(
         assertThat(log.atEpochMs).isEqualTo(FakeChoiceStoreConfig.FIXED_NOW.toEpochMilli())
     }
 
-    /**
-     * 숫자 칸이 non-null 이면 Jackson 이 0 을 채워 "0m 를 골랐다"가 조용히 기록된다.
-     * 어느 칸이 빠졌는지 짚어 400 이 나가야 한다.
-     */
     @Test
     fun `거리가 빠지면 그 필드를 짚어 400`() {
         mockMvc.post("/api/route-choices") {

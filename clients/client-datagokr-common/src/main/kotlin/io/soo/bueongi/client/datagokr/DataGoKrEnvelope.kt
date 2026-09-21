@@ -2,7 +2,7 @@ package io.soo.bueongi.client.datagokr
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-/** 외부 응답 규격 — 1741000 계열은 `response` 로 한 겹 더 감싸고 표준데이터 계열은 감싸지 않는다. */
+// 1741000 계열은 `response` 로 한 겹 더 감싸고 표준데이터 계열은 감싸지 않는다.
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class DataGoKrEnvelope(
     // 표준데이터 계열은 이 겹이 없어 null 이 가능함

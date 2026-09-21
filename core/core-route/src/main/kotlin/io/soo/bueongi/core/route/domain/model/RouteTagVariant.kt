@@ -2,7 +2,7 @@ package io.soo.bueongi.core.route.domain.model
 
 import com.fasterxml.jackson.annotation.JsonValue
 
-/** [wire] 가 와이어 계약([JsonValue]) — 정확히 'default'|'mint'|'blue'|'yellow'|'outline' 을 내야 하는 프론트 Badge variant. */
+// wire 값은 프론트 Badge variant 와 글자 그대로 맞춰야 하는 와이어 계약이다.
 enum class RouteTagVariant(@get:JsonValue val wire: String) {
     DEFAULT("default"),
     MINT("mint"),

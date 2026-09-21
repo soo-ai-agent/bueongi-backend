@@ -42,7 +42,7 @@ class KakaoPlaceClient(
 
         private const val KEYWORD_SEARCH_PATH: String = "/v2/local/search/keyword.json"
 
-        /** Kakao Local 허용 범위는 1~15 다. */
+        // Kakao Local 허용 범위는 1~15 다.
         private const val SEARCH_SIZE: Int = 15
     }
 }

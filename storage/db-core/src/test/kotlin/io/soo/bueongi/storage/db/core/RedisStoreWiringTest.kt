@@ -16,7 +16,6 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
-/** 두 저장소가 각자의 Redis 키와 상한을 쓰는지 고정한다 — 공용 [RedisJsonLog] 로 묶으며 섞이기 쉬운 지점. */
 class RedisStoreWiringTest {
 
     private val listOps: ListOperations<String, String> = mock()

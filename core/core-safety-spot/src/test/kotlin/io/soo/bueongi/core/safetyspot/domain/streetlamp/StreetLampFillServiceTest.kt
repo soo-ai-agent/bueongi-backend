@@ -26,7 +26,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class StreetLampFillServiceTest {
-
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
@@ -73,7 +72,6 @@ class StreetLampFillServiceTest {
         assertThat(liveStore.appended.first().type).isEqualTo(SafetySpotType.STREET_LAMP)
         assertThat(liveStore.appended.first().address).isEqualTo("역삼동")
 
-        // 두 번째 호출은 캐시가 막는다 — 같은 데이터를 두 번 받지 않는다.
         assertThat(service.fill()).isZero()
         assertThat(liveStore.appended).hasSize(2)
         verify(client).fetchStreetLamps()
@@ -96,7 +94,6 @@ class StreetLampFillServiceTest {
 
         service.fill()
         service.fill()
-        // 실패 1회 뒤 곧바로 온 요청은 외부를 부르지 않는다 — 요청마다 실패 호출이 반복되면 안 된다.
         verify(client, times(1)).fetchStreetLamps()
 
         ticking.now = now.plus(Duration.ofMinutes(11))
@@ -123,7 +120,6 @@ class StreetLampFillServiceTest {
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
         verify(events).fetchFailed()
-        // 실패는 캐시로 남기지 않는다 — 다음 요청에서 다시 시도해야 한다.
         verify(events, never()).hadNoCoordinates(any())
     }
 

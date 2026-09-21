@@ -19,7 +19,6 @@ class RouteChoiceService(
     private val clock: Clock,
 ) {
 
-    /** 저장소가 실패를 삼키는 계약이라 여기서도 예외가 나가지 않는다 — 기록 실패가 사용자 흐름을 막지 않는다. */
     fun record(choice: RouteChoice) {
         routeChoiceStore.record(
             RouteChoiceLog(
@@ -45,7 +44,6 @@ class RouteChoiceService(
         )
     }
 
-    /** 경로 종류 전 종류를 enum 순서로 내고 없는 값은 0 — 0건도 대시보드에 자리를 지킨다. */
     private fun byType(logs: List<RouteChoiceLog>): List<RouteTypeCount> {
         val counts: MutableMap<RouteType, Int> = EnumMap(RouteType::class.java)
         for (log in logs) {
@@ -58,7 +56,6 @@ class RouteChoiceService(
         return rows
     }
 
-    /** [byType] 과 같은 규칙 — 안심강도 전 종류를 enum 순서로 내고 없는 값은 0. */
     private fun byPreference(logs: List<RouteChoiceLog>): List<PreferenceCount> {
         val counts: MutableMap<SafetyPreference, Int> = EnumMap(SafetyPreference::class.java)
         for (log in logs) {

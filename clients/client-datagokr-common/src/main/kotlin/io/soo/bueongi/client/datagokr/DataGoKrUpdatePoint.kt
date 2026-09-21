@@ -3,7 +3,7 @@ package io.soo.bueongi.client.datagokr
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/** 원천의 데이터갱신시점 표기(YYYYMMDDHHMMSS) — 형식이 어긋나면 필터가 조용히 무시되므로 타입으로 고정한다. */
+// 원천 표기는 YYYYMMDDHHMMSS 다 — 형식이 어긋나면 필터가 조용히 무시된다.
 @JvmInline
 value class DataGoKrUpdatePoint(val value: String) {
     init {

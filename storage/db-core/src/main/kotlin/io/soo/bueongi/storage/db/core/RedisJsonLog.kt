@@ -5,10 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 
-/**
- * 담기는 것이 전부 관측용이라 저장이 실패해도 서비스는 돌아야 한다.
- * 그래서 예외를 삼키고 기록만 건너뛴다 — 세 저장소가 이 규칙을 어기지 않게 한곳에 둔다.
- */
+// 담기는 것이 전부 관측용이라, 읽기·쓰기 실패를 삼키고 빈 결과로 답한다.
 class RedisJsonLog<T : Any>(
     private val redis: StringRedisTemplate,
     private val objectMapper: ObjectMapper,
@@ -29,7 +26,6 @@ class RedisJsonLog<T : Any>(
         }
     }
 
-    /** 읽기 실패도 빈 목록 — 화면에 0건으로 보일 뿐 장애가 아니다. */
     fun readRecent(): List<T> {
         val raw: List<String> = try {
             redis.opsForList().range(key, 0, -1).orEmpty()

@@ -4,16 +4,11 @@ import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
-/**
- * 경로 도메인이 밖에 알릴 일. 받는 쪽이 무엇을 하는지 이 도메인은 모른다.
- * 사건을 발행만 한다 — 누가 받아 무엇을 하는지(알림·집계 등)는 여기서 정하지 않는다.
- */
 @Component
 class RouteEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
 
-    /** Tmap 경로 후보가 전멸해 직선거리 추정으로 응답했다. 사용자는 실제 길이 아닌 것을 모른다. */
     fun safeRouteFellBack(detail: String) {
         events.publishEvent(OperationEvent(key = FELL_BACK_KEY, title = FELL_BACK_TITLE, detail = detail))
     }

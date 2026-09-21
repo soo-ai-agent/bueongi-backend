@@ -8,7 +8,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** 프로퍼티명(lat/lng)은 RouteOption.path 직렬화로 노출되는 프론트 응답 계약 — 리네임 금지. */
+// 프로퍼티명 lat/lng 은 RouteOption.path 로 직렬화되는 프론트 응답 계약 — 리네임 금지.
 data class GeoPoint(val lat: Double, val lng: Double) {
 
     fun distanceMetersTo(other: GeoPoint): Double {
@@ -20,11 +20,10 @@ data class GeoPoint(val lat: Double, val lng: Double) {
         return EARTH_RADIUS_M * 2 * atan2(sqrt(h), sqrt(1 - h))
     }
 
-    /** 이 점에서 [other] 쪽으로 [fraction](0~1) 만큼 간 점. 도심 규모에서는 직선 보간으로 충분하다. */
     fun pointTowards(other: GeoPoint, fraction: Double): GeoPoint =
         GeoPoint(lat = lat + (other.lat - lat) * fraction, lng = lng + (other.lng - lng) * fraction)
 
-    /** 선분 [a]–[b] 위로 내린 수선. 국소 평면(equirectangular) 근사라 도심 규모(수 km)에서만 유효. */
+    // 국소 평면(equirectangular) 근사라 도심 규모(수 km)에서만 유효하다.
     fun projectOnto(a: GeoPoint, b: GeoPoint): SegmentProjection {
         val self: Planar = toPlanar(lat)
         val pa: Planar = a.toPlanar(lat)
@@ -87,7 +86,6 @@ data class GeoPoint(val lat: Double, val lng: Double) {
     }
 }
 
-/** 이어진 좌표들의 총 길이(m). */
 fun List<GeoPoint>.pathLengthMeters(): Double {
     var total: Double = 0.0
     for (i in 1 until size) {
@@ -96,15 +94,7 @@ fun List<GeoPoint>.pathLengthMeters(): Double {
     return total
 }
 
-/**
- * [everyMeters] 간격의 경유점. 처음과 끝은 반드시 들어가고, 개수는 [limit] 을 넘지 않는다.
- *
- * 꼭짓점을 고르는 것이 아니라 **선분 위를 보간**한다 — 그래야 출발·목적지 두 점짜리 직선 경로에도
- * 중간 지점이 나오고, 꼭짓점이 몰린 구간(교차로)에서 표본이 함께 몰리지 않는다.
- *
- * 그 간격으로 [limit] 개를 넘으면 뒤를 자르지 않고 **간격을 넓혀** 맞춘다 —
- * 앞에서부터 채우고 자르면 목적지 쪽이 통째로 빠진다.
- */
+// limit 을 넘으면 뒤를 자르지 않고 간격을 넓힌다 — 자르면 목적지 쪽이 통째로 빠진다.
 fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()
@@ -116,7 +106,6 @@ fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoP
     if (totalMeters <= 0) {
         return listOf(first(), last())
     }
-    // 상한을 간격으로 되돌린다 — 이래야 표본 수가 [limit] 을 넘지 않으면서 끝까지 덮는다.
     val step: Double = max(everyMeters, totalMeters / (limit - 1))
     val picked: ArrayList<GeoPoint> = ArrayList()
     picked.add(first())
@@ -126,7 +115,6 @@ fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoP
         val from: GeoPoint = this[i - 1]
         val to: GeoPoint = this[i]
         val segmentMeters: Double = from.distanceMetersTo(to)
-        // 처음과 끝을 뺀 자리만 채운다 — 부동소수점 오차로 한 점이 더 끼어도 상한을 넘지 않게.
         while (nextAt < walked + segmentMeters && picked.size < limit - 1) {
             picked.add(from.pointTowards(to, (nextAt - walked) / segmentMeters))
             nextAt += step
@@ -137,7 +125,6 @@ fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoP
     return picked
 }
 
-/** 이 경로 중 [other] 에서 [withinMeters] 이내로 겹치는 구간의 길이(m). */
 fun List<GeoPoint>.overlapMetersWith(other: List<GeoPoint>, withinMeters: Double): Double {
     if (size < 2 || other.size < 2) {
         return 0.0
