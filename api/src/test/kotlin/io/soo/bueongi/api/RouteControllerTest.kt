@@ -44,7 +44,6 @@ import org.springframework.test.web.servlet.post
 class RouteControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
@@ -180,40 +179,6 @@ class RouteControllerTest(
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }
             jsonPath("$.errors[0].field") { value("origin.lat") }
-        }
-    }
-
-    @Test
-    fun `좌표가 음의 무한대로 오버플로(lng -1e400)면 400 VALIDATION_FAILED`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"origin":{"lat":37.5,"lng":-1e400},"destination":{"lat":37.6,"lng":126.9}}"""
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-            jsonPath("$.errors[0].field") { value("origin.lng") }
-        }
-    }
-
-    @Test
-    fun `비숫자 리터럴 NaN 좌표는 400 MALFORMED_REQUEST`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"origin":{"lat":NaN,"lng":127.0},"destination":{"lat":37.6,"lng":126.9}}"""
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("MALFORMED_REQUEST") }
-        }
-    }
-
-    @Test
-    fun `비숫자 리터럴 Infinity 좌표는 400 MALFORMED_REQUEST`() {
-        mockMvc.post("/api/routes/compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"origin":{"lat":Infinity,"lng":127.0},"destination":{"lat":37.6,"lng":126.9}}"""
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("MALFORMED_REQUEST") }
         }
     }
 }

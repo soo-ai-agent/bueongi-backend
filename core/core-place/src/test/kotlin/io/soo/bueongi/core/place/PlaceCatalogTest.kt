@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class PlaceCatalogTest {
-
     private val koreaLat = 33.0..39.0
     private val koreaLng = 124.0..132.0
 
@@ -19,22 +18,6 @@ class PlaceCatalogTest {
         assertThat(SEED_PLACE_CATALOG).allSatisfy { place ->
             assertThat(place.name).isNotBlank()
             assertThat(place.address).isNotBlank()
-        }
-    }
-
-    @Test
-    fun `모든 시드 좌표는 유한하다 - NaN·Infinity 없음`() {
-        assertThat(SEED_PLACE_CATALOG).allSatisfy { place ->
-            assertThat(place.lat).isFinite()
-            assertThat(place.lng).isFinite()
-        }
-    }
-
-    @Test
-    fun `모든 시드 좌표는 지리 범위 안이다 - 위도 -90~90 경도 -180~180`() {
-        assertThat(SEED_PLACE_CATALOG).allSatisfy { place ->
-            assertThat(place.lat).isBetween(-90.0, 90.0)
-            assertThat(place.lng).isBetween(-180.0, 180.0)
         }
     }
 

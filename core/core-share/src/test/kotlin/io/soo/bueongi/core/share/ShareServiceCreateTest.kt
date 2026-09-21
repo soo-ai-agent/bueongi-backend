@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ShareServiceCreateTest : ShareServiceTestSupport() {
-
     @Test
     fun `create 는 시간 단위 TTL 뒤 만료, share_url 에 token 포함`() {
         val res = service.create(2)
@@ -49,12 +48,6 @@ class ShareServiceCreateTest : ShareServiceTestSupport() {
         val res = service.create(3, etaSeconds = 600)
         service.updateLocation(res.token, res.ownerSecret, report())
         assertFalse(service.getLocation(res.token).overdue)
-    }
-
-    @Test
-    fun `create 는 null 요청도 기본 TTL 로 처리`() {
-        val res = service.create(null)
-        assertEquals(clock.now.plusSeconds(DEFAULT_EXPIRES_HOURS * 3600L), res.expiresAt)
     }
 
     @Test

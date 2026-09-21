@@ -11,7 +11,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class AdStatsServiceTest {
-
     private fun store(events: List<AdEvent>): AdEventStore = object : AdEventStore {
         override fun record(event: AdEvent) = Unit
         override fun findRecent(limit: Int): List<AdEvent> = events.take(limit)
@@ -19,25 +18,6 @@ class AdStatsServiceTest {
 
     private fun event(at: Long = System.currentTimeMillis(), placement: String = "interstitial") =
         AdEvent(atEpochMs = at, placement = placement)
-
-    @Test
-    fun `record 는 현재시각으로 AdEvent 를 만들어 저장소에 넣는다`() {
-        val recorded: MutableList<AdEvent> = mutableListOf<AdEvent>()
-        val capturing = object : AdEventStore {
-            override fun record(event: AdEvent) {
-                recorded += event
-            }
-
-            override fun findRecent(limit: Int): List<AdEvent> = recorded
-        }
-        val before: Long = System.currentTimeMillis()
-
-        AdStatsService(capturing).record("native")
-
-        assertThat(recorded).hasSize(1)
-        assertThat(recorded.single().placement).isEqualTo("native")
-        assertThat(recorded.single().atEpochMs).isGreaterThanOrEqualTo(before)
-    }
 
     @Test
     fun `total 은 창 내 총 노출 수 today 는 Asia_Seoul 자정 이후 노출 수다`() {

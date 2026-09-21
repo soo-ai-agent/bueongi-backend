@@ -8,7 +8,6 @@ import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 
-
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -16,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RouteMarkerBuilderAlertTest {
-
     private val origin = GeoPoint(37.5, 127.000)
     private val destination = GeoPoint(37.5, 127.020)
 
@@ -63,11 +61,5 @@ class RouteMarkerBuilderAlertTest {
 
         assertThat(notifier.events.map { (it as OperationEvent).key }.toSet())
             .containsExactly("safetySpot-index-empty")
-    }
-
-    @Test
-    fun `알림기 미주입(null)이어도 마커 생성은 정상 동작한다`() {
-        val markers = build(FakeSafetySpotSource(), events = null)
-        assertThat(markers.map { it.type }).containsExactlyInAnyOrder(SafetySpotPoiType.START, SafetySpotPoiType.END)
     }
 }

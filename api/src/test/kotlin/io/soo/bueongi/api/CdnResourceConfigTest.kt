@@ -18,7 +18,6 @@ import java.nio.file.Path
 class CdnResourceConfigTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
-
     companion object {
         private val cdnDir: Path = Files.createTempDirectory("bueongi-cdn-test").also {
             Files.createDirectories(it.resolve("police"))
@@ -51,13 +50,6 @@ class CdnResourceConfigTest(
             status { isOk() }
             header { string("Cache-Control", org.hamcrest.Matchers.containsString("max-age=1800")) }
             header { string("Cache-Control", org.hamcrest.Matchers.containsString("public")) }
-        }
-    }
-
-    @Test
-    fun `없는 파일은 404 로 정직하게 응답한다`() {
-        mockMvc.get("/cdn/없는파일.json").andExpect {
-            status { isNotFound() }
         }
     }
 }

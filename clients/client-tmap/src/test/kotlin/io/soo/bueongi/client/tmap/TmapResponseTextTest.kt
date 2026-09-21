@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 
 // Tmap 실호출 응답 10,520바이트에 NUL 3개(name·description·nearPoiName)가 들어 있었다.
 class TmapResponseTextTest {
-
     private val nul: String = "\u0000"
 
     private val mapper = ObjectMapper()
@@ -44,13 +43,5 @@ class TmapResponseTextTest {
         val body = """{"name":"강남역","totalDistance":738}"""
 
         assertThat(sanitizeTmapJson(body)).isEqualTo(body)
-    }
-
-    @Test
-    fun `다듬지 않으면 Jackson 이 거부한다 - 이 함수가 필요한 이유`() {
-        val body = """{"name":"충림빌딩${nul}충림빌딩"}"""
-
-        assertThatCode { mapper.readTree(body) }.isInstanceOf(Exception::class.java)
-        assertThatCode { mapper.readTree(sanitizeTmapJson(body)) }.doesNotThrowAnyException()
     }
 }

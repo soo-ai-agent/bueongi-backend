@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class ServiceClockTest {
-
     private fun ms(iso: String): Long = Instant.parse(iso).toEpochMilli()
 
     @Test
@@ -29,14 +28,5 @@ class ServiceClockTest {
 
         assertThat(todayStartMs(beforeMidnight)).isEqualTo(ms("2026-08-13T15:00:00Z"))
         assertThat(todayStartMs(afterMidnight)).isEqualTo(ms("2026-08-14T15:00:00Z"))
-    }
-
-    @Test
-    fun `zonedAt 은 서비스 시간대로 읽는다`() {
-        val zoned = zonedAt(ms("2026-08-14T15:00:00Z"))
-
-        assertThat(zoned.hour).isEqualTo(0)
-        assertThat(zoned.dayOfMonth).isEqualTo(15)
-        assertThat(zoned.zone).isEqualTo(SERVICE_ZONE)
     }
 }

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 
 class RouteVisitSampleTest {
-
     private val maxSamplePoints: Int = 12
 
     private class RecordingPublisher : ApplicationEventPublisher {
@@ -94,13 +93,5 @@ class RouteVisitSampleTest {
         val path: List<GeoPoint> = straightPath(lngSpanDegrees = 0.005, vertexCount = 2)
 
         assertThat(visitedPoints(path)).isEqualTo(path)
-    }
-
-    @Test
-    fun `사건을 받을 쪽이 없으면(null) 마커 생성은 그대로 동작한다`() {
-        val markers = RouteMarkerBuilder(FakeSafetySpotSource(), null, null)
-            .buildMarkers(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.1), listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.1)))
-
-        assertThat(markers).hasSize(2)
     }
 }

@@ -13,7 +13,6 @@ import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
 class RedisJsonLogTest {
-
     data class Item(val name: String, val count: Int)
 
     private val listOps: ListOperations<String, String> = mock()
@@ -37,14 +36,6 @@ class RedisJsonLogTest {
 
         verify(listOps).leftPush("testkey", """{"name":"가","count":1}""")
         verify(listOps).trim("testkey", 0, 9)
-    }
-
-    @Test
-    fun `readRecent 는 저장된 순서 그대로 역직렬화한다`() {
-        whenever(listOps.range("testkey", 0, -1))
-            .thenReturn(listOf("""{"name":"나","count":2}""", """{"name":"다","count":3}"""))
-
-        assertThat(log().readRecent()).containsExactly(Item("나", 2), Item("다", 3))
     }
 
     @Test

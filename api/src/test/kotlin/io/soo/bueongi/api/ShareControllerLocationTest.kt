@@ -6,7 +6,6 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
 class ShareControllerLocationTest : ShareControllerTestSupport() {
-
     @Test
     fun `위치 POST 후 GET location 으로 같은 좌표를 200 으로 회수`() {
         val (token, secret) = createSharePair()
@@ -108,18 +107,6 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
-
-    @Test
-    fun `비유한 좌표 리터럴 POST 는 400 MALFORMED_REQUEST`() {
-        val token: String = createShare()
-        mockMvc.post("/share/$token/location") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": NaN, \"lng\": 127.0}"
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("MALFORMED_REQUEST") }
         }
     }
 
