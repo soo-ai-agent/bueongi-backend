@@ -48,11 +48,11 @@ class RouteMarkerBuilder(
                         y = 0,
                         lat = safetySpot.lat,
                         lng = safetySpot.lng,
-                        name = safetySpot.name,
-                        purpose = safetySpot.purpose,
-                        cameraCount = safetySpot.cameraCount,
-                        address = safetySpot.address,
-                        phone = safetySpot.phone,
+                        name = safetySpot.name.orEmpty(),
+                        purpose = safetySpot.purpose.orEmpty(),
+                        cameraCount = safetySpot.cameraCount ?: 0,
+                        address = safetySpot.address.orEmpty(),
+                        phone = safetySpot.phone.orEmpty(),
                     ),
                 )
             }
