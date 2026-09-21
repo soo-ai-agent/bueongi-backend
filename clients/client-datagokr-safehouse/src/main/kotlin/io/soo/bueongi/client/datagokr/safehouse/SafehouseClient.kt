@@ -4,7 +4,7 @@ import io.soo.bueongi.client.datagokr.DataGoKrFieldNames
 import io.soo.bueongi.client.datagokr.DataGoKrPagedFetcher
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
-import io.soo.bueongi.core.enums.DataGoKrQueryDialect
+import io.soo.bueongi.client.datagokr.DataGoKrQueryDialect
 import org.springframework.stereotype.Component
 
 /** 여성안심지킴이집(표준데이터). */

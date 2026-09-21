@@ -4,7 +4,7 @@ import io.soo.bueongi.core.route.domain.marker.service.MarkerEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
 import org.springframework.context.ApplicationEventPublisher
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 

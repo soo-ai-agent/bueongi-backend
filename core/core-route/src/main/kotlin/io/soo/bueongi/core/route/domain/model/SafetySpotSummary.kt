@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.model
 
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /** 경로변 시설 개수 요약. 각 값은 [SafetySpotPoiType] 별 마커 수다. */

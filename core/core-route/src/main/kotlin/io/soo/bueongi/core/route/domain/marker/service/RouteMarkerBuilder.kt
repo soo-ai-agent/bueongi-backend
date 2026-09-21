@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.domain.marker.service
 
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer

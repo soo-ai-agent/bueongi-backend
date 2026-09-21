@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.enums
+package io.soo.bueongi.client.datagokr
 
 /**
  * data.go.kr 계열별 조건 문법. 섞어 쓰면 `resultCode 10` 으로 거부된다(실측).

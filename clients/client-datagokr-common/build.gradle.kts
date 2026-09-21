@@ -4,8 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":support:logging"))
-    implementation(project(":core:core-enum"))
-
     testFixturesImplementation("org.springframework:spring-test")
     testFixturesImplementation("org.springframework:spring-web")
 

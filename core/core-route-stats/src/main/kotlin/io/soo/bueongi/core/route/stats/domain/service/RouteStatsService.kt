@@ -3,7 +3,7 @@ package io.soo.bueongi.core.route.stats.domain.service
 import io.soo.bueongi.core.route.stats.domain.model.DestinationCount
 import io.soo.bueongi.core.route.stats.domain.model.PreferenceCount
 import io.soo.bueongi.core.route.stats.domain.model.RouteStatsSummary
-import io.soo.bueongi.core.common.stats.EndpointCount
+import io.soo.bueongi.core.route.stats.domain.model.EndpointCount
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.support.util.HourlyBucket
 import io.soo.bueongi.support.util.countByHour

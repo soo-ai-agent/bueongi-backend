@@ -1,6 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
-import io.soo.bueongi.core.enums.DataGoKrQueryDialect
+import io.soo.bueongi.client.datagokr.DataGoKrQueryDialect
 import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.support.logging.ExceptionLogLine
 import io.soo.bueongi.support.logging.IGNORED_EXCEPTION

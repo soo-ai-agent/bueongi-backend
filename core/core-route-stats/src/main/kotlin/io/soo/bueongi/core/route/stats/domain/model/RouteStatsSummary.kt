@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.stats.domain.model
 
-import io.soo.bueongi.core.common.stats.EndpointCount
+import io.soo.bueongi.core.route.stats.domain.model.EndpointCount
 import io.soo.bueongi.support.util.HourlyBucket
 
 data class RouteStatsSummary(

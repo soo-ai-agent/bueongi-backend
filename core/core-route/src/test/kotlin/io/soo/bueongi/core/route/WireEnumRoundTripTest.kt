@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
 

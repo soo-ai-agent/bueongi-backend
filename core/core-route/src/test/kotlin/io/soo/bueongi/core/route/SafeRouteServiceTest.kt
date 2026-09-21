@@ -8,7 +8,7 @@ import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant

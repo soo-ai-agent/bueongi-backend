@@ -1,6 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
-import io.soo.bueongi.core.enums.DataGoKrQueryDialect
+import io.soo.bueongi.client.datagokr.DataGoKrQueryDialect
 
 /**
  * 수집 범위를 좁히는 조건. 아무것도 주지 않으면 전량 수집이라 일일 쿼터를 크게 먹는다

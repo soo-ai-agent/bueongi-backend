@@ -4,7 +4,7 @@ import io.soo.bueongi.core.route.domain.model.DataProvenance
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
-import io.soo.bueongi.core.enums.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.enums.RouteType
