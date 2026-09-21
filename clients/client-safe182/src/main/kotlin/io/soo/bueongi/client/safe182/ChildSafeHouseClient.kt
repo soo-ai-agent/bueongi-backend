@@ -45,7 +45,7 @@ class ChildSafeHouseClient(
             if (!isSuccess(response)) {
                 return null
             }
-            val rows: List<Safe182Row> = response.list.orEmpty()
+            val rows: List<Safe182Row> = response.list
             if (response.totalCount != null) {
                 totalCount = response.totalCount
             }

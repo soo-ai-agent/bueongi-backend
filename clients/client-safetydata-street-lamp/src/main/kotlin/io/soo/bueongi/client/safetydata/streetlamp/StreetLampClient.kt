@@ -40,7 +40,7 @@ class StreetLampClient(
             if (!isSuccess(response.header)) {
                 return null
             }
-            val rows: List<StreetLampRow> = response.body.orEmpty()
+            val rows: List<StreetLampRow> = response.body
             if (response.totalCount != null) {
                 totalCount = response.totalCount
             }

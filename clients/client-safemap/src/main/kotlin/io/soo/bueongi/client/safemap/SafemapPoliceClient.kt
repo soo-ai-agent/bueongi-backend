@@ -40,7 +40,7 @@ class SafemapPoliceClient(
             if (!isSuccess(response.header)) {
                 return null
             }
-            val rows: List<SafemapPoliceRow> = response.body?.items?.item.orEmpty()
+            val rows: List<SafemapPoliceRow> = response.body?.items?.item ?: emptyList()
             if (response.body?.totalCount != null) {
                 totalCount = response.body.totalCount
             }
