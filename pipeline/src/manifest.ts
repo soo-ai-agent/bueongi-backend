@@ -40,14 +40,8 @@ export function buildCollection(
     items,
   };
   const json = JSON.stringify(body, null, 0);
-  const path = sigunguCode
-    ? `${typeDir(type)}/${sigunguCode}.json`
-    : `${typeDir(type)}/${scope}.json`;
+  const path = sigunguCode ? `${type}/${sigunguCode}.json` : `${type}/${scope}.json`;
   return { path, type, scope, sigunguCode, json, count: items.length };
-}
-
-function typeDir(type: AssetType): string {
-  return type === "emergency_bell" ? "emergency_bell" : type;
 }
 
 export function buildManifest(
@@ -56,7 +50,6 @@ export function buildManifest(
   baseUrl: string,
   files: CollectionFile[],
   bySource: Record<string, SourceStat>,
-  reports: Record<string, string>,
 ) {
   return {
     schemaVersion: 1 as const,
@@ -72,6 +65,6 @@ export function buildManifest(
       bytes: Buffer.byteLength(f.json, "utf8"),
       sha256: createHash("sha256").update(f.json).digest("hex"),
     })),
-    stats: { bySource, reports },
+    stats: { bySource },
   };
 }

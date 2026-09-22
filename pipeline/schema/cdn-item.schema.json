@@ -10,12 +10,12 @@
     "id": { "type": "string", "description": "원천+키 기반 결정적 ID" },
     "source": {
       "type": "string",
-      "enum": ["A-4", "B-1", "B-2", "B-3", "B-4", "C-1", "C-2", "C-3", "D-1", "D-2"],
-      "description": "대표 원천. 병합 아이템은 우선 채택된 원천."
+      "enum": ["A-4", "B-1", "C-1", "C-2", "C-3", "C-4"],
+      "description": "대표 원천."
     },
     "type": {
       "type": "string",
-      "enum": ["cctv", "safehouse", "police", "lamp", "emergency_bell", "pedestrian_signal", "safepath"]
+      "enum": ["cctv", "lamp", "security_lamp", "pedestrian_signal", "safepath"]
     },
     "name": { "type": "string" },
     "address": { "type": "string" },
@@ -25,15 +25,13 @@
     "updatedAt": { "type": "string", "format": "date-time" },
     "properties": {
       "type": "object",
-      "description": "원천별 부가 속성. 병합 시 mergedSources/aliases/phone 등 포함.",
+      "description": "원천별 부가 속성.",
       "additionalProperties": true,
       "properties": {
         "phone": { "type": "string" },
-        "mergedSources": { "type": "array", "items": { "type": "string" } },
-        "aliases": { "type": "array", "items": { "type": "string" } },
         "coordOrigin": {
           "type": "string",
-          "enum": ["wgs84", "geocode", "epsg5179", "epsg5174", "per-district"],
+          "enum": ["wgs84", "epsg5179", "epsg5174", "per-district"],
           "description": "이 좌표가 어떤 변환 경로로 산출됐는지"
         }
       }

@@ -199,26 +199,14 @@ describe("mapRowsToRaw (keyColumns → RawRecord)", () => {
 
   it("투영좌표(epsg5179) 원천의 X/Y 좌표를 x/y 로 매핑한다", () => {
     const cols: KeyColumns = { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" };
-    const rows = [{ X좌표: "961900.5", Y좌표: "1951200.2", 시설명: "역삼지구대", 주소: "강남구" }];
-    const recs = mapRowsToRaw(rows, { source: "B-4", type: "police", coordSystem: "epsg5179", keyColumns: cols });
+    const rows = [{ X좌표: "961900.5", Y좌표: "1951200.2", 시설명: "안심귀갓길1", 주소: "강남구" }];
+    const recs = mapRowsToRaw(rows, { source: "A-4", type: "safepath", coordSystem: "epsg5179", keyColumns: cols });
     const r = recs[0]!;
     expect(r.x).toBeCloseTo(961900.5);
     expect(r.y).toBeCloseTo(1951200.2);
     expect(r.lat).toBeUndefined();
     expect(r.lng).toBeUndefined();
-    expect(r.name).toBe("역삼지구대");
-  });
-
-  it("주소만(address) 원천은 좌표 없이 name/address/phone 만 채운다", () => {
-    const cols: KeyColumns = { name: "관서명", address: "소재지도로명주소", phone: "전화번호" };
-    const rows = [{ 관서명: "역삼지구대", 소재지도로명주소: "테헤란로 1", 전화번호: "02-111-2222" }];
-    const recs = mapRowsToRaw(rows, { source: "B-3", type: "police", coordSystem: "address", keyColumns: cols });
-    const r = recs[0]!;
-    expect(r.name).toBe("역삼지구대");
-    expect(r.address).toBe("테헤란로 1");
-    expect(r.phone).toBe("02-111-2222");
-    expect(r.lat).toBeUndefined();
-    expect(r.x).toBeUndefined();
+    expect(r.name).toBe("안심귀갓길1");
   });
 
   it("좌표/필드 결측 행도 raw 보존하며 안전 통과한다", () => {

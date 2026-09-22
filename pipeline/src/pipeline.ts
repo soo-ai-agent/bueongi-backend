@@ -1,15 +1,15 @@
-// 파이프라인 오케스트레이터 — 원천 수집 → 좌표 변환/지오코딩 → 중복 제거/병합
-// → 시군구 분할 → 컬렉션 파일 + manifest + 리포트 산출.
+// 파이프라인 오케스트레이터 — 원천 수집 → 좌표 변환 → 시군구 분할
+// → 컬렉션 파일 + manifest + 리포트 산출.
 //
 // 산출은 backend 서버가 아니라 cdn/ 디렉터리(정적 파일)로만 나간다.
 // 실행: npm run run:pipeline
+//
+// 비상벨·경찰·안심지킴이집은 이 파이프라인이 만들지 않는다 — backend/data/ingest 의
+// 파이썬 스크립트가 전국 실데이터로 만드는 정본 경로다.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { besselTmToWgs84, utmkToWgs84, validateWgs84 } from "./coord/transform.js";
-import { geocodeBatch, type GeocodeCache, type GeocodeResult } from "./coord/geocode.js";
-import { mergePolice } from "./dedup/police.js";
-import { mergeEmergencyBell } from "./dedup/emergencyBell.js";
+import { validateWgs84 } from "./coord/transform.js";
 import { loadDistrictMap, getDistrictRule, processPerDistrict } from "./perDistrict.js";
 import { buildCollection, buildManifest, type CollectionFile, type SourceStat } from "./manifest.js";
 import * as F from "./sources/fetchers.js";
@@ -17,7 +17,8 @@ import type { CdnItem, CoordFailureRow, CoordOrigin, QuarantineRow, RawRecord, S
 
 const ROOT = resolve(import.meta.dirname, "..");
 const CDN_OUT = join(ROOT, "..", "cdn");
-const REPORT_OUT = join(CDN_OUT, "report");
+// 리포트는 앱 배포물이 아니라 사람(PM·QA) 보는 감사 기록 — 공개 디렉터리(cdn/) 밖에 둔다.
+const REPORT_OUT = join(ROOT, "report");
 
 const NOW = process.env.PIPELINE_NOW ?? new Date().toISOString();
 const VERSION = process.env.PIPELINE_VERSION ?? NOW.slice(0, 10);
@@ -27,18 +28,11 @@ function emptyStat(): SourceStat {
   return { input: 0, output: 0, coordFailed: 0, outOfRange: 0, deduped: 0, quarantined: 0 };
 }
 
-/** data/geocode-cache.json (주소→{lat,lng}) 로드. 없으면 빈 캐시. */
-function loadGeocodeCache(path: string): GeocodeCache {
-  if (!existsSync(path)) return {};
-  return JSON.parse(readFileSync(path, "utf8")) as GeocodeCache;
-}
-
 async function main(): Promise<void> {
   const ctx: F.FetchContext = {
     dataGoKrKey: process.env.DATA_GO_KR_SERVICE_KEY,
     seoulKey: process.env.SEOUL_OPEN_API_KEY,
   };
-  const kakaoKey = process.env.KAKAO_REST_API_KEY ?? "";
   const districtMap = loadDistrictMap(join(ROOT, "config", "district-coord-map.yaml"));
 
   const files: CollectionFile[] = [];
@@ -55,51 +49,6 @@ async function main(): Promise<void> {
     for (const [sg, group] of splitBySigungu(items)) {
       files.push(buildCollection("cctv", sg, group, ["B-1"], NOW, sg));
     }
-  }
-
-  // ---- B-2 여성안심지킴이집: WGS84, all.json ----
-  {
-    const raw = await F.fetchB2(ctx);
-    const { items, stat } = convertWgs84(raw, "B-2");
-    bySource["B-2"] = stat;
-    files.push(buildCollection("safehouse", "all", items, ["B-2"], NOW));
-  }
-
-  // ---- B-3 + B-4 파출소 병합: police/all.json ----
-  {
-    const b3raw = await F.fetchB3(ctx);
-    const b4raw = await F.fetchB4(ctx);
-
-    // B-3: E-2 카카오 지오코딩 (캐시 우선, 미스만 네트워크)
-    const b3stat = emptyStat();
-    b3stat.input = b3raw.length;
-    const b3items: CdnItem[] = [];
-    const geocodeCache = loadGeocodeCache(join(ROOT, "data", "geocode-cache.json"));
-    const geos: GeocodeResult[] = await geocodeBatch(
-      b3raw.map((r) => r.address ?? ""),
-      kakaoKey,
-      10,
-      fetch,
-      geocodeCache,
-    );
-    b3raw.forEach((r, i) => {
-      const g = geos[i]!;
-      if (g.ok && g.coord) {
-        b3items.push(toItem(r, "B-3", g.coord.lat, g.coord.lng, "geocode", b3items.length));
-      } else {
-        b3stat.coordFailed++;
-        coordFailures.push({ source: "B-3", name: r.name, address: r.address, reason: g.reason ?? "geocode-fail" });
-      }
-    });
-    b3stat.output = b3items.length;
-
-    const { items: b4items, stat: b4stat } = convertProjected(b4raw, "B-4", "epsg5179");
-
-    const merged = mergePolice(b3items, b4items);
-    b3stat.deduped = merged.deduped; // B-4 가 B-3 에 흡수된 수
-    bySource["B-3"] = b3stat;
-    bySource["B-4"] = b4stat;
-    files.push(buildCollection("police", "all", merged.items, ["B-3", "B-4"], NOW));
   }
 
   // ---- C-1 서울 가로등: WGS84, lamp/seoul.json ----
@@ -136,43 +85,6 @@ async function main(): Promise<void> {
     files.push(buildCollection("pedestrian_signal", "seoul", items, ["C-3"], NOW));
   }
 
-  // ---- D-1 + D-2 비상벨 병합: emergency_bell/{시군구코드}.json ----
-  {
-    const d1raw = await F.fetchD1(ctx);
-    const { items: d1items, stat: d1stat } = convertProjected(d1raw, "D-1", "epsg5174");
-    bySource["D-1"] = d1stat;
-
-    // D-2: 자치구별 좌표계 (verified 만 변환, quarantined 격리)
-    const d2raw = await F.fetchD2(ctx);
-    const d2items: CdnItem[] = [];
-    const d2stat = emptyStat();
-    d2stat.input = d2raw.length;
-    for (const [sg, group] of splitBySigungu(d2raw)) {
-      const rule = getDistrictRule(districtMap, "D-2", sg);
-      if (!rule) {
-        d2stat.quarantined += group.length;
-        quarantine.push({ source: "D-2", sigunguCode: sg, reason: "district rule 없음" });
-        continue;
-      }
-      const out = processPerDistrict("D-2", group, rule, NOW);
-      d2items.push(...out.items);
-      d2stat.quarantined += out.quarantine.length ? group.length : 0;
-      d2stat.coordFailed += out.coordFailures.length;
-      quarantine.push(...out.quarantine);
-      coordFailures.push(...out.coordFailures);
-    }
-    d2stat.output = d2items.length;
-    bySource["D-2"] = d2stat;
-
-    const d1Sigungus = new Set(d1items.map((i) => i.sigunguCode).filter((s): s is string => !!s));
-    const merged = mergeEmergencyBell(d1items, d2items, d1Sigungus);
-
-    for (const [sg, group] of splitBySigungu(merged.items)) {
-      files.push(buildCollection("emergency_bell", sg, group, ["D-1", "D-2"], NOW, sg));
-    }
-    bySource["D-1"]!.deduped += merged.deduped;
-  }
-
   // ---- A-4 자치구 안심귀갓길: safepath/all.json (verified 만 통합) ----
   {
     const a4raw = await F.fetchA4(ctx);
@@ -200,15 +112,9 @@ async function main(): Promise<void> {
 
   // ---- 리포트 + manifest 출력 ----
   writeReport("quarantine.json", quarantine);
-  writeReport("geocode-failures.json", coordFailures.filter((c) => c.source === "B-3"));
   writeReport("coord-failures.json", coordFailures);
 
-  const reports = {
-    quarantine: "report/quarantine.json",
-    geocodeFailures: "report/geocode-failures.json",
-    coordFailures: "report/coord-failures.json",
-  };
-  const manifest = buildManifest(VERSION, NOW, BASE_URL, files, bySource, reports);
+  const manifest = buildManifest(VERSION, NOW, BASE_URL, files, bySource);
 
   for (const f of files) writeCdn(f.path, f.json);
   writeCdn("manifest.json", JSON.stringify(manifest, null, 2));
@@ -275,27 +181,6 @@ function convertWgs84(raw: RawRecord[], source: SourceId) {
       return;
     }
     items.push(toItem(r, source, c.lat, c.lng, "wgs84", i));
-  });
-  stat.output = items.length;
-  return { items, stat };
-}
-
-function convertProjected(raw: RawRecord[], source: SourceId, crs: "epsg5179" | "epsg5174") {
-  const stat = emptyStat();
-  stat.input = raw.length;
-  const items: CdnItem[] = [];
-  raw.forEach((r, i) => {
-    const c =
-      r.x != null && r.y != null
-        ? crs === "epsg5179"
-          ? utmkToWgs84(r.x, r.y)
-          : besselTmToWgs84(r.x, r.y)
-        : null;
-    if (!c) {
-      stat.coordFailed++;
-      return;
-    }
-    items.push(toItem(r, source, c.lat, c.lng, crs, i));
   });
   stat.output = items.length;
   return { items, stat };

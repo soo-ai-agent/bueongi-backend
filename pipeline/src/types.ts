@@ -2,30 +2,21 @@
 
 export type AssetType =
   | "cctv"
-  | "safehouse"
-  | "police"
   | "lamp"
   | "security_lamp"
-  | "emergency_bell"
   | "pedestrian_signal"
   | "safepath";
 
 export type SourceId =
   | "A-4"
   | "B-1"
-  | "B-2"
-  | "B-3"
-  | "B-4"
   | "C-1"
   | "C-2"
   | "C-3"
-  | "C-4"
-  | "D-1"
-  | "D-2";
+  | "C-4";
 
 export type CoordOrigin =
   | "wgs84"
-  | "geocode"
   | "epsg5179"
   | "epsg5174"
   | "per-district";
@@ -51,7 +42,7 @@ export interface CdnItem {
 }
 
 /**
- * 정규화 직후 단계. 좌표는 아직 없을 수 있고(B-3 주소만), 좌표계 메타를 들고 다닌다.
+ * 정규화 직후 단계. 좌표계 메타를 들고 다니다가
  * 변환 단계에서 lat/lng 를 채우고 CdnItem 으로 승격한다.
  */
 export interface RawRecord {
@@ -65,7 +56,7 @@ export interface RawRecord {
   lng?: number;
   x?: number;
   y?: number;
-  coordSystem: "wgs84" | "address" | "epsg5179" | "epsg5174" | "unknown";
+  coordSystem: "wgs84" | "epsg5179" | "epsg5174" | "unknown";
   sigunguCode?: string;
   /** CCTV(B-1) 설치목적구분(용도). 방범 필터 + 프론트 표시용. 다른 소스는 미사용. */
   purpose?: string;

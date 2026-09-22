@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { csvToObjects, decodeCsvBuffer, parseCsv } from "./csv.js";
-import { fetchB2, loadCsvRecords } from "./fetchers.js";
+import type { RawRecord } from "../types.js";
+import { fetchC2, loadCsvRecords } from "./fetchers.js";
 
 describe("parseCsv", () => {
   it("따옴표 필드·이스케이프·필드 내 쉼표/개행·CRLF 를 처리한다", () => {
@@ -62,20 +63,20 @@ describe("loadCsvRecords / fetcher 우선순위", () => {
     for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
   });
 
-  it("B-2 CSV 를 sources.yaml 컬럼 계약(RawRecord)으로 매핑한다", () => {
+  it("C-2 CSV 를 sources.yaml 컬럼 계약(RawRecord)으로 매핑한다", () => {
     const csvDir = mkdir();
     writeFileSync(
-      join(csvDir, "B-2.csv"),
-      "업소명,소재지도로명주소,위도,경도\n행복편의점,서울 강남구 테헤란로 1,37.5,127.01\n",
+      join(csvDir, "C-2.csv"),
+      "관리번호,소재지지번주소,위도,경도\nA-001,서울 강남구 테헤란로 1,37.5,127.01\n",
       "utf8",
     );
-    const records = loadCsvRecords("B-2", csvDir);
+    const records = loadCsvRecords("C-2", csvDir);
     expect(records).toHaveLength(1);
     expect(records![0]).toMatchObject({
-      source: "B-2",
-      type: "safehouse",
+      source: "C-2",
+      type: "security_lamp",
       coordSystem: "wgs84",
-      name: "행복편의점",
+      name: "A-001",
       address: "서울 강남구 테헤란로 1",
       lat: 37.5,
       lng: 127.01,
@@ -83,31 +84,31 @@ describe("loadCsvRecords / fetcher 우선순위", () => {
   });
 
   it("CSV 파일이 없으면 null → 다음 입력 소스로 폴백", () => {
-    expect(loadCsvRecords("B-2", mkdir())).toBeNull();
+    expect(loadCsvRecords("C-2", mkdir())).toBeNull();
   });
 
   it("fetcher 는 CSV 를 data/raw 보다 우선한다(CSV 기본, 폴백 순서 보장)", async () => {
     const csvDir = mkdir();
     const rawDir = mkdir();
-    writeFileSync(join(csvDir, "B-2.csv"), "업소명,위도,경도\nCSV상점,37.51,127.02\n", "utf8");
+    writeFileSync(join(csvDir, "C-2.csv"), "관리번호,위도,경도\nCSV등,37.51,127.02\n", "utf8");
     writeFileSync(
-      join(rawDir, "B-2.json"),
-      JSON.stringify([{ source: "B-2", type: "safehouse", coordSystem: "wgs84", name: "RAW상점", lat: 1, lng: 2 }]),
+      join(rawDir, "C-2.json"),
+      JSON.stringify([{ source: "C-2", type: "security_lamp", coordSystem: "wgs84", name: "RAW등", lat: 1, lng: 2 }]),
       "utf8",
     );
-    const records = await fetchB2({ csvDir, rawDir });
-    expect(records.map((r) => r.name)).toEqual(["CSV상점"]);
+    const records = await fetchC2({ csvDir, rawDir });
+    expect(records.map((r: RawRecord) => r.name)).toEqual(["CSV등"]);
   });
 
   it("CSV 가 없으면 기존 data/raw 경로를 그대로 쓴다(회귀 없음)", async () => {
     const csvDir = mkdir();
     const rawDir = mkdir();
     writeFileSync(
-      join(rawDir, "B-2.json"),
-      JSON.stringify([{ source: "B-2", type: "safehouse", coordSystem: "wgs84", name: "RAW상점", lat: 1, lng: 2 }]),
+      join(rawDir, "C-2.json"),
+      JSON.stringify([{ source: "C-2", type: "security_lamp", coordSystem: "wgs84", name: "RAW등", lat: 1, lng: 2 }]),
       "utf8",
     );
-    const records = await fetchB2({ csvDir, rawDir });
-    expect(records.map((r) => r.name)).toEqual(["RAW상점"]);
+    const records = await fetchC2({ csvDir, rawDir });
+    expect(records.map((r: RawRecord) => r.name)).toEqual(["RAW등"]);
   });
 });

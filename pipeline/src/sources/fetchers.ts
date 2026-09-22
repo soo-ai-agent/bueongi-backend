@@ -39,7 +39,7 @@ const DEFAULT_CSV_DIR = join(import.meta.dirname, "..", "..", "data", "csv");
 
 // CSV 입력 스펙 — sources.yaml 의 keyColumns(한글 원천 컬럼명)와 1:1.
 // 공공데이터포털에서 내려받은 표준데이터 CSV 를 data/csv/{id}.csv 로 두면
-// 이 스펙으로 RawRecord 매핑된다. A-4/D-2(자치구별 좌표계 상이·per-district)는
+// 이 스펙으로 RawRecord 매핑된다. A-4(자치구별 좌표계 상이·per-district)는
 // CSV 일괄 매핑 대상이 아니다(manual 경로 유지).
 
 type CsvSpec = {
@@ -62,21 +62,6 @@ const CSV_SPEC: Partial<Record<SourceId, CsvSpec>> = {
       cameraCount: "카메라대수",
     },
   },
-  "B-2": {
-    type: "safehouse",
-    coordSystem: "wgs84",
-    keyColumns: { lat: "위도", lng: "경도", name: "업소명", address: "소재지도로명주소" },
-  },
-  "B-3": {
-    type: "police",
-    coordSystem: "address",
-    keyColumns: { name: "관서명", address: "소재지도로명주소", phone: "전화번호" },
-  },
-  "B-4": {
-    type: "police",
-    coordSystem: "epsg5179",
-    keyColumns: { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" },
-  },
   "C-1": {
     type: "lamp",
     coordSystem: "wgs84",
@@ -96,11 +81,6 @@ const CSV_SPEC: Partial<Record<SourceId, CsvSpec>> = {
     type: "lamp",
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "도로명", address: "소재지지번주소", sigungu: "제공기관코드" },
-  },
-  "D-1": {
-    type: "emergency_bell",
-    coordSystem: "epsg5174",
-    keyColumns: { x: "X좌표", y: "Y좌표", name: "설치장소", address: "소재지지번주소" },
   },
 };
 
@@ -204,34 +184,6 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
       cameraCount: "CAM_CNTOM",
     },
   },
-  // B-2: 여성안심지킴이집 (WGS84) — 표준데이터 조회서비스(활용신청 승인 2026-06-30, 일일 트래픽 1000).
-  //  백엔드 라이브 갱신(client-datagokr)과 동일 원천.
-  //  keyColumns 는 표준데이터 영문 규격 1순위(키 활성 후 실응답으로 확정; 백엔드 클라이언트는 한글 폴백도 가짐).
-  "B-2": {
-    kind: "datagokr",
-    endpoint: "https://api.data.go.kr/openapi/tn_pubr_public_female_safety_prtchouse_api",
-    type: "safehouse",
-    coordSystem: "wgs84",
-    keyColumns: { lat: "latitude", lng: "longitude", name: "storNm", address: "rdnmadr" },
-  },
-  // B-3: 지구대·파출소 (주소만 → 지오코딩 필요) — catalogId 15077036
-  "B-3": {
-    kind: "odcloud",
-    catalogId: "15077036",
-    uddi: "", // TODO(키 등록 후): 지구대·파출소 uddi
-    type: "police",
-    coordSystem: "address",
-    keyColumns: { name: "관서명", address: "소재지도로명주소", phone: "전화번호" },
-  },
-  // B-4: 치안안전시설 (EPSG:5179) — catalogId 15101889
-  "B-4": {
-    kind: "odcloud",
-    catalogId: "15101889",
-    uddi: "", // TODO(키 등록 후): 치안안전시설 uddi
-    type: "police",
-    coordSystem: "epsg5179",
-    keyColumns: { x: "X좌표", y: "Y좌표", name: "시설명", address: "주소" },
-  },
   // C-1: 서울 가로등 (WGS84) — 서울 열린데이터광장 OA-22205.
   //  OA-22205 는 열린데이터광장에서 **파일로만** 열려 있어 openapi.seoul.go.kr service 명이 존재하지 않는다.
   //  라이브 경로는 공공데이터포털 미러(서울특별시_가로등 위치 정보, catalogId 15107934)의 파일데이터
@@ -273,21 +225,7 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     coordSystem: "wgs84",
     keyColumns: { lat: "위도", lng: "경도", name: "신호등 종류", address: "주소" },
   },
-  // D-1: 전국 안전비상벨 — 행정안전부_안전비상벨위치정보 조회서비스.
-  "D-1": {
-    kind: "datagokr",
-    endpoint: "https://apis.data.go.kr/1741000/emergency_call_box_info/info",
-    type: "emergency_bell",
-    coordSystem: "wgs84",
-    keyColumns: {
-      lat: "WGS84_LAT",
-      lng: "WGS84_LOT",
-      name: "INSTL_PSTN",
-      address: "LCTN_LOTNO_ADDR",
-      sigungu: "",
-    },
-  },
-  // A-4 / D-2 는 per-district(자치구별 상이) → 라이브 대상 아님. manual 유지.
+  // A-4 는 per-district(자치구별 상이) → 라이브 대상 아님. manual 유지.
 };
 
 /**
@@ -317,12 +255,6 @@ function liveFor(id: SourceId): ((ctx: FetchContext) => Promise<RawRecord[]>) | 
 
 // B-1: 전국 CCTV 표준 (WGS84) — catalogId 15013094
 export const fetchB1 = (ctx: FetchContext) => collect("B-1", ctx, liveFor("B-1"));
-// B-2: 여성안심지킴이집 (WGS84) — catalogId 15034535
-export const fetchB2 = (ctx: FetchContext) => collect("B-2", ctx, liveFor("B-2"));
-// B-3: 지구대·파출소 (주소만 → 지오코딩 필요) — catalogId 15077036
-export const fetchB3 = (ctx: FetchContext) => collect("B-3", ctx, liveFor("B-3"));
-// B-4: 치안안전시설 (EPSG:5179) — catalogId 15101889
-export const fetchB4 = (ctx: FetchContext) => collect("B-4", ctx, liveFor("B-4"));
 // C-1: 서울 가로등 (WGS84) — OA-22205 (서울 열린데이터광장)
 export const fetchC1 = (ctx: FetchContext) => collect("C-1", ctx, liveFor("C-1"));
 // C-2: 전국 보안등 (WGS84) — catalogId 15017320
@@ -332,9 +264,5 @@ export const fetchC3 = (ctx: FetchContext) => collect("C-3", ctx, liveFor("C-3")
 
 // C-4: 전국 스마트가로등 표준데이터 (WGS84) — CSV 전용 투입(라이브 스펙 미배선)
 export const fetchC4 = (ctx: FetchContext) => collect("C-4", ctx);
-// D-1: 전국 비상벨 (EPSG:5174) — catalogId 15028206
-export const fetchD1 = (ctx: FetchContext) => collect("D-1", ctx, liveFor("D-1"));
-// D-2: 자치구 비상벨 보완 (자치구별 상이) — per-district, manual 유지
-export const fetchD2 = (ctx: FetchContext) => collect("D-2", ctx);
 // A-4: 자치구 안심귀갓길 (자치구별 상이) — per-district, manual 유지
 export const fetchA4 = (ctx: FetchContext) => collect("A-4", ctx);
