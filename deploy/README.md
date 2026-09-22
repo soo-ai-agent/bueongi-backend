@@ -3,19 +3,22 @@
 ## 구조 한눈에
 
 ```
-사용자 ──HTTPS──▶ [caddy(선택, 자동 TLS)] ──▶ [frontend: nginx]
-                                               ├─ /            SPA 정적 서빙
+사용자 ── 모바일 앱(Expo) ──HTTPS──▶ [backend:8119]  경로·장소검색·위치공유 API
+
+관리자·보호자 ──HTTPS──▶ [caddy(선택, 자동 TLS)] ──▶ [frontend: nginx]
+                                               ├─ /admin/*     admin.html   관리자 SPA
+                                               ├─ /share/{token} guardian.html 보호자 지도 뷰어
                                                ├─ /api/*       ─▶ [backend:8119] 장소검색·경로·헬스
                                                ├─ /cdn/*       ─▶ backend       안심시설 정적 JSON
-                                               ├─ /share/create, /share/{t}/(location|end|watching)
-                                               │               ─▶ backend       위치 공유 API
-                                               └─ /share/{token} ─▶ backend     보호자 지도 페이지(독립 HTML)
+                                               └─ /share/create, /share/{t}/(location|end|watching|route)
+                                                               ─▶ backend       위치 공유 API
                                   [backend] ──(선택)── [redis] 위치공유 세션(TTL)
 ```
 
-- **이미지**: `ghcr.io/soo-ai-agent/bueongi`(프론트), `ghcr.io/soo-ai-agent/bueongi-service`(백엔드)
-- nginx 프록시 규칙은 dev(vite) 프록시의 운영 미러다 — `/share`(발신자)·`/share/preview`(미리보기)는 SPA,
-  `/share/{token}` 단일 세그먼트는 백엔드 보호자 HTML.
+- **이미지**: `ghcr.io/soo-ai-agent/bueongi`(관리자·보호자 웹), `ghcr.io/soo-ai-agent/bueongi-service`(백엔드)
+- 사용자 화면은 모바일 앱(`mobile/`, Expo)이 담당한다. 웹에는 관리자·보호자 두 번들만 있고, 그 외 경로는 `/admin` 으로 보낸다.
+- nginx 프록시 규칙은 dev(vite) 프록시의 운영 미러다 — `/share/{token}` 단일 세그먼트는 보호자 뷰어,
+  `/share/create`·`/share/{t}/...` 는 백엔드 API.
 - 백엔드 이미지에 `cdn/`(안심시설 데이터)이 구워진다. **월 1회 파이프라인**(pipeline-monthly)이
   `cdn/` 을 main 에 커밋하면 → `docker-publish` 가 자동으로 최신 데이터 이미지를 재발행한다.
 
@@ -36,14 +39,11 @@
 **bueongi (프론트) — Settings → Secrets and variables → Actions**
 
 VITE_* 는 번들에 인라인되는 클라이언트 공개 값이다(카카오 JS 키는 도메인 제한으로 보호).
-비워 두면 해당 기능은 설계된 폴백으로 동작한다(지도=MapMock, 공유=링크 생략).
+비워 두면 해당 기능은 설계된 폴백으로 동작한다(지도=MapMock).
 
 | 종류 | 이름 | 값 |
 |---|---|---|
 | Secret | `VITE_KAKAO_JS_KEY` | Kakao JavaScript 키 (콘솔에 운영 도메인 등록 필수) |
-| Secret | `VITE_TMAP_APP_KEY` | Tmap AppKey (클라 직접 호출용, 없으면 백엔드 폴백) |
-| Secret | `VITE_SEOUL_OPENAPI_KEY` | 서울 열린데이터 키 (선택) |
-| Variable | `VITE_CDN_BASE_URL` | 기본 `/cdn` (별도 CDN 쓸 때만 변경) |
 | Variable | `VITE_SHARE_API_BASE_URL` | **운영 공개 origin** 예: `https://bueongi.example.com` |
 
 **bueongi-service (백엔드)** — 추가 설정 불요(GITHUB_TOKEN 으로 GHCR 발행).
