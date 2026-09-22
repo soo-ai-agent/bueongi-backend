@@ -50,11 +50,6 @@
               "quarantined": { "type": "integer", "description": "좌표계 미확정으로 격리된 건수 (A-4/D-2)" }
             }
           }
-        },
-        "reports": {
-          "type": "object",
-          "description": "상세 리포트 파일 경로",
-          "additionalProperties": { "type": "string" }
         }
       }
     }

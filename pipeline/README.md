@@ -29,7 +29,7 @@
 ## A-4/D-2 격리 규칙
 
 `config/district-coord-map.yaml` 에서 자치구별 `status`(`verified|quarantined`)와 `coordSystem` 을 둔다.
-`quarantined` 또는 `coordSystem: unknown` 은 변환하지 않고 `cdn/report/quarantine.json` 으로만 보고한다(PM 보고).
+`quarantined` 또는 `coordSystem: unknown` 은 변환하지 않고 `pipeline/report/quarantine.json` 으로만 보고한다(PM 보고).
 
 ## 입력 소스 (fetcher 우선순위 — "CSV 기본, API 폴백")
 

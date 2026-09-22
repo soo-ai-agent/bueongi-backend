@@ -190,11 +190,6 @@
         "deduped": 0,
         "quarantined": 1
       }
-    },
-    "reports": {
-      "quarantine": "report/quarantine.json",
-      "geocodeFailures": "report/geocode-failures.json",
-      "coordFailures": "report/coord-failures.json"
     }
   }
 }
