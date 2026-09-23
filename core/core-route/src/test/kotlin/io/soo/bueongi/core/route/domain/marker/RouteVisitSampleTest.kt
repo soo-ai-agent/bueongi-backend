@@ -9,6 +9,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
 import org.springframework.context.ApplicationEventPublisher
 
 class RouteVisitSampleTest {
@@ -24,7 +25,7 @@ class RouteVisitSampleTest {
 
     private fun visitedPoints(path: List<GeoPoint>): List<GeoPoint> {
         val recorder = RecordingPublisher()
-        RouteMarkerBuilder(FakeSafetySpotSource(), null, RouteVisitEventPublisher(recorder))
+        RouteMarkerBuilder(FakeSafetySpotSource(), mock(), RouteVisitEventPublisher(recorder))
             .buildMarkers(path.first(), path.last(), path)
         val event: RouteVisitedEvent = recorder.events.single() as RouteVisitedEvent
         val points: ArrayList<GeoPoint> = ArrayList(event.points.size)

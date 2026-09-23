@@ -7,6 +7,7 @@ import io.soo.bueongi.core.safetyspot.domain.csv.service.SafetySpotCsvParser
 import io.soo.bueongi.core.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -109,7 +110,7 @@ class SafetySpotUploadControllerTest(
                 parser = SafetySpotCsvParser(),
                 uploadStore = SafetySpotUploadStore(ObjectMapper(), dir),
                 liveStore = FakeLiveStore(),
-                refreshStatusStore = null,
+                refreshStatusStore = SafetySpotRefreshStatusStore(),
             )
         }
     }

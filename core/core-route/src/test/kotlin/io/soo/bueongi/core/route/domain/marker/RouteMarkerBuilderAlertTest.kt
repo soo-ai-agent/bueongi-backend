@@ -10,6 +10,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
 import org.springframework.context.ApplicationEventPublisher
 
 class RouteMarkerBuilderAlertTest {
@@ -26,8 +27,8 @@ class RouteMarkerBuilderAlertTest {
 
     private fun build(
         source: FakeSafetySpotSource,
-        events: MarkerEventPublisher?,
-    ) = RouteMarkerBuilder(source, events).buildMarkers(origin, destination, listOf(origin, destination))
+        events: MarkerEventPublisher,
+    ) = RouteMarkerBuilder(source, events, mock()).buildMarkers(origin, destination, listOf(origin, destination))
 
     @Test
     fun `장애 - 시설 인덱스가 통째로 비면(총 적재 0) 데이터 제공 실패로 알린다`() {

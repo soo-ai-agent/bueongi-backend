@@ -17,7 +17,7 @@ class SafetySpotUploadService(
     private val parser: SafetySpotCsvParser,
     private val uploadStore: SafetySpotUploadStore,
     private val liveStore: SafetySpotLiveStore,
-    private val refreshStatusStore: SafetySpotRefreshStatusStore? = null,
+    private val refreshStatusStore: SafetySpotRefreshStatusStore,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadService::class.java)
 
@@ -32,7 +32,7 @@ class SafetySpotUploadService(
         }
         uploadStore.save(type, parsed.points)
         val saved: Int = liveStore.replace(type, parsed.points)
-        refreshStatusStore?.recordUpload(type, saved, System.currentTimeMillis())
+        refreshStatusStore.recordUpload(type, saved, System.currentTimeMillis())
         log.info(
             "시설 업로드 반영: type={}, coordSystem={}, received={}, saved={}, skipped={}",
             type.cdnType,

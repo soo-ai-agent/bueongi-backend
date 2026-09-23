@@ -5,7 +5,9 @@ import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.common.request.LatLng
+import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
@@ -36,12 +38,11 @@ class FallbackAlertTest {
     private val source = FakeSafetySpotSource()
 
     private val query =
-        RouteQuery(
-            origin = GeoPoint(37.5, 127.0),
-            destination = GeoPoint(37.5, 127.01),
-            destinationName = "도착",
-            routeType = RouteType.SAFE,
-            safetyPreference = SafetyPreference.SAFE,
+        RouteRequest(
+            rawOrigin = LatLng(37.5, 127.0),
+            rawDestination = NamedLatLng(37.5, 127.01, name = "도착"),
+            rawRouteType = "safe",
+            rawSafetyPreference = "safe",
         )
 
     private fun service(
@@ -52,8 +53,9 @@ class FallbackAlertTest {
             routeService = RouteService(RouteTypeCatalog()),
             collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
             scorer = nightScorer(source),
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
             routeEvents = RouteEventPublisher(publisher),
+            routeStatsStore = mock(),
         )
 
     @Test

@@ -42,7 +42,7 @@ class SafetySpotUploadServiceTest {
     private fun service(
         tmp: Path,
         liveStore: SafetySpotLiveStore,
-        statusStore: SafetySpotRefreshStatusStore?,
+        statusStore: SafetySpotRefreshStatusStore,
     ) = SafetySpotUploadService(
         parser = SafetySpotCsvParser(),
         uploadStore = SafetySpotUploadStore(mapper, tmp.toFile().absolutePath),
@@ -90,7 +90,7 @@ class SafetySpotUploadServiceTest {
             종로파출소,서울 종로구 대로 8,02-100
             """.trimIndent()
 
-        assertThatThrownBy { service(tmp, liveStore, null).upload(SafetySpotType.POLICE, csv.toByteArray()) }
+        assertThatThrownBy { service(tmp, liveStore, SafetySpotRefreshStatusStore()).upload(SafetySpotType.POLICE, csv.toByteArray()) }
             .isInstanceOf(EmptySafetySpotUploadException::class.java)
 
         assertThat(liveStore.lastPoints).isNull()

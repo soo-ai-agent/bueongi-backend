@@ -14,7 +14,7 @@ import java.time.Instant
 class MissedArrivalWatchdog(
     private val store: LocationStore,
     private val clock: Clock,
-    private val shareEvents: ShareEventPublisher? = null,
+    private val shareEvents: ShareEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(MissedArrivalWatchdog::class.java)
 
@@ -37,7 +37,7 @@ class MissedArrivalWatchdog(
         val stoppedSeconds: Long? = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
         val stoppedText: String = stoppedSeconds?.let { "위치가 ${it}초째 정지" } ?: "위치 보고 없음"
         val masked: String = maskToken(session.token)
-        shareEvents?.missedArrivalSuspected(
+        shareEvents.missedArrivalSuspected(
             maskedToken = masked,
             detail = "예정 도착 시간을 ${overdueMinutes}분 초과, $stoppedText. 관리자 페이지에서 확인하세요.",
         )

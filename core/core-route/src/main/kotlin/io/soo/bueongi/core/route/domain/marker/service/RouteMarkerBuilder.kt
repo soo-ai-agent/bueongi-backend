@@ -19,8 +19,8 @@ import kotlin.math.roundToInt
 @Component
 class RouteMarkerBuilder(
     private val safetySpots: SafetySpotSpatialSource,
-    private val markerEvents: MarkerEventPublisher? = null,
-    private val visitEvents: RouteVisitEventPublisher? = null,
+    private val markerEvents: MarkerEventPublisher,
+    private val visitEvents: RouteVisitEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(RouteMarkerBuilder::class.java)
 
