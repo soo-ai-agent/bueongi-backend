@@ -1,12 +1,12 @@
 package io.soo.bueongi.core.route
 
+import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteQuery
 import io.soo.bueongi.core.route.domain.service.RouteSafetySpotService
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
@@ -25,7 +25,7 @@ class RouteSafetySpotServiceTest {
             origin = origin,
             destination = destination,
             destinationName = "목적지",
-            routeType = RouteTypeCatalog().typeOf(routeType),
+            routeType = RouteType.of(routeType),
             safetyPreference = SafetyPreference.SAFE,
         ),
     )

@@ -9,4 +9,17 @@ enum class SafetyPreference(
     BALANCED("balanced"),
     SAFE("safe"),
     SAFEST("safest"),
+    ;
+
+    companion object {
+        fun of(value: String?): SafetyPreference {
+            val normalized: String = value?.trim()?.lowercase().orEmpty()
+            for (preference in entries) {
+                if (preference.requestValue == normalized) {
+                    return preference
+                }
+            }
+            return SAFE
+        }
+    }
 }

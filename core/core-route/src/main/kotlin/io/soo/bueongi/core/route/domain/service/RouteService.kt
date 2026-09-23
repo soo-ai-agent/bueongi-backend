@@ -28,7 +28,7 @@ class RouteService(
             val meters: Double = straightMeters * display.distanceFactor
             options.add(
                 RouteOption(
-                    id = display.id,
+                    id = type.requestId,
                     name = display.name,
                     time = "${walkMinutes(meters)}분",
                     dist = formatDistance(meters),

@@ -7,8 +7,6 @@ import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.api.request.toValidatedQuery
-import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -26,7 +24,7 @@ class RouteRequestMetaAbsorptionTest {
                 destination = destination,
                 routeType = "unknown",
                 safetyPreference = "nope",
-            ).toValidatedQuery(RouteTypeCatalog())
+            ).query
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
@@ -40,7 +38,7 @@ class RouteRequestMetaAbsorptionTest {
                 destination = destination,
                 routeType = null,
                 safetyPreference = null,
-            ).toValidatedQuery(RouteTypeCatalog())
+            ).query
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
@@ -54,7 +52,7 @@ class RouteRequestMetaAbsorptionTest {
                 destination = destination,
                 routeType = "fast",
                 safetyPreference = "safest",
-            ).toValidatedQuery(RouteTypeCatalog())
+            ).query
 
         assertThat(query.routeType).isEqualTo(RouteType.FAST)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFEST)
@@ -69,7 +67,7 @@ class RouteRequestMetaAbsorptionTest {
              "routeType":999,"safetyPreference":42}
             """.trimIndent()
 
-        val query = mapper.readValue<RouteRequest>(json).toValidatedQuery(RouteTypeCatalog())
+        val query = mapper.readValue<RouteRequest>(json).query
 
         assertThat(query.routeType).isEqualTo(RouteType.SAFE)
         assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)

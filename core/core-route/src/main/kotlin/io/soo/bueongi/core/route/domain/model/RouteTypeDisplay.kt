@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.route.domain.model
 
 data class RouteTypeDisplay(
-    val id: String,
     val name: String,
     val scoredName: String,
     val desc: String,
