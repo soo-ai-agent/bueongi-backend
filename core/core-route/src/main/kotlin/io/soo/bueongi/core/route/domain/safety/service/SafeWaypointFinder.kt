@@ -13,13 +13,13 @@ import kotlin.math.floor
 class SafeWaypointFinder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun findSafetySpotClusters(directPath: List<GeoPoint>): List<SafetySpotCluster> {
-        if (directPath.size < 2) {
+    fun findSafetySpotClusters(routePath: List<GeoPoint>): List<SafetySpotCluster> {
+        if (routePath.size < 2) {
             return emptyList()
         }
         val nearby: List<SafetySpotPoint> =
             CLUSTER_SPOT_TYPES.flatMap {
-                safetySpots.index(it).withinCorridor(directPath, CLUSTER_RADIUS_METERS)
+                safetySpots.index(it).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
             }
         if (nearby.isEmpty()) {
             return emptyList()

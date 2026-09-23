@@ -5,7 +5,6 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
 import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
     private val waypointFinder: SafeWaypointFinder,
-    private val candidateMerger: RouteCandidateMerger,
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
@@ -38,14 +36,15 @@ class RouteFinder(
         return routes
     }
 
-    fun findSaferRoutes(query: RouteRequest, tmapRoutes: List<TmapRoute>): List<RouteCandidate> {
+    fun findSaferRoutes(query: RouteRequest, tmapRoutes: List<TmapRoute>): List<TmapRoute> {
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
         if (!query.reroute) {
-            val directPath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
-            val clusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(directPath)
+            val firstRoutePath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
+            val safetySpotClusters: List<SafetySpotCluster> =
+                waypointFinder.findSafetySpotClusters(firstRoutePath)
             val waypointCombos: List<List<GeoPoint>> =
-                waypointFinder.pickWaypoints(query.origin, query.destination, clusters)
+                waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
 
             val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
             val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
@@ -67,23 +66,7 @@ class RouteFinder(
             }
         }
 
-        val addedKeys: HashSet<Long> = HashSet()
-        val candidates: ArrayList<RouteCandidate> = ArrayList()
-        for (route in tmapRoutes + saferRoutes) {
-            if (!addedKeys.add(route.identityKey)) {
-                continue
-            }
-            candidates.add(
-                RouteCandidate(
-                    searchOption = route.searchOption,
-                    path = route.path.toGeoPoints(),
-                    distanceM = route.distanceM,
-                    timeS = route.timeS,
-                    steps = route.steps,
-                ),
-            )
-        }
-        return candidateMerger.mergeNearDuplicates(candidates)
+        return saferRoutes
     }
 
     private companion object {

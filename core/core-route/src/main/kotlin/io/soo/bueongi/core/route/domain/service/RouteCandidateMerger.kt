@@ -1,6 +1,9 @@
 package io.soo.bueongi.core.route.domain.service
 
+import io.soo.bueongi.client.tmap.TmapCoord
+import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import org.springframework.stereotype.Component
@@ -8,6 +11,26 @@ import org.springframework.stereotype.Component
 // Tmap 이 옵션만 다르면 골목 하나 차이의 길을 중복해서 돌려준다.
 @Component
 class RouteCandidateMerger {
+    fun toCandidates(routes: List<TmapRoute>): List<RouteCandidate> {
+        val addedKeys: HashSet<Long> = HashSet()
+        val candidates: ArrayList<RouteCandidate> = ArrayList()
+        for (route in routes) {
+            if (!addedKeys.add(route.identityKey)) {
+                continue
+            }
+            candidates.add(
+                RouteCandidate(
+                    searchOption = route.searchOption,
+                    path = route.path.toGeoPoints(),
+                    distanceM = route.distanceM,
+                    timeS = route.timeS,
+                    steps = route.steps,
+                ),
+            )
+        }
+        return mergeNearDuplicates(candidates)
+    }
+
     fun mergeNearDuplicates(candidates: List<RouteCandidate>): List<RouteCandidate> {
         val kept: ArrayList<RouteCandidate> = ArrayList()
         for (candidate in candidates) {
@@ -43,3 +66,5 @@ class RouteCandidateMerger {
         const val MERGE_OVERLAP_RATIO: Double = 0.90
     }
 }
+
+private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }

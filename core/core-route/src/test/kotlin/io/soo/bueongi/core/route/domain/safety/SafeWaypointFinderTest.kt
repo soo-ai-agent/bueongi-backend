@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 class SafeWaypointFinderTest {
     private val origin = GeoPoint(37.5, 127.0)
     private val destination = GeoPoint(37.5, 127.01)
-    private val directPath = listOf(origin, destination)
+    private val routePath = listOf(origin, destination)
 
     @Test
     fun `findSafetySpotClusters - 밀집 클러스터를 weight 로 묶고 내림차순 상위 반환`() {
@@ -30,7 +30,7 @@ class SafeWaypointFinderTest {
                     SafetySpotType.BELL to bell.map { SafetySpotPoint(SafetySpotType.BELL, it.lat, it.lng) },
                 ),
             )
-        val clusters = SafeWaypointFinder(source).findSafetySpotClusters(directPath)
+        val clusters = SafeWaypointFinder(source).findSafetySpotClusters(routePath)
 
         assertThat(clusters).isNotEmpty
         assertThat(clusters.first().weight).isEqualTo(3)
@@ -42,7 +42,7 @@ class SafeWaypointFinderTest {
     fun `findSafetySpotClusters - 회랑 밖 시설은 앵커가 되지 않는다`() {
         val far = listOf(GeoPoint(37.51, 127.005))
         val source = FakeSafetySpotSource.of(SafetySpotType.CCTV, far)
-        assertThat(SafeWaypointFinder(source).findSafetySpotClusters(directPath)).isEmpty()
+        assertThat(SafeWaypointFinder(source).findSafetySpotClusters(routePath)).isEmpty()
     }
 
     @Test

@@ -55,7 +55,8 @@ class FallbackAlertTest {
         publisher: RecordingPublisher,
     ): SafeRouteService =
         SafeRouteService(
-            routeFinder = RouteFinder(tmap, SafeWaypointFinder(source), RouteCandidateMerger()),
+            routeFinder = RouteFinder(tmap, SafeWaypointFinder(source)),
+            candidateMerger = RouteCandidateMerger(),
             scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
             routeEvents = RouteEventPublisher(publisher),

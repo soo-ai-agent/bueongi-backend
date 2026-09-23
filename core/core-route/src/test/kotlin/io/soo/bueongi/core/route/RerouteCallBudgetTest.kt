@@ -67,7 +67,8 @@ class RerouteCallBudgetTest {
 
     private fun serviceOf(tmap: TmapRouteClient): SafeRouteService =
         SafeRouteService(
-            routeFinder = RouteFinder(tmap, SafeWaypointFinder(source), RouteCandidateMerger()),
+            routeFinder = RouteFinder(tmap, SafeWaypointFinder(source)),
+            candidateMerger = RouteCandidateMerger(),
             scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
             routeEvents = mock(),

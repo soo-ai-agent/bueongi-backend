@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 @Service
 class SafeRouteService(
     private val routeFinder: RouteFinder,
+    private val candidateMerger: RouteCandidateMerger,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
     private val routeEvents: RouteEventPublisher,
@@ -28,8 +29,9 @@ class SafeRouteService(
             routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
-        val routeCandidate: List<RouteCandidate> = routeFinder.findSaferRoutes(query, tmapRoutes)
-        val assigned: List<ScoredRoute> = assignOneRoutePerType(routeCandidate)
+        val saferRoutes: List<TmapRoute> = routeFinder.findSaferRoutes(query, tmapRoutes)
+        val candidates: List<RouteCandidate> = candidateMerger.toCandidates(tmapRoutes + saferRoutes)
+        val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)
         return assembler.assemble(assigned, query.origin, query.destination)
     }
 
