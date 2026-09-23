@@ -19,38 +19,38 @@ class RouteFinder(
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    fun findBase(query: RouteRequest): List<TmapRoute> =
+    fun findFromTmap(query: RouteRequest): List<TmapRoute> =
         tmapClient.fetchRoutes(
             query.origin.toTmapCoord(),
             query.destination.toTmapCoord(),
             query.destinationName,
         )
 
-    fun findAll(
+    fun findWithSafeDetours(
         query: RouteRequest,
-        base: List<TmapRoute>,
+        tmapRoutes: List<TmapRoute>,
     ): List<RouteCandidate> {
-        val detours: List<TmapRoute> = findSafeDetours(query, base)
+        val detours: List<TmapRoute> = findSafeDetours(query, tmapRoutes)
 
         return candidateMerger.mergeNearDuplicates(
-            dedupeByIdentity(base + detours).map { it.toCandidate() },
+            dedupeByIdentity(tmapRoutes + detours).map { it.toCandidate() },
         )
     }
 
     private fun findSafeDetours(
         query: RouteRequest,
-        base: List<TmapRoute>,
+        tmapRoutes: List<TmapRoute>,
     ): List<TmapRoute> {
         if (query.reroute) {
             return emptyList()
         }
-        val directPath: List<GeoPoint> = base.first().path.toGeoPoints()
+        val directPath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
         val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
         val waypointCombos: List<List<GeoPoint>> =
             detourPlanner.pickDetourWaypoints(query.origin, query.destination, anchors)
 
         val budget: Double = DETOUR_BUDGETS.getValue(query.safetyPreference)
-        val maxDistanceM: Double = base.minOf { it.distanceM } * (1 + budget)
+        val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
         val detours: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {
             val route: TmapRoute =

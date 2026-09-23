@@ -23,12 +23,12 @@ class SafeRouteService(
         if (!routeFinder.isEnabled) {
             throw RouteSearchUnavailableException()
         }
-        val base: List<TmapRoute> = routeFinder.findBase(query)
-        if (base.isEmpty()) {
+        val tmapRoutes: List<TmapRoute> = routeFinder.findFromTmap(query)
+        if (tmapRoutes.isEmpty()) {
             routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
-        val assigned: List<ScoredRoute> = assignOneRoutePerType(routeFinder.findAll(query, base))
+        val assigned: List<ScoredRoute> = assignOneRoutePerType(routeFinder.findWithSafeDetours(query, tmapRoutes))
         return assembler.assemble(assigned, query.origin, query.destination)
     }
 

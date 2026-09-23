@@ -49,7 +49,7 @@ class RerouteCallBudgetTest {
             ),
         )
 
-    private val base =
+    private val tmapRoutes =
         listOf(
             TmapRoute("0", listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)), 880.0, 700, emptyList()),
             TmapRoute("10", listOf(TmapCoord(37.501, 127.0), TmapCoord(37.501, 127.01)), 900.0, 600, emptyList()),
@@ -58,8 +58,8 @@ class RerouteCallBudgetTest {
     private fun tmapReturning(): TmapRouteClient {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(base)
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(base.first())
+        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(tmapRoutes)
+        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(tmapRoutes.first())
         return tmap
     }
 
