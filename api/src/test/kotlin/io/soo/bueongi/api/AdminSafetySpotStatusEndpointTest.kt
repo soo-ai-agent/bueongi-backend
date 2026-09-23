@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.safetyspot.api.controller.SafetySpotStatusController
+import io.soo.bueongi.core.admin.safetyspot.api.controller.SafetySpotStatusController
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

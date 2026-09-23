@@ -9,6 +9,7 @@ include(
     "core:core-route",
     "core:core-app-info",
     "core:core-admin-ops",
+    "core:core-admin-safety-spot",
     "core:core-admin-auth",
     "api",
     "storage:db-core",

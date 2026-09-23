@@ -6,9 +6,9 @@ import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.core.admin.ops.domain.traffic.service.RequestMetricsService
-import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
-import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
-import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
+import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
+import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
+import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
