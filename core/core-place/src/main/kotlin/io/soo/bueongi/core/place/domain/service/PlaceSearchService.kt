@@ -1,53 +1,35 @@
 package io.soo.bueongi.core.place.domain.service
 
-import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
-import io.soo.bueongi.core.place.domain.model.PlaceItem
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
+import io.soo.bueongi.client.kakao.KakaoPlace
+import io.soo.bueongi.client.kakao.KakaoPlaceClient
+import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.place.api.response.PlaceResponse
+import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 
 @Service
 class PlaceSearchService(
-    private val seedProvider: SeedPlaceProvider,
-    private val remoteProvider: RemotePlaceProvider,
-    private val placeEvents: PlaceEventPublisher? = null,
+    private val kakaoPlaceClient: KakaoPlaceClient,
+    private val events: ApplicationEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun search(keyword: String?): List<PlaceItem> {
-        val trimmed: String = keyword?.trim().orEmpty()
-        if (trimmed.isEmpty()) {
-            return emptyList()
-        }
-        if (trimmed.length > MAX_KEYWORD_LENGTH) {
-            throw InvalidKeywordException(maxLength = MAX_KEYWORD_LENGTH, actualLength = trimmed.length)
-        }
-        if (!remoteProvider.isEnabled) {
-            return seedProvider.search(trimmed)
-        }
-        return try {
-            remoteProvider.search(trimmed)
+    fun search(keyword: String): List<PlaceResponse> {
+        try {
+            val places: List<KakaoPlace> = kakaoPlaceClient.search(keyword)
+            val responses: ArrayList<PlaceResponse> = ArrayList(places.size)
+            for (place in places) {
+                responses.add(PlaceResponse.from(place))
+            }
+            return responses
         } catch (e: Exception) {
-            // 검색어는 남기지 않는다 — 사용자가 어디로 가려 했는지가 로그에 쌓인다.
-            val cause: String = causeChainOf(e)
-            log.warn(
-                ExceptionLogLine(
-                    kind = IGNORED_EXCEPTION,
-                    counterpart = "장소 검색",
-                    subject = "외부 장소 검색",
-                    cause = cause,
-                    action = "시드 카탈로그로 폴백",
-                ).format(),
-            )
-            placeEvents?.placeSearchFellBack("$cause — 시드 카탈로그로 폴백 중")
-            seedProvider.search(trimmed)
+            val cause: String = e.message.orEmpty()
+            log.warn("외부 장소 검색 실패 — 503 으로 알림 | 원인=$cause")
+            events.publishEvent(OperationEvent(key = "kakao-place-failed", title = "Kakao 장소검색 실패", detail = cause))
+            throw PlaceSearchUnavailableException(cause = e)
         }
-    }
-
-    companion object {
-        const val MAX_KEYWORD_LENGTH: Int = 100
     }
 }
