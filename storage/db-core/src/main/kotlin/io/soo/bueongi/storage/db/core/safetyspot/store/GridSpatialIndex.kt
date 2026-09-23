@@ -57,7 +57,8 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
             val steps: Int = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
             for (s in 1..steps) {
                 val progress: Double = s.toDouble() / steps
-                out.add(from.pointTowards(to, progress))
+                val point: GeoPoint = from.pointTowards(to, progress)
+                out.add(point)
             }
         }
         return out
