@@ -65,7 +65,11 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return out
     }
 
-    private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<SafetySpotPoint> {
+    // 기준점들 주변의 격자 칸에 든 시설을 모아 후보로 낸다. 칸 단위라 반경 밖도 섞여 나온다 — 호출부가 다시 거른다.
+    private fun candidateCells(
+        anchors: List<GeoPoint>,
+        radiusM: Double,
+    ): List<SafetySpotPoint> {
         if (buckets.isEmpty()) {
             return emptyList()
         }
