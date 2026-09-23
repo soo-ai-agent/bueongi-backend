@@ -38,7 +38,11 @@ class SafetySpotFillTrigger(
                 fillSecurityLampsOf(points)
                 fillChildSafeHousesOf(points)
             } catch (e: Exception) {
-                log.warn("안심시설 뒤에서 채우기 실패 — 이번 채우기만 건너뜀(기존 데이터 유지)", e)
+                // 스택에는 인증키가 실린 원천 URL 이 딸려 온다 — 종류만 남긴다.
+                log.warn(
+                    "안심시설 뒤에서 채우기 실패 — 이번 채우기만 건너뜀(기존 데이터 유지) | " +
+                        "원인=${e.javaClass.simpleName}",
+                )
             }
         }
     }

@@ -57,7 +57,7 @@ class SafemapPoliceClient(
             try {
                 restClient.get().uri(URI.create(url)).retrieve().body(SafemapResponse::class.java)
             } catch (e: Exception) {
-                log.warn(failureLine(cause = e.message.orEmpty(), pageNo = pageNo))
+                log.warn(failureLine(cause = e.javaClass.simpleName, pageNo = pageNo))
                 return null
             }
         if (response == null) {
@@ -73,7 +73,7 @@ class SafemapPoliceClient(
         }
         log.warn(
             failureLine(
-                cause = "resultCode=$code(${header.resultMsg.orEmpty()})",
+                cause = "resultCode=$code",
                 pageNo = 0,
             ),
         )

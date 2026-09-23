@@ -138,7 +138,7 @@ class SlackAlertNotifier internal constructor(
         subject: String,
         action: String,
     ): String {
-        return "$PROVIDER 호출 실패 | $subject | 원인=${e.message.orEmpty()} | 조치=$action"
+        return "$PROVIDER 호출 실패 | $subject | 원인=${e.javaClass.simpleName} | 조치=$action"
     }
 
     private companion object {

@@ -26,7 +26,7 @@ class PlaceSearchService(
             }
             return responses
         } catch (e: Exception) {
-            val cause: String = e.message.orEmpty()
+            val cause: String = e.javaClass.simpleName
             log.warn("외부 장소 검색 실패 — 503 으로 알림 | 원인=$cause")
             events.publishEvent(OperationEvent(key = "kakao-place-failed", title = "Kakao 장소검색 실패", detail = cause))
             throw PlaceSearchUnavailableException(cause = e)

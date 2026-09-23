@@ -217,7 +217,11 @@ class ApiControllerAdvice(
         ex: Exception,
     ) {
         val origin: String = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN }
-        log.error("미처리 예외 | $counterpart | $status | $origin | ${traceColumn()} | 조치=$action", ex)
+        // 스택에는 외부 호출 URL(인증키 포함)이 섞여 온다 — 예외 종류까지만 남긴다.
+        log.error(
+            "미처리 예외 | $counterpart | $status | $origin | ${traceColumn()} | " +
+                "원인=${ex.javaClass.simpleName} | 조치=$action",
+        )
     }
 
     private companion object {

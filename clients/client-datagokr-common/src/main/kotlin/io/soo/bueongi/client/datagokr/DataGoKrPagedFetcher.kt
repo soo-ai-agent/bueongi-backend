@@ -46,7 +46,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = "resultCode=$code(${header.resultMsg.orEmpty()})",
+                        cause = "resultCode=$code",
                         paging = "page=$pageNo",
                     ),
                 )
@@ -97,7 +97,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = e.message.orEmpty(),
+                        cause = e.javaClass.simpleName,
                         paging = "page=$pageNo 시도=${attempt}회",
                         result = "${e.statusCode.value()} GET",
                     ),
@@ -108,7 +108,7 @@ class DataGoKrPagedFetcher(
                     log.warn(
                         failureLine(
                             endpoint = endpoint,
-                            cause = e.message.orEmpty(),
+                            cause = e.javaClass.simpleName,
                             paging = "page=$pageNo 시도=${attempt}회",
                         ),
                     )
@@ -118,7 +118,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = e.message.orEmpty(),
+                        cause = e.javaClass.simpleName,
                         paging = "page=$pageNo 시도=${attempt}회",
                         action = "${backoffMs}ms 후 재시도",
                     ),

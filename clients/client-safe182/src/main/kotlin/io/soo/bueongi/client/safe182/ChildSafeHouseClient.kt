@@ -70,7 +70,7 @@ class ChildSafeHouseClient(
                     ?: return null
             objectMapper.readValue(body, Safe182Response::class.java)
         } catch (e: Exception) {
-            log.warn(failureLine(cause = e.message.orEmpty(), pageIndex = pageIndex))
+            log.warn(failureLine(cause = e.javaClass.simpleName, pageIndex = pageIndex))
             null
         }
     }
@@ -109,7 +109,7 @@ class ChildSafeHouseClient(
         }
         log.warn(
             failureLine(
-                cause = "result=$code(${response.msg.orEmpty()})",
+                cause = "result=$code",
                 pageIndex = 0,
             ),
         )

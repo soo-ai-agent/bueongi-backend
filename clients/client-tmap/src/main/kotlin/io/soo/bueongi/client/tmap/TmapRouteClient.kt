@@ -98,7 +98,7 @@ class TmapRouteClient(
         } catch (e: Exception) {
             log.warn(
                 "$PROVIDER 호출 실패 | $PEDESTRIAN_PATH | searchOption=$searchOption | " +
-                    "원인=${e.message.orEmpty()} | 조치=이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
+                    "원인=${e.javaClass.simpleName} | 조치=이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
             )
             null
         }

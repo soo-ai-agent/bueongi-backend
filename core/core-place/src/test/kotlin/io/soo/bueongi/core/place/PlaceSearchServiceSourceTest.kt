@@ -42,7 +42,7 @@ class PlaceSearchServiceSourceTest {
     }
 
     @Test
-    fun `실패 로그에 검색어를 남기지 않고 원인만 적는다`() {
+    fun `실패 로그에 검색어도 예외 메시지도 남기지 않는다`() {
         val logger: LogbackLogger = LoggerFactory.getLogger(PlaceSearchService::class.java) as LogbackLogger
         val appender: ListAppender<ILoggingEvent> = ListAppender<ILoggingEvent>()
         appender.start()
@@ -57,7 +57,8 @@ class PlaceSearchServiceSourceTest {
         val line: String = appender.list.single().formattedMessage
         assertThat(line).doesNotContain("우리집")
         assertThat(line).startsWith("외부 장소 검색 실패")
-        assertThat(line).contains("Kakao 5xx")
+        assertThat(line).doesNotContain("Kakao 5xx")
+        assertThat(line).contains("RuntimeException")
     }
 
     @Test
@@ -72,6 +73,6 @@ class PlaceSearchServiceSourceTest {
         val captor = argumentCaptor<OperationEvent>()
         verify(events).publishEvent(captor.capture())
         assertThat(captor.firstValue.key).isEqualTo("kakao-place-failed")
-        assertThat(captor.firstValue.detail).contains("Kakao 5xx")
+        assertThat(captor.firstValue.detail).isEqualTo("RuntimeException")
     }
 }

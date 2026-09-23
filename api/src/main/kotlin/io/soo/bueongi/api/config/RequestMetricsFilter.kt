@@ -114,7 +114,10 @@ class RequestMetricsFilter(
                 ),
             )
         } catch (e: Exception) {
-            log.warn("요청 계측 실패 | $status $method $path | 응답은 그대로 나감(통계만 유실)", e)
+            log.warn(
+                "요청 계측 실패 | $status $method $path | 응답은 그대로 나감(통계만 유실) | " +
+                    "원인=${e.javaClass.simpleName}",
+            )
         }
     }
 

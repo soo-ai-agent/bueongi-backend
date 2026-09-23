@@ -28,7 +28,7 @@ class ApiControllerAdviceLogTest {
     }
 
     @Test
-    fun `미처리 예외는 조치와 함께 남기고 원인은 스택으로 남긴다`() {
+    fun `미처리 예외는 조치와 예외 종류를 남긴다`() {
         val appender = captureLogs()
         val root = IllegalArgumentException("Illegal unquoted character")
         val outer = IllegalStateException("Error while extracting response", root)
@@ -39,17 +39,19 @@ class ApiControllerAdviceLogTest {
         assertThat(event.level).isEqualTo(Level.ERROR)
         assertThat(event.formattedMessage).startsWith("미처리 예외")
         assertThat(event.formattedMessage).contains("조치=500 INTERNAL_ERROR 응답")
-        assertThat(event.throwableProxy.message).isEqualTo("Error while extracting response")
-        assertThat(event.throwableProxy.cause.message).isEqualTo("Illegal unquoted character")
+        assertThat(event.formattedMessage).contains("원인=IllegalStateException")
     }
 
     @Test
-    fun `미처리 예외는 스택도 함께 남긴다`() {
+    fun `예외 메시지와 스택은 로그에 남기지 않는다`() {
         val appender = captureLogs()
+        val leaked = IllegalStateException("GET https://openapi.sk.com/route?appKey=LEAKED-1234")
 
-        ApiControllerAdvice().handleUncaught(IllegalStateException("터졌다"))
+        ApiControllerAdvice().handleUncaught(leaked)
 
-        assertThat(appender.list.single().throwableProxy).isNotNull()
+        val event: ILoggingEvent = appender.list.single()
+        assertThat(event.formattedMessage).doesNotContain("LEAKED-1234")
+        assertThat(event.throwableProxy).isNull()
     }
 
     @Test
@@ -63,7 +65,7 @@ class ApiControllerAdviceLogTest {
         val line: String = appender.list.single().formattedMessage
         assertThat(line).startsWith("미처리 예외")
         assertThat(line).contains("공유 저장소")
-        assertThat(appender.list.single().throwableProxy.cause.message).isEqualTo("redis down")
+        assertThat(line).contains("원인=LocationStoreUnavailableException")
     }
 
     @Test

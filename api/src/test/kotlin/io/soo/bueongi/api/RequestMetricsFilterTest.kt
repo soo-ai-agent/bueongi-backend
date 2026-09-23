@@ -386,8 +386,8 @@ class RequestMetricsFilterTest {
 
         val failureEvent = appender.list.last()
         assertThat(failureEvent.formattedMessage).startsWith("요청 계측 실패")
-        assertThat(failureEvent.throwableProxy.message).isEqualTo("창이 닫혔다")
-        assertThat(failureEvent.throwableProxy.cause.message).isEqualTo("연결 없음")
+        assertThat(failureEvent.formattedMessage).contains("원인=IllegalStateException")
+        assertThat(failureEvent.throwableProxy).isNull()
         assertThat(response.status).isEqualTo(200)
     }
 
