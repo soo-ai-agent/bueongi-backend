@@ -17,10 +17,11 @@ class SafeWaypointFinder(
         if (routePath.size < 2) {
             return emptyList()
         }
-        val spotsNearRoute: List<SafetySpotPoint> =
-            CLUSTER_SPOT_TYPES.flatMap {
-                safetySpots.index(it).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
-            }
+        val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
+        for (spotType in CLUSTER_SPOT_TYPES) {
+            val spots: List<SafetySpotPoint> = safetySpots.index(spotType).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
+            spotsNearRoute.addAll(spots)
+        }
         if (spotsNearRoute.isEmpty()) {
             return emptyList()
         }
