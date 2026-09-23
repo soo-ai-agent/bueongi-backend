@@ -13,6 +13,7 @@ import kotlin.math.floor
 class SafeWaypointFinder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
+    // 경로 양옆을 훑어 안심시설이 뭉친 자리를 찾고, 뭉치마다 중심점과 시설 수를 낸다. 많이 뭉친 순으로 최대 6개.
     fun findSafetySpotClusters(routePath: List<GeoPoint>): List<SafetySpotCluster> {
         if (routePath.size < 2) {
             return emptyList()
@@ -57,16 +58,11 @@ class SafeWaypointFinder(
         return clusters.subList(0, MAX_CLUSTERS)
     }
 
-    fun pickWaypoints(
-        origin: GeoPoint,
-        destination: GeoPoint,
-        clusters: List<SafetySpotCluster>,
-    ): List<List<GeoPoint>> {
+    fun pickWaypoints(origin: GeoPoint, destination: GeoPoint, clusters: List<SafetySpotCluster>): List<List<GeoPoint>> {
         if (clusters.isEmpty()) {
             return emptyList()
         }
         val maxLateralMeters: Double = origin.distanceMetersTo(destination) * DEFAULT_LATERAL_RATIO
-
         val placed: ArrayList<PlacedCluster> = ArrayList()
         for (cluster in clusters) {
             val projection: SegmentProjection = cluster.center.projectOnto(origin, destination)
