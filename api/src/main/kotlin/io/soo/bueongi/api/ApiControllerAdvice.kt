@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
@@ -77,16 +78,66 @@ class ApiControllerAdvice(
     }
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadable(ex: HttpMessageNotReadableException): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(
+    fun handleUnreadable(ex: HttpMessageNotReadableException): ProblemDetail {
+        val domainCause: ApiException? = ex.findApiCause()
+        if (domainCause != null) {
+            return handleApi(domainCause)
+        }
+        val missingField: String? = ex.missingFieldPath()
+        if (missingField != null) {
+            return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "요청 본문 검증에 실패했습니다.",
+            ).apply {
+                title = "Validation Failed"
+                setProperty("code", "VALIDATION_FAILED")
+                setProperty(
+                    "errors",
+                    listOf(ApiFieldError(field = missingField, message = "널이어서는 안됩니다", rejectedValue = null)),
+                )
+            }
+        }
+        return ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
             "요청 본문을 읽을 수 없습니다(JSON 형식 또는 본문 누락을 확인하세요).",
         ).apply {
             title = "Malformed Request"
             setProperty("code", "MALFORMED_REQUEST")
         }
+    }
 
-    // 요청 DTO 생성자에서 던진 도메인 예외는 스프링이 BeanInstantiationException 으로 감싼다 — 원래 예외로 되돌린다.
+    private fun HttpMessageNotReadableException.missingFieldPath(): String? {
+        val cause: Throwable? = cause
+        if (cause !is MismatchedInputException) {
+            return null
+        }
+        val names: MutableList<String> = mutableListOf()
+        for (reference in cause.path) {
+            val name: String? = reference.fieldName
+            if (name != null) {
+                names.add(name)
+            }
+        }
+        if (names.isEmpty()) {
+            return null
+        }
+        return names.joinToString(".")
+    }
+
+    private fun Throwable.findApiCause(): ApiException? {
+        var current: Throwable? = cause
+        while (current != null) {
+            if (current is ApiException) {
+                return current
+            }
+            if (current.cause === current) {
+                return null
+            }
+            current = current.cause
+        }
+        return null
+    }
+
     @ExceptionHandler(BeanInstantiationException::class)
     fun handleRequestBinding(ex: BeanInstantiationException): ProblemDetail {
         val cause: Throwable? = ex.cause

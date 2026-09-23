@@ -18,44 +18,40 @@ class RouteRequestMetaAbsorptionTest {
 
     @Test
     fun `미상 문자열 routeType safetyPreference 는 안전 우선 기본으로 흡수된다`() {
-        val query =
+        val request =
             RouteRequest(
-                origin = origin,
-                destination = destination,
-                routeType = "unknown",
-                safetyPreference = "nope",
-            ).query
+                rawOrigin = origin,
+                rawDestination = destination,
+                rawRouteType = "unknown",
+                rawSafetyPreference = "nope",
+            )
 
-        assertThat(query.routeType).isEqualTo(RouteType.SAFE)
-        assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
+        assertThat(request.routeType).isEqualTo(RouteType.SAFE)
+        assertThat(request.safetyPreference).isEqualTo(SafetyPreference.SAFE)
     }
 
     @Test
-    fun `누락 null routeType safetyPreference 는 안전 우선 기본으로 흡수된다`() {
-        val query =
-            RouteRequest(
-                origin = origin,
-                destination = destination,
-                routeType = null,
-                safetyPreference = null,
-            ).query
+    fun `routeType safetyPreference 키가 없으면 안전 우선 기본이다`() {
+        val json = """{"origin":{"lat":37.4979,"lng":127.0276},"destination":{"lat":37.5572,"lng":126.9245}}"""
 
-        assertThat(query.routeType).isEqualTo(RouteType.SAFE)
-        assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
+        val request = mapper.readValue<RouteRequest>(json)
+
+        assertThat(request.routeType).isEqualTo(RouteType.SAFE)
+        assertThat(request.safetyPreference).isEqualTo(SafetyPreference.SAFE)
     }
 
     @Test
     fun `유효 문자열은 그대로 통과한다 - 비회귀`() {
-        val query =
+        val request =
             RouteRequest(
-                origin = origin,
-                destination = destination,
-                routeType = "fast",
-                safetyPreference = "safest",
-            ).query
+                rawOrigin = origin,
+                rawDestination = destination,
+                rawRouteType = "fast",
+                rawSafetyPreference = "safest",
+            )
 
-        assertThat(query.routeType).isEqualTo(RouteType.FAST)
-        assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFEST)
+        assertThat(request.routeType).isEqualTo(RouteType.FAST)
+        assertThat(request.safetyPreference).isEqualTo(SafetyPreference.SAFEST)
     }
 
     @Test
@@ -67,9 +63,9 @@ class RouteRequestMetaAbsorptionTest {
              "routeType":999,"safetyPreference":42}
             """.trimIndent()
 
-        val query = mapper.readValue<RouteRequest>(json).query
+        val request = mapper.readValue<RouteRequest>(json)
 
-        assertThat(query.routeType).isEqualTo(RouteType.SAFE)
-        assertThat(query.safetyPreference).isEqualTo(SafetyPreference.SAFE)
+        assertThat(request.routeType).isEqualTo(RouteType.SAFE)
+        assertThat(request.safetyPreference).isEqualTo(SafetyPreference.SAFE)
     }
 }

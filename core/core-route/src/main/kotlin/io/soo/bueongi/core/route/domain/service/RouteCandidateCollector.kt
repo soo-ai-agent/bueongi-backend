@@ -5,7 +5,7 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
@@ -19,7 +19,7 @@ class RouteCandidateCollector(
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    fun collectBase(query: RouteQuery): List<TmapRoute> =
+    fun collectBase(query: RouteRequest): List<TmapRoute> =
         tmapClient.fetchRoutes(
             query.origin.toTmapCoord(),
             query.destination.toTmapCoord(),
@@ -27,7 +27,7 @@ class RouteCandidateCollector(
         )
 
     fun collectAll(
-        query: RouteQuery,
+        query: RouteRequest,
         base: List<TmapRoute>,
     ): List<RouteCandidate> {
         val detours: List<TmapRoute> = collectSafeDetours(query, base)
@@ -38,7 +38,7 @@ class RouteCandidateCollector(
     }
 
     private fun collectSafeDetours(
-        query: RouteQuery,
+        query: RouteRequest,
         base: List<TmapRoute>,
     ): List<TmapRoute> {
         if (query.reroute) {
