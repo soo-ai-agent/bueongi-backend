@@ -3,6 +3,7 @@ package io.soo.bueongi.core.route.domain.marker.service
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.model.toMiniMapPercent
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -59,37 +60,6 @@ class RouteMarkerBuilder(
         }
 
         return raw.toMiniMapPercent()
-    }
-
-    private fun List<SafetySpotPoi>.toMiniMapPercent(): List<SafetySpotPoi> {
-        val minLat: Double = minOf { it.lat }
-        val maxLat: Double = maxOf { it.lat }
-        val minLng: Double = minOf { it.lng }
-        val maxLng: Double = maxOf { it.lng }
-        val spanLat: Double = maxLat - minLat
-        val spanLng: Double = maxLng - minLng
-        val drawableRange: Double = MINI_MAP_MAX - 2 * MARKER_PADDING
-        val placed: ArrayList<SafetySpotPoi> = ArrayList()
-        for (marker in this) {
-            val x: Int = percentOrCenter(marker.lng - minLng, spanLng, drawableRange)
-            val northFlippedOffset: Double = maxLat - marker.lat
-            val y: Int = percentOrCenter(northFlippedOffset, spanLat, drawableRange)
-            placed.add(marker.copy(x = x, y = y))
-        }
-        return placed
-    }
-
-    private fun percentOrCenter(
-        offset: Double,
-        span: Double,
-        drawableRange: Double,
-    ): Int {
-        if (span == 0.0) {
-            return MINI_MAP_CENTER
-        }
-        val ratio: Double = offset / span
-        val percent: Double = MARKER_PADDING + ratio * drawableRange
-        return percent.roundToInt().coerceIn(0, MINI_MAP_MAX.toInt())
     }
 
     // 보안등 원천이 자치단체(instt_code)당 한 번만 응답해, 경로가 지나는 자치단체를 모두 짚어야 한다.
@@ -155,11 +125,6 @@ class RouteMarkerBuilder(
                 SafetySpotPoiType.SECURITY_LAMP to SafetySpotType.SECURITY_LAMP,
                 SafetySpotPoiType.PEDESTRIAN_SIGNAL to SafetySpotType.PEDESTRIAN_SIGNAL,
             )
-
-        const val MINI_MAP_MAX: Double = 100.0
-        const val MINI_MAP_CENTER: Int = 50
-
-        const val MARKER_PADDING: Double = 12.0
 
         const val MAX_MARKERS_PER_TYPE: Int = 12
 
