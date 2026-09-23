@@ -3,11 +3,9 @@ package io.soo.bueongi.api
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.soo.bueongi.client.slack.SlackAlertConfig
 import io.soo.bueongi.core.enums.RequestCaller
-import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.core.admin.ops.domain.traffic.service.RequestMetricsService
-import io.soo.bueongi.core.admin.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
@@ -15,8 +13,6 @@ import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
-import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
-import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -39,25 +35,6 @@ import org.springframework.context.annotation.Primary
 class AdminEndpointFixtures {
     @TestConfiguration
     class FakeStoreConfig {
-        @Bean
-        fun routeStatsStore(): RouteStatsStore =
-            object : RouteStatsStore {
-                override fun record(log: RouteRecommendationLog) = Unit
-
-                override fun findRecent(limit: Int): List<RouteRecommendationLog> =
-                    listOf(
-                        RouteRecommendationLog(
-                            atEpochMs = System.currentTimeMillis(),
-                            endpoint = "compare",
-                            destinationName = "강남역",
-                            preference = SafetyPreference.SAFE,
-                        ),
-                    )
-            }
-
-        @Bean
-        fun routeStatsService(store: RouteStatsStore): RouteStatsService = RouteStatsService(store)
-
         @Bean
         @Primary
         fun requestMetricStore(): RequestMetricStore =

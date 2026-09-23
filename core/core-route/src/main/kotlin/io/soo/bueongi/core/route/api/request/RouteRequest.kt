@@ -40,11 +40,7 @@ class RouteRequest
             }
         }
 
-        private fun requireInRange(
-            lat: Double,
-            lng: Double,
-            field: String,
-        ): GeoPoint {
+        private fun requireInRange(lat: Double, lng: Double, field: String): GeoPoint {
             if (!GeoPoint.isValidLat(lat)) {
                 throw CoordinateOutOfRangeException("$field.lat", lat)
             }

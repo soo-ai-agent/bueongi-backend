@@ -8,7 +8,6 @@ include(
     "core:core-place",
     "core:core-route",
     "core:core-app-info",
-    "core:core-admin-route-stats",
     "core:core-admin-ops",
     "core:core-admin-auth",
     "api",

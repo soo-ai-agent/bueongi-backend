@@ -11,14 +11,11 @@ import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
+import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
-import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
@@ -68,12 +65,10 @@ class RerouteCallBudgetTest {
 
     private fun serviceOf(tmap: TmapRouteClient): SafeRouteService =
         SafeRouteService(
-            routeService = RouteService(RouteTypeCatalog()),
-            collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
+            routeFinder = RouteFinder(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
             scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
             routeEvents = mock(),
-            routeStatsStore = mock(),
         )
 
     @Test
@@ -102,31 +97,4 @@ class RerouteCallBudgetTest {
         assertThat(result.first().path).isNotNull()
     }
 
-    @Test
-    fun `재탐색은 추천 통계에 세지 않는다`() {
-        val recorded: MutableList<RouteRecommendationLog> = mutableListOf()
-        val store =
-            object : RouteStatsStore {
-                override fun record(log: RouteRecommendationLog) {
-                    recorded.add(log)
-                }
-
-                override fun findRecent(limit: Int): List<RouteRecommendationLog> = recorded
-            }
-        val service =
-            SafeRouteService(
-                routeService = RouteService(RouteTypeCatalog()),
-                collector = RouteCandidateCollector(tmapReturning(), SafeDetourPlanner(source), RouteCandidateMerger()),
-                scorer = nightScorer(source),
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
-                routeEvents = mock(),
-                routeStatsStore = store,
-            )
-
-        service.safeCompare(queryOf(reroute = false))
-        service.safeCompare(queryOf(reroute = true))
-        service.safeCompare(queryOf(reroute = true))
-
-        assertThat(recorded).hasSize(1)
-    }
 }

@@ -11,5 +11,3 @@ fun formatDistance(meters: Double): String {
         "%.1fkm".format(clampedMeters / 1000.0)
     }
 }
-
-fun walkMinutes(meters: Double): Int = max(1, (max(0.0, meters) / 67.0).roundToInt())

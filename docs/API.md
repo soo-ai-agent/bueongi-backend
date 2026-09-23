@@ -123,7 +123,7 @@
 - 매칭: 이름·주소 부분일치, 앞뒤 트림 + 라틴 대소문자 무시.
 - 트림 후 **빈 검색어 → 빈 목록 `[]`**(에러 아님 — 프론트는 '최근 검색'으로 폴백). 추측 결과를 만들지 않는다.
 - 트림 후 **100자 초과 → 400 `INVALID_KEYWORD`**(외부 API 호출 전에 차단). 경계(정확히 100자)는 허용. (`MAX_KEYWORD_LENGTH=100`)
-- 키 주입 시 Kakao Local 실검색 시도 → **실패 시 시드 폴백**(안심앱: 검색 불능보다 근사 결과가 안전). 키 없으면 시드. 어느 경로든 `PlaceItem` 계약 동일.
+- Kakao Local 실검색만 쓴다. 키가 없거나 호출이 실패하면 **503 `PLACE_SEARCH_UNAVAILABLE`** 로 알린다 — 근사 결과를 지어내지 않는다.
 
 ---
 
@@ -134,7 +134,9 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 - `safetyPreference` (optional): `balanced`/`safe`/`safest`. 생략하면 백엔드 기본 성향.
 - `reroute` (optional, 기본 `false`): 경로 이탈 재탐색이면 `true`. 외부 호출 예산을 달리 쓴다(`RouteCandidateCollector`).
 
-**200 응답** (`List<RouteOption>`): `compare` 의 7개 필드에 더해 실경로일 때만 `path`·`steps`·`score`·`markers`·`breakdown`·`provenance` 여섯이 **함께** 실린다. 폴백(키 미설정/Tmap 전면 실패) 응답은 여섯을 하나도 담지 않으며, `@JsonInclude(NON_NULL)` 이라 키 자체가 빠진다.
+**200 응답** (`List<RouteOption>`): 유형별 7개 기본 필드에 `path`·`steps`·`score`·`markers`·`breakdown`·`provenance` 여섯이 **함께** 실린다.
+
+Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_UNAVAILABLE`** 로 알린다 — 직선거리로 지어낸 경로를 내보내지 않는다.
 
 - `score`: 0~100. 주변에 어떤 안심시설 자료도 없으면 `null`(0점이 아니라 '없음').
 - `breakdown.scoredAxes`/`unscoredAxes`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 축은 빼고 남은 축의 가중치로 다시 나눈다.
@@ -226,36 +228,6 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 ### `GET /share/{token}` — 보호자 지도 페이지 (HTML)
 
 **200** `text/html`. 지도(Leaflet + OpenStreetMap 타일, **지도 SDK 키 불요**) + 5초 폴링 JS 를 담은 보호자 페이지. 토큰 유효성과 무관하게 페이지를 주고, 폴링 JS 가 위 `GET location` 의 `expired` 로 만료/대기/라이브 상태를 그린다. 정적 리소스: `resources/share/guardian.html`.
-
----
-
-## `GET /api/admin/route-stats` — 추천 통계 (관리자)
-
-`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 경로 추천 요청(`POST /api/routes/safe-compare`)을 창(window, 최근 `ROUTE_STATS_CAP`=2000 건) 단위로 집계해 돌려준다. 저장/집계는 순수 부수효과라 추천 응답은 불변이며, 저장소 미주입(테스트 슬라이스)이어도 무해하다. 출처: `api/admin/AdminController.kt`, `domain/admin/RouteStatsService.kt`, `storage/db-core/.../routestats/`.
-
-**200 응답** (`RouteStatsSummary`):
-
-```json
-{
-  "total": 128,
-  "windowSize": 128,
-  "byEndpoint": [ { "endpoint": "compare", "count": 90 }, { "endpoint": "safe-compare", "count": 38 } ],
-  "byPreference": [ { "preference": "safe", "count": 70 }, { "preference": "balanced", "count": 40 }, { "preference": "safest", "count": 18 } ],
-  "topDestinations": [ { "name": "강남역", "count": 12 }, { "name": "홍대입구역", "count": 8 } ],
-  "hourlyTrend": [ { "hourStartMs": 1720828800000, "count": 3 } ]
-}
-```
-
-| 필드 | 의미 |
-|------|------|
-| `total` | 집계 창 내 총 추천 요청 수. |
-| `windowSize` | 집계에 쓴 기록 수(창 상한 이하). |
-| `byEndpoint` | **항상 2건**(`compare`/`safe-compare`, 요청 0건도 노출). |
-| `byPreference` | 안심강도 선호(`SafetyPreference.requestValue`: `balanced`/`safe`/`safest`) 분포. **실제 나타난 값만**, `count` 내림차순. |
-| `topDestinations` | 목적지명 상위 **최대 10건**(빈 이름 제외, `count` 내림차순). |
-| `hourlyTrend` | 최근 24시간 1시간 버킷(오래된→최신, Asia/Seoul 정각). `hourStartMs`=버킷 시작 epoch ms, 요청 0건 버킷도 노출. |
-
-- **이중 카운트 방지**: `safe-compare` 는 진입 시 `safe-compare` 1회만 집계하고, 폴백(키 미설정/Tmap 전면 실패)은 `RouteService.compare` 가 아니라 집계 없는 `RouteService.buildRoutes` 를 호출한다.
 
 ---
 

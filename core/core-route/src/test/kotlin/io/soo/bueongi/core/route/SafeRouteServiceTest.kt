@@ -15,17 +15,16 @@ import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
+import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
-import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -49,7 +48,6 @@ class SafeRouteServiceTest {
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer = nightScorer(source)
     private val detourPlanner = SafeDetourPlanner(source)
-    private val routeService = RouteService(RouteTypeCatalog())
 
     private val routeA =
         TmapRoute(
@@ -76,35 +74,29 @@ class SafeRouteServiceTest {
         detourPlanner: SafeDetourPlanner,
         source: FakeSafetySpotSource,
     ) = SafeRouteService(
-        routeService = routeService,
-        collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
+        routeFinder = RouteFinder(tmap, detourPlanner, RouteCandidateMerger()),
         scorer = scorer,
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
         routeEvents = mock(),
-        routeStatsStore = mock(),
     )
 
     @Test
-    fun `Tmap 키 미설정이면 compare 폴백(3개, 점수 없음)`() {
+    fun `Tmap 키가 없으면 경로를 지어내지 않고 사용 불가를 알린다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
-        val result = service(tmap).safeCompare(request)
-        assertThat(result).hasSize(3)
-        assertThat(result.map { it.type }).containsExactly(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
-        assertThat(result.first().score).isNull()
-        assertThat(result.first().path).isNull()
-        assertThat(result.first().provenance).isNull()
-        assertThat(result.first().breakdown).isNull()
+
+        assertThatThrownBy { service(tmap).safeCompare(request) }
+            .isInstanceOf(RouteSearchUnavailableException::class.java)
     }
 
     @Test
-    fun `Tmap 전부 실패(빈 후보)면 compare 폴백`() {
+    fun `Tmap 후보가 전멸하면 사용 불가를 알린다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
-        val result = service(tmap).safeCompare(request)
-        assertThat(result).hasSize(3)
-        assertThat(result.first().score).isNull()
+
+        assertThatThrownBy { service(tmap).safeCompare(request) }
+            .isInstanceOf(RouteSearchUnavailableException::class.java)
     }
 
     @Test
@@ -229,48 +221,6 @@ class SafeRouteServiceTest {
     }
 
     @Test
-    fun `Tmap 미설정 폴백도 safe-compare 를 1회 집계한다`() {
-        val recording = RecordingRouteStatsStore()
-        val tmap = mock<TmapRouteClient>()
-        whenever(tmap.isEnabled).thenReturn(false)
-        val svc =
-            SafeRouteService(
-                routeService = RouteService(RouteTypeCatalog()),
-                collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
-                scorer = scorer,
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
-                routeEvents = mock(),
-                routeStatsStore = recording,
-            )
-
-        svc.safeCompare(request)
-
-        assertThat(recording.records.map { it.endpoint }).containsExactly("safe-compare")
-        assertThat(recording.records.first().preference).isEqualTo(SafetyPreference.SAFE)
-    }
-
-    @Test
-    fun `Tmap 전부 실패 폴백도 safe-compare 만 1회 집계한다`() {
-        val recording = RecordingRouteStatsStore()
-        val tmap = mock<TmapRouteClient>()
-        whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
-        val svc =
-            SafeRouteService(
-                routeService = RouteService(RouteTypeCatalog()),
-                collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
-                scorer = scorer,
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
-                routeEvents = mock(),
-                routeStatsStore = recording,
-            )
-
-        svc.safeCompare(request)
-
-        assertThat(recording.records.map { it.endpoint }).containsExactly("safe-compare")
-    }
-
-    @Test
     fun `서로 다른 후보가 4개여도 유형당 하나씩 정확히 3개만 반환한다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
@@ -288,14 +238,4 @@ class SafeRouteServiceTest {
         assertThat(result).hasSize(3)
         assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
     }
-}
-
-class RecordingRouteStatsStore : RouteStatsStore {
-    val records: MutableList<RouteRecommendationLog> = mutableListOf<RouteRecommendationLog>()
-
-    override fun record(log: RouteRecommendationLog) {
-        records.add(log)
-    }
-
-    override fun findRecent(limit: Int): List<RouteRecommendationLog> = records.take(limit)
 }

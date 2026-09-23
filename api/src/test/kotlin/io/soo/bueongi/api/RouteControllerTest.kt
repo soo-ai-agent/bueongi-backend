@@ -7,14 +7,12 @@ import io.soo.bueongi.core.route.domain.marker.service.RouteVisitEventPublisher
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
+import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteEventPublisher
-import io.soo.bueongi.core.route.domain.service.RouteService
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.storage.db.core.routestats.RouteStatsStoreConfig
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.junit.jupiter.api.Tag
@@ -32,16 +30,14 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
-    RouteService::class,
     RouteTypeCatalog::class,
     SafeRouteService::class,
-    RouteCandidateCollector::class,
+    RouteFinder::class,
     RouteOptionAssembler::class,
     RouteMarkerBuilder::class,
     MarkerEventPublisher::class,
     RouteVisitEventPublisher::class,
     RouteEventPublisher::class,
-    RouteStatsStoreConfig::class,
     RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeDetourPlanner::class,
@@ -73,36 +69,13 @@ class RouteControllerTest(
     }
 
     @Test
-    fun `compare 정상 요청은 200 과 safe main fast 3개 경로`() {
+    fun `safe-compare 는 Tmap 키 없으면 503 으로 사용 불가를 알린다`() {
         mockMvc.post("/api/routes/safe-compare") {
             contentType = MediaType.APPLICATION_JSON
             content = validBody
         }.andExpect {
-            status { isOk() }
-            content { contentTypeCompatibleWith("application/json") }
-            jsonPath("$.length()") { value(3) }
-            jsonPath("$[0].type") { value("safe") }
-            jsonPath("$[1].type") { value("main") }
-            jsonPath("$[2].type") { value("fast") }
-            jsonPath("$[0].id") { exists() }
-            jsonPath("$[0].name") { exists() }
-            jsonPath("$[0].time") { exists() }
-            jsonPath("$[0].dist") { exists() }
-            jsonPath("$[0].tags[0].text") { exists() }
-            jsonPath("$[0].tags[0].variant") { exists() }
-        }
-    }
-
-    @Test
-    fun `safe-compare 는 Tmap 키 없으면 폴백으로 200 과 safe main fast 3개 경로`() {
-        mockMvc.post("/api/routes/safe-compare") {
-            contentType = MediaType.APPLICATION_JSON
-            content = validBody
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.length()") { value(3) }
-            jsonPath("$[0].type") { value("safe") }
-            jsonPath("$[2].type") { value("fast") }
+            status { isServiceUnavailable() }
+            jsonPath("$.code") { value("ROUTE_SEARCH_UNAVAILABLE") }
         }
     }
 

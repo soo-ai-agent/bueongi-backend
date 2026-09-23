@@ -12,32 +12,32 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
 @Component
-class RouteCandidateCollector(
+class RouteFinder(
     private val tmapClient: TmapRouteClient,
     private val detourPlanner: SafeDetourPlanner,
     private val candidateMerger: RouteCandidateMerger,
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    fun collectBase(query: RouteRequest): List<TmapRoute> =
+    fun findBase(query: RouteRequest): List<TmapRoute> =
         tmapClient.fetchRoutes(
             query.origin.toTmapCoord(),
             query.destination.toTmapCoord(),
             query.destinationName,
         )
 
-    fun collectAll(
+    fun findAll(
         query: RouteRequest,
         base: List<TmapRoute>,
     ): List<RouteCandidate> {
-        val detours: List<TmapRoute> = collectSafeDetours(query, base)
+        val detours: List<TmapRoute> = findSafeDetours(query, base)
 
         return candidateMerger.mergeNearDuplicates(
             dedupeByIdentity(base + detours).map { it.toCandidate() },
         )
     }
 
-    private fun collectSafeDetours(
+    private fun findSafeDetours(
         query: RouteRequest,
         base: List<TmapRoute>,
     ): List<TmapRoute> {

@@ -23,11 +23,4 @@ class DistanceFormatTest {
         assertThat(formatDistance(-100.0)).isEqualTo("0m")
     }
 
-    @Test
-    fun `walkMinutes - 67m per minute 환산, 최소 1분`() {
-        assertThat(walkMinutes(0.0)).isEqualTo(1)
-        assertThat(walkMinutes(67.0)).isEqualTo(1)
-        assertThat(walkMinutes(670.0)).isEqualTo(10)
-        assertThat(walkMinutes(-50.0)).isEqualTo(1)
-    }
 }
