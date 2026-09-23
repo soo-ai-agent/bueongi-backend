@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
+import io.soo.bueongi.core.appinfo.api.controller.AppInfoController
 import io.soo.bueongi.core.share.domain.service.ShareService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -37,16 +37,12 @@ class AppInfoControllerTest {
                     jsonPath("$.serverVersion") { value("1.2.3") }
                     jsonPath("$.serverBuiltAt") { value("2026-08-17T00:00:00Z") }
                     jsonPath("$.frontendVersion") { value("") }
-                    jsonPath("$.placeSource") { value("seed") }
                     jsonPath("$.locationStore") { value("memory") }
                 }
         }
 
         @TestConfiguration
         class Config {
-            @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = false)
-
             @Bean
             fun shareService(): ShareService = stubShareService()
 
@@ -75,9 +71,6 @@ class AppInfoControllerTest {
 
         @TestConfiguration
         class Config {
-            @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = false)
-
             @Bean
             fun shareService(): ShareService = stubShareService()
         }

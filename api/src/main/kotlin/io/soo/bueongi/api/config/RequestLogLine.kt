@@ -1,7 +1,6 @@
 package io.soo.bueongi.api.config
 
 import io.soo.bueongi.core.enums.RequestCaller
-import io.soo.bueongi.support.logging.COUNTERPART_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.DIRECTION_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.DURATION_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.INBOUND_DIRECTION
@@ -17,20 +16,16 @@ data class RequestLogLine(
     val status: Int,
     val durationMs: Long,
     val clientId: String?,
-    val address: String,
-    val kind: String,
     val caller: RequestCaller,
 ) {
     fun format(): String =
         listOf(
             padColumn(directionAndCaller(), DIRECTION_COLUMN_WIDTH),
-            padColumn(address, COUNTERPART_COLUMN_WIDTH),
             padColumn("$status $method", STATUS_COLUMN_WIDTH),
             padColumn(shortPath(), TARGET_COLUMN_WIDTH),
             "${durationMs}ms".padStart(DURATION_COLUMN_WIDTH),
             traceColumn(),
             "👤 ${clientId ?: UNKNOWN_CLIENT}",
-            "📱 $kind",
         ).joinToString(LOG_COLUMN_SEPARATOR)
 
     private fun directionAndCaller(): String =

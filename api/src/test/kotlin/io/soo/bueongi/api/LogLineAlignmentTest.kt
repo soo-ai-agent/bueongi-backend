@@ -1,6 +1,5 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.api.config.ExternalCallLogLine
 import io.soo.bueongi.api.config.RequestLogLine
 import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.support.logging.LOG_COLUMN_SEPARATOR
@@ -15,23 +14,12 @@ class LogLineAlignmentTest {
             status = 200,
             durationMs = 12,
             clientId = null,
-            address = "127.0.0.1",
-            kind = "curl",
             caller = RequestCaller.USER,
-        ).format()
-
-    private fun outbound(endpoint: String): String =
-        ExternalCallLogLine(
-            provider = "kakao",
-            method = "GET",
-            endpoint = endpoint,
-            status = 200,
-            durationMs = 12,
         ).format()
 
     private fun columnAfterTarget(line: String): Int {
         val parts: List<String> = line.split(LOG_COLUMN_SEPARATOR)
-        return parts.take(4).sumOf { displayWidthOf(it) + LOG_COLUMN_SEPARATOR.length }
+        return parts.take(COLUMNS_TO_TARGET).sumOf { displayWidthOf(it) + LOG_COLUMN_SEPARATOR.length }
     }
 
     private fun displayWidthOf(text: String): Int {
@@ -51,21 +39,11 @@ class LogLineAlignmentTest {
     }
 
     @Test
-    fun `송신 줄도 경로 길이가 달라도 다음 칸이 같은 열에서 시작한다`() {
-        val short: Int = columnAfterTarget(outbound("/x"))
-        val long: Int = columnAfterTarget(outbound("/v2/local/search/keyword.json"))
-
-        assertThat(short).isEqualTo(long)
-    }
-
-    @Test
-    fun `수신 줄과 송신 줄의 다음 칸이 같은 열에서 시작한다`() {
-        assertThat(columnAfterTarget(inbound("/api/places/search")))
-            .isEqualTo(columnAfterTarget(outbound("/v2/local/search/keyword.json")))
-    }
-
-    @Test
     fun `줄 끝에 채운 공백이 남지 않는다`() {
-        assertThat(outbound("/x")).isEqualTo(outbound("/x").trimEnd())
+        assertThat(inbound("/x")).isEqualTo(inbound("/x").trimEnd())
+    }
+
+    private companion object {
+        const val COLUMNS_TO_TARGET: Int = 3
     }
 }

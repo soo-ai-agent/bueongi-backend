@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
+import io.soo.bueongi.core.appinfo.api.controller.HealthController
 import io.soo.bueongi.core.share.domain.service.ShareService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -14,68 +14,29 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
-class HealthControllerTest {
-    @Tag("context")
-    @WebMvcTest(HealthController::class)
-    @AutoConfigureMockMvc(addFilters = false)
-    @Import(HealthControllerSeedTest.DisabledRemoteConfig::class)
-    @ActiveProfiles("test")
-    class HealthControllerSeedTest(
-        @param:Autowired private val mockMvc: MockMvc,
-    ) {
-        @Test
-        fun `키 미설정이면 200 과 status UP, placeSource seed, locationStore memory`() {
-            mockMvc.get("/api/health")
-                .andExpect {
-                    status { isOk() }
-                    content { contentTypeCompatibleWith("application/json") }
-                    jsonPath("$.status") { value("UP") }
-                    jsonPath("$.service") { value("bueongi-backend") }
-                    jsonPath("$.placeSource") { value("seed") }
-                    jsonPath("$.locationStore") { value("memory") }
-                }
-        }
-
-        @TestConfiguration
-        class DisabledRemoteConfig {
-            @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = false)
-
-            @Bean
-            fun shareService(): ShareService = stubShareService()
-        }
+@Tag("context")
+@WebMvcTest(HealthController::class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(HealthControllerTest.Config::class)
+@ActiveProfiles("test")
+class HealthControllerTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
+    @Test
+    fun `200 과 status UP, 서비스 이름, locationStore 를 내려준다`() {
+        mockMvc.get("/api/health")
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith("application/json") }
+                jsonPath("$.status") { value("UP") }
+                jsonPath("$.service") { value("bueongi-backend") }
+                jsonPath("$.locationStore") { value("memory") }
+            }
     }
 
-    @Tag("context")
-    @WebMvcTest(HealthController::class)
-    @AutoConfigureMockMvc(addFilters = false)
-    @Import(HealthControllerLiveTest.EnabledRemoteConfig::class)
-    @ActiveProfiles("test")
-    class HealthControllerLiveTest(
-        @param:Autowired private val mockMvc: MockMvc,
-    ) {
-        @Test
-        fun `키 설정이면 placeSource live 이고 키 값은 응답에 노출되지 않는다`() {
-            mockMvc.get("/api/health")
-                .andExpect {
-                    status { isOk() }
-                    jsonPath("$.status") { value("UP") }
-                    jsonPath("$.placeSource") { value("live") }
-                    content { string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(SECRET_KEY))) }
-                }
-        }
-
-        @TestConfiguration
-        class EnabledRemoteConfig {
-            @Bean
-            fun remotePlaceProvider(): RemotePlaceProvider = stubRemotePlaceProvider(enabled = true)
-
-            @Bean
-            fun shareService(): ShareService = stubShareService()
-        }
-
-        companion object {
-            const val SECRET_KEY: String = "super-secret-kakao-key-value"
-        }
+    @TestConfiguration
+    class Config {
+        @Bean
+        fun shareService(): ShareService = stubShareService()
     }
 }

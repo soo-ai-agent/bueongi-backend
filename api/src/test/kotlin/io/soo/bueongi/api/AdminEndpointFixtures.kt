@@ -2,23 +2,16 @@ package io.soo.bueongi.api
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.soo.bueongi.client.slack.SlackAlertConfig
-import io.soo.bueongi.core.ads.domain.service.AdStatsService
-import io.soo.bueongi.core.enums.ExternalApiProvider
 import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.ops.domain.external.service.ExternalApiMetricsService
-import io.soo.bueongi.core.ops.domain.slack.service.SlackConfigService
-import io.soo.bueongi.core.ops.domain.traffic.service.RequestMetricsService
-import io.soo.bueongi.core.route.stats.domain.service.RouteStatsService
+import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
+import io.soo.bueongi.core.admin.ops.domain.traffic.service.RequestMetricsService
+import io.soo.bueongi.core.admin.route.stats.domain.service.RouteStatsService
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.adevent.AdEvent
-import io.soo.bueongi.storage.db.core.adevent.AdEventStore
-import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetric
-import io.soo.bueongi.storage.db.core.externalcall.ExternalCallMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
@@ -109,52 +102,6 @@ class AdminEndpointFixtures {
             adminStore: AdminRequestMetricStore,
         ): RequestMetricsService = RequestMetricsService(store, adminStore, FIXED_CLOCK)
 
-        @Bean
-        fun externalCallMetricStore(): ExternalCallMetricStore =
-            object : ExternalCallMetricStore {
-                override fun record(metric: ExternalCallMetric) = Unit
-
-                override fun findRecent(limit: Int): List<ExternalCallMetric> =
-                    listOf(
-                        ExternalCallMetric(
-                            atEpochMs = FIXED_NOW.toEpochMilli(),
-                            provider = ExternalApiProvider.TMAP,
-                            method = "GET",
-                            endpoint = "/tmap/routes/pedestrian",
-                            status = 200,
-                            durationMs = 320,
-                            failureReason = null,
-                        ),
-                        ExternalCallMetric(
-                            atEpochMs = FIXED_NOW.toEpochMilli(),
-                            provider = ExternalApiProvider.KAKAO,
-                            method = "GET",
-                            endpoint = "/v2/local/search/keyword.json",
-                            status = 429,
-                            durationMs = 90,
-                            failureReason = null,
-                        ),
-                    )
-            }
-
-        @Bean
-        fun externalApiMetricsService(store: ExternalCallMetricStore): ExternalApiMetricsService =
-            ExternalApiMetricsService(store, FIXED_CLOCK)
-
-        @Bean
-        fun adEventStore(): AdEventStore =
-            object : AdEventStore {
-                override fun record(event: AdEvent) = Unit
-
-                override fun findRecent(limit: Int): List<AdEvent> =
-                    listOf(
-                        AdEvent(atEpochMs = System.currentTimeMillis(), placement = "interstitial"),
-                        AdEvent(atEpochMs = System.currentTimeMillis(), placement = "native"),
-                    )
-            }
-
-        @Bean
-        fun adStatsService(store: AdEventStore): AdStatsService = AdStatsService(store)
 
         @Bean
         fun safetySpotSource(): SafetySpotSpatialSource =

@@ -1,6 +1,6 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.route.stats.api.controller.RouteStatsController
+import io.soo.bueongi.core.admin.route.stats.api.controller.RouteStatsController
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

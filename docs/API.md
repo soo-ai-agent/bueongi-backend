@@ -68,12 +68,11 @@
 **200 응답** (`HealthStatus`):
 
 ```json
-{ "status": "UP", "service": "bueongi-backend", "placeSource": "seed", "locationStore": "memory" }
+{ "status": "UP", "service": "bueongi-backend", "locationStore": "memory" }
 ```
 
 - `status`: 항상 `"UP"`(요청 처리 가능하면 도달).
 - `service`: `"bueongi-backend"`.
-- `placeSource`: `"live"`=외부 실연동(Kakao 키 주입됨) / `"seed"`=내장 시드 폴백. **키 설정 여부 불리언에서 파생한 라벨일 뿐 키 값은 절대 노출하지 않는다.** ops/오케스트레이터가 키 배선/폴백을 검증하는 용도.
 - `locationStore`: `"redis"`=Redis 위치공유 저장소 / `"memory"`=인메모리 폴백(`BUEONGI_REDIS_URL` 미주입 시 MVP 기본). **저장소 종류 라벨일 뿐 Redis URL·자격증명은 절대 노출하지 않는다.** (위치 공유 섹션 참조)
 
 ---
@@ -92,7 +91,6 @@
   "serverBuiltAt": "2026-08-17T05:45:04.284Z",
   "serverStatus": "UP",
   "frontendVersion": "1.4.0",
-  "placeSource": "live",
   "locationStore": "memory"
 }
 ```
@@ -100,7 +98,7 @@
 - `serverVersion` / `serverBuiltAt`: 빌드 정보(`build-info.properties`)에서. 빌드 정보 없는 실행(IDE 클래스 빌드)이면 빈 문자열.
 - `serverStatus`: 항상 `"UP"`(요청 처리 가능하면 도달).
 - `frontendVersion`: **배포 파이프라인이 프론트 배포 시 `BUEONGI_FRONTEND_VERSION` 으로 채우는 값.** 서버는 프론트 버전을 스스로 알 수 없다. 미설정이면 빈 문자열 — 프론트는 빈 값을 "확인 불가"로 다룬다.
-- `placeSource` / `locationStore`: `/api/health` 와 동일 라벨(시크릿 비노출).
+- `locationStore`: `/api/health` 와 동일 라벨(시크릿 비노출).
 
 ---
 
@@ -187,16 +185,6 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 
 - `score`: 0~100. 주변에 어떤 안심시설 자료도 없으면 `null`(0점이 아니라 '없음').
 - `breakdown.scoredAxes`/`unscoredAxes`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 축은 빼고 남은 축의 가중치로 다시 나눈다.
-
----
-
-## `POST /api/ads/impression` — 광고 노출 기록
-
-**요청 본문** (`AdImpressionRequest`): `{ "placement": "banner" }`
-
-- `placement`: **필수**, `interstitial`/`native`/`banner` 만 허용(그 밖 → 400 `VALIDATION_FAILED`).
-
-**204 No Content**, 본문 없음. 집계는 `GET /api/admin/ad-stats` 가 세 지면 모두를 키로 돌려준다.
 
 ---
 

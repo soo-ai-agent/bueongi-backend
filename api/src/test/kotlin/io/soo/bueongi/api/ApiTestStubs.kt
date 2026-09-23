@@ -1,18 +1,9 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.core.place.domain.model.PlaceItem
-import io.soo.bueongi.core.place.domain.service.RemotePlaceProvider
 import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import io.soo.bueongi.storage.db.core.share.store.LocationStore
 import java.time.Clock
-
-internal fun stubRemotePlaceProvider(enabled: Boolean): RemotePlaceProvider =
-    object : RemotePlaceProvider {
-        override val isEnabled: Boolean = enabled
-
-        override fun search(keyword: String): List<PlaceItem> = throw AssertionError("이 테스트는 search 를 호출하지 않는다")
-    }
 
 internal fun stubShareService(backend: String = "memory"): ShareService =
     ShareService(StubLocationStore(backend), Clock.systemUTC(), "http://localhost:3619")
