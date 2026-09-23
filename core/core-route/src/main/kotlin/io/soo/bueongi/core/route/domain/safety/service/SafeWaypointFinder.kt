@@ -42,12 +42,9 @@ class SafeWaypointFinder(
                 sumLat += spot.lat
                 sumLng += spot.lng
             }
-            clusters.add(
-                SafetySpotCluster(
-                    GeoPoint(sumLat / spots.size, sumLng / spots.size),
-                    weight = spots.size,
-                ),
-            )
+            val center = GeoPoint(sumLat / spots.size, sumLng / spots.size)
+            val cluster = SafetySpotCluster(center, weight = spots.size)
+            clusters.add(cluster)
         }
         val byDensityThenPosition: Comparator<SafetySpotCluster> =
             compareByDescending<SafetySpotCluster> { it.weight }
