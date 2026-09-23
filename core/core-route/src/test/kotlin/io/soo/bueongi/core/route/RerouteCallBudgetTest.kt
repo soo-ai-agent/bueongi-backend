@@ -10,7 +10,7 @@ import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
@@ -67,7 +67,7 @@ class RerouteCallBudgetTest {
 
     private fun serviceOf(tmap: TmapRouteClient): SafeRouteService =
         SafeRouteService(
-            routeFinder = RouteFinder(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
+            routeFinder = RouteFinder(tmap, SafeWaypointFinder(source), RouteCandidateMerger()),
             scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
             routeEvents = mock(),

@@ -6,15 +6,15 @@ import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
-import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
+import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
 @Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
-    private val detourPlanner: SafeDetourPlanner,
+    private val waypointFinder: SafeWaypointFinder,
     private val candidateMerger: RouteCandidateMerger,
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
@@ -38,22 +38,19 @@ class RouteFinder(
         return routes
     }
 
-    fun findSaferRoutes(
-        query: RouteRequest,
-        tmapRoutes: List<TmapRoute>,
-    ): List<RouteCandidate> {
-        val detours: ArrayList<TmapRoute> = ArrayList()
+    fun findSaferRoutes(query: RouteRequest, tmapRoutes: List<TmapRoute>): List<RouteCandidate> {
+        val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
         if (!query.reroute) {
             val directPath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
-            val anchors: List<SafeAnchor> = detourPlanner.extractSafeAnchors(directPath)
+            val clusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(directPath)
             val waypointCombos: List<List<GeoPoint>> =
-                detourPlanner.pickDetourWaypoints(query.origin, query.destination, anchors)
+                waypointFinder.pickWaypoints(query.origin, query.destination, clusters)
 
-            val budget: Double = DETOUR_BUDGETS.getValue(query.safetyPreference)
+            val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
             val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
             for (waypoints in waypointCombos) {
-                val detour: TmapRoute? =
+                val saferRoute: TmapRoute? =
                     tmapClient.fetchRoute(
                         origin = query.origin.toTmapCoord(),
                         destination = query.destination.toTmapCoord(),
@@ -61,18 +58,18 @@ class RouteFinder(
                         searchOption = VIA_SEARCH_OPTION,
                         passList = waypoints.map { it.toTmapCoord() },
                     )
-                if (detour == null) {
+                if (saferRoute == null) {
                     continue
                 }
-                if (detour.distanceM <= maxDistanceM) {
-                    detours.add(detour)
+                if (saferRoute.distanceM <= maxDistanceM) {
+                    saferRoutes.add(saferRoute)
                 }
             }
         }
 
         val addedKeys: HashSet<Long> = HashSet()
         val candidates: ArrayList<RouteCandidate> = ArrayList()
-        for (route in tmapRoutes + detours) {
+        for (route in tmapRoutes + saferRoutes) {
             if (!addedKeys.add(route.identityKey)) {
                 continue
             }
@@ -95,7 +92,7 @@ class RouteFinder(
 
         const val VIA_SEARCH_OPTION: String = "0"
 
-        val DETOUR_BUDGETS: Map<SafetyPreference, Double> =
+        val DETOUR_DISTANCE_BUDGETS: Map<SafetyPreference, Double> =
             mapOf(
                 SafetyPreference.BALANCED to 0.2,
                 SafetyPreference.SAFE to 0.35,

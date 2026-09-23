@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety.service
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.route.domain.safety.model.SafeAnchor
+import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SegmentProjection
@@ -10,74 +10,74 @@ import org.springframework.stereotype.Component
 import kotlin.math.floor
 
 @Component
-class SafeDetourPlanner(
+class SafeWaypointFinder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun extractSafeAnchors(directPath: List<GeoPoint>): List<SafeAnchor> {
+    fun findSafetySpotClusters(directPath: List<GeoPoint>): List<SafetySpotCluster> {
         if (directPath.size < 2) {
             return emptyList()
         }
         val nearby: List<SafetySpotPoint> =
-            ANCHOR_TYPES.flatMap {
-                safetySpots.index(it).withinCorridor(directPath, ANCHOR_RADIUS_METERS)
+            CLUSTER_SPOT_TYPES.flatMap {
+                safetySpots.index(it).withinCorridor(directPath, CLUSTER_RADIUS_METERS)
             }
         if (nearby.isEmpty()) {
             return emptyList()
         }
 
         data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var safetySpotCount: Int = 0)
-        val clusters: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap()
+        val accumulatorByCell: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap()
         for (safetySpot in nearby) {
             val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
             val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
             val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
-            val cluster: ClusterAccumulator = clusters.getOrPut(key) { ClusterAccumulator() }
+            val cluster: ClusterAccumulator = accumulatorByCell.getOrPut(key) { ClusterAccumulator() }
             cluster.sumLat += safetySpot.lat
             cluster.sumLng += safetySpot.lng
             cluster.safetySpotCount += 1
         }
 
-        val anchors: ArrayList<SafeAnchor> = ArrayList()
-        for (cluster in clusters.values) {
-            anchors.add(
-                SafeAnchor(
+        val clusters: ArrayList<SafetySpotCluster> = ArrayList()
+        for (cluster in accumulatorByCell.values) {
+            clusters.add(
+                SafetySpotCluster(
                     GeoPoint(cluster.sumLat / cluster.safetySpotCount, cluster.sumLng / cluster.safetySpotCount),
                     weight = cluster.safetySpotCount,
                 ),
             )
         }
-        val byDensityThenPosition: Comparator<SafeAnchor> =
-            compareByDescending<SafeAnchor> { it.weight }
+        val byDensityThenPosition: Comparator<SafetySpotCluster> =
+            compareByDescending<SafetySpotCluster> { it.weight }
                 .thenBy { it.center.lat }
                 .thenBy { it.center.lng }
-        anchors.sortWith(byDensityThenPosition)
-        if (anchors.size <= MAX_ANCHORS) {
-            return anchors
+        clusters.sortWith(byDensityThenPosition)
+        if (clusters.size <= MAX_CLUSTERS) {
+            return clusters
         }
-        return anchors.subList(0, MAX_ANCHORS)
+        return clusters.subList(0, MAX_CLUSTERS)
     }
 
-    fun pickDetourWaypoints(
+    fun pickWaypoints(
         origin: GeoPoint,
         destination: GeoPoint,
-        anchors: List<SafeAnchor>,
+        clusters: List<SafetySpotCluster>,
     ): List<List<GeoPoint>> {
-        if (anchors.isEmpty()) {
+        if (clusters.isEmpty()) {
             return emptyList()
         }
         val maxLateralMeters: Double = origin.distanceMetersTo(destination) * DEFAULT_LATERAL_RATIO
 
-        data class Placed(val anchor: SafeAnchor, val progress: Double)
+        data class Placed(val cluster: SafetySpotCluster, val progress: Double)
         val placed: List<Placed> =
-            anchors.mapNotNull { anchor ->
-                val projection: SegmentProjection = anchor.center.projectOnto(origin, destination)
+            clusters.mapNotNull { cluster ->
+                val projection: SegmentProjection = cluster.center.projectOnto(origin, destination)
                 val progress: Double = projection.t
                 val lateralMeters: Double = projection.distanceMeters
                 val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
                 if (nearEnds || lateralMeters > maxLateralMeters) {
                     return@mapNotNull null
                 }
-                Placed(anchor, progress)
+                Placed(cluster, progress)
             }
         if (placed.isEmpty()) {
             return emptyList()
@@ -85,20 +85,20 @@ class SafeDetourPlanner(
 
         val byWeight: List<Placed> =
             placed.sortedWith(
-                compareByDescending<Placed> { it.anchor.weight }.thenBy { it.progress },
+                compareByDescending<Placed> { it.cluster.weight }.thenBy { it.progress },
             )
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
-        val singles: List<Placed> = byWeight.take(SINGLE_ANCHOR_COMBOS)
+        val singles: List<Placed> = byWeight.take(SINGLE_CLUSTER_COMBOS)
         for (single in singles) {
-            combos.add(listOf(single.anchor.center))
+            combos.add(listOf(single.cluster.center))
         }
         if (byWeight.size >= 2) {
             val topTwo: List<Placed> = byWeight.take(2)
             val inTravelOrder: List<Placed> = topTwo.sortedBy { it.progress }
             val pair: ArrayList<GeoPoint> = ArrayList()
-            for (placedAnchor in inTravelOrder) {
-                pair.add(placedAnchor.anchor.center)
+            for (placedCluster in inTravelOrder) {
+                pair.add(placedCluster.cluster.center)
             }
             combos.add(pair)
         }
@@ -106,9 +106,9 @@ class SafeDetourPlanner(
     }
 
     companion object {
-        const val ANCHOR_RADIUS_METERS: Double = 150.0
+        const val CLUSTER_RADIUS_METERS: Double = 150.0
 
-        const val MAX_ANCHORS: Int = 6
+        const val MAX_CLUSTERS: Int = 6
 
         const val CLUSTER_CELL_DEG: Double = 0.0008
 
@@ -117,9 +117,9 @@ class SafeDetourPlanner(
         const val MIDDLE_MIN_PROGRESS: Double = 0.2
         const val MIDDLE_MAX_PROGRESS: Double = 0.8
 
-        const val SINGLE_ANCHOR_COMBOS: Int = 3
+        const val SINGLE_CLUSTER_COMBOS: Int = 3
 
-        val ANCHOR_TYPES: List<SafetySpotType> =
+        val CLUSTER_SPOT_TYPES: List<SafetySpotType> =
             listOf(SafetySpotType.CCTV, SafetySpotType.SAFEHOUSE, SafetySpotType.BELL, SafetySpotType.POLICE)
     }
 }

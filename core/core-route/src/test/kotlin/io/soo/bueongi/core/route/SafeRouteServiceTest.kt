@@ -13,7 +13,7 @@ import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
+import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
@@ -49,7 +49,7 @@ class SafeRouteServiceTest {
         }
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer = nightScorer(source)
-    private val detourPlanner = SafeDetourPlanner(source)
+    private val waypointFinder = SafeWaypointFinder(source)
 
     private val routeA =
         TmapRoute(
@@ -68,15 +68,15 @@ class SafeRouteServiceTest {
             steps = emptyList(),
         )
 
-    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, detourPlanner, source)
+    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, waypointFinder, source)
 
     private fun safeRouteService(
         tmap: TmapRouteClient,
         scorer: SafetyScorer,
-        detourPlanner: SafeDetourPlanner,
+        waypointFinder: SafeWaypointFinder,
         source: FakeSafetySpotSource,
     ) = SafeRouteService(
-        routeFinder = RouteFinder(tmap, detourPlanner, RouteCandidateMerger()),
+        routeFinder = RouteFinder(tmap, waypointFinder, RouteCandidateMerger()),
         scorer = scorer,
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
         routeEvents = mock(),
@@ -155,7 +155,7 @@ class SafeRouteServiceTest {
                         whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
                     },
                 scorer = nightScorer(richSource),
-                detourPlanner = SafeDetourPlanner(richSource),
+                waypointFinder = SafeWaypointFinder(richSource),
                 source = richSource,
             )
 
@@ -167,9 +167,9 @@ class SafeRouteServiceTest {
 
     @Test
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
-        val overBudget = detourAt(lat = 37.53, distanceM = 2000.0)
+        val overBudget = saferRouteAt(lat = 37.53, distanceM = 2000.0)
 
-        val result = service(tmapReturning(detour = overBudget)).safeCompare(request)
+        val result = service(tmapReturning(saferRoute = overBudget)).safeCompare(request)
 
         assertThat(result).hasSize(1)
         assertThat(result.map { it.dist }).doesNotContain("2.0km")
@@ -177,15 +177,15 @@ class SafeRouteServiceTest {
 
     @Test
     fun `거리 예산 안에 드는 우회 후보는 채택된다`() {
-        val withinBudget = detourAt(lat = 37.53, distanceM = 1000.0)
+        val withinBudget = saferRouteAt(lat = 37.53, distanceM = 1000.0)
 
-        val result = service(tmapReturning(detour = withinBudget)).safeCompare(request)
+        val result = service(tmapReturning(saferRoute = withinBudget)).safeCompare(request)
 
         assertThat(result).hasSize(2)
         assertThat(result.map { it.dist }).contains("1.0km")
     }
 
-    private fun detourAt(
+    private fun saferRouteAt(
         lat: Double,
         distanceM: Double,
     ): TmapRoute =
@@ -197,11 +197,11 @@ class SafeRouteServiceTest {
             steps = emptyList(),
         )
 
-    private fun tmapReturning(detour: TmapRoute): TmapRouteClient =
+    private fun tmapReturning(saferRoute: TmapRoute): TmapRouteClient =
         mock<TmapRouteClient>().also {
             whenever(it.isEnabled).thenReturn(true)
             whenever(it.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA)
-            whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(detour)
+            whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(saferRoute)
         }
 
     @Test
