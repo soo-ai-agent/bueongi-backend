@@ -27,12 +27,16 @@ class RouteController(
     @PostMapping("/compare")
     fun compare(
         @Valid @RequestBody request: RouteRequest,
-    ): List<RouteOption> = routeService.compare(request.toValidatedQuery(routeTypeCatalog))
+    ): List<RouteOption> {
+        return routeService.compare(request.toValidatedQuery(routeTypeCatalog))
+    }
 
     @PostMapping("/safe-compare")
     fun safeCompare(
         @Valid @RequestBody request: RouteRequest,
-    ): List<RouteOption> = safeRouteService.safeCompare(request.toValidatedQuery(routeTypeCatalog))
+    ): List<RouteOption> {
+        return safeRouteService.safeCompare(request.toValidatedQuery(routeTypeCatalog))
+    }
 
     @PostMapping("/safety-spots")
     fun safetySpots(

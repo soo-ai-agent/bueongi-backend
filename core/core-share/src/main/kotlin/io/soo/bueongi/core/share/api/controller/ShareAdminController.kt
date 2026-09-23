@@ -31,10 +31,14 @@ class ShareAdminController(
     @GetMapping("/share-sessions/{token}/location")
     fun shareSessionLocation(
         @PathVariable token: String,
-    ): LocationView = shareService.getLocationForAdmin(token)
+    ): LocationView {
+        return shareService.getLocationForAdmin(token)
+    }
 
     @GetMapping("/share-sessions/{token}/route")
     fun shareSessionRoute(
         @PathVariable token: String,
-    ): RouteView = shareService.getRoute(token)
+    ): RouteView {
+        return shareService.getRoute(token)
+    }
 }

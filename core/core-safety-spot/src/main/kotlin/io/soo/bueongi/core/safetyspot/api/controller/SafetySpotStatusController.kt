@@ -17,7 +17,9 @@ class SafetySpotStatusController(
     private val regionStatusService: RegionSafetySpotStatusService,
 ) {
     @GetMapping("/api/admin/safety-spot-status")
-    fun safetySpotStatus(): SafetySpotStatusSummary = safetySpotStatusService.summarize()
+    fun safetySpotStatus(): SafetySpotStatusSummary {
+        return safetySpotStatusService.summarize()
+    }
 
     @GetMapping("/api/admin/safety-spot-status/regions")
     fun regions(): List<RegionSafetySpotResponse> {
@@ -33,5 +35,7 @@ class SafetySpotStatusController(
     fun regionSpots(
         @PathVariable code: String,
         @RequestParam(required = false, defaultValue = "2000") limit: Int,
-    ): RegionSafetySpotsResponse = RegionSafetySpotsResponse.from(regionStatusService.findSpotsByCode(code, limit))
+    ): RegionSafetySpotsResponse {
+        return RegionSafetySpotsResponse.from(regionStatusService.findSpotsByCode(code, limit))
+    }
 }

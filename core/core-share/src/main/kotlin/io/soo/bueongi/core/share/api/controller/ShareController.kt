@@ -32,7 +32,9 @@ class ShareController(
     @PostMapping("/create")
     fun create(
         @Valid @RequestBody(required = false) request: CreateShareRequest?,
-    ): CreateShareResponse = CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
+    ): CreateShareResponse {
+        return CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
+    }
 
     @PostMapping("/{token}/location")
     fun updateLocation(
@@ -47,7 +49,9 @@ class ShareController(
     @GetMapping("/{token}/location")
     fun getLocation(
         @PathVariable token: String,
-    ): LocationView = service.getLocation(token)
+    ): LocationView {
+        return service.getLocation(token)
+    }
 
     @PostMapping("/{token}/route")
     fun saveRoute(
@@ -62,22 +66,30 @@ class ShareController(
     @GetMapping("/{token}/route")
     fun getRoute(
         @PathVariable token: String,
-    ): RouteView = service.getRoute(token)
+    ): RouteView {
+        return service.getRoute(token)
+    }
 
     @PostMapping("/{token}/end")
     fun end(
         @PathVariable token: String,
         @Valid @RequestBody request: EndShareRequest,
-    ) = service.end(token, request.ownerSecret)
+    ) {
+        service.end(token, request.ownerSecret)
+    }
 
     @PostMapping("/{token}/watching")
     fun watching(
         @PathVariable token: String,
         @Valid @RequestBody request: WatchRequest,
-    ): WatchResponse = WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
+    ): WatchResponse {
+        return WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
+    }
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
     fun page(
         @PathVariable token: String,
-    ): String = guardianPage.render(token)
+    ): String {
+        return guardianPage.render(token)
+    }
 }
