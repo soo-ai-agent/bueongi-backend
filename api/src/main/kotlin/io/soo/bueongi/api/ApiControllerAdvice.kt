@@ -3,12 +3,11 @@ package io.soo.bueongi.api
 import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.UNHANDLED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
 import io.soo.bueongi.support.logging.currentRequestOrigin
+import io.soo.bueongi.support.logging.traceColumn
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.BeanInstantiationException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -17,6 +16,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
@@ -84,6 +84,30 @@ class ApiControllerAdvice(
         ).apply {
             title = "Malformed Request"
             setProperty("code", "MALFORMED_REQUEST")
+        }
+
+    // 요청 DTO 생성자에서 던진 도메인 예외는 스프링이 BeanInstantiationException 으로 감싼다 — 원래 예외로 되돌린다.
+    @ExceptionHandler(BeanInstantiationException::class)
+    fun handleRequestBinding(ex: BeanInstantiationException): ProblemDetail {
+        val cause: Throwable? = ex.cause
+        if (cause is ApiException) {
+            return handleApi(cause)
+        }
+        throw ex
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    fun handleMissingParameter(ex: MissingServletRequestParameterException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "필수 요청 파라미터가 없습니다.",
+        ).apply {
+            title = "Validation Failed"
+            setProperty("code", "VALIDATION_FAILED")
+            setProperty(
+                "errors",
+                listOf(ApiFieldError(field = ex.parameterName, message = "필수 파라미터입니다.", rejectedValue = null)),
+            )
         }
 
     @ExceptionHandler(MissingServletRequestPartException::class)
@@ -192,16 +216,8 @@ class ApiControllerAdvice(
         action: String,
         ex: Exception,
     ) {
-        val line: String =
-            ExceptionLogLine(
-                kind = UNHANDLED_EXCEPTION,
-                counterpart = counterpart,
-                subject = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN },
-                cause = causeChainOf(ex),
-                result = status.toString(),
-                action = action,
-            ).format()
-        log.error(line, ex)
+        val origin: String = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN }
+        log.error("미처리 예외 | $counterpart | $status | $origin | ${traceColumn()} | 조치=$action", ex)
     }
 
     private companion object {

@@ -4,17 +4,13 @@ import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
 import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.beginTrace
-import io.soo.bueongi.support.logging.causeChainOf
 import io.soo.bueongi.support.logging.endTrace
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpHeaders
 import org.springframework.web.filter.OncePerRequestFilter
 
 class RequestMetricsFilter(
@@ -44,12 +40,6 @@ class RequestMetricsFilter(
                     status = response.status,
                     durationMs = durationMs,
                     clientId = clientId,
-                    address = clientAddressOf(request),
-                    kind =
-                        clientKindOf(
-                            declaredPlatform = request.getHeader(CLIENT_PLATFORM_HEADER),
-                            userAgent = request.getHeader(HttpHeaders.USER_AGENT),
-                        ),
                     caller = caller,
                 ),
             )
@@ -124,22 +114,12 @@ class RequestMetricsFilter(
                 ),
             )
         } catch (e: Exception) {
-            log.warn(
-                ExceptionLogLine(
-                    kind = IGNORED_EXCEPTION,
-                    counterpart = "요청 계측",
-                    subject = path,
-                    cause = causeChainOf(e),
-                    result = "$status $method",
-                    action = "응답은 그대로 나감(통계만 유실)",
-                ).format(),
-            )
+            log.warn("요청 계측 실패 | $status $method $path | 응답은 그대로 나감(통계만 유실)", e)
         }
     }
 
     private companion object {
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
-        const val CLIENT_PLATFORM_HEADER: String = "X-Client-Platform"
         val ADMIN_PREFIXES: List<String> = listOf("/api/admin", "/api/v1/auth")
         val EXCLUDED_PREFIXES: List<String> = listOf("/actuator", "/healthz", "/cdn")
         val METRIC_PREFIXES: List<String> = listOf("/api", "/share")

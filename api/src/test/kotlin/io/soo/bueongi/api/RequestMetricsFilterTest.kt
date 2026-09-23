@@ -287,27 +287,9 @@ class RequestMetricsFilterTest {
     }
 
     @Test
-    fun `요청 주소를 남긴다 - 프록시 뒤에서는 전달 헤더의 맨 앞을 쓴다`() {
+    fun `수신 요청은 방향을 맨 앞에 두고 상태 경로 순으로 적는다`() {
         val appender = captureLogs()
-        val direct = MockHttpServletRequest("GET", "/api/app-info").apply { remoteAddr = "10.0.0.9" }
-        val behindProxy =
-            MockHttpServletRequest("GET", "/api/app-info").apply {
-                remoteAddr = "10.0.0.9"
-                addHeader("X-Forwarded-For", "203.0.113.7, 70.41.3.18")
-            }
-
-        filterOf(CapturingStore()).doFilter(direct, MockHttpServletResponse(), chainSetting(200))
-        filterOf(CapturingStore()).doFilter(behindProxy, MockHttpServletResponse(), chainSetting(200))
-
-        assertThat(appender.list[0].formattedMessage).contains("10.0.0.9")
-        assertThat(appender.list[1].formattedMessage).contains("203.0.113.7")
-        assertThat(appender.list[1].formattedMessage).doesNotContain("10.0.0.9")
-    }
-
-    @Test
-    fun `수신 요청은 방향을 맨 앞에 두고 상대 상태 경로 순으로 적는다`() {
-        val appender = captureLogs()
-        val request = MockHttpServletRequest("GET", "/api/places/search").apply { remoteAddr = "10.0.0.9" }
+        val request = MockHttpServletRequest("GET", "/api/places/search")
 
         filterOf(CapturingStore()).doFilter(request, MockHttpServletResponse(), chainSetting(200))
 
@@ -315,24 +297,23 @@ class RequestMetricsFilterTest {
         assertThat(line).startsWith("[수신] 사용자")
         assertThat(line).doesNotContain("[송신]")
         val columns: List<String> = line.split("  |  ").map { it.trim() }
-        assertThat(columns[1]).isEqualTo("10.0.0.9")
-        assertThat(columns[2]).isEqualTo("200 GET")
-        assertThat(columns[3]).isEqualTo("/api/places/search")
-        assertThat(columns[4]).endsWith("ms")
+        assertThat(columns[1]).isEqualTo("200 GET")
+        assertThat(columns[2]).isEqualTo("/api/places/search")
+        assertThat(columns[3]).endsWith("ms")
     }
 
     @Test
-    fun `앞의 세 칸은 값이 짧아도 폭을 채운다`() {
+    fun `앞의 두 칸은 값이 짧아도 폭을 채운다`() {
         val appender = captureLogs()
         val filter = filterOf(CapturingStore())
 
         filter.doFilter(
-            MockHttpServletRequest("GET", "/api/admin/traffic").apply { remoteAddr = "10.0.0.9" },
+            MockHttpServletRequest("GET", "/api/admin/traffic"),
             MockHttpServletResponse(),
             chainSetting(200),
         )
         filter.doFilter(
-            MockHttpServletRequest("DELETE", "/api/x").apply { remoteAddr = "203.0.113.7" },
+            MockHttpServletRequest("DELETE", "/api/x"),
             MockHttpServletResponse(),
             chainSetting(200),
         )
@@ -387,7 +368,7 @@ class RequestMetricsFilterTest {
     }
 
     @Test
-    fun `통계 기록 실패는 예외 줄로 남기고 응답은 그대로 나간다`() {
+    fun `통계 기록 실패는 로그로 남기고 응답은 그대로 나간다`() {
         val appender = captureLogs()
         val broken =
             object : RequestMetricStore {
@@ -403,10 +384,10 @@ class RequestMetricsFilterTest {
             chainSetting(200),
         )
 
-        val exceptionLine: String = appender.list.last().formattedMessage
-        assertThat(exceptionLine).startsWith("[예외] 무시")
-        assertThat(exceptionLine).contains("✖ IllegalStateException: 창이 닫혔다")
-        assertThat(exceptionLine).contains("IllegalArgumentException: 연결 없음")
+        val failureEvent = appender.list.last()
+        assertThat(failureEvent.formattedMessage).startsWith("요청 계측 실패")
+        assertThat(failureEvent.throwableProxy.message).isEqualTo("창이 닫혔다")
+        assertThat(failureEvent.throwableProxy.cause.message).isEqualTo("연결 없음")
         assertThat(response.status).isEqualTo(200)
     }
 

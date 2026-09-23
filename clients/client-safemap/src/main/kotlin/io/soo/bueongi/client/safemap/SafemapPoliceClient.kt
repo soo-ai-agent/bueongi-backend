@@ -1,9 +1,5 @@
 package io.soo.bueongi.client.safemap
 
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
-import io.soo.bueongi.support.logging.maskSecrets
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 import org.slf4j.Logger
@@ -61,7 +57,7 @@ class SafemapPoliceClient(
             try {
                 restClient.get().uri(URI.create(url)).retrieve().body(SafemapResponse::class.java)
             } catch (e: Exception) {
-                log.warn(failureLine(cause = causeChainOf(e, serviceKey), pageNo = pageNo))
+                log.warn(failureLine(cause = e.message.orEmpty(), pageNo = pageNo))
                 return null
             }
         if (response == null) {
@@ -77,7 +73,7 @@ class SafemapPoliceClient(
         }
         log.warn(
             failureLine(
-                cause = "resultCode=$code(${maskSecrets(header.resultMsg.orEmpty())})",
+                cause = "resultCode=$code(${header.resultMsg.orEmpty()})",
                 pageNo = 0,
             ),
         )
@@ -122,15 +118,10 @@ class SafemapPoliceClient(
     private fun failureLine(
         cause: String,
         pageNo: Int,
-    ): String =
-        ExceptionLogLine(
-            kind = IGNORED_EXCEPTION,
-            counterpart = PROVIDER,
-            subject = PATH,
-            cause = cause,
-            action = "수집 중단(기존 데이터 유지)",
-            paging = if (pageNo > 0) "page=$pageNo" else "",
-        ).format()
+    ): String {
+        val paging: String = if (pageNo > 0) "page=$pageNo" else ""
+        return "$PROVIDER 수집 실패 | $PATH | $paging | 원인=$cause | 조치=수집 중단(기존 데이터 유지)"
+    }
 
     private companion object {
         const val PATH: String = "/openapi2/IF_0036"

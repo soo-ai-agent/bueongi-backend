@@ -1,9 +1,6 @@
 package io.soo.bueongi.client.slack
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
 import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
@@ -140,14 +137,9 @@ class SlackAlertNotifier internal constructor(
         e: Throwable,
         subject: String,
         action: String,
-    ): String =
-        ExceptionLogLine(
-            kind = IGNORED_EXCEPTION,
-            counterpart = PROVIDER,
-            subject = subject,
-            cause = causeChainOf(e, config.webhookUrl()),
-            action = action,
-        ).format()
+    ): String {
+        return "$PROVIDER 호출 실패 | $subject | 원인=${e.message.orEmpty()} | 조치=$action"
+    }
 
     private companion object {
         const val ALERT_HISTORY_CAP: Int = 200

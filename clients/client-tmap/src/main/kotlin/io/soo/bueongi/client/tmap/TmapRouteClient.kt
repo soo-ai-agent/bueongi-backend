@@ -2,9 +2,6 @@ package io.soo.bueongi.client.tmap
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -100,14 +97,8 @@ class TmapRouteClient(
             route
         } catch (e: Exception) {
             log.warn(
-                ExceptionLogLine(
-                    kind = IGNORED_EXCEPTION,
-                    counterpart = PROVIDER,
-                    subject = PEDESTRIAN_PATH,
-                    cause = causeChainOf(e, appKey),
-                    action = "이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
-                    paging = "searchOption=$searchOption",
-                ).format(),
+                "$PROVIDER 호출 실패 | $PEDESTRIAN_PATH | searchOption=$searchOption | " +
+                    "원인=${e.message.orEmpty()} | 조치=이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
             )
             null
         }

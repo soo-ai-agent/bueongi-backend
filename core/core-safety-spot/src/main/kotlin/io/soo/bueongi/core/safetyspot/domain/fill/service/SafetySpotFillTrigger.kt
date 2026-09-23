@@ -7,9 +7,6 @@ import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFil
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -41,16 +38,7 @@ class SafetySpotFillTrigger(
                 fillSecurityLampsOf(points)
                 fillChildSafeHousesOf(points)
             } catch (e: Exception) {
-                // 예외 메시지에 인증키가 실린 URL 이 섞여 올 수 있어 causeChainOf 로 지운다.
-                log.warn(
-                    ExceptionLogLine(
-                        kind = IGNORED_EXCEPTION,
-                        counterpart = "안심시설",
-                        subject = "뒤에서 채우기",
-                        cause = causeChainOf(e),
-                        action = "이번 채우기만 건너뜀(기존 데이터 유지)",
-                    ).format(),
-                )
+                log.warn("안심시설 뒤에서 채우기 실패 — 이번 채우기만 건너뜀(기존 데이터 유지)", e)
             }
         }
     }

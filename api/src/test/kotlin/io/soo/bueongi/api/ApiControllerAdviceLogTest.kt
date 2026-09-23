@@ -28,7 +28,7 @@ class ApiControllerAdviceLogTest {
     }
 
     @Test
-    fun `미처리 예외는 예외 줄로 남기고 원인 사슬을 끝까지 적는다`() {
+    fun `미처리 예외는 조치와 함께 남기고 원인은 스택으로 남긴다`() {
         val appender = captureLogs()
         val root = IllegalArgumentException("Illegal unquoted character")
         val outer = IllegalStateException("Error while extracting response", root)
@@ -37,10 +37,10 @@ class ApiControllerAdviceLogTest {
 
         val event: ILoggingEvent = appender.list.single()
         assertThat(event.level).isEqualTo(Level.ERROR)
-        assertThat(event.formattedMessage).startsWith("[예외] 미처리")
-        assertThat(event.formattedMessage).contains("✖ IllegalStateException: Error while extracting response")
-        assertThat(event.formattedMessage).contains("IllegalArgumentException: Illegal unquoted character")
-        assertThat(event.formattedMessage).contains("↳ 500 INTERNAL_ERROR 응답")
+        assertThat(event.formattedMessage).startsWith("미처리 예외")
+        assertThat(event.formattedMessage).contains("조치=500 INTERNAL_ERROR 응답")
+        assertThat(event.throwableProxy.message).isEqualTo("Error while extracting response")
+        assertThat(event.throwableProxy.cause.message).isEqualTo("Illegal unquoted character")
     }
 
     @Test
@@ -53,7 +53,7 @@ class ApiControllerAdviceLogTest {
     }
 
     @Test
-    fun `저장소 장애도 같은 예외 줄로 남긴다`() {
+    fun `저장소 장애도 같은 형식으로 남긴다`() {
         val appender = captureLogs()
 
         ApiControllerAdvice().handleShareStoreUnavailable(
@@ -61,9 +61,9 @@ class ApiControllerAdviceLogTest {
         )
 
         val line: String = appender.list.single().formattedMessage
-        assertThat(line).startsWith("[예외] 미처리")
+        assertThat(line).startsWith("미처리 예외")
         assertThat(line).contains("공유 저장소")
-        assertThat(line).contains("RuntimeException: redis down")
+        assertThat(appender.list.single().throwableProxy.cause.message).isEqualTo("redis down")
     }
 
     @Test

@@ -1,10 +1,6 @@
 package io.soo.bueongi.client.safe182
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
-import io.soo.bueongi.support.logging.causeChainOf
-import io.soo.bueongi.support.logging.maskSecrets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -74,7 +70,7 @@ class ChildSafeHouseClient(
                     ?: return null
             objectMapper.readValue(body, Safe182Response::class.java)
         } catch (e: Exception) {
-            log.warn(failureLine(cause = causeChainOf(e, esntlId, authKey), pageIndex = pageIndex))
+            log.warn(failureLine(cause = e.message.orEmpty(), pageIndex = pageIndex))
             null
         }
     }
@@ -113,7 +109,7 @@ class ChildSafeHouseClient(
         }
         log.warn(
             failureLine(
-                cause = "result=$code(${maskSecrets(response.msg.orEmpty(), esntlId, authKey)})",
+                cause = "result=$code(${response.msg.orEmpty()})",
                 pageIndex = 0,
             ),
         )
@@ -161,15 +157,10 @@ class ChildSafeHouseClient(
         cause: String,
         pageIndex: Int,
         action: String = STOPPED_ACTION,
-    ): String =
-        ExceptionLogLine(
-            kind = IGNORED_EXCEPTION,
-            counterpart = PROVIDER,
-            subject = PATH,
-            cause = cause,
-            action = action,
-            paging = if (pageIndex > 0) "page=$pageIndex" else "",
-        ).format()
+    ): String {
+        val paging: String = if (pageIndex > 0) "page=$pageIndex" else ""
+        return "$PROVIDER 수집 실패 | $PATH | $paging | 원인=$cause | 조치=$action"
+    }
 
     private companion object {
         const val PATH: String = "/api/lcm/safeMap.do"

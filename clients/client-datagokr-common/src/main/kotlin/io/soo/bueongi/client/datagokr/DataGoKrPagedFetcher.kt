@@ -1,11 +1,7 @@
 package io.soo.bueongi.client.datagokr
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.soo.bueongi.support.logging.ExceptionLogLine
-import io.soo.bueongi.support.logging.IGNORED_EXCEPTION
 import io.soo.bueongi.support.logging.NO_RESPONSE_STATUS
-import io.soo.bueongi.support.logging.causeChainOf
-import io.soo.bueongi.support.logging.maskSecrets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -50,7 +46,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = "resultCode=$code(${maskSecrets(header.resultMsg.orEmpty())})",
+                        cause = "resultCode=$code(${header.resultMsg.orEmpty()})",
                         paging = "page=$pageNo",
                     ),
                 )
@@ -101,7 +97,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = causeChainOf(e, serviceKey),
+                        cause = e.message.orEmpty(),
                         paging = "page=$pageNo 시도=${attempt}회",
                         result = "${e.statusCode.value()} GET",
                     ),
@@ -112,7 +108,7 @@ class DataGoKrPagedFetcher(
                     log.warn(
                         failureLine(
                             endpoint = endpoint,
-                            cause = causeChainOf(e, serviceKey),
+                            cause = e.message.orEmpty(),
                             paging = "page=$pageNo 시도=${attempt}회",
                         ),
                     )
@@ -122,7 +118,7 @@ class DataGoKrPagedFetcher(
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
-                        cause = causeChainOf(e, serviceKey),
+                        cause = e.message.orEmpty(),
                         paging = "page=$pageNo 시도=${attempt}회",
                         action = "${backoffMs}ms 후 재시도",
                     ),
@@ -181,19 +177,11 @@ class DataGoKrPagedFetcher(
         paging: String,
         action: String = STOPPED_ACTION,
         result: String = NO_RESPONSE_STATUS,
-    ): String =
-        ExceptionLogLine(
-            kind = IGNORED_EXCEPTION,
-            counterpart = PROVIDER,
-            subject = URI.create(endpoint).path,
-            cause = cause,
-            result = result,
-            action = action,
-            paging = paging,
-        ).format()
+    ): String {
+        return "$PROVIDER 수집 실패 | ${URI.create(endpoint).path} | $result | $paging | 원인=$cause | 조치=$action"
+    }
 
     private companion object {
-        // 송신 줄의 원천 이름(ExternalApiProvider.DATA_GO_KR)과 같아야 세로로 짝이 보인다.
         const val PROVIDER: String = "data_go_kr"
         const val STOPPED_ACTION: String = "갱신 중단(기존 데이터 유지)"
     }
