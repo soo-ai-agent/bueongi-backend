@@ -14,11 +14,11 @@ class TmapRouteCache(
 
     fun get(
         origin: TmapCoord,
-        dest: TmapCoord,
+        destination: TmapCoord,
         searchOption: String,
-        passList: List<TmapCoord>?,
+        passList: List<TmapCoord>,
     ): TmapRoute? {
-        val key: String = key(origin, dest, searchOption, passList)
+        val key: String = key(origin, destination, searchOption, passList)
         val entry: Entry = entries[key] ?: return null
         if (clock() >= entry.expiresAt) {
             entries.remove(key)
@@ -29,31 +29,33 @@ class TmapRouteCache(
 
     fun put(
         origin: TmapCoord,
-        dest: TmapCoord,
+        destination: TmapCoord,
         searchOption: String,
-        passList: List<TmapCoord>?,
+        passList: List<TmapCoord>,
         route: TmapRoute,
     ) {
         if (entries.size >= maxEntries) {
             entries.clear()
         }
-        entries[key(origin, dest, searchOption, passList)] = Entry(route, clock() + ttlMillis)
+        entries[key(origin, destination, searchOption, passList)] = Entry(route, clock() + ttlMillis)
     }
 
     fun size(): Int = entries.size
 
     private fun key(
         origin: TmapCoord,
-        dest: TmapCoord,
+        destination: TmapCoord,
         searchOption: String,
-        passList: List<TmapCoord>?,
+        passList: List<TmapCoord>,
     ): String {
         val sb =
             StringBuilder()
                 .append(snap(origin.lat)).append(',').append(snap(origin.lng)).append('>')
-                .append(snap(dest.lat)).append(',').append(snap(dest.lng)).append('#')
+                .append(snap(destination.lat)).append(',').append(snap(destination.lng)).append('#')
                 .append(searchOption)
-        passList?.forEach { sb.append('|').append(snap(it.lat)).append(',').append(snap(it.lng)) }
+        for (waypoint in passList) {
+            sb.append('|').append(snap(waypoint.lat)).append(',').append(snap(waypoint.lng))
+        }
         return sb.toString()
     }
 

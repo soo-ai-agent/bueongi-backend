@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test
 
 class SafeDetourPlannerTest {
     private val origin = GeoPoint(37.5, 127.0)
-    private val dest = GeoPoint(37.5, 127.01)
-    private val directPath = listOf(origin, dest)
+    private val destination = GeoPoint(37.5, 127.01)
+    private val directPath = listOf(origin, destination)
 
     @Test
     fun `extractSafeAnchors - 밀집 클러스터를 weight 로 묶고 내림차순 상위 반환`() {
@@ -50,7 +50,7 @@ class SafeDetourPlannerTest {
         val planner = SafeDetourPlanner(FakeSafetySpotSource())
         val a = SafeAnchor(GeoPoint(37.5004, 127.004), weight = 5)
         val d = SafeAnchor(GeoPoint(37.5004, 127.006), weight = 3)
-        val combos = planner.pickDetourWaypoints(origin, dest, listOf(a, d))
+        val combos = planner.pickDetourWaypoints(origin, destination, listOf(a, d))
 
         assertThat(combos).hasSize(3)
         assertThat(combos).contains(listOf(a.center), listOf(d.center))
@@ -62,13 +62,13 @@ class SafeDetourPlannerTest {
         val planner = SafeDetourPlanner(FakeSafetySpotSource())
         val nearOrigin = SafeAnchor(GeoPoint(37.5, 127.0005), weight = 9)
         val farLateral = SafeAnchor(GeoPoint(37.503, 127.005), weight = 9)
-        val combos = planner.pickDetourWaypoints(origin, dest, listOf(nearOrigin, farLateral))
+        val combos = planner.pickDetourWaypoints(origin, destination, listOf(nearOrigin, farLateral))
         assertThat(combos).isEmpty()
     }
 
     @Test
     fun `pickDetourWaypoints - 앵커 없으면 빈 결과`() {
         val planner = SafeDetourPlanner(FakeSafetySpotSource())
-        assertThat(planner.pickDetourWaypoints(origin, dest, emptyList())).isEmpty()
+        assertThat(planner.pickDetourWaypoints(origin, destination, emptyList())).isEmpty()
     }
 }

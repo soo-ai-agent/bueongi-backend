@@ -20,113 +20,66 @@ class TmapRouteClient(
 
     val isEnabled: Boolean
         get() = appKey.isNotEmpty()
-
     private val restClient: RestClient = restClientBuilder.clone().build()
-
     private val cache = TmapRouteCache()
-
     private val objectMapper = ObjectMapper()
 
-    fun fetchRoutes(
+    fun fetchRoute(
         origin: TmapCoord,
-        dest: TmapCoord,
-        destName: String? = null,
-    ): List<TmapRoute> {
-        if (!isEnabled) {
-            return emptyList()
-        }
-        val routes: ArrayList<TmapRoute> = ArrayList()
-        val seen: HashSet<Long> = HashSet()
-        for (option in DEFAULT_SEARCH_OPTIONS) {
-            val route: TmapRoute = call(origin, dest, destName, option, passList = null) ?: continue
-            if (!seen.add(route.identityKey)) {
-                continue
-            }
-            routes.add(route)
-        }
-        return routes
-    }
-
-    fun fetchRouteVia(
-        origin: TmapCoord,
-        dest: TmapCoord,
+        destination: TmapCoord,
+        destinationName: String,
+        searchOption: String,
         passList: List<TmapCoord>,
-        destName: String? = null,
     ): TmapRoute? {
         if (!isEnabled) {
             return null
         }
-        return call(origin, dest, destName, VIA_SEARCH_OPTION, passList.ifEmpty { null })
-    }
+        val cached: TmapRoute? = cache.get(origin, destination, searchOption, passList)
+        if (cached != null) {
+            return cached
+        }
 
-    private fun call(
-        origin: TmapCoord,
-        dest: TmapCoord,
-        destName: String?,
-        searchOption: String,
-        passList: List<TmapCoord>?,
-    ): TmapRoute? {
-        cache.get(origin, dest, searchOption, passList)?.let { return it }
-        return try {
-            val body: Map<String, String> = buildRequestBody(origin, dest, destName, searchOption, passList)
-            // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
-            val raw: String? =
-                restClient.post()
-                    .uri(PEDESTRIAN_ENDPOINT)
-                    .header("appKey", appKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body<String>()
-            val json: JsonNode? =
-                if (raw == null) {
-                    null
-                } else {
-                    objectMapper.readTree(sanitizeTmapJson(raw))
+        val route: TmapRoute? =
+            try {
+                val body: LinkedHashMap<String, String> =
+                    linkedMapOf(
+                        "startX" to origin.lng.toString(),
+                        "startY" to origin.lat.toString(),
+                        "endX" to destination.lng.toString(),
+                        "endY" to destination.lat.toString(),
+                        "startName" to "출발",
+                        "endName" to destinationName,
+                        "reqCoordType" to "WGS84GEO",
+                        "resCoordType" to "WGS84GEO",
+                        "searchOption" to searchOption,
+                    )
+                if (passList.isNotEmpty()) {
+                    body["passList"] = passList.joinToString("_") { "${it.lng},${it.lat}" }
                 }
-            val route: TmapRoute?
-            if (json == null) {
-                route = null
-            } else {
-                route = parseTmapGeoJson(json, searchOption)
+                // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
+                val raw: String? =
+                    restClient.post()
+                        .uri(PEDESTRIAN_ENDPOINT)
+                        .header("appKey", appKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .body<String>()
+                val json: JsonNode = objectMapper.readTree(sanitizeTmapJson(raw.orEmpty()))
+                parseTmapGeoJson(json, searchOption)
+            } catch (e: Exception) {
+                log.warn(
+                    "$PROVIDER 호출 실패 | $PEDESTRIAN_PATH | searchOption=$searchOption | " +
+                        "원인=${e.javaClass.simpleName} | 조치=이 후보 하나만 버림(나머지 옵션으로 계속)",
+                )
+                null
             }
-            if (route != null) {
-                cache.put(origin, dest, searchOption, passList, route)
-            }
-            route
-        } catch (e: Exception) {
-            log.warn(
-                "$PROVIDER 호출 실패 | $PEDESTRIAN_PATH | searchOption=$searchOption | " +
-                    "원인=${e.javaClass.simpleName} | 조치=이 후보 하나만 버림(나머지 옵션·폴백으로 계속)",
-            )
-            null
-        }
-    }
 
-    private fun buildRequestBody(
-        origin: TmapCoord,
-        dest: TmapCoord,
-        destName: String?,
-        searchOption: String,
-        passList: List<TmapCoord>?,
-    ): Map<String, String> {
-        val body: LinkedHashMap<String, String> =
-            linkedMapOf(
-                "startX" to origin.lng.toString(),
-                "startY" to origin.lat.toString(),
-                "endX" to dest.lng.toString(),
-                "endY" to dest.lat.toString(),
-                "startName" to "출발",
-                "endName" to (destName?.trim()?.takeIf { it.isNotEmpty() } ?: "목적지"),
-                "reqCoordType" to "WGS84GEO",
-                "resCoordType" to "WGS84GEO",
-                "searchOption" to searchOption,
-            )
-        if (!passList.isNullOrEmpty()) {
-            body["passList"] = passList.joinToString("_") { "${it.lng},${it.lat}" }
+        if (route != null) {
+            cache.put(origin, destination, searchOption, passList, route)
         }
-        return body
+        return route
     }
 
     companion object {
@@ -136,10 +89,5 @@ class TmapRouteClient(
         private const val PEDESTRIAN_PATH: String = "/tmap/routes/pedestrian"
 
         private const val PROVIDER: String = "tmap"
-
-        // Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10.
-        private val DEFAULT_SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
-
-        private const val VIA_SEARCH_OPTION: String = "0"
     }
 }

@@ -28,7 +28,8 @@ class SafeRouteService(
             routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
-        val assigned: List<ScoredRoute> = assignOneRoutePerType(routeFinder.findWithSafeDetours(query, tmapRoutes))
+        val routeCandidate: List<RouteCandidate> = routeFinder.findSaferRoutes(query, tmapRoutes)
+        val assigned: List<ScoredRoute> = assignOneRoutePerType(routeCandidate)
         return assembler.assemble(assigned, query.origin, query.destination)
     }
 

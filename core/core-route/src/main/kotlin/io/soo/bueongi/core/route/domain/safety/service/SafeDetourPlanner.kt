@@ -59,18 +59,18 @@ class SafeDetourPlanner(
 
     fun pickDetourWaypoints(
         origin: GeoPoint,
-        dest: GeoPoint,
+        destination: GeoPoint,
         anchors: List<SafeAnchor>,
     ): List<List<GeoPoint>> {
         if (anchors.isEmpty()) {
             return emptyList()
         }
-        val maxLateralMeters: Double = origin.distanceMetersTo(dest) * DEFAULT_LATERAL_RATIO
+        val maxLateralMeters: Double = origin.distanceMetersTo(destination) * DEFAULT_LATERAL_RATIO
 
         data class Placed(val anchor: SafeAnchor, val progress: Double)
         val placed: List<Placed> =
             anchors.mapNotNull { anchor ->
-                val projection: SegmentProjection = anchor.center.projectOnto(origin, dest)
+                val projection: SegmentProjection = anchor.center.projectOnto(origin, destination)
                 val progress: Double = projection.t
                 val lateralMeters: Double = projection.distanceMeters
                 val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS

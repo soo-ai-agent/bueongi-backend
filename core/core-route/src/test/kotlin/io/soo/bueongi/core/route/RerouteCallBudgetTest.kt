@@ -23,6 +23,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -58,8 +60,8 @@ class RerouteCallBudgetTest {
     private fun tmapReturning(): TmapRouteClient {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(tmapRoutes)
-        whenever(tmap.fetchRouteVia(any(), any(), any(), anyOrNull())).thenReturn(tmapRoutes.first())
+        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(tmapRoutes.first())
+        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(tmapRoutes.first())
         return tmap
     }
 
@@ -77,7 +79,7 @@ class RerouteCallBudgetTest {
 
         serviceOf(tmap).safeCompare(queryOf(reroute = true))
 
-        verify(tmap, never()).fetchRouteVia(any(), any(), any(), anyOrNull())
+        verify(tmap, never()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
 
     @Test
@@ -86,7 +88,7 @@ class RerouteCallBudgetTest {
 
         serviceOf(tmap).safeCompare(queryOf(reroute = false))
 
-        verify(tmap, org.mockito.kotlin.atLeastOnce()).fetchRouteVia(any(), any(), any(), anyOrNull())
+        verify(tmap, org.mockito.kotlin.atLeastOnce()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
 
     @Test

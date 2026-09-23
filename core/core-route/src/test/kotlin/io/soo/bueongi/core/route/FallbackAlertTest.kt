@@ -23,6 +23,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.context.ApplicationEventPublisher
@@ -63,7 +65,7 @@ class FallbackAlertTest {
     fun `Tmap 후보가 전멸하면 503 으로 알리면서 알림을 쏜다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
+        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(null)
         val notifier = RecordingPublisher()
 
         assertThatThrownBy { service(tmap, notifier).safeCompare(query) }
