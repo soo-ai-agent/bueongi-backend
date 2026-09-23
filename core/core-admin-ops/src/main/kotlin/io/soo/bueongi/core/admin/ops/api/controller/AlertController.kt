@@ -24,9 +24,7 @@ class AlertController(
     private val slackConfigService: SlackConfigService,
 ) {
     @GetMapping("/alerts")
-    fun alerts(
-        @RequestParam(required = false, defaultValue = "100") limit: Int,
-    ): AlertsResponse {
+    fun alerts(@RequestParam(required = false, defaultValue = "100") limit: Int): AlertsResponse {
         val alerts: List<AlertRecord> = alertNotifier.findRecentAlerts(limit)
         return AlertsResponse(alerts = alerts)
     }
@@ -37,9 +35,7 @@ class AlertController(
     }
 
     @PutMapping("/slack-config")
-    fun updateSlackConfig(
-        @Valid @RequestBody request: SlackConfigUpdateRequest,
-    ): SlackConfigSummary {
+    fun updateSlackConfig(@Valid @RequestBody request: SlackConfigUpdateRequest): SlackConfigSummary {
         val update: SlackConfigUpdate = request.toUpdate()
         return slackConfigService.update(update)
     }

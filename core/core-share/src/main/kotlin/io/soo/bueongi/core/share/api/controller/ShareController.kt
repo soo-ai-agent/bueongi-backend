@@ -30,9 +30,7 @@ class ShareController(
     private val guardianPage: GuardianPage,
 ) {
     @PostMapping("/create")
-    fun create(
-        @Valid @RequestBody(required = false) request: CreateShareRequest?,
-    ): CreateShareResponse {
+    fun create(@Valid @RequestBody(required = false) request: CreateShareRequest?): CreateShareResponse {
         return CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
     }
 
@@ -47,9 +45,7 @@ class ShareController(
     }
 
     @GetMapping("/{token}/location")
-    fun getLocation(
-        @PathVariable token: String,
-    ): LocationView {
+    fun getLocation(@PathVariable token: String): LocationView {
         return service.getLocation(token)
     }
 
@@ -64,9 +60,7 @@ class ShareController(
     }
 
     @GetMapping("/{token}/route")
-    fun getRoute(
-        @PathVariable token: String,
-    ): RouteView {
+    fun getRoute(@PathVariable token: String): RouteView {
         return service.getRoute(token)
     }
 
@@ -87,9 +81,7 @@ class ShareController(
     }
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])
-    fun page(
-        @PathVariable token: String,
-    ): String {
+    fun page(@PathVariable token: String): String {
         return guardianPage.render(token)
     }
 }
