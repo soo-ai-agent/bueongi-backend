@@ -37,12 +37,12 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         if (path.isEmpty() || corridorM <= 0) {
             return emptyList()
         }
-        val samples: List<GeoPoint> = densify(path)
+        val samples: List<GeoPoint> = fillPointsBetween(path)
         val candidates: List<SafetySpotPoint> = candidateCells(samples, corridorM)
         return candidates.filter { it.toGeoPoint().distanceMetersToPath(path) <= corridorM }
     }
 
-    private fun densify(path: List<GeoPoint>): List<GeoPoint> {
+    private fun fillPointsBetween(path: List<GeoPoint>): List<GeoPoint> {
         if (path.size < 2) {
             return path
         }
@@ -56,7 +56,8 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
             val spanDeg: Double = maxOf(latSpanDeg, lngSpanDeg)
             val steps: Int = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
             for (s in 1..steps) {
-                out.add(from.pointTowards(to, s.toDouble() / steps))
+                val progress: Double = s.toDouble() / steps
+                out.add(from.pointTowards(to, progress))
             }
         }
         return out
