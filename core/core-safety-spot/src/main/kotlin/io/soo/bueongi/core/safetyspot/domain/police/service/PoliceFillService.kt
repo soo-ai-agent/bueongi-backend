@@ -4,70 +4,29 @@ import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPolicePoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
+import io.soo.bueongi.core.safetyspot.domain.fill.service.NationwideFillService
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class PoliceFillService(
     private val client: SafemapPoliceClient,
-    private val cache: SafetySpotRegionCache,
-    private val liveStore: SafetySpotLiveStore,
-    private val retryGate: FillFailureCooldown = FillFailureCooldown(),
-    private val events: SafetySpotFillEventPublisher,
-) {
-    private val log: Logger = LoggerFactory.getLogger(PoliceFillService::class.java)
+    cache: SafetySpotRegionCache,
+    liveStore: SafetySpotLiveStore,
+    retryGate: FillFailureCooldown = FillFailureCooldown(),
+    events: SafetySpotFillEventPublisher,
+) : NationwideFillService<SafemapPolicePoint>(cache, liveStore, retryGate, events) {
+    override val type: SafetySpotType = SafetySpotType.POLICE
 
-    private val inFlight: AtomicBoolean = AtomicBoolean(false)
+    override val isSourceEnabled: Boolean
+        get() = client.isEnabled
 
-    fun isFilled(): Boolean = cache.isCached(SafetySpotType.POLICE, NATIONWIDE)
+    override fun fetch(): List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
 
-    fun fill(): Int {
-        if (!client.isEnabled) {
-            return 0
-        }
-        if (isFilled()) {
-            return 0
-        }
-        if (retryGate.isCoolingDown(NATIONWIDE)) {
-            return 0
-        }
-        if (!inFlight.compareAndSet(false, true)) {
-            return 0
-        }
-        return try {
-            fetchAndStore()
-        } finally {
-            inFlight.set(false)
-        }
-    }
-
-    private fun fetchAndStore(): Int {
-        val fetched: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
-        if (fetched == null) {
-            retryGate.recordFailure(NATIONWIDE)
-            events.fetchFailed(SafetySpotType.POLICE, NATIONWIDE)
-            return 0
-        }
-        val points: List<SafetySpotPoint> = toSafetySpots(fetched)
-        if (points.isEmpty()) {
-            cache.save(SafetySpotType.POLICE, NATIONWIDE, points)
-            events.hadNoCoordinates(SafetySpotType.POLICE, NATIONWIDE, fetched.size)
-            return 0
-        }
-        cache.save(SafetySpotType.POLICE, NATIONWIDE, points)
-        liveStore.append(SafetySpotType.POLICE, points)
-        log.info("치안시설 채움: 받은={}", points.size)
-        return points.size
-    }
-
-    private fun toSafetySpots(fetched: List<SafemapPolicePoint>): List<SafetySpotPoint> {
+    override fun toSafetySpots(fetched: List<SafemapPolicePoint>): List<SafetySpotPoint> {
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
@@ -84,5 +43,4 @@ class PoliceFillService(
         }
         return points
     }
-
 }
