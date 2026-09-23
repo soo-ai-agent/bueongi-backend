@@ -42,6 +42,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return candidates.filter { it.toGeoPoint().distanceMetersToPath(path) <= corridorM }
     }
 
+    // 경로의 점 사이가 격자 칸보다 넓으면 중간 점을 채워, 모든 구간의 주변 칸이 검색되게 한다.
     private fun fillPointsBetween(path: List<GeoPoint>): List<GeoPoint> {
         if (path.size < 2) {
             return path
@@ -64,11 +65,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return out
     }
 
-    // 격자 칸 단위라 반경 밖도 섞여 나온다 — 호출부가 다시 거른다.
-    private fun candidateCells(
-        anchors: List<GeoPoint>,
-        radiusM: Double,
-    ): List<SafetySpotPoint> {
+    private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<SafetySpotPoint> {
         if (buckets.isEmpty()) {
             return emptyList()
         }
@@ -76,9 +73,9 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         val ring: Int = ceil(radiusM / cellSpanMinM).toInt().coerceAtLeast(1)
         val seenCells: HashSet<Long> = HashSet()
         val result: ArrayList<SafetySpotPoint> = ArrayList()
-        for (anchor in anchors) {
-            val latCell: Int = cellIndex(anchor.lat, CELL_DEG)
-            val lngCell: Int = cellIndex(anchor.lng, CELL_DEG)
+        for ((lat, lng) in anchors) {
+            val latCell: Int = cellIndex(lat, CELL_DEG)
+            val lngCell: Int = cellIndex(lng, CELL_DEG)
             for (latStep in -ring..ring) {
                 for (lngStep in -ring..ring) {
                     val key: Long = cellKey(latCell + latStep, lngCell + lngStep)
@@ -98,6 +95,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         // 한국 최북단 기준 경도 1°의 최소 폭 — 이보다 키우면 후보 셀이 누락된다.
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
+        // 좌표가 몇 번째 칸에 드는지 낸다.
         private fun cellIndex(
             value: Double,
             cellDeg: Double,
@@ -110,6 +108,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
     }
 }
 
+// 좌표를 5자리(≈1.1m)로 반올림해 같은 지점 판정에 쓴다.
 private fun roundCoord(value: Double): Long = Math.round(value * COORD_SCALE)
 
 private const val COORD_SCALE: Double = 100_000.0
