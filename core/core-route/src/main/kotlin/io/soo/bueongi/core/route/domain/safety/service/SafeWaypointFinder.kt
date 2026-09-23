@@ -17,16 +17,16 @@ class SafeWaypointFinder(
         if (routePath.size < 2) {
             return emptyList()
         }
-        val nearby: List<SafetySpotPoint> =
+        val spotsNearRoute: List<SafetySpotPoint> =
             CLUSTER_SPOT_TYPES.flatMap {
                 safetySpots.index(it).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
             }
-        if (nearby.isEmpty()) {
+        if (spotsNearRoute.isEmpty()) {
             return emptyList()
         }
 
         val spotsByCell: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
-        for (safetySpot in nearby) {
+        for (safetySpot in spotsNearRoute) {
             val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
             val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
             val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
