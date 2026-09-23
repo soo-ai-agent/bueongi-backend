@@ -9,7 +9,7 @@ class ApiEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
     fun shareStoreUnavailable(detail: String) {
-        events.publishEvent(OperationEvent(key = STORE_UNAVAILABLE_KEY, title = STORE_UNAVAILABLE_TITLE, detail = detail))
+        events.publishEvent(OperationEvent(key = "share-store-unavailable", title = "위치 공유 저장소(Redis) 접근 실패", detail = detail))
     }
 
     fun unhandledServerError(
@@ -17,14 +17,7 @@ class ApiEventPublisher(
         detail: String,
     ) {
         events.publishEvent(
-            OperationEvent(key = "$SERVER_ERROR_KEY_PREFIX$exceptionName", title = SERVER_ERROR_TITLE, detail = detail),
+            OperationEvent(key = "api-500:$exceptionName", title = "처리되지 않은 서버 오류(500)", detail = detail),
         )
-    }
-
-    companion object {
-        private const val STORE_UNAVAILABLE_KEY: String = "share-store-unavailable"
-        private const val STORE_UNAVAILABLE_TITLE: String = "위치 공유 저장소(Redis) 접근 실패"
-        private const val SERVER_ERROR_KEY_PREFIX: String = "api-500:"
-        private const val SERVER_ERROR_TITLE: String = "처리되지 않은 서버 오류(500)"
     }
 }

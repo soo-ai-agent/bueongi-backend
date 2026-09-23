@@ -14,12 +14,7 @@ class ShareEventPublisher(
         detail: String,
     ) {
         events.publishEvent(
-            OperationEvent(key = "$MISSED_ARRIVAL_KEY_PREFIX$maskedToken", title = MISSED_ARRIVAL_TITLE, detail = detail),
+            OperationEvent(key = "missed-arrival:$maskedToken", title = "미도착 의심 — 위치 공유", detail = detail),
         )
-    }
-
-    companion object {
-        private const val MISSED_ARRIVAL_KEY_PREFIX: String = "missed-arrival:"
-        private const val MISSED_ARRIVAL_TITLE: String = "미도착 의심 — 위치 공유"
     }
 }
