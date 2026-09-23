@@ -54,8 +54,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
             val spanDeg: Double = maxOf(kotlin.math.abs(b.lat - a.lat), kotlin.math.abs(b.lng - a.lng))
             val steps: Int = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
             for (s in 1..steps) {
-                val t: Double = s.toDouble() / steps
-                out.add(GeoPoint(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t))
+                out.add(a.pointTowards(b, s.toDouble() / steps))
             }
         }
         return out
