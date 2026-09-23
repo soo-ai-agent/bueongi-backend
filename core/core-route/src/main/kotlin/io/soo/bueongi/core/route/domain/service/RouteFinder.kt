@@ -36,13 +36,17 @@ class RouteFinder(
         return routes
     }
 
-    fun findSaferRoutes(query: RouteRequest, tmapRoutes: List<TmapRoute>): List<TmapRoute> {
+    fun findSaferRoutes(
+        query: RouteRequest,
+        tmapRoutes: List<TmapRoute>,
+    ): List<TmapRoute> {
         val firstRoutePath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
         val safetySpotClusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
         val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
 
         val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-        val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
+        val shortestDistanceM: Double = tmapRoutes.minOf { it.distanceM }
+        val maxDistanceM: Double = shortestDistanceM * (1 + budget)
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {
             val saferRoute: TmapRoute? =
@@ -77,5 +81,7 @@ class RouteFinder(
 }
 
 private fun RouteRequest.endName(): String = destinationName.trim().ifEmpty { "목적지" }
+
 private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
+
 private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)

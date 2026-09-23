@@ -67,35 +67,37 @@ class SafeWaypointFinder(
         }
         val maxLateralMeters: Double = origin.distanceMetersTo(destination) * DEFAULT_LATERAL_RATIO
 
-        data class Placed(val cluster: SafetySpotCluster, val progress: Double)
-        val placed: List<Placed> =
-            clusters.mapNotNull { cluster ->
-                val projection: SegmentProjection = cluster.center.projectOnto(origin, destination)
-                val progress: Double = projection.t
-                val lateralMeters: Double = projection.distanceMeters
-                val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
-                if (nearEnds || lateralMeters > maxLateralMeters) {
-                    return@mapNotNull null
-                }
-                Placed(cluster, progress)
+        val placed: ArrayList<PlacedCluster> = ArrayList()
+        for (cluster in clusters) {
+            val projection: SegmentProjection = cluster.center.projectOnto(origin, destination)
+            val progress: Double = projection.t
+            val lateralMeters: Double = projection.distanceMeters
+            val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
+            if (nearEnds) {
+                continue
             }
+            if (lateralMeters > maxLateralMeters) {
+                continue
+            }
+            placed.add(PlacedCluster(cluster, progress))
+        }
         if (placed.isEmpty()) {
             return emptyList()
         }
 
-        val byWeight: List<Placed> =
-            placed.sortedWith(
-                compareByDescending<Placed> { it.cluster.weight }.thenBy { it.progress },
-            )
+        val byWeightThenProgress: Comparator<PlacedCluster> =
+            compareByDescending<PlacedCluster> { it.cluster.weight }
+                .thenBy { it.progress }
+        val byWeight: List<PlacedCluster> = placed.sortedWith(byWeightThenProgress)
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
-        val singles: List<Placed> = byWeight.take(SINGLE_CLUSTER_COMBOS)
+        val singles: List<PlacedCluster> = byWeight.take(SINGLE_CLUSTER_COMBOS)
         for (single in singles) {
             combos.add(listOf(single.cluster.center))
         }
         if (byWeight.size >= 2) {
-            val topTwo: List<Placed> = byWeight.take(2)
-            val inTravelOrder: List<Placed> = topTwo.sortedBy { it.progress }
+            val topTwo: List<PlacedCluster> = byWeight.take(2)
+            val inTravelOrder: List<PlacedCluster> = topTwo.sortedBy { it.progress }
             val pair: ArrayList<GeoPoint> = ArrayList()
             for (placedCluster in inTravelOrder) {
                 pair.add(placedCluster.cluster.center)
@@ -104,6 +106,9 @@ class SafeWaypointFinder(
         }
         return combos.toList()
     }
+
+    // 경로 직선 위에 투영해 본 덩어리 — 어디쯤(progress) 있는지를 같이 든다.
+    private data class PlacedCluster(val cluster: SafetySpotCluster, val progress: Double)
 
     companion object {
         const val CLUSTER_RADIUS_METERS: Double = 150.0
