@@ -5,7 +5,7 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillEventPublisher
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
@@ -89,7 +89,7 @@ class SecurityLampFillServiceTest {
             cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
             liveStore = liveStore,
             safetySpots = source,
-            events = mock<SecurityLampFillEventPublisher>(),
+            events = mock<SafetySpotFillEventPublisher>(),
         )
     }
 

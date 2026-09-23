@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPolicePoint
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillEventPublisher
+import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
@@ -95,21 +96,21 @@ class PoliceFillServiceTest {
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchPoliceFacilities()).thenReturn(null)
         val liveStore = FakeLiveStore()
-        val events: PoliceFillEventPublisher = mock()
+        val events: SafetySpotFillEventPublisher = mock()
 
         val added: Int = service(dir, client, liveStore, events).fill()
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(events).fetchFailed()
-        verify(events, never()).hadNoCoordinates(any())
+        verify(events).fetchFailed(SafetySpotType.POLICE, NATIONWIDE)
+        verify(events, never()).hadNoCoordinates(any(), any(), any())
     }
 
     private fun service(
         dir: Path,
         client: SafemapPoliceClient,
         liveStore: SafetySpotLiveStore,
-        events: PoliceFillEventPublisher = mock(),
+        events: SafetySpotFillEventPublisher = mock(),
     ): PoliceFillService =
         PoliceFillService(
             client = client,

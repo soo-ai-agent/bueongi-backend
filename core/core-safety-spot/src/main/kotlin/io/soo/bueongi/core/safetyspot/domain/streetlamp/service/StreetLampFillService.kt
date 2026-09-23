@@ -4,6 +4,8 @@ import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
+import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -18,7 +20,7 @@ class StreetLampFillService(
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
-    private val events: StreetLampFillEventPublisher,
+    private val events: SafetySpotFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
 
@@ -50,13 +52,13 @@ class StreetLampFillService(
         val fetched: List<StreetLampPoint>? = client.fetchStreetLamps()
         if (fetched == null) {
             retryGate.recordFailure(NATIONWIDE)
-            events.fetchFailed()
+            events.fetchFailed(SafetySpotType.STREET_LAMP, NATIONWIDE)
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         if (points.isEmpty()) {
             cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
-            events.hadNoCoordinates(fetched.size)
+            events.hadNoCoordinates(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched.size)
             return 0
         }
         cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
@@ -81,8 +83,4 @@ class StreetLampFillService(
         return points
     }
 
-    private companion object {
-        // 재난안전데이터 DSSP-IF-00084 는 지역 조건을 받지 않아 전국 한 덩이로만 준다.
-        const val NATIONWIDE: String = "nationwide"
-    }
 }

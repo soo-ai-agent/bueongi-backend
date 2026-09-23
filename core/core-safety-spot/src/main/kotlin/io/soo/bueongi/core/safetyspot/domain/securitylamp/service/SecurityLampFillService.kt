@@ -5,6 +5,8 @@ import io.soo.bueongi.client.datagokr.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
+import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -21,7 +23,7 @@ class SecurityLampFillService(
     private val liveStore: SafetySpotLiveStore,
     private val safetySpots: SafetySpotSpatialSource,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
-    private val events: SecurityLampFillEventPublisher,
+    private val events: SafetySpotFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SecurityLampFillService::class.java)
 
@@ -66,14 +68,14 @@ class SecurityLampFillService(
         val fetched: List<DataGoKrPoint>? = client.fetch(DataGoKrQuery(municipalityCode = regionCode))
         if (fetched == null) {
             retryGate.recordFailure(regionCode)
-            events.regionFetchFailed(regionCode)
+            events.fetchFailed(SafetySpotType.SECURITY_LAMP, regionCode)
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         if (points.isEmpty()) {
             // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 캐시로 남겨 매번 다시 받지 않게 한다.
             cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
-            events.regionHadNoCoordinates(regionCode, fetched.size)
+            events.hadNoCoordinates(SafetySpotType.SECURITY_LAMP, regionCode, fetched.size)
             return 0
         }
         cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)

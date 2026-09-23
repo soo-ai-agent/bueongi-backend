@@ -29,8 +29,13 @@ class SafeRouteService(
             routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
-        val saferRoutes: List<TmapRoute> = routeFinder.findSaferRoutes(query, tmapRoutes)
-        val candidates: List<RouteCandidate> = candidateMerger.toCandidates(tmapRoutes + saferRoutes)
+        val routes: ArrayList<TmapRoute> = ArrayList(tmapRoutes)
+        if (!query.reroute) {
+            // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
+            routes.addAll(routeFinder.findSaferRoutes(query, tmapRoutes))
+        }
+
+        val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)
         val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)
         return assembler.assemble(assigned, query.origin, query.destination)
     }

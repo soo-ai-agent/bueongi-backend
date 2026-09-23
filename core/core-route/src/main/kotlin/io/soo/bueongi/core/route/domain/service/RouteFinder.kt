@@ -37,44 +37,36 @@ class RouteFinder(
     }
 
     fun findSaferRoutes(query: RouteRequest, tmapRoutes: List<TmapRoute>): List<TmapRoute> {
-        val saferRoutes: ArrayList<TmapRoute> = ArrayList()
-        // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
-        if (!query.reroute) {
-            val firstRoutePath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
-            val safetySpotClusters: List<SafetySpotCluster> =
-                waypointFinder.findSafetySpotClusters(firstRoutePath)
-            val waypointCombos: List<List<GeoPoint>> =
-                waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
+        val firstRoutePath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
+        val safetySpotClusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
+        val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
 
-            val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-            val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
-            for (waypoints in waypointCombos) {
-                val saferRoute: TmapRoute? =
-                    tmapClient.fetchRoute(
-                        origin = query.origin.toTmapCoord(),
-                        destination = query.destination.toTmapCoord(),
-                        destinationName = query.endName(),
-                        searchOption = VIA_SEARCH_OPTION,
-                        passList = waypoints.map { it.toTmapCoord() },
-                    )
-                if (saferRoute == null) {
-                    continue
-                }
-                if (saferRoute.distanceM <= maxDistanceM) {
-                    saferRoutes.add(saferRoute)
-                }
+        val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
+        val maxDistanceM: Double = tmapRoutes.minOf { it.distanceM } * (1 + budget)
+        val saferRoutes: ArrayList<TmapRoute> = ArrayList()
+        for (waypoints in waypointCombos) {
+            val saferRoute: TmapRoute? =
+                tmapClient.fetchRoute(
+                    origin = query.origin.toTmapCoord(),
+                    destination = query.destination.toTmapCoord(),
+                    destinationName = query.endName(),
+                    searchOption = VIA_SEARCH_OPTION,
+                    passList = waypoints.map { it.toTmapCoord() },
+                )
+            if (saferRoute == null) {
+                continue
+            }
+            if (saferRoute.distanceM <= maxDistanceM) {
+                saferRoutes.add(saferRoute)
             }
         }
-
         return saferRoutes
     }
 
     private companion object {
         // Tmap searchOption 규격: 추천=0, 대로우선=4, 최단=10.
         val SEARCH_OPTIONS: List<String> = listOf("0", "4", "10")
-
         const val VIA_SEARCH_OPTION: String = "0"
-
         val DETOUR_DISTANCE_BUDGETS: Map<SafetyPreference, Double> =
             mapOf(
                 SafetyPreference.BALANCED to 0.2,
@@ -84,9 +76,6 @@ class RouteFinder(
     }
 }
 
-// Tmap 이 안내 문구에 쓰는 이름 — 비면 화면에 빈 칸이 나가므로 대신 넣는다.
 private fun RouteRequest.endName(): String = destinationName.trim().ifEmpty { "목적지" }
-
 private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
-
 private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)

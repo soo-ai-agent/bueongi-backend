@@ -5,7 +5,8 @@ import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillEventPublisher
+import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
+import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
@@ -130,21 +131,21 @@ class StreetLampFillServiceTest {
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetchStreetLamps()).thenReturn(null)
         val liveStore = FakeLiveStore()
-        val events: StreetLampFillEventPublisher = mock()
+        val events: SafetySpotFillEventPublisher = mock()
 
         val added: Int = service(dir, client, liveStore, events).fill()
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(events).fetchFailed()
-        verify(events, never()).hadNoCoordinates(any())
+        verify(events).fetchFailed(SafetySpotType.STREET_LAMP, NATIONWIDE)
+        verify(events, never()).hadNoCoordinates(any(), any(), any())
     }
 
     private fun service(
         dir: Path,
         client: StreetLampClient,
         liveStore: SafetySpotLiveStore,
-        events: StreetLampFillEventPublisher = mock(),
+        events: SafetySpotFillEventPublisher = mock(),
     ): StreetLampFillService =
         StreetLampFillService(
             client = client,
