@@ -7,7 +7,9 @@ import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.common.request.LatLng
+import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateCollector
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
@@ -30,18 +32,15 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class RerouteCallBudgetTest {
-    private val origin = GeoPoint(37.5, 127.0)
-    private val dest = GeoPoint(37.5, 127.01)
-
-    private fun queryOf(reroute: Boolean): RouteQuery =
-        RouteQuery(
-            origin = origin,
-            destination = dest,
-            destinationName = "목적지",
-            routeType = RouteType.SAFE,
-            safetyPreference = SafetyPreference.SAFE,
+    private fun queryOf(reroute: Boolean): RouteRequest {
+        return RouteRequest(
+            rawOrigin = LatLng(37.5, 127.0),
+            rawDestination = NamedLatLng(37.5, 127.01),
+            rawRouteType = "safe",
+            rawSafetyPreference = "safe",
             reroute = reroute,
         )
+    }
 
     private val source =
         FakeSafetySpotSource(
@@ -72,7 +71,9 @@ class RerouteCallBudgetTest {
             routeService = RouteService(RouteTypeCatalog()),
             collector = RouteCandidateCollector(tmap, SafeDetourPlanner(source), RouteCandidateMerger()),
             scorer = nightScorer(source),
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
+            routeEvents = mock(),
+            routeStatsStore = mock(),
         )
 
     @Test
@@ -117,7 +118,8 @@ class RerouteCallBudgetTest {
                 routeService = RouteService(RouteTypeCatalog()),
                 collector = RouteCandidateCollector(tmapReturning(), SafeDetourPlanner(source), RouteCandidateMerger()),
                 scorer = nightScorer(source),
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
+                routeEvents = mock(),
                 routeStatsStore = store,
             )
 

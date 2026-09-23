@@ -47,7 +47,6 @@
 | `VALIDATION_FAILED` | 400 | Validation Failed | ✅ field별 | `@Valid` 좌표 범위 위반(lat ±90·lng ±180 초과), 좌표 오버플로(`1e400`→±Infinity). 좌표 입력 인라인 에러 표시. |
 | `MALFORMED_REQUEST` | 400 | Malformed Request | ❌ | 빈 본문·깨진 JSON·타입 불일치·`NaN`/`Infinity` 비숫자 리터럴(Jackson 거부). |
 | `INVALID_KEYWORD` | 400 | Invalid Keyword | ✅ `keyword`(rejectedValue=입력 길이) | 검색어가 트림 후 100자 초과. 검색어 줄이도록 안내. |
-| `ORIGIN_REQUIRED` | 422 | Origin Required | ❌ | compare/safety-spots 에서 `origin` 키 누락(위치 권한 거부/미지원). **에러 토스트 아님** → 위치 권한 재요청 또는 "출발지 직접 선택" UI 유도. |
 | `SAME_ORIGIN_DESTINATION` | 422 | Same Origin And Destination | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 < 1m(사실상 같은 지점). 도착지 재선택 유도. |
 | `TRIP_TOO_FAR` | 422 | Trip Too Far | ✅ `destination`(rejectedValue=직선거리m) | 출발-도착 직선거리 > 100km(도착지 오선택/위경도 뒤바뀜 추정). 도착지 재선택 유도("100km 이내" 안내). |
 | `INVALID_SLACK_CATEGORY` | 422 | Invalid Slack Category | ✅ `mutedCategories`(rejectedValue=알 수 없는 key 목록) | 관리자 Slack 설정 편집(PUT `/api/admin/slack-config`)의 `mutedCategories` 에 알려진 5종 밖 key. 허용 카테고리만 뮤트하도록 안내. |
@@ -117,7 +116,7 @@
 ```
 
 - `name`/`address`: 프론트 `Destination{name,address}` 로 매핑.
-- `lat`/`lng`: `POST /api/routes/compare` 의 `destination` 좌표로 바로 사용 가능(additive, 무시해도 무방).
+- `lat`/`lng`: `POST /api/routes/safe-compare` 의 `destination` 좌표로 바로 사용 가능(additive, 무시해도 무방).
 
 **동작/정책**:
 
@@ -125,52 +124,6 @@
 - 트림 후 **빈 검색어 → 빈 목록 `[]`**(에러 아님 — 프론트는 '최근 검색'으로 폴백). 추측 결과를 만들지 않는다.
 - 트림 후 **100자 초과 → 400 `INVALID_KEYWORD`**(외부 API 호출 전에 차단). 경계(정확히 100자)는 허용. (`MAX_KEYWORD_LENGTH=100`)
 - 키 주입 시 Kakao Local 실검색 시도 → **실패 시 시드 폴백**(안심앱: 검색 불능보다 근사 결과가 안전). 키 없으면 시드. 어느 경로든 `PlaceItem` 계약 동일.
-
----
-
-## `POST /api/routes/compare` — 경로 비교
-
-출발/도착 좌표로 safe/main/fast 3개 경로를 만든다. 출처: `routes/RouteController.kt`, `routes/RouteService.kt`, `routes/RouteType.kt`, `routes/RouteDtos.kt`.
-
-**요청 본문** (`RouteRequest`):
-
-```json
-{
-  "origin": { "lat": 37.4979, "lng": 127.0276 },
-  "destination": { "lat": 37.5563, "lng": 126.9236, "name": "홍대입구역" },
-  "routeType": "safe"
-}
-```
-
-- `origin` (`{lat,lng}`): **누락 가능**(위치 권한 거부/미지원). 누락 → 422 `ORIGIN_REQUIRED`. 값이 있으면 좌표 범위 검증(범위 초과 → 400 `VALIDATION_FAILED`).
-- `destination` (`{lat,lng,name?}`): **필수**(누락 → 400 `VALIDATION_FAILED`, `destination` @NotNull). `name` 은 optional 표시명.
-- `routeType` (optional): compare 에서는 **무시됨**(항상 3개 경로 반환). safety-spots 전용.
-
-**200 응답** (`List<RouteOption>`, 항상 safe→main→fast 순):
-
-```json
-[
-  {
-    "id": "1", "name": "추천 경로", "time": "24분", "dist": "1.2km",
-    "desc": "가장 밝고 안심 시설이 잘 갖춰진 길입니다.",
-    "tags": [ { "text": "CCTV 많음", "variant": "mint" }, { "text": "밝은 길", "variant": "yellow" } ],
-    "type": "safe"
-  }
-]
-```
-
-| 필드 | 의미 |
-|------|------|
-| `id` | safe="1" / main="2" / fast="3" |
-| `name` | safe="추천 경로" / main="주요 도로" / fast="최단 경로" |
-| `time` | `"N분"`. 도보 67m/분(≈4km/h), 최소 1분. |
-| `dist` | 1km 미만 `"850m"`(10m 단위 반올림), 이상 `"1.2km"`(소수1자리). |
-| `desc` | 유형 설명 문구. |
-| `tags` | `{text, variant}` 목록. `variant`: `default`/`mint`/`blue`/`yellow`/`outline`(프론트 Badge variant → 아이콘 매핑). |
-| `type` | `safe`/`main`/`fast`. |
-
-- 거리 계산: 출발-도착 직선거리(haversine) × 유형 `distanceFactor`(safe 1.18 / main 1.05 / fast 0.92). 추천(safe)이 가장 길지만 가장 안전.
-- **가드(순서 고정, 공통)**: `ORIGIN_REQUIRED`(422) → `SAME_ORIGIN_DESTINATION`(422, 직선거리<1m) → `TRIP_TOO_FAR`(422, 직선거리>100km). (`RouteRequest.validatedOrigin()`)
 
 ---
 
@@ -185,56 +138,6 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 
 - `score`: 0~100. 주변에 어떤 안심시설 자료도 없으면 `null`(0점이 아니라 '없음').
 - `breakdown.scoredAxes`/`unscoredAxes`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 축은 빼고 남은 축의 가중치로 다시 나눈다.
-
----
-
-## `POST /api/routes/safety-spots` — 경로상 안심시설
-
-선택 경로(routeType) 위의 안심시설 POI + 집계. 출처: `routes/RouteController.kt`, `routes/SafetySpotService.kt`, `routes/SafetySpotDtos.kt`.
-
-**요청 본문** (`RouteRequest`, compare 와 동일):
-
-```json
-{
-  "origin": { "lat": 37.4979, "lng": 127.0276 },
-  "destination": { "lat": 37.5563, "lng": 126.9236 },
-  "routeType": "safe"
-}
-```
-
-- `routeType` (optional): `safe`/`main`/`fast`(또는 id `1`/`2`/`3`). **null/미상 → safe**(안전 우선 기본).
-- `origin`/`destination` 규약·가드는 compare 와 동일.
-
-**200 응답** (`SafetySpotsResponse`):
-
-```json
-{
-  "pois": [
-    { "type": "start",  "x": 12, "y": 84, "lat": 37.4979, "lng": 127.0276 },
-    { "type": "cctv",   "x": 22, "y": 73, "lat": 37.50,   "lng": 127.01 },
-    { "type": "end",    "x": 88, "y": 16, "lat": 37.5563, "lng": 126.9236 }
-  ],
-  "summary": { "cctv": 6, "bell": 3, "store": 2, "police": 1, "total": 12 }
-}
-```
-
-**`pois[]`** (`SafetySpotPoi`):
-
-| 필드 | 의미 |
-|------|------|
-| `type` | `start`/`end`/`cctv`/`bell`/`store`/`police`/`safehouse`/`lamp`/`security_lamp`/`pedestrian_signal`. (`start`/`end` 는 summary 집계 제외) |
-| `x`,`y` | 정규화 표시 좌표(0~100). 좌하단(출발)→우상단(도착) 대각선 + 유형별 측면 분리. |
-| `lat`,`lng` | 실 지리 좌표. **출발-도착 직선 경로 위**에 결정론적 배치(선형 보간). |
-| `name` | optional. |
-
-**`summary`** (`SafetySpotSummary`): `cctv`/`bell`/`store`/`police` 와 `total`. **생성된 POI 를 실제로 집계한 값**이라 화면 표시와 항상 일치(없는 데이터를 지어내지 않음). `total = cctv + bell + store + police`(start/end 제외).
-
-**시설 개수 도메인 불변식**:
-
-- 개수 = `직선거리 × distanceFactor(km) × 유형별 km당 밀도`, 반올림, **유형별 상한 8**.
-- km당 밀도(safe/main/fast): cctv 6/4/2, bell 3/1.5/0.5, store 2/4/1.5, police 1/0.5/0.
-- **per-km 안심시설 밀도(cctv·bell·police)는 SAFE > MAIN > FAST 로 엄격히 단조 감소**(추천 경로가 가장 안전). store(편의점)만 예외로 MAIN 최대(상업/유동인구).
-- **SAFE(추천) 최소 보정**: 짧은 경로라도 cctv≥2, bell≥1, store≥1 보장(추천 경로가 '시설 0'으로 보이지 않게). SAFE 에만 적용.
 
 ---
 
@@ -328,7 +231,7 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 
 ## `GET /api/admin/route-stats` — 추천 통계 (관리자)
 
-`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 경로 추천 요청(`POST /api/routes/compare`·`/safe-compare`)을 창(window, 최근 `ROUTE_STATS_CAP`=2000 건) 단위로 집계해 돌려준다. 저장/집계는 순수 부수효과라 추천 응답은 불변이며, 저장소 미주입(테스트 슬라이스)이어도 무해하다. 출처: `api/admin/AdminController.kt`, `domain/admin/RouteStatsService.kt`, `storage/db-core/.../routestats/`.
+`/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 경로 추천 요청(`POST /api/routes/safe-compare`)을 창(window, 최근 `ROUTE_STATS_CAP`=2000 건) 단위로 집계해 돌려준다. 저장/집계는 순수 부수효과라 추천 응답은 불변이며, 저장소 미주입(테스트 슬라이스)이어도 무해하다. 출처: `api/admin/AdminController.kt`, `domain/admin/RouteStatsService.kt`, `storage/db-core/.../routestats/`.
 
 **200 응답** (`RouteStatsSummary`):
 

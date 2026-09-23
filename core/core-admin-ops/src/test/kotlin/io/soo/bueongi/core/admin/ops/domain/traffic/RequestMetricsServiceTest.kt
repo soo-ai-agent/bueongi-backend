@@ -54,7 +54,7 @@ class RequestMetricsServiceTest {
                 metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 100),
                 metric(endpoint = "/api/places/search", clientId = "b", status = 500, durationMs = 200),
                 metric(endpoint = "/api/places/search", clientId = "a", status = 200, durationMs = 300),
-                metric(method = "POST", endpoint = "/api/routes/compare", clientId = "c", status = 200, durationMs = 50),
+                metric(method = "POST", endpoint = "/api/routes/safe-compare", clientId = "c", status = 200, durationMs = 50),
             )
 
         val byEndpoint = serviceOf(metrics).summarize().byEndpoint

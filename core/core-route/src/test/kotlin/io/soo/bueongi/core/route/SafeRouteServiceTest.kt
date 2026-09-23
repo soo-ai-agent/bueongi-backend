@@ -8,7 +8,9 @@ import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.common.request.LatLng
+import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.service.SafeDetourPlanner
@@ -32,16 +34,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
 class SafeRouteServiceTest {
-    private val origin = GeoPoint(37.5, 127.0)
-    private val dest = GeoPoint(37.5, 127.01)
-
     private val request =
-        RouteQuery(
-            origin = origin,
-            destination = dest,
-            destinationName = "목적지",
-            routeType = RouteType.SAFE,
-            safetyPreference = SafetyPreference.SAFE,
+        RouteRequest(
+            rawOrigin = LatLng(37.5, 127.0),
+            rawDestination = NamedLatLng(37.5, 127.01),
+            rawRouteType = "safe",
+            rawSafetyPreference = "safe",
         )
 
     private val cctv =
@@ -81,7 +79,9 @@ class SafeRouteServiceTest {
         routeService = routeService,
         collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
         scorer = scorer,
-        assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+        assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
+        routeEvents = mock(),
+        routeStatsStore = mock(),
     )
 
     @Test
@@ -229,16 +229,17 @@ class SafeRouteServiceTest {
     }
 
     @Test
-    fun `Tmap 미설정 폴백은 compare 를 record 하지 않고 safe-compare 만 1회 집계한다`() {
+    fun `Tmap 미설정 폴백도 safe-compare 를 1회 집계한다`() {
         val recording = RecordingRouteStatsStore()
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
         val svc =
             SafeRouteService(
-                routeService = RouteService(RouteTypeCatalog(), recording),
+                routeService = RouteService(RouteTypeCatalog()),
                 collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
                 scorer = scorer,
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
+                routeEvents = mock(),
                 routeStatsStore = recording,
             )
 
@@ -256,10 +257,11 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoutes(any(), any(), anyOrNull())).thenReturn(emptyList())
         val svc =
             SafeRouteService(
-                routeService = RouteService(RouteTypeCatalog(), recording),
+                routeService = RouteService(RouteTypeCatalog()),
                 collector = RouteCandidateCollector(tmap, detourPlanner, RouteCandidateMerger()),
                 scorer = scorer,
-                assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+                assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
+                routeEvents = mock(),
                 routeStatsStore = recording,
             )
 

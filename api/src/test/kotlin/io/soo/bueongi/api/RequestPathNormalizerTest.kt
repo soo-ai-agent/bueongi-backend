@@ -22,7 +22,7 @@ class RequestPathNormalizerTest {
     @Test
     fun `api 경로와 알 수 없는 경로는 원경로를 보존한다`() {
         assertThat(normalizeRequestPath("/api/places/search")).isEqualTo("/api/places/search")
-        assertThat(normalizeRequestPath("/api/routes/compare")).isEqualTo("/api/routes/compare")
+        assertThat(normalizeRequestPath("/api/routes/safe-compare")).isEqualTo("/api/routes/safe-compare")
         assertThat(normalizeRequestPath("/api/routes/safe-compare")).isEqualTo("/api/routes/safe-compare")
         assertThat(normalizeRequestPath("/api/safety-spots")).isEqualTo("/api/safety-spots")
         assertThat(normalizeRequestPath("/something/else")).isEqualTo("/something/else")

@@ -4,11 +4,12 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteOption
-import io.soo.bueongi.core.route.domain.model.RouteQuery
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
+import io.soo.bueongi.storage.db.core.routestats.RouteRecommendationLog
 import io.soo.bueongi.storage.db.core.routestats.RouteStatsStore
 import org.springframework.stereotype.Service
 
@@ -18,18 +19,27 @@ class SafeRouteService(
     private val collector: RouteCandidateCollector,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    private val routeEvents: RouteEventPublisher? = null,
-    private val routeStatsStore: RouteStatsStore? = null,
+    private val routeEvents: RouteEventPublisher,
+    private val routeStatsStore: RouteStatsStore,
 ) {
-    fun safeCompare(query: RouteQuery): List<RouteOption> {
-        routeStatsStore.recordRecommendation("safe-compare", query)
+    fun safeCompare(query: RouteRequest): List<RouteOption> {
+        if (!query.reroute) {
+            routeStatsStore.record(
+                RouteRecommendationLog(
+                    atEpochMs = System.currentTimeMillis(),
+                    endpoint = "safe-compare",
+                    destinationName = query.destinationName,
+                    preference = query.safetyPreference,
+                ),
+            )
+        }
 
         if (!collector.isEnabled) {
             return routeService.buildStraightLineRoutes(query)
         }
         val base: List<TmapRoute> = collector.collectBase(query)
         if (base.isEmpty()) {
-            routeEvents?.safeRouteFellBack("모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)")
+            routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 폴백 경로로 응답 중(키 설정 상태)")
             return routeService.buildStraightLineRoutes(query)
         }
         val assigned: List<ScoredRoute> = assignOneRoutePerType(collector.collectAll(query, base))
