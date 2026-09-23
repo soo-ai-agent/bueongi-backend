@@ -25,24 +25,26 @@ class SafeWaypointFinder(
             return emptyList()
         }
 
-        data class ClusterAccumulator(var sumLat: Double = 0.0, var sumLng: Double = 0.0, var safetySpotCount: Int = 0)
-        val accumulatorByCell: LinkedHashMap<Long, ClusterAccumulator> = LinkedHashMap()
+        val spotsByCell: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
         for (safetySpot in nearby) {
             val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
             val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
             val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
-            val cluster: ClusterAccumulator = accumulatorByCell.getOrPut(key) { ClusterAccumulator() }
-            cluster.sumLat += safetySpot.lat
-            cluster.sumLng += safetySpot.lng
-            cluster.safetySpotCount += 1
+            spotsByCell.getOrPut(key) { ArrayList() }.add(safetySpot)
         }
 
         val clusters: ArrayList<SafetySpotCluster> = ArrayList()
-        for (cluster in accumulatorByCell.values) {
+        for (spots in spotsByCell.values) {
+            var sumLat = 0.0
+            var sumLng = 0.0
+            for (spot in spots) {
+                sumLat += spot.lat
+                sumLng += spot.lng
+            }
             clusters.add(
                 SafetySpotCluster(
-                    GeoPoint(cluster.sumLat / cluster.safetySpotCount, cluster.sumLng / cluster.safetySpotCount),
-                    weight = cluster.safetySpotCount,
+                    GeoPoint(sumLat / spots.size, sumLng / spots.size),
+                    weight = spots.size,
                 ),
             )
         }
