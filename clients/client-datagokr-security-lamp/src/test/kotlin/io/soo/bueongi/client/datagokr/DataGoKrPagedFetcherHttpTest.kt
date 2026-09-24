@@ -1,5 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
+import io.soo.bueongi.client.datagokr.query.DataGoKrFieldNames
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.hamcrest.Matchers.containsString

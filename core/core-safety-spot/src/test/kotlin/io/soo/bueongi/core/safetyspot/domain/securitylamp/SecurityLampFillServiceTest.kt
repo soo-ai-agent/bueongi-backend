@@ -2,7 +2,7 @@ package io.soo.bueongi.core.safetyspot.domain.securitylamp
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
-import io.soo.bueongi.client.datagokr.DataGoKrQuery
+import io.soo.bueongi.client.datagokr.query.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
@@ -54,7 +54,7 @@ class SecurityLampFillServiceTest {
         val added: Int = service(dir, client, FakeLiveStore(), alreadyLoaded = CHANGNYEONG).fill(CHANGNYEONG)
 
         assertThat(added).isZero()
-        verify(client, never()).fetch(any())
+        verify(client, never()).fetchSecurityLamps(any())
     }
 
     @Test
@@ -63,7 +63,7 @@ class SecurityLampFillServiceTest {
     ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetch(any())).thenReturn(
+        whenever(client.fetchSecurityLamps(any())).thenReturn(
             listOf(DataGoKrPoint(lat = 37.52, lng = 126.81, name = "원종동 292-4", sigungu = BUCHEON)),
         )
         val liveStore = FakeLiveStore()
@@ -72,7 +72,7 @@ class SecurityLampFillServiceTest {
 
         assertThat(added).isEqualTo(1)
         assertThat(liveStore.appended.single().type).isEqualTo(SafetySpotType.SECURITY_LAMP)
-        verify(client).fetch(any<DataGoKrQuery>())
+        verify(client).fetchSecurityLamps(any<DataGoKrQuery>())
     }
 
     private fun service(

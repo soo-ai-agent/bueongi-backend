@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.datagokr
+package io.soo.bueongi.client.datagokr.query
 
 data class DataGoKrFieldNames(
     val lat: List<String>,

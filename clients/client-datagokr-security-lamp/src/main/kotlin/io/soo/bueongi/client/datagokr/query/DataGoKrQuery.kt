@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.datagokr
+package io.soo.bueongi.client.datagokr.query
 
 // 아무 조건도 주지 않으면 전량 수집이라 일일 쿼터(1,000회)를 넘긴다 — CCTV 전국은 3,773회다.
 // 전국 수집이면 자치단체가 없고 첫 수집이면 비교할 이전 시각이 없어, 둘 다 null 이 가능하다.

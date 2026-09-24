@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.datagokr
+package io.soo.bueongi.client.datagokr.query
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

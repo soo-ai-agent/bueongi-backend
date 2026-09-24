@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.datagokr
+package io.soo.bueongi.client.datagokr.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode
