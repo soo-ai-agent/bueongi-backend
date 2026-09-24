@@ -17,7 +17,7 @@ class RouteFinder(
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
-    fun findFromTmap(query: RouteRequest): List<TmapRoute> {
+    fun findRoutes(query: RouteRequest): List<TmapRoute> {
         val routes: ArrayList<TmapRoute> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
             val route: TmapRoute? =
@@ -38,14 +38,14 @@ class RouteFinder(
 
     fun findSaferRoutes(
         query: RouteRequest,
-        tmapRoutes: List<TmapRoute>,
+        routes: List<TmapRoute>,
     ): List<TmapRoute> {
-        val firstRoutePath: List<GeoPoint> = tmapRoutes.first().path.toGeoPoints()
+        val firstRoutePath: List<GeoPoint> = routes.first().path.toGeoPoints()
         val safetySpotClusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
         val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
 
         val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-        val shortestDistanceM: Double = tmapRoutes.minOf { it.distanceM }
+        val shortestDistanceM: Double = routes.minOf { it.distanceM }
         val maxDistanceM: Double = shortestDistanceM * (1 + budget)
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {

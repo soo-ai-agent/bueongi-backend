@@ -2,10 +2,10 @@ package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteOption
-import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
@@ -24,15 +24,14 @@ class SafeRouteService(
         if (!routeFinder.isEnabled) {
             throw RouteSearchUnavailableException()
         }
-        val tmapRoutes: List<TmapRoute> = routeFinder.findFromTmap(query)
-        if (tmapRoutes.isEmpty()) {
+        val routes: ArrayList<TmapRoute> = ArrayList(routeFinder.findRoutes(query))
+        if (routes.isEmpty()) {
             routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
-        val routes: ArrayList<TmapRoute> = ArrayList(tmapRoutes)
         if (!query.reroute) {
             // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
-            routes.addAll(routeFinder.findSaferRoutes(query, tmapRoutes))
+            routes.addAll(routeFinder.findSaferRoutes(query, routes))
         }
 
         val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)

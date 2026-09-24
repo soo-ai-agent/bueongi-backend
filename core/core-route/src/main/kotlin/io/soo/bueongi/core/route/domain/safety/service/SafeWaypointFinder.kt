@@ -58,7 +58,11 @@ class SafeWaypointFinder(
         return clusters.subList(0, MAX_CLUSTERS)
     }
 
-    fun pickWaypoints(origin: GeoPoint, destination: GeoPoint, clusters: List<SafetySpotCluster>): List<List<GeoPoint>> {
+    fun pickWaypoints(
+        origin: GeoPoint,
+        destination: GeoPoint,
+        clusters: List<SafetySpotCluster>,
+    ): List<List<GeoPoint>> {
         if (clusters.isEmpty()) {
             return emptyList()
         }
@@ -81,7 +85,9 @@ class SafeWaypointFinder(
             return emptyList()
         }
 
-        val byWeightThenProgress: Comparator<PlacedCluster> = compareByDescending<PlacedCluster> { it.cluster.weight }.thenBy { it.progress }
+        val byWeightThenProgress: Comparator<PlacedCluster> =
+            compareByDescending<PlacedCluster> { it.cluster.weight }
+                .thenBy { it.progress }
         val byWeight: List<PlacedCluster> = placed.sortedWith(byWeightThenProgress)
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
