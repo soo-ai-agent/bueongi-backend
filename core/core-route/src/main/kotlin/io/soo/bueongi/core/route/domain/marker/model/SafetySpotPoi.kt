@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.route.domain.marker.model
 
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import kotlin.math.roundToInt
 
 // x·y 는 위경도가 아니라 프론트 미니맵용 0~100 백분율 좌표다(프론트 계약).
@@ -18,6 +20,22 @@ data class SafetySpotPoi(
     val address: String = "",
     val phone: String = "",
 )
+
+// 설치 목적·대수는 CCTV 만 갖는다 — 다른 종류는 앱이 truthy 로 읽는 빈 값으로 나간다.
+// x·y 는 목록 전체 범위가 있어야 나오므로 여기서 0으로 두고 toMiniMapPercent 가 채운다.
+internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi =
+    SafetySpotPoi(
+        type = markerType,
+        x = 0,
+        y = 0,
+        lat = lat,
+        lng = lng,
+        name = name.orEmpty(),
+        purpose = if (this is CctvSpot) purpose.orEmpty() else "",
+        cameraCount = if (this is CctvSpot) cameraCount else null,
+        address = address.orEmpty(),
+        phone = phone.orEmpty(),
+    )
 
 // 백분율은 목록 전체의 위경도 범위가 있어야 나오므로 마커 하나가 아니라 목록이 계산한다.
 internal fun List<SafetySpotPoi>.toMiniMapPercent(): List<SafetySpotPoi> {
@@ -38,11 +56,7 @@ internal fun List<SafetySpotPoi>.toMiniMapPercent(): List<SafetySpotPoi> {
     return placed
 }
 
-private fun percentOrCenter(
-    offset: Double,
-    span: Double,
-    drawableRange: Double,
-): Int {
+private fun percentOrCenter(offset: Double, span: Double, drawableRange: Double): Int {
     if (span == 0.0) {
         return MINI_MAP_CENTER
     }
