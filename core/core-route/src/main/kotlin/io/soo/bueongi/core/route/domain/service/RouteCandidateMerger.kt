@@ -1,9 +1,7 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import org.springframework.stereotype.Component
@@ -41,10 +39,7 @@ class RouteCandidateMerger {
         return kept
     }
 
-    private fun isNearDuplicate(
-        first: RouteCandidate,
-        second: RouteCandidate,
-    ): Boolean {
+    private fun isNearDuplicate(first: RouteCandidate, second: RouteCandidate): Boolean {
         val lengthFirst: Double = first.path.pathLengthMeters()
         val lengthSecond: Double = second.path.pathLengthMeters()
         val shorter: Double = minOf(lengthFirst, lengthSecond)
@@ -66,5 +61,3 @@ class RouteCandidateMerger {
         const val MERGE_OVERLAP_RATIO: Double = 0.90
     }
 }
-
-private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }

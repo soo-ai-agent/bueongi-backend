@@ -20,26 +20,15 @@ class RouteFinder(
     fun findRoutes(query: RouteRequest): List<TmapRoute> {
         val routes: ArrayList<TmapRoute> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
-            val route: TmapRoute? =
-                tmapClient.fetchRoute(
-                    origin = query.origin.toTmapCoord(),
-                    destination = query.destination.toTmapCoord(),
-                    destinationName = query.endName(),
-                    searchOption = searchOption,
-                    passList = emptyList(),
-                )
-            if (route == null) {
-                continue
+            val route: TmapRoute? = fetchRoute(query, searchOption)
+            if (route != null) {
+                routes.add(route)
             }
-            routes.add(route)
         }
         return routes
     }
 
-    fun findSaferRoutes(
-        query: RouteRequest,
-        routes: List<TmapRoute>,
-    ): List<TmapRoute> {
+    fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>): List<TmapRoute> {
         val firstRoutePath: List<GeoPoint> = routes.first().path.toGeoPoints()
         val safetySpotClusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
         val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
@@ -49,14 +38,7 @@ class RouteFinder(
         val maxDistanceM: Double = shortestDistanceM * (1 + budget)
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {
-            val saferRoute: TmapRoute? =
-                tmapClient.fetchRoute(
-                    origin = query.origin.toTmapCoord(),
-                    destination = query.destination.toTmapCoord(),
-                    destinationName = query.endName(),
-                    searchOption = VIA_SEARCH_OPTION,
-                    passList = waypoints.map { it.toTmapCoord() },
-                )
+            val saferRoute: TmapRoute? = fetchRoute(query, VIA_SEARCH_OPTION, waypoints)
             if (saferRoute == null) {
                 continue
             }
@@ -65,6 +47,16 @@ class RouteFinder(
             }
         }
         return saferRoutes
+    }
+
+    private fun fetchRoute(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): TmapRoute? {
+        return tmapClient.fetchRoute(
+            origin = query.origin.toTmapCoord(),
+            destination = query.destination.toTmapCoord(),
+            destinationName = query.endName(),
+            searchOption = searchOption,
+            passList = waypoints.map { it.toTmapCoord() },
+        )
     }
 
     private companion object {
@@ -82,6 +74,6 @@ class RouteFinder(
 
 private fun RouteRequest.endName(): String = destinationName.trim().ifEmpty { "목적지" }
 
-private fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
+internal fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
 
 private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)
