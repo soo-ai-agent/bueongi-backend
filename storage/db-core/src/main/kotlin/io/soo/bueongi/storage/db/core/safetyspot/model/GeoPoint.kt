@@ -100,7 +100,8 @@ fun List<GeoPoint>.pathLengthMeters(): Double {
     return total
 }
 
-// 고른 좌표가 limit 보다 많아지면 뒤를 자르지 않고 간격을 넓힌다. 자르면 도착지 쪽이 없어진다.
+// 경로가 길어 주어진 간격으로 고른 좌표가 한도를 넘으면, 간격을 넓혀 한도만큼만 고른다.
+// 앞에서부터 한도만큼 남기고 자르지 않는다 — 도착지 쪽 좌표가 통째로 사라진다.
 fun List<GeoPoint>.pickPointsAlong(spacingMeters: Double, limit: Int): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()
