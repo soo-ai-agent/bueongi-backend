@@ -35,7 +35,7 @@ class DataGoKrPagedFetcherHttpTest {
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑`() {
         val (fetcher, server) = bindFetcher()
         server.expect(requestTo(containsString("$endpoint?serviceKey=$TEST_SERVICE_KEY")))
-            .andExpect(requestTo(containsString("pageNo=1&numOfRows=100&returnType=json&type=json")))
+            .andExpect(requestTo(containsString("pageNo=1&numOfRows=1000&type=json")))
             .andRespond(withSuccess(envelope(item(), 1), MediaType.APPLICATION_JSON))
 
         val points: List<DataGoKrPoint>? = fetcher.fetchAll(endpoint, fields)
@@ -61,8 +61,8 @@ class DataGoKrPagedFetcherHttpTest {
     @Test
     fun `정상 - 가득 찬 페이지는 다음 페이지로 순회하고 마지막 페이지에서 멈춘다`() {
         val (fetcher, server) = bindFetcher()
-        val fullPage: String = (1..DataGoKrApiSpec.PAGE_SIZE).joinToString(",") { item(name = "기관$it") }
-        val totalCount: Int = DataGoKrApiSpec.PAGE_SIZE + 2
+        val fullPage: String = (1..DataGoKrApiSpec.STANDARD_PAGE_SIZE).joinToString(",") { item(name = "기관$it") }
+        val totalCount: Int = DataGoKrApiSpec.STANDARD_PAGE_SIZE + 2
         server.expect(requestTo(containsString("pageNo=1")))
             .andRespond(withSuccess(envelope(fullPage, totalCount), MediaType.APPLICATION_JSON))
         server.expect(requestTo(containsString("pageNo=2")))
@@ -75,7 +75,7 @@ class DataGoKrPagedFetcherHttpTest {
 
         val points: List<DataGoKrPoint>? = fetcher.fetchAll(endpoint, fields)
 
-        assertThat(points).hasSize(DataGoKrApiSpec.PAGE_SIZE + 2)
+        assertThat(points).hasSize(DataGoKrApiSpec.STANDARD_PAGE_SIZE + 2)
         server.verify()
     }
 

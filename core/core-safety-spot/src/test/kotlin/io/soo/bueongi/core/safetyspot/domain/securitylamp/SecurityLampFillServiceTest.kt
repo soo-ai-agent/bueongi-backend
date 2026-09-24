@@ -2,7 +2,6 @@ package io.soo.bueongi.core.safetyspot.domain.securitylamp
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
-import io.soo.bueongi.client.datagokr.query.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
@@ -72,7 +71,7 @@ class SecurityLampFillServiceTest {
 
         assertThat(added).isEqualTo(1)
         assertThat(liveStore.appended.single().type).isEqualTo(SafetySpotType.SECURITY_LAMP)
-        verify(client).fetchSecurityLamps(any<DataGoKrQuery>())
+        verify(client).fetchSecurityLamps(any<String>())
     }
 
     private fun service(

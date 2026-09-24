@@ -1,9 +1,6 @@
 package io.soo.bueongi.client.datagokr
 
 object DataGoKrApiSpec {
-    // numOfRows 를 더 크게 줘도 서버가 100 으로 고정한다(실측).
-    const val PAGE_SIZE: Int = 100
-
     // 표준데이터 계열(tn_pubr)은 2000 이상을 resultCode 10 으로 거부한다(실측).
     const val STANDARD_PAGE_SIZE: Int = 1000
 

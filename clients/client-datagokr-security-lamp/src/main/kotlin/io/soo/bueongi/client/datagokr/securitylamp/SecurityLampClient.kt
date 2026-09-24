@@ -3,8 +3,6 @@ package io.soo.bueongi.client.datagokr.securitylamp
 import io.soo.bueongi.client.datagokr.DataGoKrPagedFetcher
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.query.DataGoKrFieldNames
-import io.soo.bueongi.client.datagokr.query.DataGoKrQuery
-import io.soo.bueongi.client.datagokr.query.DataGoKrQueryDialect
 import org.springframework.stereotype.Component
 
 // 전국 보안등(표준데이터): https://www.data.go.kr/data/15149415/openapi.do
@@ -15,8 +13,8 @@ class SecurityLampClient(
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 
-    fun fetchSecurityLamps(query: DataGoKrQuery = DataGoKrQuery()): List<DataGoKrPoint>? =
-        fetcher.fetchAll(ENDPOINT, FIELDS, query, DataGoKrQueryDialect.FIELD)
+    fun fetchSecurityLamps(municipalityCode: String? = null): List<DataGoKrPoint>? =
+        fetcher.fetchAll(ENDPOINT, FIELDS, municipalityCode)
 
     private companion object {
         const val ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"

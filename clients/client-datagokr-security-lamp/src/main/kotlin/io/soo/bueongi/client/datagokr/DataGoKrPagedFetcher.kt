@@ -2,8 +2,6 @@ package io.soo.bueongi.client.datagokr
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.client.datagokr.query.DataGoKrFieldNames
-import io.soo.bueongi.client.datagokr.query.DataGoKrQuery
-import io.soo.bueongi.client.datagokr.query.DataGoKrQueryDialect
 import io.soo.bueongi.client.datagokr.response.DataGoKrEnvelope
 import io.soo.bueongi.client.datagokr.response.DataGoKrHeader
 import io.soo.bueongi.client.datagokr.response.DataGoKrResponse
@@ -34,8 +32,7 @@ class DataGoKrPagedFetcher(
     fun fetchAll(
         endpoint: String,
         fields: DataGoKrFieldNames,
-        query: DataGoKrQuery = DataGoKrQuery(),
-        dialect: DataGoKrQueryDialect = DataGoKrQueryDialect.CONDITION,
+        municipalityCode: String? = null,
     ): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
@@ -44,7 +41,7 @@ class DataGoKrPagedFetcher(
         var totalCount: Long = Long.MAX_VALUE
 
         while (pageNo <= DataGoKrApiSpec.MAX_PAGES && received < totalCount) {
-            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, query, dialect) ?: return null
+            val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, municipalityCode) ?: return null
             val response: DataGoKrResponse = envelope.payload()
             val header: DataGoKrHeader? = response.header
             val code: String? = header?.resultCode
@@ -64,7 +61,7 @@ class DataGoKrPagedFetcher(
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
-            if (rows.isEmpty() || rows.size < pageSizeOf(dialect)) {
+            if (rows.isEmpty() || rows.size < DataGoKrApiSpec.STANDARD_PAGE_SIZE) {
                 if (totalCount == Long.MAX_VALUE) {
                     totalCount = received
                 }
@@ -89,14 +86,13 @@ class DataGoKrPagedFetcher(
     private fun fetchPage(
         endpoint: String,
         pageNo: Int,
-        query: DataGoKrQuery,
-        dialect: DataGoKrQueryDialect,
+        municipalityCode: String?,
     ): DataGoKrEnvelope? {
         var attempt: Int = 1
         while (true) {
             try {
                 return restClient.get()
-                    .uri(URI.create(pageUrl(endpoint, pageNo, query, dialect)))
+                    .uri(URI.create(pageUrl(endpoint, pageNo, municipalityCode)))
                     .retrieve()
                     .body(DataGoKrEnvelope::class.java)
             } catch (e: HttpClientErrorException) {
@@ -139,27 +135,19 @@ class DataGoKrPagedFetcher(
     private fun pageUrl(
         endpoint: String,
         pageNo: Int,
-        query: DataGoKrQuery,
-        dialect: DataGoKrQueryDialect,
+        municipalityCode: String?,
     ): String {
-        val responseType: String =
-            if (dialect == DataGoKrQueryDialect.CONDITION) {
-                "&returnType=json&type=json"
+        val regionFilter: String =
+            if (municipalityCode != null) {
+                "&$PARAM_INSTITUTION_CODE=$municipalityCode"
             } else {
-                "&type=json"
+                ""
             }
         return "$endpoint?serviceKey=$serviceKey" +
-            "&pageNo=$pageNo&numOfRows=${pageSizeOf(dialect)}" +
-            responseType +
-            query.toQueryParams(dialect)
+            "&pageNo=$pageNo&numOfRows=${DataGoKrApiSpec.STANDARD_PAGE_SIZE}" +
+            "&type=json" +
+            regionFilter
     }
-
-    private fun pageSizeOf(dialect: DataGoKrQueryDialect): Int =
-        if (dialect == DataGoKrQueryDialect.CONDITION) {
-            DataGoKrApiSpec.PAGE_SIZE
-        } else {
-            DataGoKrApiSpec.STANDARD_PAGE_SIZE
-        }
 
     private fun extractItems(items: JsonNode?): List<JsonNode> =
         when {
@@ -188,6 +176,8 @@ class DataGoKrPagedFetcher(
 
     private companion object {
         const val PROVIDER: String = "data_go_kr"
+
+        const val PARAM_INSTITUTION_CODE: String = "insttCode"
         const val STOPPED_ACTION: String = "갱신 중단(기존 데이터 유지)"
     }
 }

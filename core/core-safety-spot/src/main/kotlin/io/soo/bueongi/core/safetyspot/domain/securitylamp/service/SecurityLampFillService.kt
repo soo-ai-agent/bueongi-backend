@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.safetyspot.domain.securitylamp.service
 
 import io.soo.bueongi.client.datagokr.DataGoKrPoint
-import io.soo.bueongi.client.datagokr.query.DataGoKrQuery
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
@@ -65,7 +64,7 @@ class SecurityLampFillService(
     }
 
     private fun fetchAndStore(regionCode: String): Int {
-        val fetched: List<DataGoKrPoint>? = client.fetchSecurityLamps(DataGoKrQuery(municipalityCode = regionCode))
+        val fetched: List<DataGoKrPoint>? = client.fetchSecurityLamps(regionCode)
         if (fetched == null) {
             retryGate.recordFailure(regionCode)
             events.fetchFailed(SafetySpotType.SECURITY_LAMP, regionCode)
