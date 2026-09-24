@@ -15,7 +15,6 @@ class SecurityLampClient(
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 
-    // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
     fun fetchSecurityLamps(query: DataGoKrQuery = DataGoKrQuery()): List<DataGoKrPoint>? =
         fetcher.fetchAll(ENDPOINT, FIELDS, query, DataGoKrQueryDialect.FIELD)
 

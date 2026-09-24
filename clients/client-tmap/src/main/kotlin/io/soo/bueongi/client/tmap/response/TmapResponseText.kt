@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.tmap
+package io.soo.bueongi.client.tmap.response
 
 // Tmap 은 문자열 값 안에 NUL(0x00)을 끼워 보내 Jackson 이 파싱을 거부한다 — 앞뒤가 같으면 하나만, 다르면 공백으로 잇는다.
 fun sanitizeTmapJson(body: String): String {

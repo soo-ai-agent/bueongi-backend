@@ -1,5 +1,8 @@
 package io.soo.bueongi.client.safemap
 
+import io.soo.bueongi.client.safemap.response.SafemapPoliceRow
+import io.soo.bueongi.client.safemap.response.SafemapResponse
+import io.soo.bueongi.client.safemap.response.SafemapResponseHeader
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 import org.slf4j.Logger

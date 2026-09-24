@@ -1,5 +1,6 @@
 package io.soo.bueongi.client.kakao
 
+import io.soo.bueongi.client.kakao.response.KakaoKeywordResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component

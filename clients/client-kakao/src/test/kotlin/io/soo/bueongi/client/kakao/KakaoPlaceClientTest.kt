@@ -1,5 +1,6 @@
 package io.soo.bueongi.client.kakao
 
+import io.soo.bueongi.client.kakao.response.KakaoPlaceDocument
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

@@ -154,7 +154,6 @@ class DataGoKrPagedFetcher(
             query.toQueryParams(dialect)
     }
 
-    // 표준데이터 계열은 한 번에 1,000건까지 준다(실측).
     private fun pageSizeOf(dialect: DataGoKrQueryDialect): Int =
         if (dialect == DataGoKrQueryDialect.CONDITION) {
             DataGoKrApiSpec.PAGE_SIZE

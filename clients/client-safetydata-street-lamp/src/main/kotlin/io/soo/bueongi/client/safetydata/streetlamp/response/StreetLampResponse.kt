@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safetydata.streetlamp
+package io.soo.bueongi.client.safetydata.streetlamp.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSetter

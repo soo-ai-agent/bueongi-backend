@@ -1,7 +1,8 @@
-package io.soo.bueongi.client.kakao
+package io.soo.bueongi.client.kakao.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.soo.bueongi.client.kakao.KakaoPlace
 
 // Kakao Local 좌표 규격: x=경도(lng), y=위도(lat), 문자열로 온다.
 @JsonIgnoreProperties(ignoreUnknown = true)

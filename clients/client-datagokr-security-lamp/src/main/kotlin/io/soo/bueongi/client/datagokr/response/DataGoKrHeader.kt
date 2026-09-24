@@ -2,7 +2,6 @@ package io.soo.bueongi.client.datagokr.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-// 원천이 코드나 메시지를 생략하는 응답이 있어 전부 null 이 가능하다.
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class DataGoKrHeader(
     val resultCode: String? = null,

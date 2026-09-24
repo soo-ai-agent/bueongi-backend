@@ -1,5 +1,8 @@
 package io.soo.bueongi.client.safetydata.streetlamp
 
+import io.soo.bueongi.client.safetydata.streetlamp.response.StreetLampResponse
+import io.soo.bueongi.client.safetydata.streetlamp.response.StreetLampResponseHeader
+import io.soo.bueongi.client.safetydata.streetlamp.response.StreetLampRow
 import io.soo.bueongi.support.util.Wgs84Point
 import io.soo.bueongi.support.util.resolveKoreanWgs84OrNull
 import org.slf4j.Logger

@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.kakao
+package io.soo.bueongi.client.kakao.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 

@@ -1,4 +1,4 @@
-package io.soo.bueongi.client.safe182
+package io.soo.bueongi.client.safe182.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSetter
