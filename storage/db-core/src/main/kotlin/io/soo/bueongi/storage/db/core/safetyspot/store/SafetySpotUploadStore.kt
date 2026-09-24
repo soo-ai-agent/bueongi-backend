@@ -6,6 +6,7 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotCollectionDto
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemDto
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemPropertiesDto
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,10 +28,7 @@ class SafetySpotUploadStore(
 
     private val writeMapper: ObjectMapper = objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-    fun save(
-        type: SafetySpotType,
-        points: List<SafetySpotPoint>,
-    ) {
+    fun save(type: SafetySpotType, points: List<SafetySpotPoint>) {
         val dir = File(uploadDir)
         Files.createDirectories(dir.toPath())
         val target = File(dir, "${type.cdnType}.json")
@@ -70,6 +68,17 @@ class SafetySpotUploadStore(
     }
 }
 
+// 설치 목적·대수는 CCTV 만 갖는다 — 그 종류일 때만 칸을 만든다.
+private fun SafetySpotPoint.cctvPropertiesOrNull(): SafetySpotItemPropertiesDto? {
+    if (this !is CctvSpot) {
+        return null
+    }
+    if (purpose == null && cameraCount == null) {
+        return null
+    }
+    return SafetySpotItemPropertiesDto(purpose = purpose, cameraCount = cameraCount)
+}
+
 internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto =
     SafetySpotItemDto(
         name = name,
@@ -78,10 +87,5 @@ internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto =
         sigunguCode = sigungu,
         address = address,
         phone = phone,
-        properties =
-            if (purpose != null || cameraCount != null) {
-                SafetySpotItemPropertiesDto(purpose = purpose, cameraCount = cameraCount)
-            } else {
-                null
-            },
+        properties = cctvPropertiesOrNull(),
     )

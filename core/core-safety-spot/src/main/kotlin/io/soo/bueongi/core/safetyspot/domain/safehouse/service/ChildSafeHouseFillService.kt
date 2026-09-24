@@ -4,9 +4,9 @@ import io.soo.bueongi.client.safe182.ChildSafeHouseClient
 import io.soo.bueongi.client.safe182.ChildSafeHousePoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafeHouseSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -71,8 +71,7 @@ class ChildSafeHouseFillService(
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
-                SafetySpotPoint(
-                    type = SafetySpotType.SAFEHOUSE,
+                SafeHouseSpot(
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,

@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidSpotLimitException
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpots
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
@@ -16,14 +16,10 @@ class RegionSafetySpotStatusServiceSpotsTest {
     private fun service(points: Map<SafetySpotType, List<SafetySpotPoint>>): RegionSafetySpotStatusService =
         RegionSafetySpotStatusService(FakeSafetySpotSource(points), RegionNameCatalog(jacksonObjectMapper()))
 
-    private fun points(
-        type: SafetySpotType,
-        count: Int,
-        region: String = MAPO,
-    ): List<SafetySpotPoint> {
+    private fun points(type: SafetySpotType, count: Int, region: String = MAPO): List<SafetySpotPoint> {
         val made: ArrayList<SafetySpotPoint> = ArrayList(count)
         for (i in 0 until count) {
-            made.add(SafetySpotPoint(type, lat = 37.50 + i * 0.001, lng = 127.00, name = "p$i", sigungu = region))
+            made.add(SafetySpotPoint.of(type, lat = 37.50 + i * 0.001, lng = 127.00, name = "p$i", sigungu = region))
         }
         return made
     }
@@ -35,8 +31,8 @@ class RegionSafetySpotStatusServiceSpotsTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
                         ),
                 ),
             ).findSpotsByCode(MAPO, limit = 100)
@@ -127,8 +123,8 @@ class RegionSafetySpotStatusServiceSpotsTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
                         ),
                 ),
             ).findSpotsByCode("unknown", limit = 100)

@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
@@ -23,13 +23,13 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
                         ),
                     SafetySpotType.BELL to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.BELL, 37.52, 127.02, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.BELL, 37.52, 127.02, sigungu = MAPO),
                         ),
                 ),
             ).summarize()
@@ -45,7 +45,7 @@ class RegionSafetySpotStatusServiceTest {
     fun `이름표에 있는 코드는 사람이 읽는 이름으로 바꾼다`() {
         val summary =
             service(
-                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = MAPO))),
+                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, sigungu = MAPO))),
             ).summarize()
 
         assertThat(summary.single().sido).isEqualTo("서울특별시")
@@ -59,8 +59,8 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 38.1, 127.7, sigungu = HWACHEON),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.7, 128.8, sigungu = GANGNEUNG),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 38.1, 127.7, sigungu = HWACHEON),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.7, 128.8, sigungu = GANGNEUNG),
                         ),
                 ),
             ).summarize()
@@ -73,7 +73,7 @@ class RegionSafetySpotStatusServiceTest {
     fun `모르는 코드는 코드를 그대로 보여 주고 시도는 비운다 - 추측하지 않는다`() {
         val summary =
             service(
-                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "9999999"))),
+                mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "9999999"))),
             ).summarize()
 
         assertThat(summary.single().name).isEqualTo("9999999")
@@ -87,8 +87,8 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.6, 127.1, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.6, 127.1, sigungu = MAPO),
                         ),
                 ),
             ).summarize()
@@ -104,8 +104,8 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.1, 126.9, sigungu = GWANGJU_BUKGU),
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.8, 126.4, sigungu = MOKPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.1, 126.9, sigungu = GWANGJU_BUKGU),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.8, 126.4, sigungu = MOKPO),
                         ),
                 ),
             ).summarize()
@@ -123,7 +123,7 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.9, 127.5, sigungu = SUNCHEON),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.9, 127.5, sigungu = SUNCHEON),
                         ),
                 ),
             ).summarize()
@@ -138,9 +138,9 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.4, 126.9, sigungu = GEUMCHEON),
-                            SafetySpotPoint(SafetySpotType.CCTV, 36.6, 127.4, sigungu = CHEONGJU),
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.7, 127.7, sigungu = YEOSU),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.4, 126.9, sigungu = GEUMCHEON),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 36.6, 127.4, sigungu = CHEONGJU),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.7, 127.7, sigungu = YEOSU),
                         ),
                 ),
             ).summarize()
@@ -159,9 +159,9 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "11110"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 33.4, 126.5, sigungu = "50110"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.8, 127.7, sigungu = "42110"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "11110"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 33.4, 126.5, sigungu = "50110"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.8, 127.7, sigungu = "42110"),
                         ),
                 ),
             ).summarize()
@@ -179,8 +179,8 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.19, 126.91, sigungu = "12300"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "12110"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.19, 126.91, sigungu = "12300"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "12110"),
                         ),
                 ),
             ).summarize()
@@ -197,7 +197,7 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "99999"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, sigungu = "99999"),
                         ),
                 ),
             ).summarize()
@@ -213,10 +213,10 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.48, 126.58, sigungu = "3490000"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.14, 126.93, sigungu = "3590000"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "4800000"),
-                            SafetySpotPoint(SafetySpotType.CCTV, 34.46, 126.25, sigungu = "5000000"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.48, 126.58, sigungu = "3490000"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.14, 126.93, sigungu = "3590000"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.80, 126.40, sigungu = "4800000"),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 34.46, 126.25, sigungu = "5000000"),
                         ),
                 ),
             ).summarize()
@@ -236,8 +236,8 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.60, 127.20, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.60, 127.20, sigungu = MAPO),
                         ),
                 ),
             ).summarize()
@@ -254,9 +254,9 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
-                            SafetySpotPoint(SafetySpotType.CCTV, Double.NaN, 127.0, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, Double.NaN, 127.0, sigungu = MAPO),
                         ),
                 ),
             ).summarize()
@@ -275,7 +275,7 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 0.0, 0.0, sigungu = MAPO),
                         ),
                 ),
             ).summarize()
@@ -290,9 +290,9 @@ class RegionSafetySpotStatusServiceTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, sigungu = null),
-                            SafetySpotPoint(SafetySpotType.CCTV, 35.1, 129.0, sigungu = null),
-                            SafetySpotPoint(SafetySpotType.CCTV, 37.56, 126.91, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, sigungu = null),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.1, 129.0, sigungu = null),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.56, 126.91, sigungu = MAPO),
                         ),
                 ),
             ).summarize()

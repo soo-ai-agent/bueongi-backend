@@ -47,10 +47,7 @@ class SafetySpotRepository(
 
     override fun index(type: SafetySpotType): GridSpatialIndex = indexByType.get()[type] ?: EMPTY_INDEX
 
-    override fun append(
-        type: SafetySpotType,
-        points: List<SafetySpotPoint>,
-    ): Int {
+    override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
         if (points.isEmpty()) {
             return index(type).size
         }
@@ -64,10 +61,7 @@ class SafetySpotRepository(
         return total
     }
 
-    override fun replace(
-        type: SafetySpotType,
-        points: List<SafetySpotPoint>,
-    ): Int {
+    override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
         val replaced = GridSpatialIndex(points)
         indexByType.updateAndGet { current -> current + (type to replaced) }
         log.info("안심시설 라이브 교체: type={}, count={}", type, points.size)
@@ -122,10 +116,7 @@ class SafetySpotRepository(
         return regions
     }
 
-    private fun readSafetySpotFiles(
-        dir: File,
-        byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>,
-    ): Int {
+    private fun readSafetySpotFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var fileCount: Int = 0
         for (type in SafetySpotType.entries) {
             val typeDir = File(dir, type.cdnType)
@@ -145,10 +136,7 @@ class SafetySpotRepository(
         return fileCount
     }
 
-    private fun readSafePathFiles(
-        dir: File,
-        paths: MutableList<SafePath>,
-    ): Int {
+    private fun readSafePathFiles(dir: File, paths: MutableList<SafePath>): Int {
         val safePathDir = File(dir, "safepath")
         if (!safePathDir.isDirectory) {
             return 0
@@ -343,7 +331,7 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     val sigungu: String? = parts.firstOrNull()?.trim()?.trim('"')?.takeIf { it.isNotEmpty() }
-    return SafetySpotPoint(
+    return SafetySpotPoint.of(
         type = SafetySpotType.CCTV,
         lat = point.lat,
         lng = point.lng,
@@ -358,10 +346,7 @@ private const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
 
 private const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
 
-private fun resolveCsvDir(
-    configured: String,
-    default: String,
-): File? {
+private fun resolveCsvDir(configured: String, default: String): File? {
     if (configured.isBlank()) {
         return null
     }
@@ -373,10 +358,7 @@ private fun File.listCsvFiles(): List<File> =
         ?.sortedBy { it.name }
         .orEmpty()
 
-private fun resolveCsv(
-    configured: String,
-    default: String,
-): File? {
+private fun resolveCsv(configured: String, default: String): File? {
     if (configured.isBlank()) {
         return null
     }
@@ -401,7 +383,7 @@ private class LampCsvColumns(
                 lng = parts[lngAt].trim().toDoubleOrNull(),
             ) ?: return null
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
-        return SafetySpotPoint(
+        return SafetySpotPoint.of(
             type = SafetySpotType.SECURITY_LAMP,
             lat = point.lat,
             lng = point.lng,
@@ -410,10 +392,7 @@ private class LampCsvColumns(
         )
     }
 
-    private fun valueAt(
-        parts: List<String>,
-        at: Int,
-    ): String? {
+    private fun valueAt(parts: List<String>, at: Int): String? {
         if (at < 0 || at >= parts.size) {
             return null
         }

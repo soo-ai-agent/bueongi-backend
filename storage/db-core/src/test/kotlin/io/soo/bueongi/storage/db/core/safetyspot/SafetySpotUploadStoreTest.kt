@@ -2,6 +2,7 @@ package io.soo.bueongi.storage.db.core.safetyspot
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
@@ -20,8 +21,8 @@ class SafetySpotUploadStoreTest {
         val store = SafetySpotUploadStore(mapper, tmp.toFile().absolutePath)
         val points =
             listOf(
-                SafetySpotPoint(SafetySpotType.CCTV, 37.5, 127.0, name = "c1", purpose = "생활방범", cameraCount = 4),
-                SafetySpotPoint(SafetySpotType.CCTV, 37.51, 127.01, name = "c2", address = "서울 종로구", phone = "02-1"),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, name = "c1", purpose = "생활방범", cameraCount = 4),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, name = "c2", address = "서울 종로구", phone = "02-1"),
             )
 
         store.save(SafetySpotType.CCTV, points)
@@ -30,8 +31,9 @@ class SafetySpotUploadStoreTest {
         val loaded = store.findByType(SafetySpotType.CCTV)!!
         assertThat(loaded).hasSize(2)
         assertThat(loaded[0].name).isEqualTo("c1")
-        assertThat(loaded[0].purpose).isEqualTo("생활방범")
-        assertThat(loaded[0].cameraCount).isEqualTo(4)
+        val cctv: CctvSpot = loaded[0] as CctvSpot
+        assertThat(cctv.purpose).isEqualTo("생활방범")
+        assertThat(cctv.cameraCount).isEqualTo(4)
         assertThat(loaded[1].address).isEqualTo("서울 종로구")
         assertThat(loaded[1].phone).isEqualTo("02-1")
     }
@@ -49,10 +51,13 @@ class SafetySpotUploadStoreTest {
         @TempDir tmp: Path,
     ) {
         val store = SafetySpotUploadStore(mapper, File(tmp.toFile(), "made/here").absolutePath)
-        store.save(SafetySpotType.STREET_LAMP, listOf(SafetySpotPoint(SafetySpotType.STREET_LAMP, 37.5, 127.0)))
+        store.save(SafetySpotType.STREET_LAMP, listOf(SafetySpotPoint.of(SafetySpotType.STREET_LAMP, 37.5, 127.0)))
         store.save(
             SafetySpotType.STREET_LAMP,
-            listOf(SafetySpotPoint(SafetySpotType.STREET_LAMP, 37.6, 127.1), SafetySpotPoint(SafetySpotType.STREET_LAMP, 37.7, 127.2)),
+            listOf(
+                SafetySpotPoint.of(SafetySpotType.STREET_LAMP, 37.6, 127.1),
+                SafetySpotPoint.of(SafetySpotType.STREET_LAMP, 37.7, 127.2),
+            ),
         )
 
         assertThat(store.findByType(SafetySpotType.STREET_LAMP)).hasSize(2)

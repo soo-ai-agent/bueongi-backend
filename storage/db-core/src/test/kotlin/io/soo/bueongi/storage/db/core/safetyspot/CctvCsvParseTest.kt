@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.safetyspot
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.store.parseCctvCsvLine
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,8 +18,10 @@ class CctvCsvParseTest {
         assertThat(point.lat).isEqualTo(37.58774)
         assertThat(point.lng).isEqualTo(126.9839)
         assertThat(point.name).isEqualTo("서울특별시 종로구청")
-        assertThat(point.purpose).isEqualTo("생활방범")
-        assertThat(point.cameraCount).isEqualTo(2)
+        assertThat(point).isInstanceOf(CctvSpot::class.java)
+        val cctv: CctvSpot = point as CctvSpot
+        assertThat(cctv.purpose).isEqualTo("생활방범")
+        assertThat(cctv.cameraCount).isEqualTo(2)
     }
 
     @Test

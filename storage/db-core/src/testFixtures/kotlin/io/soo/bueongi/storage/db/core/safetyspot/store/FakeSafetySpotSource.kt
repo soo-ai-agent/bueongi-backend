@@ -13,9 +13,7 @@ class FakeSafetySpotSource(
     override fun index(type: SafetySpotType): GridSpatialIndex = indices[type] ?: GridSpatialIndex(emptyList())
 
     companion object {
-        fun of(
-            type: SafetySpotType,
-            points: List<GeoPoint>,
-        ): FakeSafetySpotSource = FakeSafetySpotSource(mapOf(type to points.map { SafetySpotPoint(type, it.lat, it.lng) }))
+        fun of(type: SafetySpotType, points: List<GeoPoint>): FakeSafetySpotSource =
+            FakeSafetySpotSource(mapOf(type to points.map { SafetySpotPoint.of(type, it.lat, it.lng) }))
     }
 }

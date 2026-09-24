@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status.service
 
-import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatus
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatusSummary
+import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotRefreshRecord
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore

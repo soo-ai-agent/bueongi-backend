@@ -1,9 +1,10 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvSpec
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
+import io.soo.bueongi.core.enums.SafetySpotCoordSystem
+import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.support.util.Epsg5179
 import org.assertj.core.api.Assertions.assertThat
@@ -13,10 +14,7 @@ import java.nio.charset.Charset
 class SafetySpotCsvParserTest {
     private val parser = SafetySpotCsvParser()
 
-    private fun bytes(
-        text: String,
-        charset: Charset = Charsets.UTF_8,
-    ): ByteArray = text.toByteArray(charset)
+    private fun bytes(text: String, charset: Charset = Charsets.UTF_8): ByteArray = text.toByteArray(charset)
 
     @Test
     fun `cctv wgs84 - 방범 용도만 적재하고 카메라대수·주소를 읽는다`() {
@@ -37,8 +35,9 @@ class SafetySpotCsvParserTest {
         assertThat(result.skipped).isEqualTo(2)
         val first = result.points.first()
         assertThat(first.name).isEqualTo("종로구청")
-        assertThat(first.purpose).isEqualTo("생활방범")
-        assertThat(first.cameraCount).isEqualTo(4)
+        val cctv: CctvSpot = first as CctvSpot
+        assertThat(cctv.purpose).isEqualTo("생활방범")
+        assertThat(cctv.cameraCount).isEqualTo(4)
         assertThat(first.address).isEqualTo("서울 종로구 1")
     }
 

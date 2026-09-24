@@ -7,6 +7,7 @@ import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NationwideFillService
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.StreetLampSpot
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import org.springframework.stereotype.Service
@@ -30,8 +31,7 @@ class StreetLampFillService(
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
-                SafetySpotPoint(
-                    type = SafetySpotType.STREET_LAMP,
+                StreetLampSpot(
                     lat = row.lat,
                     lng = row.lng,
                     sigungu = row.sigungu,

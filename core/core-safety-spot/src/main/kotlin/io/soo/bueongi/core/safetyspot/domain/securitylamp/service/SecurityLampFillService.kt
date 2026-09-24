@@ -4,9 +4,9 @@ import io.soo.bueongi.client.datagokr.DataGoKrPoint
 import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.SecurityLampSpot
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
@@ -87,8 +87,7 @@ class SecurityLampFillService(
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
-                SafetySpotPoint(
-                    type = SafetySpotType.SECURITY_LAMP,
+                SecurityLampSpot(
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,

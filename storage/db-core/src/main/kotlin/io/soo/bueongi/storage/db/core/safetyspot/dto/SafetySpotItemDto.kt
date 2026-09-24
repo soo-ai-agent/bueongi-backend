@@ -18,7 +18,7 @@ data class SafetySpotItemDto(
 ) {
     fun toSafetySpotPoint(type: SafetySpotType): SafetySpotPoint? {
         val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
-        return SafetySpotPoint(
+        return SafetySpotPoint.of(
             type = type,
             lat = point.lat,
             lng = point.lng,

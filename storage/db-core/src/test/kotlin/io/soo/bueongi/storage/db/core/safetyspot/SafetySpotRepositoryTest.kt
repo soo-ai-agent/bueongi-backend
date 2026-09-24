@@ -20,11 +20,7 @@ import java.util.concurrent.TimeUnit
 class SafetySpotRepositoryTest {
     private val mapper = ObjectMapper()
 
-    private fun write(
-        dir: File,
-        rel: String,
-        json: String,
-    ) {
+    private fun write(dir: File, rel: String, json: String) {
         val file = File(dir, rel)
         file.parentFile.mkdirs()
         file.writeText(json)
@@ -123,12 +119,9 @@ class SafetySpotRepositoryTest {
         write(dir, "cctv/seed.json", """{"items":[{"lat":37.5,"lng":127.0}]}""")
         val csv = File(dir, "CCTV정보.csv")
 
-        fun row(
-            id: String,
-            lat: String,
-            purpose: String,
-        ) = "3000000,$id,서울 종로구청,종로 $id,,$purpose,2,200,360도 전방면,30,202005," +
-            "02-0000-0000,$lat,126.97,2026-05-18,,갱신,수정"
+        fun row(id: String, lat: String, purpose: String) =
+            "3000000,$id,서울 종로구청,종로 $id,,$purpose,2,200,360도 전방면,30,202005," +
+                "02-0000-0000,$lat,126.97,2026-05-18,,갱신,수정"
         csv.writeText(
             buildString {
                 appendLine(
@@ -165,8 +158,8 @@ class SafetySpotRepositoryTest {
             repo.replace(
                 SafetySpotType.CCTV,
                 listOf(
-                    SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.6, lng = 127.1, name = "live1"),
-                    SafetySpotPoint(type = SafetySpotType.CCTV, lat = 37.61, lng = 127.11, name = "live2"),
+                    SafetySpotPoint.of(type = SafetySpotType.CCTV, lat = 37.6, lng = 127.1, name = "live1"),
+                    SafetySpotPoint.of(type = SafetySpotType.CCTV, lat = 37.61, lng = 127.11, name = "live2"),
                 ),
             )
 
@@ -182,7 +175,7 @@ class SafetySpotRepositoryTest {
     ) {
         val repo = SafetySpotRepository(tmp.toFile().absolutePath, mapper, uploadStore(tmp), "")
 
-        repo.replace(SafetySpotType.BELL, listOf(SafetySpotPoint(type = SafetySpotType.BELL, lat = 37.5, lng = 127.0)))
+        repo.replace(SafetySpotType.BELL, listOf(SafetySpotPoint.of(type = SafetySpotType.BELL, lat = 37.5, lng = 127.0)))
 
         assertThat(repo.index(SafetySpotType.BELL).size).isEqualTo(1)
     }
@@ -209,9 +202,9 @@ class SafetySpotRepositoryTest {
         store.save(
             SafetySpotType.CCTV,
             listOf(
-                SafetySpotPoint(SafetySpotType.CCTV, 37.6, 127.1, name = "u1"),
-                SafetySpotPoint(SafetySpotType.CCTV, 37.61, 127.11, name = "u2"),
-                SafetySpotPoint(SafetySpotType.CCTV, 37.62, 127.12, name = "u3"),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.6, 127.1, name = "u1"),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.61, 127.11, name = "u2"),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.62, 127.12, name = "u3"),
             ),
         )
 
@@ -227,7 +220,7 @@ class SafetySpotRepositoryTest {
         @TempDir tmp: Path,
     ) {
         val store = SafetySpotUploadStore(mapper, File(tmp.toFile(), "uploads").absolutePath)
-        store.save(SafetySpotType.BELL, listOf(SafetySpotPoint(SafetySpotType.BELL, 37.5, 127.0)))
+        store.save(SafetySpotType.BELL, listOf(SafetySpotPoint.of(SafetySpotType.BELL, 37.5, 127.0)))
 
         val repo = SafetySpotRepository(tmp.toFile().absolutePath, mapper, store, "")
         repo.load()
@@ -269,10 +262,8 @@ class SafetySpotRepositoryTest {
         pool.shutdown()
     }
 
-    private fun point(
-        type: SafetySpotType,
-        offset: Int = 0,
-    ): SafetySpotPoint = SafetySpotPoint(type = type, lat = 37.5 + offset * 0.001, lng = 127.0)
+    private fun point(type: SafetySpotType, offset: Int = 0): SafetySpotPoint =
+        SafetySpotPoint.of(type = type, lat = 37.5 + offset * 0.001, lng = 127.0)
 
     private companion object {
         const val TRIALS: Int = 300

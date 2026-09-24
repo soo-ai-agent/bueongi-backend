@@ -74,10 +74,8 @@ class AdminEndpointFixtures {
             }
 
         @Bean
-        fun requestMetricsService(
-            store: RequestMetricStore,
-            adminStore: AdminRequestMetricStore,
-        ): RequestMetricsService = RequestMetricsService(store, adminStore, FIXED_CLOCK)
+        fun requestMetricsService(store: RequestMetricStore, adminStore: AdminRequestMetricStore): RequestMetricsService =
+            RequestMetricsService(store, adminStore, FIXED_CLOCK)
 
         @Bean
         fun safetySpotSource(): SafetySpotSpatialSource =
@@ -86,7 +84,7 @@ class AdminEndpointFixtures {
                     GridSpatialIndex(
                         // 인덱스가 같은 좌표를 하나로 세므로 지점을 달리한다.
                         List(2) { i ->
-                            SafetySpotPoint(
+                            SafetySpotPoint.of(
                                 type = SafetySpotType.CCTV,
                                 lat = 37.5 + i * 0.001,
                                 lng = 127.0,
@@ -154,11 +152,7 @@ class AdminEndpointFixtures {
             object : AlertNotifier {
                 override val isEnabled: Boolean = false
 
-                override fun notify(
-                    key: String,
-                    title: String,
-                    detail: String,
-                ) = Unit
+                override fun notify(key: String, title: String, detail: String) = Unit
 
                 override fun findRecentAlerts(limit: Int): List<AlertRecord> =
                     listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
@@ -168,10 +162,7 @@ class AdminEndpointFixtures {
         fun slackAlertConfig(): SlackAlertConfig = SlackAlertConfig(webhookUrl = "", throttleMinutes = 10)
 
         @Bean
-        fun slackConfigService(
-            config: SlackAlertConfig,
-            notifier: AlertNotifier,
-        ): SlackConfigService = SlackConfigService(config, notifier)
+        fun slackConfigService(config: SlackAlertConfig, notifier: AlertNotifier): SlackConfigService = SlackConfigService(config, notifier)
 
         companion object {
             var lastLimit: Int = -1

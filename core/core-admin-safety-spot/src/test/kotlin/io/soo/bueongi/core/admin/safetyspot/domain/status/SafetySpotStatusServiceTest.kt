@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
+import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -19,7 +19,7 @@ class SafetySpotStatusServiceTest {
     ) : SafetySpotSpatialSource {
         private val indices =
             counts.mapValues { (type, n) ->
-                GridSpatialIndex((1..n).map { i -> SafetySpotPoint(type = type, lat = 37.5 + i * 0.001, lng = 127.0) })
+                GridSpatialIndex((1..n).map { i -> SafetySpotPoint.of(type = type, lat = 37.5 + i * 0.001, lng = 127.0) })
             }
 
         override fun index(type: SafetySpotType): GridSpatialIndex = indices[type] ?: GridSpatialIndex(emptyList())

@@ -60,10 +60,8 @@ class SafetySpotRegionCacheTest {
         assertThat(cache.isCached(SafetySpotType.STREET_LAMP, "3210000")).isTrue()
     }
 
-    private fun cacheOf(
-        tmp: File,
-        clock: Clock = Clock.systemUTC(),
-    ): SafetySpotRegionCache = SafetySpotRegionCache(ObjectMapper(), File(tmp, "region").absolutePath, TTL_DAYS, clock)
+    private fun cacheOf(tmp: File, clock: Clock = Clock.systemUTC()): SafetySpotRegionCache =
+        SafetySpotRegionCache(ObjectMapper(), File(tmp, "region").absolutePath, TTL_DAYS, clock)
 
     @Test
     fun `저장 시각을 함께 남긴다`(
@@ -104,11 +102,8 @@ class SafetySpotRegionCacheTest {
         assertThat(expired.loadAll(SafetySpotType.STREET_LAMP)).hasSize(1)
     }
 
-    private fun lamp(
-        name: String,
-        lat: Double,
-        lng: Double,
-    ): SafetySpotPoint = SafetySpotPoint(type = SafetySpotType.STREET_LAMP, lat = lat, lng = lng, name = name)
+    private fun lamp(name: String, lat: Double, lng: Double): SafetySpotPoint =
+        SafetySpotPoint.of(type = SafetySpotType.STREET_LAMP, lat = lat, lng = lng, name = name)
 
     private companion object {
         const val TTL_DAYS: Long = 90

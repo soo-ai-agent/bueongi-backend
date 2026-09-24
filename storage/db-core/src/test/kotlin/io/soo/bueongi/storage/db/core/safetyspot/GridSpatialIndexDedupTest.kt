@@ -48,9 +48,6 @@ class GridSpatialIndexDedupTest {
         assertThat(index.withinRadius(GeoPoint(37.5250, 126.8023), 100.0)).hasSize(1)
     }
 
-    private fun lamp(
-        name: String,
-        lat: Double,
-        lng: Double,
-    ): SafetySpotPoint = SafetySpotPoint(type = SafetySpotType.STREET_LAMP, lat = lat, lng = lng, name = name)
+    private fun lamp(name: String, lat: Double, lng: Double): SafetySpotPoint =
+        SafetySpotPoint.of(type = SafetySpotType.STREET_LAMP, lat = lat, lng = lng, name = name)
 }

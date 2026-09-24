@@ -6,6 +6,7 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NationwideFillService
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
+import io.soo.bueongi.storage.db.core.safetyspot.model.PoliceSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -30,8 +31,7 @@ class PoliceFillService(
         val points: ArrayList<SafetySpotPoint> = ArrayList(fetched.size)
         for (row in fetched) {
             points.add(
-                SafetySpotPoint(
-                    type = SafetySpotType.POLICE,
+                PoliceSpot(
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,

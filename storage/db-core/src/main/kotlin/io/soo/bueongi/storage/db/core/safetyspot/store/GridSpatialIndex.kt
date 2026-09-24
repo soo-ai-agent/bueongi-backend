@@ -19,10 +19,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
     val regions: Set<String> = distinct.mapNotNullTo(HashSet()) { it.sigungu }
 
-    fun withinRadius(
-        center: GeoPoint,
-        radiusM: Double,
-    ): List<SafetySpotPoint> {
+    fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {
             return emptyList()
         }
@@ -30,10 +27,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return candidates.filter { center.distanceMetersTo(it.toGeoPoint()) <= radiusM }
     }
 
-    fun withinCorridor(
-        path: List<GeoPoint>,
-        corridorM: Double,
-    ): List<SafetySpotPoint> {
+    fun withinCorridor(path: List<GeoPoint>, corridorM: Double): List<SafetySpotPoint> {
         if (path.isEmpty() || corridorM <= 0) {
             return emptyList()
         }
@@ -66,10 +60,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
     }
 
     // 기준점들 주변의 격자 칸에 든 시설을 모아 후보로 낸다. 칸 단위라 반경 밖도 섞여 나온다 — 호출부가 다시 거른다.
-    private fun candidateCells(
-        anchors: List<GeoPoint>,
-        radiusM: Double,
-    ): List<SafetySpotPoint> {
+    private fun candidateCells(anchors: List<GeoPoint>, radiusM: Double): List<SafetySpotPoint> {
         if (buckets.isEmpty()) {
             return emptyList()
         }
@@ -100,10 +91,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
         // 좌표가 몇 번째 칸에 드는지 낸다.
-        private fun cellIndex(
-            value: Double,
-            cellDeg: Double,
-        ): Int = floor(value / cellDeg).toInt()
+        private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
 
         fun cellKey(latCell: Int, lngCell: Int): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
