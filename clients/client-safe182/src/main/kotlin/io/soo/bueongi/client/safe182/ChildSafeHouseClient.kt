@@ -1,8 +1,8 @@
 package io.soo.bueongi.client.safe182
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safe182.response.Safe182Response
 import io.soo.bueongi.client.safe182.response.Safe182Row
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

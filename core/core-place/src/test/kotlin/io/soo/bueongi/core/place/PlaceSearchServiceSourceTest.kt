@@ -2,8 +2,8 @@ package io.soo.bueongi.core.place
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
-import io.soo.bueongi.client.kakao.KakaoPlace
-import io.soo.bueongi.client.kakao.KakaoPlaceClient
+import io.soo.bueongi.client.tmap.TmapPlace
+import io.soo.bueongi.client.tmap.TmapPlaceClient
 import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
@@ -21,8 +21,8 @@ import ch.qos.logback.classic.Logger as LogbackLogger
 class PlaceSearchServiceSourceTest {
     @Test
     fun `검색어를 그대로 외부 클라이언트에 넘긴다`() {
-        val client = mock<KakaoPlaceClient>()
-        whenever(client.search("강남")).thenReturn(listOf(KakaoPlace("리모트장소", "서울 어딘가 1", 37.5, 127.0)))
+        val client = mock<TmapPlaceClient>()
+        whenever(client.search("강남")).thenReturn(listOf(TmapPlace("리모트장소", "서울 어딘가 1", 37.5, 127.0)))
 
         val result = PlaceSearchService(client, mock()).search("강남")
 
@@ -33,7 +33,7 @@ class PlaceSearchServiceSourceTest {
     @Test
     fun `외부 검색이 실패하면 사용 불가를 알리고 원인을 잃지 않는다`() {
         val hidden = RuntimeException("Kakao 5xx")
-        val client = mock<KakaoPlaceClient>()
+        val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenThrow(hidden)
 
         assertThatThrownBy { PlaceSearchService(client, mock()).search("강남") }
@@ -48,7 +48,7 @@ class PlaceSearchServiceSourceTest {
         appender.start()
         logger.addAppender(appender)
         val hidden = RuntimeException("Kakao 5xx", IllegalStateException("연결 끊김"))
-        val client = mock<KakaoPlaceClient>()
+        val client = mock<TmapPlaceClient>()
         whenever(client.search("우리집 앞 골목")).thenThrow(hidden)
 
         assertThatThrownBy { PlaceSearchService(client, mock()).search("우리집 앞 골목") }
@@ -63,7 +63,7 @@ class PlaceSearchServiceSourceTest {
 
     @Test
     fun `외부 검색이 실패하면 운영 이벤트를 발행한다`() {
-        val client = mock<KakaoPlaceClient>()
+        val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenThrow(RuntimeException("Kakao 5xx"))
         val events = mock<ApplicationEventPublisher>()
 
@@ -72,7 +72,7 @@ class PlaceSearchServiceSourceTest {
 
         val captor = argumentCaptor<OperationEvent>()
         verify(events).publishEvent(captor.capture())
-        assertThat(captor.firstValue.key).isEqualTo("kakao-place-failed")
+        assertThat(captor.firstValue.key).isEqualTo("tmap-place-failed")
         assertThat(captor.firstValue.detail).isEqualTo("RuntimeException")
     }
 }

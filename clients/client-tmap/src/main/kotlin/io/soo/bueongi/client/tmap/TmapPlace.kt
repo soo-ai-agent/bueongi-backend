@@ -1,6 +1,6 @@
-package io.soo.bueongi.client.kakao
+package io.soo.bueongi.client.tmap
 
-data class KakaoPlace(
+data class TmapPlace(
     val name: String,
     val address: String,
     val lat: Double,

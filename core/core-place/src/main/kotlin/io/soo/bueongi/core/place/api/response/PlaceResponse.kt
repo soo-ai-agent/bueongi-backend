@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.place.api.response
 
-import io.soo.bueongi.client.kakao.KakaoPlace
+import io.soo.bueongi.client.tmap.TmapPlace
 
 data class PlaceResponse(
     val name: String,
@@ -9,7 +9,7 @@ data class PlaceResponse(
     val lng: Double,
 ) {
     companion object {
-        fun from(place: KakaoPlace): PlaceResponse {
+        fun from(place: TmapPlace): PlaceResponse {
             return PlaceResponse(
                 name = place.name,
                 address = place.address,

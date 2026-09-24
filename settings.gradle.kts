@@ -14,7 +14,6 @@ include(
     "api",
     "storage:db-core",
     "clients:client-tmap",
-    "clients:client-kakao",
     "clients:client-slack",
     "clients:client-datagokr-security-lamp",
     "clients:client-safemap",

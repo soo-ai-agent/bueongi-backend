@@ -25,7 +25,6 @@ spring:
       - client-datagokr-security-lamp.yml
       - db-core.yml
       - client-tmap.yml
-      - client-kakao.yml
       - client-safetydata-street-lamp.yml
       - client-safemap.yml
       - client-safe182.yml

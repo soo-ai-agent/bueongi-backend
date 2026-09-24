@@ -19,7 +19,6 @@ dependencies {
     implementation(project(":core:core-admin-auth"))
     implementation(project(":storage:db-core"))
     implementation(project(":clients:client-tmap"))
-    implementation(project(":clients:client-kakao"))
     implementation(project(":clients:client-slack"))
     implementation(project(":support:logging"))
     implementation(project(":support:monitoring"))

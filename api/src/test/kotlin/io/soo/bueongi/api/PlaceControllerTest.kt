@@ -1,7 +1,7 @@
 package io.soo.bueongi.api
 
-import io.soo.bueongi.client.kakao.KakaoPlace
-import io.soo.bueongi.client.kakao.KakaoPlaceClient
+import io.soo.bueongi.client.tmap.TmapPlace
+import io.soo.bueongi.client.tmap.TmapPlaceClient
 import io.soo.bueongi.core.place.api.controller.PlaceController
 import io.soo.bueongi.core.place.api.request.PlaceSearchRequest
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
@@ -78,10 +78,10 @@ class PlaceControllerTest(
     @TestConfiguration
     class StubRemoteConfig {
         @Bean
-        fun kakaoPlaceClient(): KakaoPlaceClient {
-            val client = mock<KakaoPlaceClient>()
+        fun tmapPlaceClient(): TmapPlaceClient {
+            val client = mock<TmapPlaceClient>()
             whenever(client.search("강남역"))
-                .thenReturn(listOf(KakaoPlace("강남역 2번 출구", "서울 강남구 강남대로 396", 37.4979, 127.0276)))
+                .thenReturn(listOf(TmapPlace("강남역 2번 출구", "서울 강남구 강남대로 396", 37.4979, 127.0276)))
             whenever(client.search("존재하지않는장소xyz")).thenReturn(emptyList())
             return client
         }

@@ -1,9 +1,9 @@
 package io.soo.bueongi.client.tmap.response
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
-import com.fasterxml.jackson.databind.JsonNode
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.roundToInt

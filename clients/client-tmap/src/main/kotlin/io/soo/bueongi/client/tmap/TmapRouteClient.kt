@@ -1,9 +1,9 @@
 package io.soo.bueongi.client.tmap
 
-import io.soo.bueongi.client.tmap.response.parseTmapGeoJson
-import io.soo.bueongi.client.tmap.response.sanitizeTmapJson
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.client.tmap.response.parseTmapGeoJson
+import io.soo.bueongi.client.tmap.response.sanitizeTmapJson
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -89,7 +89,6 @@ class TmapRouteClient(
 
         // 로그 대상 칸은 경로만 적는다 — 송신 줄과 같은 자리에서 같은 값이 보여야 한다.
         private const val PEDESTRIAN_PATH: String = "/tmap/routes/pedestrian"
-
         private const val PROVIDER: String = "tmap"
     }
 }

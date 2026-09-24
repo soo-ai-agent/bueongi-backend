@@ -1,7 +1,7 @@
 dependencies {
     implementation(project(":core:core-enum"))
     implementation(project(":core:core-common"))
-    implementation(project(":clients:client-kakao"))
+    implementation(project(":clients:client-tmap"))
     implementation(project(":storage:db-core"))
     implementation(project(":support:logging"))
 
