@@ -22,7 +22,7 @@ spring:
       - logging.yml
       - monitoring.yml
       - client-slack.yml
-      - client-datagokr-common.yml
+      - client-datagokr-security-lamp.yml
       - db-core.yml
       - client-tmap.yml
       - client-kakao.yml

@@ -105,10 +105,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
             cellDeg: Double,
         ): Int = floor(value / cellDeg).toInt()
 
-        fun cellKey(
-            latCell: Int,
-            lngCell: Int,
-        ): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
+        fun cellKey(latCell: Int, lngCell: Int): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
 }
 

@@ -81,9 +81,7 @@ class SafeWaypointFinder(
             return emptyList()
         }
 
-        val byWeightThenProgress: Comparator<PlacedCluster> =
-            compareByDescending<PlacedCluster> { it.cluster.weight }
-                .thenBy { it.progress }
+        val byWeightThenProgress: Comparator<PlacedCluster> = compareByDescending<PlacedCluster> { it.cluster.weight }.thenBy { it.progress }
         val byWeight: List<PlacedCluster> = placed.sortedWith(byWeightThenProgress)
 
         val combos: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()

@@ -1,8 +1,14 @@
-dependencies {
-    implementation(project(":clients:client-datagokr-common"))
+plugins {
+    id("java-test-fixtures")
+}
 
-    testImplementation(testFixtures(project(":clients:client-datagokr-common")))
+dependencies {
+    implementation(project(":support:logging"))
 
     implementation("org.springframework:spring-web")
     implementation("org.springframework:spring-context")
+    implementation("org.slf4j:slf4j-api")
+
+    testFixturesImplementation("org.springframework:spring-test")
+    testFixturesImplementation("org.springframework:spring-web")
 }

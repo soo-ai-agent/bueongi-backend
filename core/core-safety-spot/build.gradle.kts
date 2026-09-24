@@ -1,6 +1,5 @@
 dependencies {
     implementation(project(":clients:client-datagokr-security-lamp"))
-    implementation(project(":clients:client-datagokr-common"))
     implementation(project(":clients:client-safetydata-street-lamp"))
     implementation(project(":clients:client-safemap"))
     implementation(project(":clients:client-safe182"))
