@@ -77,7 +77,7 @@ class SafeRouteServiceTest {
         candidateMerger = RouteCandidateMerger(),
         scorer = scorer,
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
-        visitEvents = mock(),
+        plannedEvents = mock(),
     )
 
     @Test

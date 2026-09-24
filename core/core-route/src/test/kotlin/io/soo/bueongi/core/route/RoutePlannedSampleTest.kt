@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.route
 
-import io.soo.bueongi.core.common.event.RouteVisitedEvent
-import io.soo.bueongi.core.common.event.VisitedPoint
-import io.soo.bueongi.core.route.domain.service.RouteVisitEventPublisher
+import io.soo.bueongi.core.common.event.RoutePlannedEvent
+import io.soo.bueongi.core.common.event.RoutePoint
+import io.soo.bueongi.core.route.domain.service.RoutePlannedEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
 import org.assertj.core.api.Assertions.assertThat
@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 
-class RouteVisitSampleTest {
+class RoutePlannedSampleTest {
     private val maxSamplePoints: Int = 12
 
     private class RecordingPublisher : ApplicationEventPublisher {
@@ -23,10 +23,10 @@ class RouteVisitSampleTest {
 
     private fun visitedPoints(path: List<GeoPoint>): List<GeoPoint> {
         val recorder = RecordingPublisher()
-        RouteVisitEventPublisher(recorder).routeVisited(path.sampleEveryMeters(2_000.0, maxSamplePoints))
-        val event: RouteVisitedEvent = recorder.events.single() as RouteVisitedEvent
+        RoutePlannedEventPublisher(recorder).routePlanned(path.sampleEveryMeters(2_000.0, maxSamplePoints))
+        val event: RoutePlannedEvent = recorder.events.single() as RoutePlannedEvent
         val points: ArrayList<GeoPoint> = ArrayList(event.points.size)
-        for (point: VisitedPoint in event.points) {
+        for (point: RoutePoint in event.points) {
             points.add(GeoPoint(lat = point.lat, lng = point.lng))
         }
         return points

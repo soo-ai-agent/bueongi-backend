@@ -20,7 +20,7 @@ class SafeRouteService(
     private val candidateMerger: RouteCandidateMerger,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    private val visitEvents: RouteVisitEventPublisher,
+    private val plannedEvents: RoutePlannedEventPublisher,
 ) {
     fun safeCompare(query: RouteRequest): List<RouteOption> {
         if (!routeFinder.isEnabled) {
@@ -35,9 +35,9 @@ class SafeRouteService(
             routes.addAll(routeFinder.findSaferRoutes(query, routes))
         }
 
-        // 보안등은 자치단체마다 따로 요청해야 해서, 경로 위 여러 지점을 알려 그 지역 시설을 받아 오게 한다.
-        val visitedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
-        visitEvents.routeVisited(visitedPath.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
+        // 경로가 지나는 지역의 안심시설을 받아 두게 한다 — 다음 요청부터 그 지역 점수가 정확해진다.
+        val plannedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
+        plannedEvents.routePlanned(plannedPath.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
 
         val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)
         val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)
