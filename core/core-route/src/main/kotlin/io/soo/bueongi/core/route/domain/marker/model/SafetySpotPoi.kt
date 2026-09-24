@@ -5,7 +5,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import kotlin.math.roundToInt
 
 // x·y 는 위경도가 아니라 프론트 미니맵용 0~100 백분율 좌표다(프론트 계약).
-// 문자열 칸은 원천이 비워 보낸 것을 여기서 빈 값으로 메운다 — 받는 쪽이 전부 truthy 로 읽는다.
+// 문자열 칸은 원천이 비워 보낸 것을 빈 값으로 메운다. 앱이 값이 있는지로만 보고 그리기 때문이다.
 // cameraCount 만 예외로 null 을 유지한다 — 웹 보호자 뷰가 `!= null` 로 분기해
 // 0 을 보내면 카메라가 없는 시설에도 "카메라 0대" 배지가 붙는다(RouteMap.tsx).
 data class SafetySpotPoi(
@@ -21,8 +21,8 @@ data class SafetySpotPoi(
     val phone: String = "",
 )
 
-// 설치 목적·대수는 CCTV 만 갖는다 — 다른 종류는 앱이 truthy 로 읽는 빈 값으로 나간다.
-// x·y 는 목록 전체 범위가 있어야 나오므로 여기서 0으로 두고 toMiniMapPercent 가 채운다.
+// 설치 목적·대수는 CCTV 만 갖는다. 다른 종류는 빈 값으로 나간다.
+// x·y 는 목록 전체의 위경도 범위를 알아야 정해지므로 0으로 두고 toMiniMapPercent 가 채운다.
 internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi =
     SafetySpotPoi(
         type = markerType,

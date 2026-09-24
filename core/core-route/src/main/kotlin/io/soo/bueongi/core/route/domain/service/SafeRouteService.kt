@@ -35,7 +35,7 @@ class SafeRouteService(
             routes.addAll(routeFinder.findSaferRoutes(query, routes))
         }
 
-        // 경로가 지나는 지역의 안심시설을 받아 두게 한다 — 다음 요청부터 그 지역 점수가 정확해진다.
+        // 경로가 지나는 지역의 안심시설을 받아 두게 한다. 다음 요청부터 그 지역 안전 점수가 정확해진다.
         val plannedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
         val pickedPoints: List<GeoPoint> = plannedPath.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS)
         plannedEvents.routePlanned(pickedPoints)
@@ -82,7 +82,7 @@ class SafeRouteService(
 
         const val FILL_POINT_SPACING_METERS: Double = 2_000.0
 
-        // 점 하나가 최악의 경우 보안등 약 8회 외부 호출이라 한 요청의 쿼터 소모를 이 상한으로 막는다.
+        // 좌표 하나마다 보안등을 최대 여덟 번 부르므로, 한 요청이 외부 호출을 너무 쓰지 않게 막는다.
         const val MAX_FILL_POINTS: Int = 12
     }
 }
