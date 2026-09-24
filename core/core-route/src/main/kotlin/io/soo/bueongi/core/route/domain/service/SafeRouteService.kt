@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.client.tmap.TmapRoute
+import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
@@ -20,7 +21,7 @@ class SafeRouteService(
     private val candidateMerger: RouteCandidateMerger,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    private val plannedEvents: RoutePlannedEventPublisher,
+    private val routePlannedHandler: RoutePlannedHandler,
 ) {
     fun safeCompare(query: RouteRequest): List<RouteOption> {
         if (!routeFinder.isEnabled) {
@@ -38,7 +39,7 @@ class SafeRouteService(
         // 경로가 지나는 지역의 안심시설을 받아 두게 한다. 다음 요청부터 그 지역 안전 점수가 정확해진다.
         val plannedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
         val pickedPoints: List<GeoPoint> = plannedPath.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS)
-        plannedEvents.routePlanned(pickedPoints)
+        routePlannedHandler.onRoutePlanned(pickedPoints)
 
         val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)
         val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)

@@ -1,6 +1,7 @@
 package io.soo.bueongi.api
 
 import io.soo.bueongi.client.tmap.TmapRouteClient
+import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
@@ -8,7 +9,6 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
-import io.soo.bueongi.core.route.domain.service.RoutePlannedEventPublisher
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.post
     RouteFinder::class,
     RouteOptionAssembler::class,
     RouteMarkerBuilder::class,
-    RoutePlannedEventPublisher::class,
     RouteCandidateMerger::class,
     SafetyScorer::class,
     SafeWaypointFinder::class,
@@ -45,6 +44,9 @@ class RouteControllerTest(
 ) {
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
+
+    @MockitoBean
+    private lateinit var routePlannedHandler: RoutePlannedHandler
 
     private val validBody: String =
         """

@@ -67,7 +67,7 @@ class RerouteCallBudgetTest {
             candidateMerger = RouteCandidateMerger(),
             scorer = nightScorer(source),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
-            plannedEvents = mock(),
+            routePlannedHandler = mock(),
         )
 
     @Test

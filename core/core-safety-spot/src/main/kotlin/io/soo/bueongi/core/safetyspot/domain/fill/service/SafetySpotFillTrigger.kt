@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.safetyspot.domain.fill.service
 
+import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
 import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
@@ -20,13 +21,17 @@ class SafetySpotFillTrigger(
     private val streetLampFill: StreetLampFillService,
     private val policeFill: PoliceFillService,
     private val childSafeHouseFill: ChildSafeHouseFillService,
-) {
+) : RoutePlannedHandler {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotFillTrigger::class.java)
 
     private val executor: ExecutorService =
         Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "safety-spot-fill").apply { isDaemon = true }
         }
+
+    override fun onRoutePlanned(points: List<GeoPoint>) {
+        fillAround(points)
+    }
 
     fun fillAround(points: List<GeoPoint>) {
         if (points.isEmpty()) {

@@ -1,35 +1,16 @@
-package io.soo.bueongi.core.route
+package io.soo.bueongi.storage.db.core.safetyspot
 
-import io.soo.bueongi.core.common.event.RoutePlannedEvent
-import io.soo.bueongi.core.common.event.RoutePoint
-import io.soo.bueongi.core.route.domain.service.RoutePlannedEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
-class RoutePlannedPointsTest {
+class PickPointsAlongTest {
     private val maxPoints: Int = 12
 
-    private class RecordingPublisher : ApplicationEventPublisher {
-        val events: MutableList<Any> = ArrayList()
-
-        override fun publishEvent(event: Any) {
-            events.add(event)
-        }
-    }
-
     private fun visitedPoints(path: List<GeoPoint>): List<GeoPoint> {
-        val recorder = RecordingPublisher()
-        RoutePlannedEventPublisher(recorder).routePlanned(path.pickPointsAlong(2_000.0, maxPoints))
-        val event: RoutePlannedEvent = recorder.events.single() as RoutePlannedEvent
-        val points: ArrayList<GeoPoint> = ArrayList(event.points.size)
-        for (point: RoutePoint in event.points) {
-            points.add(GeoPoint(lat = point.lat, lng = point.lng))
-        }
-        return points
+        return path.pickPointsAlong(2_000.0, maxPoints)
     }
 
     private fun straightPath(lngSpanDegrees: Double, vertexCount: Int): List<GeoPoint> {
