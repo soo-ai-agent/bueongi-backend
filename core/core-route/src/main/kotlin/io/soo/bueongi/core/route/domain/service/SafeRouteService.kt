@@ -11,7 +11,7 @@ import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
+import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
 import org.springframework.stereotype.Service
 
 @Service
@@ -37,7 +37,8 @@ class SafeRouteService(
 
         // 경로가 지나는 지역의 안심시설을 받아 두게 한다 — 다음 요청부터 그 지역 점수가 정확해진다.
         val plannedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
-        plannedEvents.routePlanned(plannedPath.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
+        val pickedPoints: List<GeoPoint> = plannedPath.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS)
+        plannedEvents.routePlanned(pickedPoints)
 
         val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)
         val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)
@@ -79,9 +80,9 @@ class SafeRouteService(
     private companion object {
         const val TIE_BREAK_EPSILON: Double = 1e-9
 
-        const val FILL_SAMPLE_SPACING_METERS: Double = 2_000.0
+        const val FILL_POINT_SPACING_METERS: Double = 2_000.0
 
         // 점 하나가 최악의 경우 보안등 약 8회 외부 호출이라 한 요청의 쿼터 소모를 이 상한으로 막는다.
-        const val MAX_FILL_SAMPLE_POINTS: Int = 12
+        const val MAX_FILL_POINTS: Int = 12
     }
 }

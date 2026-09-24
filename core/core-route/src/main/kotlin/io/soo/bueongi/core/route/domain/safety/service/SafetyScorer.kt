@@ -10,7 +10,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
-import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
+import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.support.util.zonedAt
 import org.springframework.stereotype.Component
@@ -26,10 +26,10 @@ class SafetyScorer(
     private val clock: Clock = Clock.systemUTC(),
 ) {
     fun coverageOf(paths: List<List<GeoPoint>>): SafetyDataCoverage {
-        val samples: List<GeoPoint> = paths.flatMap { it.sampleEveryMeters(SAMPLE_SPACING_METERS, MAX_SAMPLES) }
+        val scorePoints: List<GeoPoint> = paths.flatMap { it.pickPointsAlong(SCORE_POINT_SPACING_METERS, MAX_SCORE_POINTS) }
         val covered: MutableSet<SafetyAxis> = LinkedHashSet()
         for (axis in SafetyAxis.entries) {
-            if (hasDataNear(axis, samples)) {
+            if (hasDataNear(axis, scorePoints)) {
                 covered.add(axis)
             }
         }
@@ -74,13 +74,13 @@ class SafetyScorer(
         )
     }
 
-    private fun hasDataNear(axis: SafetyAxis, samples: List<GeoPoint>): Boolean {
+    private fun hasDataNear(axis: SafetyAxis, scorePoints: List<GeoPoint>): Boolean {
         if (axis == SafetyAxis.SAFE_PATH) {
-            return hasSafePathNear(samples)
+            return hasSafePathNear(scorePoints)
         }
         for (type in spotTypesOf(axis)) {
-            for (sample in samples) {
-                if (safetySpots.index(type).withinRadius(sample, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()) {
+            for (point in scorePoints) {
+                if (safetySpots.index(type).withinRadius(point, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()) {
                     return true
                 }
             }
@@ -88,11 +88,11 @@ class SafetyScorer(
         return false
     }
 
-    private fun hasSafePathNear(samples: List<GeoPoint>): Boolean {
+    private fun hasSafePathNear(scorePoints: List<GeoPoint>): Boolean {
         for (safePath in safetySpots.safePaths) {
             for (coord in safePath.coords) {
-                for (sample in samples) {
-                    if (coord.distanceMetersTo(sample) <= DATA_PRESENCE_RADIUS_METERS) {
+                for (point in scorePoints) {
+                    if (coord.distanceMetersTo(point) <= DATA_PRESENCE_RADIUS_METERS) {
                         return true
                     }
                 }
@@ -203,9 +203,9 @@ class SafetyScorer(
         // 실측(2026-08-24, 전국 무작위 1.5km 구간 300개): 자료가 실린 축은 반경 1km 안에 최소 3건, 안 실린 축은 3km 까지 0건.
         const val DATA_PRESENCE_RADIUS_METERS: Double = 1_000.0
 
-        const val SAMPLE_SPACING_METERS: Double = 500.0
+        const val SCORE_POINT_SPACING_METERS: Double = 500.0
 
-        const val MAX_SAMPLES: Int = 40
+        const val MAX_SCORE_POINTS: Int = 40
 
         private const val MIN_DIVISOR_KM: Double = 0.001
 

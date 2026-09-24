@@ -4,14 +4,14 @@ import io.soo.bueongi.core.common.event.RoutePlannedEvent
 import io.soo.bueongi.core.common.event.RoutePoint
 import io.soo.bueongi.core.route.domain.service.RoutePlannedEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
+import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 
-class RoutePlannedSampleTest {
-    private val maxSamplePoints: Int = 12
+class RoutePlannedPointsTest {
+    private val maxPoints: Int = 12
 
     private class RecordingPublisher : ApplicationEventPublisher {
         val events: MutableList<Any> = ArrayList()
@@ -23,7 +23,7 @@ class RoutePlannedSampleTest {
 
     private fun visitedPoints(path: List<GeoPoint>): List<GeoPoint> {
         val recorder = RecordingPublisher()
-        RoutePlannedEventPublisher(recorder).routePlanned(path.sampleEveryMeters(2_000.0, maxSamplePoints))
+        RoutePlannedEventPublisher(recorder).routePlanned(path.pickPointsAlong(2_000.0, maxPoints))
         val event: RoutePlannedEvent = recorder.events.single() as RoutePlannedEvent
         val points: ArrayList<GeoPoint> = ArrayList(event.points.size)
         for (point: RoutePoint in event.points) {
@@ -81,7 +81,7 @@ class RoutePlannedSampleTest {
 
         val visited: List<GeoPoint> = visitedPoints(path)
 
-        assertThat(visited).hasSize(maxSamplePoints)
+        assertThat(visited).hasSize(maxPoints)
         assertThat(visited.last()).isEqualTo(path.last())
         assertThat(gapsMeters(visited).max())
             .describedAs("간격을 넓혀 덮으므로 중간에 큰 구멍이 없다")

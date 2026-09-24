@@ -100,8 +100,8 @@ fun List<GeoPoint>.pathLengthMeters(): Double {
     return total
 }
 
-// limit 을 넘으면 뒤를 자르지 않고 간격을 넓힌다 — 자르면 목적지 쪽이 통째로 빠진다.
-fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoPoint> {
+// 간격은 기준일 뿐이고 limit 이 넘치면 넓어진다 — 뒤를 자르면 목적지 쪽이 통째로 빠지기 때문이다.
+fun List<GeoPoint>.pickPointsAlong(spacingMeters: Double, limit: Int): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()
     }
@@ -112,7 +112,7 @@ fun List<GeoPoint>.sampleEveryMeters(everyMeters: Double, limit: Int): List<GeoP
     if (totalMeters <= 0) {
         return listOf(first(), last())
     }
-    val step: Double = max(everyMeters, totalMeters / (limit - 1))
+    val step: Double = max(spacingMeters, totalMeters / (limit - 1))
     val picked: ArrayList<GeoPoint> = ArrayList()
     picked.add(first())
     var walked: Double = 0.0
