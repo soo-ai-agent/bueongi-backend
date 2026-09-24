@@ -1,15 +1,13 @@
-package io.soo.bueongi.core.route.domain.marker
+package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.common.event.RouteVisitedEvent
 import io.soo.bueongi.core.common.event.VisitedPoint
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
-import io.soo.bueongi.core.route.domain.marker.service.RouteVisitEventPublisher
+import io.soo.bueongi.core.route.domain.service.RouteVisitEventPublisher
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
 import org.springframework.context.ApplicationEventPublisher
 
 class RouteVisitSampleTest {
@@ -25,8 +23,7 @@ class RouteVisitSampleTest {
 
     private fun visitedPoints(path: List<GeoPoint>): List<GeoPoint> {
         val recorder = RecordingPublisher()
-        RouteMarkerBuilder(FakeSafetySpotSource(), mock(), RouteVisitEventPublisher(recorder))
-            .buildMarkers(path.first(), path.last(), path)
+        RouteVisitEventPublisher(recorder).routeVisited(path.sampleEveryMeters(2_000.0, maxSamplePoints))
         val event: RouteVisitedEvent = recorder.events.single() as RouteVisitedEvent
         val points: ArrayList<GeoPoint> = ArrayList(event.points.size)
         for (point: VisitedPoint in event.points) {
@@ -35,10 +32,7 @@ class RouteVisitSampleTest {
         return points
     }
 
-    private fun straightPath(
-        lngSpanDegrees: Double,
-        vertexCount: Int,
-    ): List<GeoPoint> {
+    private fun straightPath(lngSpanDegrees: Double, vertexCount: Int): List<GeoPoint> {
         val points: ArrayList<GeoPoint> = ArrayList(vertexCount)
         for (index in 0 until vertexCount) {
             points.add(GeoPoint(37.5, 127.0 + lngSpanDegrees * index / (vertexCount - 1)))

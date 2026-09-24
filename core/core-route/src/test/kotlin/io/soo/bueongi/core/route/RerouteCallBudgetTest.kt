@@ -3,28 +3,24 @@ package io.soo.bueongi.core.route
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.api.request.RouteRequest
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
-import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
+import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.argThat
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -46,7 +42,7 @@ class RerouteCallBudgetTest {
             mapOf(
                 SafetySpotType.CCTV to
                     listOf(127.002, 127.004, 127.006, 127.008).map {
-                        SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
+                        SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, it)
                     },
             ),
         )
@@ -70,8 +66,8 @@ class RerouteCallBudgetTest {
             routeFinder = RouteFinder(tmap, SafeWaypointFinder(source)),
             candidateMerger = RouteCandidateMerger(),
             scorer = nightScorer(source),
-            assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
-            routeEvents = mock(),
+            assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+            visitEvents = mock(),
         )
 
     @Test
@@ -99,5 +95,4 @@ class RerouteCallBudgetTest {
         assertThat(result).isNotEmpty()
         assertThat(result.first().path).isNotNull()
     }
-
 }

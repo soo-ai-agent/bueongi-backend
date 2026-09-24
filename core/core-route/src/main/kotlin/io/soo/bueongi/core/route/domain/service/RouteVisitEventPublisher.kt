@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.route.domain.marker.service
+package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.core.common.event.RouteVisitedEvent
 import io.soo.bueongi.core.common.event.VisitedPoint

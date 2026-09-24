@@ -10,6 +10,8 @@ import io.soo.bueongi.core.route.domain.model.ScoredCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.sampleEveryMeters
 import org.springframework.stereotype.Service
 
 @Service
@@ -18,7 +20,7 @@ class SafeRouteService(
     private val candidateMerger: RouteCandidateMerger,
     private val scorer: SafetyScorer,
     private val assembler: RouteOptionAssembler,
-    private val routeEvents: RouteEventPublisher,
+    private val visitEvents: RouteVisitEventPublisher,
 ) {
     fun safeCompare(query: RouteRequest): List<RouteOption> {
         if (!routeFinder.isEnabled) {
@@ -26,13 +28,16 @@ class SafeRouteService(
         }
         val routes: ArrayList<TmapRoute> = ArrayList(routeFinder.findRoutes(query))
         if (routes.isEmpty()) {
-            routeEvents.safeRouteFellBack("모든 경로 후보 호출 실패 — 503 으로 알림")
             throw RouteSearchUnavailableException()
         }
+        // 길을 잃어 다시 부른 것이면 빨리 답해야 해서 우회를 찾지 않는다.
         if (!query.reroute) {
-            // 경로 이탈로 앱이 다시 부른 것은 우회를 찾지 않는다 — 길 잃은 사람에게는 빨리 답한다.
             routes.addAll(routeFinder.findSaferRoutes(query, routes))
         }
+
+        // 보안등은 자치단체마다 따로 요청해야 해서, 경로 위 여러 지점을 알려 그 지역 시설을 받아 오게 한다.
+        val visitedPath: List<GeoPoint> = routes.first().path.toGeoPoints()
+        visitEvents.routeVisited(visitedPath.sampleEveryMeters(FILL_SAMPLE_SPACING_METERS, MAX_FILL_SAMPLE_POINTS))
 
         val candidates: List<RouteCandidate> = candidateMerger.toCandidates(routes)
         val assigned: List<ScoredRoute> = assignOneRoutePerType(candidates)
@@ -73,5 +78,10 @@ class SafeRouteService(
 
     private companion object {
         const val TIE_BREAK_EPSILON: Double = 1e-9
+
+        const val FILL_SAMPLE_SPACING_METERS: Double = 2_000.0
+
+        // 점 하나가 최악의 경우 보안등 약 8회 외부 호출이라 한 요청의 쿼터 소모를 이 상한으로 막는다.
+        const val MAX_FILL_SAMPLE_POINTS: Int = 12
     }
 }

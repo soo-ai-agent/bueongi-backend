@@ -21,11 +21,7 @@ class RouteOptionAssembler(
     private val safetySpotSource: SafetySpotSpatialSource,
     private val routeTypeCatalog: RouteTypeCatalog,
 ) {
-    internal fun assemble(
-        scoredRoutes: List<ScoredRoute>,
-        origin: GeoPoint,
-        destination: GeoPoint,
-    ): List<RouteOption> {
+    internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {
         val provenance: DataProvenance = buildProvenance()
         val ordered: List<ScoredRoute> = scoredRoutes.sortedByDescending { it.score.rank }
         return ordered
@@ -50,10 +46,7 @@ class RouteOptionAssembler(
             }
     }
 
-    private fun describe(
-        score: Int?,
-        breakdown: SafetyBreakdown,
-    ): String {
+    private fun describe(score: Int?, breakdown: SafetyBreakdown): String {
         if (score == null) {
             return NO_DATA_DESC
         }

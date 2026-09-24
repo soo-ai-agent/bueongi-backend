@@ -3,34 +3,31 @@ package io.soo.bueongi.core.route
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.api.request.RouteRequest
+import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
+import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
+import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
+import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
-import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.argThat
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
@@ -45,7 +42,7 @@ class SafeRouteServiceTest {
 
     private val cctv =
         listOf(127.002, 127.004, 127.006, 127.008).map {
-            SafetySpotPoint(SafetySpotType.CCTV, 37.5, it)
+            SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, it)
         }
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer = nightScorer(source)
@@ -79,8 +76,8 @@ class SafeRouteServiceTest {
         routeFinder = RouteFinder(tmap, waypointFinder),
         candidateMerger = RouteCandidateMerger(),
         scorer = scorer,
-        assembler = RouteOptionAssembler(RouteMarkerBuilder(source, mock(), mock()), source, RouteTypeCatalog()),
-        routeEvents = mock(),
+        assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
+        visitEvents = mock(),
     )
 
     @Test
@@ -145,7 +142,7 @@ class SafeRouteServiceTest {
 
     @Test
     fun `회랑에 실 지구대가 있으면 추정으로 중복 채우지 않는다`() {
-        val police = listOf(SafetySpotPoint(SafetySpotType.POLICE, 37.5, 127.005, name = "역삼지구대"))
+        val police = listOf(SafetySpotPoint.of(SafetySpotType.POLICE, 37.5, 127.005, name = "역삼지구대"))
         val richSource = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv, SafetySpotType.POLICE to police))
         val svc =
             safeRouteService(
@@ -186,10 +183,7 @@ class SafeRouteServiceTest {
         assertThat(result.map { it.dist }).contains("1.0km")
     }
 
-    private fun saferRouteAt(
-        lat: Double,
-        distanceM: Double,
-    ): TmapRoute =
+    private fun saferRouteAt(lat: Double, distanceM: Double): TmapRoute =
         TmapRoute(
             searchOption = "2",
             path = listOf(TmapCoord(lat, 127.0), TmapCoord(lat, 127.01)),

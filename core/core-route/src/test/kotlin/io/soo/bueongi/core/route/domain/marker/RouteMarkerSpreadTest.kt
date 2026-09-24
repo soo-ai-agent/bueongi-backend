@@ -8,7 +8,6 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.mock
 
 class RouteMarkerSpreadTest {
     private val origin = GeoPoint(37.5, 127.000)
@@ -18,7 +17,7 @@ class RouteMarkerSpreadTest {
         val points: ArrayList<SafetySpotPoint> = ArrayList(count)
         for (index in 0 until count) {
             val lng: Double = origin.lng + (destination.lng - origin.lng) * index / (count - 1)
-            points.add(SafetySpotPoint(SafetySpotType.STREET_LAMP, origin.lat, lng))
+            points.add(SafetySpotPoint.of(SafetySpotType.STREET_LAMP, origin.lat, lng))
         }
         return points
     }
@@ -26,7 +25,7 @@ class RouteMarkerSpreadTest {
     private fun lampMarkerLngs(spotCount: Int): List<Double> {
         val source = FakeSafetySpotSource(mapOf(SafetySpotType.STREET_LAMP to lampsAlongPath(spotCount)))
         val path: List<GeoPoint> = listOf(origin, destination)
-        return RouteMarkerBuilder(source, mock(), mock())
+        return RouteMarkerBuilder(source)
             .buildMarkers(origin, destination, path)
             .filter { it.type == SafetySpotPoiType.STREET_LAMP }
             .map { it.lng }
