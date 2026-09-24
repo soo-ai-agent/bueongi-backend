@@ -9,12 +9,12 @@
 ## 한눈 요약
 
 **켜질 때 외부 API 호출은 없다.** 기동 중에 하는 일은 로컬 파일 읽기와 (설정했을 때만) Redis 연결뿐이다.
-외부 API(Tmap·Kakao·Slack)는 전부 **사용자 요청이나 사건이 있어야** 불린다.
+외부 API(Tmap·Slack)는 전부 **사용자 요청이나 사건이 있어야** 불린다.
 
 ```
 켜질 때        CDN 파일 적재(로컬) · Redis 연결(선택)          ← 외부 API 없음
 켜진 뒤        도착 감시 루프(60초마다, 내부 데이터만 훑음)
-요청이 올 때   Tmap(경로) · Kakao(장소검색)
+요청이 올 때   Tmap(경로·장소검색)
 사건이 날 때   Slack(운영 알림)
 ```
 
@@ -36,14 +36,13 @@ flowchart LR
     end
     subgraph 외부
         TMAP[Tmap API]
-        KAKAO[Kakao Local]
         SLACK[Slack 웹훅]
         REDIS[(Redis<br/>선택)]
     end
     CDN[/CDN 파일<br/>로컬 디스크/]
 
     FE -->|경로 요청| RC --> TM -->|POST| TMAP
-    FE -->|장소 검색| PC --> KK -->|GET| KAKAO
+    FE -->|장소 검색| PC --> KK -->|GET| TMAP
     FE -->|위치 공유| SH --> REDIS
     RC -. 폴백 사건 .-> OPS
     PC -. 폴백 사건 .-> OPS
@@ -117,9 +116,9 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 - 응답 본문에 NUL(0x00)이 섞여 오는 실측 사례가 있어 문자열로 받아 다듬은 뒤 파싱한다
   (`TmapResponseText.sanitizeTmapJson`).
 
-### Kakao Local (장소 검색) — `clients:client-kakao`
+### Tmap POI (장소 검색) — `clients:client-tmap`
 
-- **언제**: 장소 검색 요청일 때만 (`/api/places?...`). `KAKAO_REST_API_KEY` 미설정이면 아예 안 부르고
+- **언제**: 장소 검색 요청일 때만 (`/api/places?...`). `TMAP_APP_KEY` 미설정이면 아예 안 부르고
   내장 시드 카탈로그로 검색한다.
 - **안 되면**: 시드 폴백으로 응답 + Slack 사건. 검색 불능보다 근사 결과가 안전하다는 설계다.
 
@@ -127,7 +126,7 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 
 - **언제**: 사건이 났을 때만. 도메인은 Slack 을 모른다 — 사건(`OperationEvent`)을 발행하면
   `core-ops` 리스너가 받아 `SlackAlertNotifier` 로 보낸다.
-- 발송 지점: 처리 못한 500 · Tmap 전면 실패 · Kakao 검색 실패 · 시설 적재 0건 · 도착 미확인.
+- 발송 지점: 처리 못한 500 · Tmap 전면 실패 · 장소 검색 실패 · 시설 적재 0건 · 도착 미확인.
 - 같은 사건 key 는 10분 창 안에서 1번만 보낸다(스로틀). `SLACK_WEBHOOK_URL` 미설정이면 전체 무발송(무해).
 
 ### Redis (위치 공유 저장) — `storage:db-core`
@@ -142,14 +141,14 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 
 ```
 스프링 자동구성 RestClient.Builder ──┬─→ TmapRouteClient   (clone().build())
-   ↑ 전역 타임아웃이 여기 걸린다      ├─→ KakaoPlaceClient  (clone().build())
+   ↑ 전역 타임아웃이 여기 걸린다      ├─→ TmapPlaceClient  (clone().build())
                                      └─→ SlackAlertNotifier (clone().build())
 ```
 
 - **타임아웃은 yml 한 곳에서 전부 적용된다** (`application.yml`): 연결 3초, 응답 10초.
   미설정이면 무한대라, 외부가 느려지는 "슬로우 장애"에서 우리 스레드가 전부 잡혀 전체 장애로 번진다.
 - **키는 생성자에서 주입**받고(`@Value`), 키가 비어 있으면 `isEnabled = false` — **호출 자체를 안 한다.**
-- **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.** 클라이언트가 우리 말(`TmapRoute`·`KakaoPlace`)로
+- **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.** 클라이언트가 우리 말(`TmapRoute`·`TmapPlace`)로
   번역해서 내보낸다. 외부 규격이 바뀌어도 고칠 곳은 그 모듈 하나다.
 
 ### Tmap 경로 — 요청 한 번의 여정
@@ -202,7 +201,7 @@ RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
 (안전 점수·마커 없음), 사건 `tmap-route-fallback` 을 발행한다 → Slack 알림.
 **사용자 응답은 어떤 경우에도 나간다** — 외부 장애가 우리 장애가 되지 않게.
 
-### Kakao 장소 검색 — 게이트 → 호출 → 폴백
+### Tmap 장소 검색 — 게이트 → 호출
 
 ```
 PlaceSearchService.search(키워드)

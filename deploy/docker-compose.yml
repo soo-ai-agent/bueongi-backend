@@ -20,7 +20,6 @@ services:
     environment:
       # 외부 API 키(없으면 결정론적 폴백으로 동작 — safe-compare 목업 경로, 시드 장소검색)
       TMAP_APP_KEY: ${TMAP_APP_KEY:-}
-      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       # 공공데이터포털 키(없으면 시설 라이브 갱신 비활성 — 이미지에 구운 cdn/ 데이터로 동작)
       DATA_GO_KR_SERVICE_KEY: ${DATA_GO_KR_SERVICE_KEY:-}
       SAFEMAP_SERVICE_KEY: ${SAFEMAP_SERVICE_KEY:-}

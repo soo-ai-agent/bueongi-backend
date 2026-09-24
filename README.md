@@ -103,7 +103,6 @@ curl http://localhost:8119/api/health
 | `BUEONGI_ADMIN_EMAIL` | (빈 값) | 로그인 응답에 표시할 관리자 이메일. |
 | `BUEONGI_FACILITY_CCTV_CSV` | `data/source/CCTV정보.csv` | 초기 적재용 CCTV CSV 경로. **`.gz` 를 투명하게 읽는다** — 저장소에는 압축본만 둔다(`backend/data/source/README.md`). |
 | `BUEONGI_FRONTEND_VERSION` | (빈 값) | 스플래시 `GET /api/app-info` 가 내려줄 배포된 프론트 버전. 배포 파이프라인이 프론트 배포 시 채운다. 미설정이면 빈 문자열. |
-| `KAKAO_REST_API_KEY` | (빈 값) | Kakao Local REST 키. **미설정이면 내장 시드 카탈로그**로 장소 검색. 주입 시 실연동을 시도하되 실패하면 시드로 폴백(안심앱: 검색 불능보다 근사 결과가 안전). |
 | `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 적재 0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백) ⑤도착 미확인을 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
 | `SLACK_ALERT_THROTTLE_MINUTES` | `10` | 같은 알림 key 의 재발송 억제 창(분) — 장애 중 알림 폭주 방지. |
 | `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**`에 허용할 CORS origin(콤마 구분). 운영 도메인은 여기에 덧붙인다. 허용 메서드는 GET/POST/OPTIONS 고정. |
@@ -146,7 +145,6 @@ JWT_PUBLIC_KEY=<base64-DER 또는 PEM 공개키>
 JWT_PRIVATE_KEY=<base64-DER 또는 PKCS#8 PEM 개인키>
 BUEONGI_ADMIN_LOGIN_ID=admin
 BUEONGI_ADMIN_PASSWORD_HASH='<bcrypt 해시>'
-KAKAO_REST_API_KEY=<your-key>
 BUEONGI_CORS_ORIGINS=http://localhost:3619,https://bueongi.example.com
 BUEONGI_REDIS_URL=redis://localhost:6379
 BUEONGI_SHARE_BASE_URL=https://bueongi.example.com
