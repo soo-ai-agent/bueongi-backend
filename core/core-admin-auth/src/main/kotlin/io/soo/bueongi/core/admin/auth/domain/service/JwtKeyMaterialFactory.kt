@@ -7,10 +7,7 @@ import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
-fun createJwtKeyMaterial(
-    properties: JwtProperties,
-    localProfile: Boolean,
-): JwtKeyMaterial {
+fun createJwtKeyMaterial(properties: JwtProperties, localProfile: Boolean): JwtKeyMaterial {
     if (properties.publicKey.isNotBlank() && properties.privateKey.isNotBlank()) {
         return JwtKeyMaterial(
             publicKey = JwtTokenVerifier.parsePemPublicKey(properties.publicKey),

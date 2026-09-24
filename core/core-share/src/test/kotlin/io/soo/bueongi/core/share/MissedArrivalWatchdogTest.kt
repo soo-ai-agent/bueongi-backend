@@ -16,10 +16,7 @@ import java.time.ZoneOffset
 class MissedArrivalWatchdogTest {
     private val now = Instant.parse("2026-07-28T12:00:00Z")
 
-    private fun session(
-        expectedArrivalAt: Instant?,
-        lastLocationAt: Instant? = null,
-    ): ShareSession =
+    private fun session(expectedArrivalAt: Instant?, lastLocationAt: Instant? = null): ShareSession =
         ShareSession(
             token = "tok-abcdef-123456",
             ownerSecret = "sek",

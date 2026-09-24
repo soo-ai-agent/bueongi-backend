@@ -22,5 +22,4 @@ class DistanceFormatTest {
     fun `formatDistance - 음수는 0m 로 방어`() {
         assertThat(formatDistance(-100.0)).isEqualTo("0m")
     }
-
 }

@@ -12,10 +12,7 @@ const val NATIONWIDE: String = "nationwide"
 class SafetySpotFillEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
-    fun fetchFailed(
-        type: SafetySpotType,
-        scope: String,
-    ) {
+    fun fetchFailed(type: SafetySpotType, scope: String) {
         events.publishEvent(
             OperationEvent(
                 key = "${type.cdnType}-fetch-failed",
@@ -25,11 +22,7 @@ class SafetySpotFillEventPublisher(
         )
     }
 
-    fun hadNoCoordinates(
-        type: SafetySpotType,
-        scope: String,
-        fetched: Int,
-    ) {
+    fun hadNoCoordinates(type: SafetySpotType, scope: String, fetched: Int) {
         events.publishEvent(
             OperationEvent(
                 key = "${type.cdnType}-no-coordinates",

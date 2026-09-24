@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvParseResult
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvSpec
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotUploadResult
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
@@ -21,10 +21,7 @@ class SafetySpotUploadService(
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadService::class.java)
 
-    fun upload(
-        type: SafetySpotType,
-        bytes: ByteArray,
-    ): SafetySpotUploadResult {
+    fun upload(type: SafetySpotType, bytes: ByteArray): SafetySpotUploadResult {
         val spec: SafetySpotCsvSpec = SafetySpotCsvSpec.forType(type)
         val parsed: SafetySpotCsvParseResult = parser.parse(bytes, spec)
         if (parsed.points.isEmpty()) {

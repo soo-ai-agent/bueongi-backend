@@ -26,8 +26,8 @@ class SafeWaypointFinderTest {
         val source =
             FakeSafetySpotSource(
                 mapOf(
-                    SafetySpotType.CCTV to cctvCluster.map { SafetySpotPoint(SafetySpotType.CCTV, it.lat, it.lng) },
-                    SafetySpotType.BELL to bell.map { SafetySpotPoint(SafetySpotType.BELL, it.lat, it.lng) },
+                    SafetySpotType.CCTV to cctvCluster.map { SafetySpotPoint.of(SafetySpotType.CCTV, it.lat, it.lng) },
+                    SafetySpotType.BELL to bell.map { SafetySpotPoint.of(SafetySpotType.BELL, it.lat, it.lng) },
                 ),
             )
         val clusters = SafeWaypointFinder(source).findSafetySpotClusters(routePath)

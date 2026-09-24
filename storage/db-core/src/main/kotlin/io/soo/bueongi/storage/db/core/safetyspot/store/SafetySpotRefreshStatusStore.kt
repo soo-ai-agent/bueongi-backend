@@ -11,10 +11,7 @@ class SafetySpotRefreshStatusStore {
     private val records: AtomicReference<Map<SafetySpotType, SafetySpotRefreshRecord>> =
         AtomicReference<Map<SafetySpotType, SafetySpotRefreshRecord>>(emptyMap())
 
-    fun record(
-        results: Map<SafetySpotType, Int?>,
-        atEpochMs: Long,
-    ) {
+    fun record(results: Map<SafetySpotType, Int?>, atEpochMs: Long) {
         val recorded: Map<SafetySpotType, SafetySpotRefreshRecord> =
             results.mapValues { (_, count) ->
                 SafetySpotRefreshRecord(atEpochMs = atEpochMs, replacedCount = count)
@@ -22,11 +19,7 @@ class SafetySpotRefreshStatusStore {
         records.updateAndGet { current -> current + recorded }
     }
 
-    fun recordUpload(
-        type: SafetySpotType,
-        replacedCount: Int,
-        atEpochMs: Long,
-    ) {
+    fun recordUpload(type: SafetySpotType, replacedCount: Int, atEpochMs: Long) {
         val recorded = SafetySpotRefreshRecord(atEpochMs = atEpochMs, replacedCount = replacedCount)
         records.updateAndGet { current -> current + (type to recorded) }
     }

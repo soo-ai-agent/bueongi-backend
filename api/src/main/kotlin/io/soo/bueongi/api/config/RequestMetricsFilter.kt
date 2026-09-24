@@ -19,11 +19,7 @@ class RequestMetricsFilter(
 ) : OncePerRequestFilter() {
     private val log: Logger = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
 
-    override fun doFilterInternal(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        filterChain: FilterChain,
-    ) {
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val startedAt: Long = System.currentTimeMillis()
         val path: String = normalizeRequestPath(request.requestURI)
         beginTrace("${request.method} $path")

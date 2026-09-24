@@ -77,10 +77,7 @@ class AppInfoControllerTest {
     }
 }
 
-private fun buildProperties(
-    version: String,
-    builtAt: String,
-): BuildProperties {
+private fun buildProperties(version: String, builtAt: String): BuildProperties {
     val entries = Properties()
     entries["version"] = version
     entries["time"] = Instant.parse(builtAt).toEpochMilli().toString()

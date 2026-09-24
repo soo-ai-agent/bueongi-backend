@@ -54,15 +54,10 @@ class RouteCandidateMergerTest {
         assertThat(kept).hasSize(2)
     }
 
-    private fun candidate(
-        searchOption: String,
-        path: List<GeoPoint>,
-    ): RouteCandidate = RouteCandidate(searchOption = searchOption, path = path, distanceM = 1.0, timeS = 1, steps = emptyList())
+    private fun candidate(searchOption: String, path: List<GeoPoint>): RouteCandidate =
+        RouteCandidate(searchOption = searchOption, path = path, distanceM = 1.0, timeS = 1, steps = emptyList())
 
-    private fun straight(
-        segments: Int,
-        latOffset: Double = 0.0,
-    ): List<GeoPoint> {
+    private fun straight(segments: Int, latOffset: Double = 0.0): List<GeoPoint> {
         val points: MutableList<GeoPoint> = ArrayList()
         for (i in 0..segments) {
             points.add(GeoPoint(BASE_LAT + latOffset, BASE_LNG + i * SEGMENT_DEGREES))

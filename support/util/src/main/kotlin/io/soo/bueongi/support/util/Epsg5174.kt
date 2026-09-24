@@ -43,10 +43,7 @@ object Epsg5174 {
 
     private const val BOWRING_ITERATIONS: Int = 5
 
-    fun toWgs84(
-        easting: Double,
-        northing: Double,
-    ): Wgs84Point? {
+    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
         if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
@@ -65,20 +62,14 @@ object Epsg5174 {
     }
 
     // 지오이드고 미상이라 양방향 모두 h=0 으로 둔다 — 수평 왕복 오차는 무시 수준.
-    fun fromWgs84(
-        lat: Double,
-        lng: Double,
-    ): TmXy {
+    fun fromWgs84(lat: Double, lng: Double): TmXy {
         val wgsEcef: Ecef = geodeticToEcef(Math.toRadians(lat), Math.toRadians(lng), A_WGS84, E2_WGS84)
         val besselEcef: Ecef = helmertWgs84ToBessel(wgsEcef)
         val besselGeodetic: Geodetic = ecefToGeodetic(besselEcef, A_BESSEL, E2_BESSEL)
         return forwardTm(besselGeodetic.latRad, besselGeodetic.lngRad)
     }
 
-    private fun inverseTm(
-        x: Double,
-        y: Double,
-    ): Geodetic {
+    private fun inverseTm(x: Double, y: Double): Geodetic {
         val m: Double = M0_BESSEL + (y - FALSE_NORTHING) / K0
         val mu: Double = m / (A_BESSEL * (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256))
         val phi1: Double =
@@ -112,10 +103,7 @@ object Epsg5174 {
         return Geodetic(lat, lng)
     }
 
-    private fun forwardTm(
-        latRad: Double,
-        lngRad: Double,
-    ): TmXy {
+    private fun forwardTm(latRad: Double, lngRad: Double): TmXy {
         val sinPhi: Double = sin(latRad)
         val cosPhi: Double = cos(latRad)
         val tanPhi: Double = tan(latRad)
@@ -156,11 +144,7 @@ object Epsg5174 {
         return Ecef(x, y, z)
     }
 
-    private fun ecefToGeodetic(
-        ecef: Ecef,
-        a: Double,
-        e2: Double,
-    ): Geodetic {
+    private fun ecefToGeodetic(ecef: Ecef, a: Double, e2: Double): Geodetic {
         val p: Double = sqrt(ecef.x * ecef.x + ecef.y * ecef.y)
         val lng: Double = atan2(ecef.y, ecef.x)
         var lat: Double = atan2(ecef.z, p * (1 - e2))

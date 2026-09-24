@@ -4,17 +4,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class InMemoryRequestMetricStoreTest {
-    private fun metric(
-        at: Long,
-        clientId: String? = "anon-1",
-    ) = RequestMetric(
-        atEpochMs = at,
-        method = "GET",
-        endpoint = "/api/places/search",
-        clientId = clientId,
-        status = 200,
-        durationMs = 10,
-    )
+    private fun metric(at: Long, clientId: String? = "anon-1") =
+        RequestMetric(
+            atEpochMs = at,
+            method = "GET",
+            endpoint = "/api/places/search",
+            clientId = clientId,
+            status = 200,
+            durationMs = 10,
+        )
 
     @Test
     fun `이 저장소의 상한은 REQUEST_METRIC_CAP 이다`() {

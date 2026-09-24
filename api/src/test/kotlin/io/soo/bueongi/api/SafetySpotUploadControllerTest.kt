@@ -92,15 +92,9 @@ class SafetySpotUploadControllerTest(
     @TestConfiguration
     class TestConfig {
         private class FakeLiveStore : SafetySpotLiveStore {
-            override fun replace(
-                type: SafetySpotType,
-                points: List<SafetySpotPoint>,
-            ): Int = points.size
+            override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
 
-            override fun append(
-                type: SafetySpotType,
-                points: List<SafetySpotPoint>,
-            ): Int = points.size
+            override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
         }
 
         @Bean

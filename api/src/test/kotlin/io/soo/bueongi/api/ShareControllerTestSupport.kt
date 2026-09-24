@@ -59,9 +59,6 @@ abstract class ShareControllerTestSupport {
         fun locationStore(clock: MutableTestClock): LocationStore = InMemoryLocationStore(clock)
 
         @Bean
-        fun shareService(
-            store: LocationStore,
-            clock: MutableTestClock,
-        ): ShareService = ShareService(store, clock, "http://localhost:8119")
+        fun shareService(store: LocationStore, clock: MutableTestClock): ShareService = ShareService(store, clock, "http://localhost:8119")
     }
 }

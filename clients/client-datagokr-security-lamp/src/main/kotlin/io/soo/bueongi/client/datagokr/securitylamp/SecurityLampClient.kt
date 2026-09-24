@@ -13,8 +13,7 @@ class SecurityLampClient(
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 
-    fun fetchSecurityLamps(municipalityCode: String? = null): List<DataGoKrPoint>? =
-        fetcher.fetchAll(ENDPOINT, FIELDS, municipalityCode)
+    fun fetchSecurityLamps(municipalityCode: String? = null): List<DataGoKrPoint>? = fetcher.fetchAll(ENDPOINT, FIELDS, municipalityCode)
 
     private companion object {
         const val ENDPOINT: String = "https://api.data.go.kr/openapi/tn_pubr_public_scrty_lmp_api"

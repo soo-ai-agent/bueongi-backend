@@ -47,17 +47,14 @@ class RequestMetricsFilterTest {
             (response as HttpServletResponse).status = status
         }
 
-    private fun chainWriting(
-        status: Int,
-        body: String,
-        type: String,
-    ) = FilterChain { _, response ->
-        val http = response as HttpServletResponse
-        http.status = status
-        http.contentType = type
-        http.writer.write(body)
-        http.writer.flush()
-    }
+    private fun chainWriting(status: Int, body: String, type: String) =
+        FilterChain { _, response ->
+            val http = response as HttpServletResponse
+            http.status = status
+            http.contentType = type
+            http.writer.write(body)
+            http.writer.flush()
+        }
 
     @Test
     fun `체인 실행 후 메서드 정규화경로 clientId status 를 기록한다`() {

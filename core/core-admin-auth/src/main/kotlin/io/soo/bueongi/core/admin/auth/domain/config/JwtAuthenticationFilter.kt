@@ -18,11 +18,7 @@ class JwtAuthenticationFilter(
     private val verifier: JwtTokenVerifier,
     private val objectMapper: ObjectMapper,
 ) : OncePerRequestFilter() {
-    override fun doFilterInternal(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        filterChain: FilterChain,
-    ) {
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val header: String? = request.getHeader("Authorization")
         if (header.isNullOrBlank() || !header.startsWith("Bearer ")) {
             writeUnauthorized(response, "인증 토큰이 필요합니다.")
@@ -50,10 +46,7 @@ class JwtAuthenticationFilter(
         }
     }
 
-    private fun writeUnauthorized(
-        response: HttpServletResponse,
-        detail: String,
-    ) {
+    private fun writeUnauthorized(response: HttpServletResponse, detail: String) {
         writeAuthProblem(
             response = response,
             objectMapper = objectMapper,

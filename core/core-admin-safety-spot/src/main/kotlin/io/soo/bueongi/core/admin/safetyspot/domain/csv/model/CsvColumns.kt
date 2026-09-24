@@ -40,10 +40,7 @@ class CsvColumns(
         return count
     }
 
-    private fun textAt(
-        row: List<String>,
-        index: Int?,
-    ): String? {
+    private fun textAt(row: List<String>, index: Int?): String? {
         if (index == null || index >= row.size) {
             return null
         }
@@ -54,10 +51,7 @@ class CsvColumns(
         return trimmed
     }
 
-    private fun numberAt(
-        row: List<String>,
-        index: Int?,
-    ): Double? {
+    private fun numberAt(row: List<String>, index: Int?): Double? {
         val text: String = textAt(row, index) ?: return null
         return text.toDoubleOrNull()
     }

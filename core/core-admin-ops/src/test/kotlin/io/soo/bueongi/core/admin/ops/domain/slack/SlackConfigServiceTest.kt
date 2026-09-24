@@ -16,11 +16,7 @@ class SlackConfigServiceTest {
         object : AlertNotifier {
             override val isEnabled: Boolean = false
 
-            override fun notify(
-                key: String,
-                title: String,
-                detail: String,
-            ) = Unit
+            override fun notify(key: String, title: String, detail: String) = Unit
 
             override fun sendTest(): Boolean = sendTestResult
         }

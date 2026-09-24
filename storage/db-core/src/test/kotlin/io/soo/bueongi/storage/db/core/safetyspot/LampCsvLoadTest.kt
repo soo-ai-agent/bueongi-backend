@@ -84,19 +84,13 @@ class LampCsvLoadTest {
         assertThat(loadLamp(tmp, csvDir)).isEmpty()
     }
 
-    private fun csvDirOf(
-        tmp: File,
-        vararg lines: String,
-    ): File {
+    private fun csvDirOf(tmp: File, vararg lines: String): File {
         val dir = File(tmp, "lamp").apply { mkdirs() }
         File(dir, "lamp.csv").writeText(lines.joinToString("\n"), CP949)
         return dir
     }
 
-    private fun loadLamp(
-        tmp: File,
-        csvDir: File,
-    ): List<SafetySpotPoint> {
+    private fun loadLamp(tmp: File, csvDir: File): List<SafetySpotPoint> {
         val uploads = File(tmp, "uploads").apply { mkdirs() }
         val repo =
             SafetySpotRepository(

@@ -15,10 +15,7 @@ import org.junit.jupiter.api.Test
 class WireEnumRoundTripTest {
     private val mapper = jacksonObjectMapper()
 
-    private inline fun <reified T : Enum<T>> roundTrip(
-        value: T,
-        wire: String,
-    ) {
+    private inline fun <reified T : Enum<T>> roundTrip(value: T, wire: String) {
         assertThat(mapper.writeValueAsString(value)).isEqualTo("\"$wire\"")
         assertThat(mapper.readValue<T>("\"$wire\"")).isEqualTo(value)
     }

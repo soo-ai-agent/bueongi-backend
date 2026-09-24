@@ -160,10 +160,7 @@ class RedisLocationStore(
     }
 
     // token 은 로깅하지 않는다(추적 방지).
-    private fun <T> onRedis(
-        operation: String,
-        block: () -> T,
-    ): T =
+    private fun <T> onRedis(operation: String, block: () -> T): T =
         try {
             block()
         } catch (e: DataAccessException) {

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.api.request
 
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.error.UnknownSafetySpotTypeException
+import io.soo.bueongi.core.enums.SafetySpotType
 
 fun toValidatedSafetySpotType(cdnType: String): SafetySpotType {
     for (type in SafetySpotType.entries) {

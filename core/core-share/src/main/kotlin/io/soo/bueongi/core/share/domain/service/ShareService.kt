@@ -33,10 +33,7 @@ class ShareService(
     private val random = SecureRandom()
     private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
-    fun create(
-        expiresInHours: Int?,
-        etaSeconds: Int? = null,
-    ): ShareCreated {
+    fun create(expiresInHours: Int?, etaSeconds: Int? = null): ShareCreated {
         val hours: Int = expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token: String = newToken()
         val ownerSecret: String = newToken()
@@ -73,10 +70,7 @@ class ShareService(
 
     fun countActiveSessions(): Int = store.countActiveSessions()
 
-    private fun toActiveShareView(
-        session: ShareSession,
-        now: Instant,
-    ): ActiveShareView {
+    private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
         val location: StoredLocation? = session.location
         val ttlSeconds: Long = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
         return ActiveShareView(
@@ -92,11 +86,7 @@ class ShareService(
 
     private fun shareUrlFor(token: String): String = "${baseUrl.trimEnd('/')}/share/$token"
 
-    fun updateLocation(
-        token: String,
-        ownerSecret: String?,
-        report: LocationReport,
-    ): ShareLocationUpdated {
+    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): ShareLocationUpdated {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
@@ -112,11 +102,7 @@ class ShareService(
         return ShareLocationUpdated(updatedAt = now, expiresAt = session.expiresAt)
     }
 
-    fun saveRoute(
-        token: String,
-        ownerSecret: String?,
-        route: StoredRoute,
-    ): ShareLocationUpdated {
+    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): ShareLocationUpdated {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
@@ -164,19 +150,13 @@ class ShareService(
 
     fun storeBackendLabel(): String = store.backend
 
-    fun end(
-        token: String,
-        ownerSecret: String?,
-    ) {
+    fun end(token: String, ownerSecret: String?) {
         val session: ShareSession = store.findByToken(token) ?: return
         requireOwner(session, ownerSecret)
         store.deleteByToken(token)
     }
 
-    fun getWatchingStatus(
-        token: String,
-        ownerSecret: String?,
-    ): ShareWatchStatus {
+    fun getWatchingStatus(token: String, ownerSecret: String?): ShareWatchStatus {
         val session: ShareSession =
             store.findByToken(token)
                 ?: return ShareWatchStatus(watching = false, expired = true)
@@ -194,10 +174,7 @@ class ShareService(
     }
 
     // 상수 시간 비교로 타이밍 누출을 피하고, 누락/불일치는 404(불투명 응답).
-    private fun requireOwner(
-        session: ShareSession,
-        providedSecret: String?,
-    ) {
+    private fun requireOwner(session: ShareSession, providedSecret: String?) {
         val provided: String = providedSecret ?: throw ShareSessionNotFoundException()
         val matches: Boolean =
             MessageDigest.isEqual(

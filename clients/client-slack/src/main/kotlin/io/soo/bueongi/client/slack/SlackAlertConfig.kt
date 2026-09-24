@@ -46,11 +46,7 @@ class SlackAlertConfig(
         return maskWebhook(webhook)
     }
 
-    fun update(
-        enabled: Boolean,
-        throttleMinutes: Int,
-        mutedCategories: Set<String>,
-    ) {
+    fun update(enabled: Boolean, throttleMinutes: Int, mutedCategories: Set<String>) {
         require(throttleMinutes in MIN_THROTTLE_MINUTES..MAX_THROTTLE_MINUTES) {
             "throttleMinutes 는 $MIN_THROTTLE_MINUTES..$MAX_THROTTLE_MINUTES 여야 합니다."
         }

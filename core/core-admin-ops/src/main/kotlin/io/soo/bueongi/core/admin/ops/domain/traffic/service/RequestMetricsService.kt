@@ -77,10 +77,7 @@ class RequestMetricsService(
             .map { (key, group) -> aggregateEndpoint(key, group) }
             .sortedByDescending { it.count }
 
-    private fun aggregateEndpoint(
-        key: EndpointKey,
-        group: List<RequestMetric>,
-    ): EndpointTraffic {
+    private fun aggregateEndpoint(key: EndpointKey, group: List<RequestMetric>): EndpointTraffic {
         val count: Int = group.size
         val successCount: Int = group.count { it.status in SUCCESS_STATUS_RANGE }
         val successRate: Double = successCount.toDouble() / count
@@ -111,10 +108,7 @@ class RequestMetricsService(
         )
     }
 
-    private fun newVsReturningToday(
-        metrics: List<RequestMetric>,
-        todayStartMs: Long,
-    ): NewVsReturning {
+    private fun newVsReturningToday(metrics: List<RequestMetric>, todayStartMs: Long): NewVsReturning {
         val firstSeenByClient: Map<String, Long> = firstSeenByClient(metrics)
         val activeTodayClients: List<String> =
             metrics
@@ -141,10 +135,8 @@ class RequestMetricsService(
         return firstSeen
     }
 
-    private fun distinctClientsSince(
-        metrics: List<RequestMetric>,
-        sinceMs: Long,
-    ): Int = distinctClients(metrics.filter { it.atEpochMs >= sinceMs })
+    private fun distinctClientsSince(metrics: List<RequestMetric>, sinceMs: Long): Int =
+        distinctClients(metrics.filter { it.atEpochMs >= sinceMs })
 
     private fun distinctClients(metrics: List<RequestMetric>): Int = metrics.mapNotNull { it.clientId }.distinct().size
 

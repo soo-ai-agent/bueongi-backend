@@ -12,10 +12,7 @@ class ApiEventPublisher(
         events.publishEvent(OperationEvent(key = "share-store-unavailable", title = "위치 공유 저장소(Redis) 접근 실패", detail = detail))
     }
 
-    fun unhandledServerError(
-        exceptionName: String,
-        detail: String,
-    ) {
+    fun unhandledServerError(exceptionName: String, detail: String) {
         events.publishEvent(
             OperationEvent(key = "api-500:$exceptionName", title = "처리되지 않은 서버 오류(500)", detail = detail),
         )

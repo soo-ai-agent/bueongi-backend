@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
+import io.soo.bueongi.core.enums.SafetySpotCoordSystem
+import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
@@ -24,31 +24,22 @@ class SafetySpotUploadServiceTest {
         var lastType: SafetySpotType? = null
         var lastPoints: List<SafetySpotPoint>? = null
 
-        override fun append(
-            type: SafetySpotType,
-            points: List<SafetySpotPoint>,
-        ): Int = points.size
+        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
 
-        override fun replace(
-            type: SafetySpotType,
-            points: List<SafetySpotPoint>,
-        ): Int {
+        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
             lastType = type
             lastPoints = points
             return points.size
         }
     }
 
-    private fun service(
-        tmp: Path,
-        liveStore: SafetySpotLiveStore,
-        statusStore: SafetySpotRefreshStatusStore,
-    ) = SafetySpotUploadService(
-        parser = SafetySpotCsvParser(),
-        uploadStore = SafetySpotUploadStore(mapper, tmp.toFile().absolutePath),
-        liveStore = liveStore,
-        refreshStatusStore = statusStore,
-    )
+    private fun service(tmp: Path, liveStore: SafetySpotLiveStore, statusStore: SafetySpotRefreshStatusStore) =
+        SafetySpotUploadService(
+            parser = SafetySpotCsvParser(),
+            uploadStore = SafetySpotUploadStore(mapper, tmp.toFile().absolutePath),
+            liveStore = liveStore,
+            refreshStatusStore = statusStore,
+        )
 
     @Test
     fun `업로드는 파일 저장 + 라이브 교체 + 상태 기록을 하고 집계를 반환한다`(

@@ -25,11 +25,8 @@ class DataGoKrPagedFetcherHttpTest {
             sigungu = emptyList(),
         )
 
-    private fun item(
-        lat: Any = 37.5,
-        lng: Any = 127.0,
-        name: String = "관리기관",
-    ) = """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
+    private fun item(lat: Any = 37.5, lng: Any = 127.0, name: String = "관리기관") =
+        """{"WGS84_LAT":"$lat","WGS84_LOT":"$lng","MNG_INST_NM":"$name","LCTN_ROAD_NM_ADDR":"서울시 도로명 1"}"""
 
     @Test
     fun `정상 - serviceKey 원형 유지 + 페이징 파라미터 + 필드 매핑`() {

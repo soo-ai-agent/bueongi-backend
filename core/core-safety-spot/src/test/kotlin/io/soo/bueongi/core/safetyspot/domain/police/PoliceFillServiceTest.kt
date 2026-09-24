@@ -24,19 +24,13 @@ class PoliceFillServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
-        override fun replace(
-            type: SafetySpotType,
-            points: List<SafetySpotPoint>,
-        ): Int {
+        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
             appended.clear()
             appended.addAll(points)
             return points.size
         }
 
-        override fun append(
-            type: SafetySpotType,
-            points: List<SafetySpotPoint>,
-        ): Int {
+        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
             appended.addAll(points)
             return points.size
         }

@@ -35,18 +35,12 @@ class SafetySpotRegionCache(
 
     private val savedAtByFile: ConcurrentHashMap<String, Instant> = ConcurrentHashMap()
 
-    fun isCached(
-        type: SafetySpotType,
-        regionCode: String,
-    ): Boolean {
+    fun isCached(type: SafetySpotType, regionCode: String): Boolean {
         val savedAt: Instant = savedAtOf(type, regionCode) ?: return false
         return Duration.between(savedAt, clock.instant()) < Duration.ofDays(ttlDays)
     }
 
-    fun savedAtOf(
-        type: SafetySpotType,
-        regionCode: String,
-    ): Instant? {
+    fun savedAtOf(type: SafetySpotType, regionCode: String): Instant? {
         val remembered: Instant? = savedAtByFile[cacheKey(type, regionCode)]
         if (remembered != null) {
             return remembered
@@ -68,11 +62,7 @@ class SafetySpotRegionCache(
         }
     }
 
-    fun save(
-        type: SafetySpotType,
-        regionCode: String,
-        points: List<SafetySpotPoint>,
-    ) {
+    fun save(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
         val target: File = fileOf(type, regionCode)
         Files.createDirectories(target.parentFile.toPath())
         val savedAt: Instant = clock.instant()
@@ -123,15 +113,9 @@ class SafetySpotRegionCache(
             ?.toSet()
             .orEmpty()
 
-    private fun cacheKey(
-        type: SafetySpotType,
-        regionCode: String,
-    ): String = "${type.cdnType}/$regionCode"
+    private fun cacheKey(type: SafetySpotType, regionCode: String): String = "${type.cdnType}/$regionCode"
 
-    private fun fileOf(
-        type: SafetySpotType,
-        regionCode: String,
-    ): File = File(File(regionDir, type.cdnType), "$regionCode.json")
+    private fun fileOf(type: SafetySpotType, regionCode: String): File = File(File(regionDir, type.cdnType), "$regionCode.json")
 
     private companion object {
         // 지자체가 뒤늦게 좌표를 채워 넣는 일이 있어 분기마다 한 번은 다시 받는다.

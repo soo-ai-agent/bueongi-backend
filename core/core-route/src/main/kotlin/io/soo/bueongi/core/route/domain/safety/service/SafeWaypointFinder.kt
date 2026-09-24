@@ -58,11 +58,7 @@ class SafeWaypointFinder(
         return clusters.subList(0, MAX_CLUSTERS)
     }
 
-    fun pickWaypoints(
-        origin: GeoPoint,
-        destination: GeoPoint,
-        clusters: List<SafetySpotCluster>,
-    ): List<List<GeoPoint>> {
+    fun pickWaypoints(origin: GeoPoint, destination: GeoPoint, clusters: List<SafetySpotCluster>): List<List<GeoPoint>> {
         if (clusters.isEmpty()) {
             return emptyList()
         }

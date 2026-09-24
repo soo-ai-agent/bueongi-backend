@@ -75,7 +75,7 @@ class SafetyScorerTest {
     fun `가중치 합이 1이라 모두 가득 차면 밤낮 모두 100점`() {
         val byType: MutableMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
         for (type in WEIGHTED_TYPES) {
-            byType[type] = denseSpots().map { SafetySpotPoint(type, it.lat, it.lng) }
+            byType[type] = denseSpots().map { SafetySpotPoint.of(type, it.lat, it.lng) }
         }
         val source = FakeSafetySpotSource(byType, listOf(SafePath(coords = path, name = "안심귀갓길")))
 
@@ -127,10 +127,8 @@ class SafetyScorerTest {
         }
     }
 
-    private fun scoreWithDense(
-        type: SafetySpotType,
-        clock: Clock,
-    ): Int? = scorer(fullyCovered(type to denseSpots()), clock).score(path).score
+    private fun scoreWithDense(type: SafetySpotType, clock: Clock): Int? =
+        scorer(fullyCovered(type to denseSpots()), clock).score(path).score
 
     private fun denseSpots(): List<GeoPoint> {
         val spots: MutableList<GeoPoint> = ArrayList()
@@ -301,18 +299,15 @@ class SafetyScorerTest {
     ): FakeSafetySpotSource {
         val byType: LinkedHashMap<SafetySpotType, MutableList<SafetySpotPoint>> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
-            byType[type] = mutableListOf(SafetySpotPoint(type, COVERAGE_ANCHOR.lat, COVERAGE_ANCHOR.lng))
+            byType[type] = mutableListOf(SafetySpotPoint.of(type, COVERAGE_ANCHOR.lat, COVERAGE_ANCHOR.lng))
         }
         for ((type, points) in spots) {
-            byType.getValue(type).addAll(points.map { SafetySpotPoint(type, it.lat, it.lng) })
+            byType.getValue(type).addAll(points.map { SafetySpotPoint.of(type, it.lat, it.lng) })
         }
         return FakeSafetySpotSource(byType, safePaths)
     }
 
-    private fun scorer(
-        source: FakeSafetySpotSource,
-        clock: Clock,
-    ): SafetyScorer = SafetyScorer(source, SafetyWeightsCatalog(), clock)
+    private fun scorer(source: FakeSafetySpotSource, clock: Clock): SafetyScorer = SafetyScorer(source, SafetyWeightsCatalog(), clock)
 
     private companion object {
         val NIGHT: Clock = Clock.fixed(Instant.parse("2026-08-15T13:00:00Z"), ZoneOffset.UTC)

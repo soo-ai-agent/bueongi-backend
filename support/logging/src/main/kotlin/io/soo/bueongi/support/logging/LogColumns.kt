@@ -22,10 +22,7 @@ const val OUTBOUND_DIRECTION: String = "[송신]"
 const val EXCEPTION_DIRECTION: String = "[예외]"
 
 // 터미널에서 한글은 두 칸을 차지한다 — 글자 수로 채우면 한글이 섞인 줄만 밀린다.
-fun padColumn(
-    text: String,
-    width: Int,
-): String {
+fun padColumn(text: String, width: Int): String {
     val missing: Int = width - displayWidth(text)
     if (missing <= 0) {
         return text

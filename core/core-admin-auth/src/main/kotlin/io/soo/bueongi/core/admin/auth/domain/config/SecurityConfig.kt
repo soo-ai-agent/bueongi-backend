@@ -29,10 +29,7 @@ class SecurityConfig(
     private val objectMapper: ObjectMapper,
 ) {
     @Bean
-    fun jwtKeyMaterial(
-        props: JwtProperties,
-        environment: Environment,
-    ): JwtKeyMaterial {
+    fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
         val isLocalProfile: Boolean = environment.activeProfiles.contains("local")
         return createJwtKeyMaterial(props, isLocalProfile)
     }
@@ -41,23 +38,14 @@ class SecurityConfig(
     fun jwtTokenVerifier(keys: JwtKeyMaterial): JwtTokenVerifier = JwtTokenVerifier(keys.publicKey, keys.issuer)
 
     @Bean
-    fun adminTokenService(
-        keys: JwtKeyMaterial,
-        auth: AdminAuthProperties,
-    ): AdminTokenService = AdminTokenService(keys, auth)
+    fun adminTokenService(keys: JwtKeyMaterial, auth: AdminAuthProperties): AdminTokenService = AdminTokenService(keys, auth)
 
     @Bean
-    fun adminAuthService(
-        auth: AdminAuthProperties,
-        tokens: AdminTokenService,
-    ): AdminAuthService = AdminAuthService(auth, tokens)
+    fun adminAuthService(auth: AdminAuthProperties, tokens: AdminTokenService): AdminAuthService = AdminAuthService(auth, tokens)
 
     @Bean
     @Order(0)
-    fun adminSecurityFilterChain(
-        http: HttpSecurity,
-        verifier: JwtTokenVerifier,
-    ): SecurityFilterChain {
+    fun adminSecurityFilterChain(http: HttpSecurity, verifier: JwtTokenVerifier): SecurityFilterChain {
         http
             .securityMatcher("/api/admin/**")
             .csrf { it.disable() }

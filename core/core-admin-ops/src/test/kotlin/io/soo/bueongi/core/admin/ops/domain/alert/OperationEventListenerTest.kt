@@ -10,11 +10,7 @@ class OperationEventListenerTest {
         override val isEnabled: Boolean = true
         val sent: MutableList<Triple<String, String, String>> = ArrayList()
 
-        override fun notify(
-            key: String,
-            title: String,
-            detail: String,
-        ) {
+        override fun notify(key: String, title: String, detail: String) {
             sent.add(Triple(key, title, detail))
         }
     }

@@ -38,10 +38,7 @@ class SafetyScorer(
 
     fun score(path: List<GeoPoint>): SafetyScore = score(path, coverageOf(listOf(path)))
 
-    fun score(
-        path: List<GeoPoint>,
-        coverage: SafetyDataCoverage,
-    ): SafetyScore {
+    fun score(path: List<GeoPoint>, coverage: SafetyDataCoverage): SafetyScore {
         val lengthM: Double = path.pathLengthMeters()
         val routeKm: Double = lengthM / 1000.0
         val km: Double =
@@ -77,10 +74,7 @@ class SafetyScorer(
         )
     }
 
-    private fun hasDataNear(
-        axis: SafetyAxis,
-        samples: List<GeoPoint>,
-    ): Boolean {
+    private fun hasDataNear(axis: SafetyAxis, samples: List<GeoPoint>): Boolean {
         if (axis == SafetyAxis.SAFE_PATH) {
             return hasSafePathNear(samples)
         }
@@ -119,18 +113,13 @@ class SafetyScorer(
             crimeProneArea = countRiskNear(path),
         )
 
-    private fun countWithinCorridor(
-        type: SafetySpotType,
-        path: List<GeoPoint>,
-    ): Int = safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+    private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
+        safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
 
     private fun countRiskNear(path: List<GeoPoint>): Int =
         safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
 
-    private fun safePathOverlapRatio(
-        path: List<GeoPoint>,
-        lengthM: Double,
-    ): Double {
+    private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
         if (lengthM <= 0 || safetySpots.safePaths.isEmpty()) {
             return 0.0
         }
@@ -145,11 +134,7 @@ class SafetyScorer(
         return min(1.0, bestSingleRouteOverlapRatio)
     }
 
-    private fun fillsOf(
-        counts: SafetySpotCounts,
-        km: Double,
-        safePathOverlap: Double,
-    ): Map<SafetyAxis, Double> =
+    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> =
         mapOf(
             SafetyAxis.CCTV to fill(counts.cctv / km, HALF_CCTV_PER_KM),
             SafetyAxis.LAMP to fill(counts.lamp / km, HALF_LAMP_PER_KM),
@@ -159,11 +144,7 @@ class SafetyScorer(
             SafetyAxis.SAFE_PATH to safePathOverlap,
         )
 
-    private fun normalizedScore(
-        fills: Map<SafetyAxis, Double>,
-        weights: SafetyWeights,
-        coverage: SafetyDataCoverage,
-    ): Double? {
+    private fun normalizedScore(fills: Map<SafetyAxis, Double>, weights: SafetyWeights, coverage: SafetyDataCoverage): Double? {
         val totalWeight: Double = coveredWeight(weights, coverage)
         if (totalWeight <= 0) {
             return null
@@ -178,10 +159,7 @@ class SafetyScorer(
         return weighted / totalWeight
     }
 
-    private fun coveredWeight(
-        weights: SafetyWeights,
-        coverage: SafetyDataCoverage,
-    ): Double {
+    private fun coveredWeight(weights: SafetyWeights, coverage: SafetyDataCoverage): Double {
         var total: Double = 0.0
         for (axis in SafetyAxis.entries) {
             if (coverage.has(axis)) {
@@ -193,11 +171,7 @@ class SafetyScorer(
 
     private fun spotTypesOf(axis: SafetyAxis): List<SafetySpotType> = SPOT_TYPES_BY_AXIS.getValue(axis)
 
-    private fun applyRiskPenalty(
-        normalized: Double,
-        riskCount: Int,
-        km: Double,
-    ): Double {
+    private fun applyRiskPenalty(normalized: Double, riskCount: Int, km: Double): Double {
         if (riskCount <= 0) {
             return normalized
         }
@@ -205,20 +179,14 @@ class SafetyScorer(
         return max(0.0, normalized - penalty)
     }
 
-    private fun fill(
-        value: Double,
-        halfPoint: Double,
-    ): Double {
+    private fun fill(value: Double, halfPoint: Double): Double {
         if (value <= 0 || halfPoint <= 0) {
             return 0.0
         }
         return value / (value + halfPoint)
     }
 
-    private fun saturate(
-        value: Double,
-        saturationCeiling: Double,
-    ): Double {
+    private fun saturate(value: Double, saturationCeiling: Double): Double {
         if (saturationCeiling <= 0) {
             return 0.0
         }

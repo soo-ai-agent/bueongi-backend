@@ -33,10 +33,7 @@ private fun tailAfterQuote(out: StringBuilder): String {
     return out.substring(i)
 }
 
-private fun valueEnd(
-    body: String,
-    from: Int,
-): Int {
+private fun valueEnd(body: String, from: Int): Int {
     var i: Int = from
     while (i < body.length && body[i] != '"' && body[i] != NUL) {
         i++

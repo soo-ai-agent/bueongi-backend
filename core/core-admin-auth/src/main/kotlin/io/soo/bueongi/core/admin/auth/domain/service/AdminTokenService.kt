@@ -57,10 +57,7 @@ class AdminTokenService(
         return issue()
     }
 
-    private fun createToken(
-        kind: AdminTokenKind,
-        lifetimeSeconds: Long,
-    ): String {
+    private fun createToken(kind: AdminTokenKind, lifetimeSeconds: Long): String {
         val issuedAt: Instant = clock.instant()
         return Jwts.builder()
             .issuer(issuer)

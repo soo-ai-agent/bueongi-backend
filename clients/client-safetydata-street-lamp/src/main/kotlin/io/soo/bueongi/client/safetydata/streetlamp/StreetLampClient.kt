@@ -83,10 +83,7 @@ class StreetLampClient(
         return false
     }
 
-    private fun addPoints(
-        rows: List<StreetLampRow>,
-        into: MutableList<StreetLampPoint>,
-    ) {
+    private fun addPoints(rows: List<StreetLampRow>, into: MutableList<StreetLampPoint>) {
         for (row in rows) {
             val point: Wgs84Point = resolveKoreanWgs84OrNull(row.x, row.y) ?: continue
             into.add(
@@ -101,11 +98,7 @@ class StreetLampClient(
     }
 
     // 서버가 numOfRows 보다 적게 줄 수 있어 건수만으로 끊지 않는다(실측).
-    private fun isLastPage(
-        rowCount: Int,
-        received: Long,
-        totalCount: Long?,
-    ): Boolean {
+    private fun isLastPage(rowCount: Int, received: Long, totalCount: Long?): Boolean {
         if (rowCount == 0) {
             return true
         }
@@ -115,10 +108,7 @@ class StreetLampClient(
         return rowCount < PAGE_SIZE
     }
 
-    private fun failureLine(
-        cause: String,
-        pageNo: Int,
-    ): String {
+    private fun failureLine(cause: String, pageNo: Int): String {
         val paging: String = if (pageNo > 0) "page=$pageNo" else ""
         return "$PROVIDER 수집 실패 | $PATH | $paging | 원인=$cause | 조치=수집 중단(기존 데이터 유지)"
     }

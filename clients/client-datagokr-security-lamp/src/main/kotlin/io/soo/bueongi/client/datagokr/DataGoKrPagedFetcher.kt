@@ -29,11 +29,7 @@ class DataGoKrPagedFetcher(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     // null = 수집 실패(부분 실패 포함), 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
-    fun fetchAll(
-        endpoint: String,
-        fields: DataGoKrFieldNames,
-        municipalityCode: String? = null,
-    ): List<DataGoKrPoint>? {
+    fun fetchAll(endpoint: String, fields: DataGoKrFieldNames, municipalityCode: String? = null): List<DataGoKrPoint>? {
         check(isEnabled) { "data.go.kr 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<DataGoKrPoint> = ArrayList<DataGoKrPoint>()
         var pageNo: Int = 1
@@ -83,11 +79,7 @@ class DataGoKrPagedFetcher(
     }
 
     // 전량 수집은 페이지가 수천 건이라 한 페이지의 일시 장애로 전체를 버리면 갱신이 성립하지 않는다.
-    private fun fetchPage(
-        endpoint: String,
-        pageNo: Int,
-        municipalityCode: String?,
-    ): DataGoKrEnvelope? {
+    private fun fetchPage(endpoint: String, pageNo: Int, municipalityCode: String?): DataGoKrEnvelope? {
         var attempt: Int = 1
         while (true) {
             try {
@@ -132,11 +124,7 @@ class DataGoKrPagedFetcher(
     }
 
     // 표준데이터 계열은 `type` 만 받는다 — `returnType` 을 주면 resultCode 10 으로 거부한다(실측).
-    private fun pageUrl(
-        endpoint: String,
-        pageNo: Int,
-        municipalityCode: String?,
-    ): String {
+    private fun pageUrl(endpoint: String, pageNo: Int, municipalityCode: String?): String {
         val regionFilter: String =
             if (municipalityCode != null) {
                 "&$PARAM_INSTITUTION_CODE=$municipalityCode"

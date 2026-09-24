@@ -1,0 +1,6 @@
+root = true
+
+[*.{kt,kts}]
+# 파라미터 2~3개는 한 줄에 둔다. 4개 이상은 max-line-length 가 잡는다.
+ktlint_standard_function-signature = disabled
+ktlint_standard_parameter-list-wrapping = disabled

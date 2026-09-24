@@ -48,11 +48,7 @@ class SlackAlertNotifier internal constructor(
     override val isEnabled: Boolean
         get() = config.sendEnabled()
 
-    override fun notify(
-        key: String,
-        title: String,
-        detail: String,
-    ) {
+    override fun notify(key: String, title: String, detail: String) {
         recordAlert(key, title, detail)
         if (!config.sendEnabled()) {
             log.debug("Slack 알림 비활성(webhook 미설정 또는 토글 off) — 무시: {}", key)
@@ -103,11 +99,7 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun recordAlert(
-        key: String,
-        title: String,
-        detail: String,
-    ) {
+    private fun recordAlert(key: String, title: String, detail: String) {
         val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
         synchronized(recentAlerts) {
             recentAlerts.addLast(record)
@@ -117,10 +109,7 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun send(
-        title: String,
-        detail: String,
-    ) {
+    private fun send(title: String, detail: String) {
         try {
             restClient.post()
                 .uri(URI.create(config.webhookUrl()))
@@ -133,11 +122,7 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun failureLine(
-        e: Throwable,
-        subject: String,
-        action: String,
-    ): String {
+    private fun failureLine(e: Throwable, subject: String, action: String): String {
         return "$PROVIDER 호출 실패 | $subject | 원인=${e.javaClass.simpleName} | 조치=$action"
     }
 

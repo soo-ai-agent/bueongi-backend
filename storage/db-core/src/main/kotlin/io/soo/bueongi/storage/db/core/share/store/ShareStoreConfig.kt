@@ -40,10 +40,7 @@ class ShareStoreConfig {
             StringRedisTemplate(factory).apply { afterPropertiesSet() }
 
         @Bean
-        fun locationStore(
-            template: StringRedisTemplate,
-            clock: Clock,
-        ): LocationStore = RedisLocationStore(template, clock)
+        fun locationStore(template: StringRedisTemplate, clock: Clock): LocationStore = RedisLocationStore(template, clock)
     }
 
     @Configuration

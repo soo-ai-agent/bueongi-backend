@@ -21,10 +21,7 @@ object Epsg5179 {
     private val E1: Double = (1 - sqrt(1 - E2)) / (1 + sqrt(1 - E2))
     private val M0: Double = meridianArc(LAT0)
 
-    fun toWgs84(
-        easting: Double,
-        northing: Double,
-    ): Wgs84Point? {
+    fun toWgs84(easting: Double, northing: Double): Wgs84Point? {
         if (!easting.isFinite() || !northing.isFinite()) {
             return null
         }
@@ -68,10 +65,7 @@ object Epsg5179 {
         }
     }
 
-    fun fromWgs84(
-        lat: Double,
-        lng: Double,
-    ): TmXy {
+    fun fromWgs84(lat: Double, lng: Double): TmXy {
         val phi: Double = Math.toRadians(lat)
         val sinPhi: Double = sin(phi)
         val cosPhi: Double = cos(phi)

@@ -2,10 +2,7 @@ package io.soo.bueongi.support.util
 
 import kotlin.math.ceil
 
-fun nearestRankPercentile(
-    sortedAscending: List<Long>,
-    percentile: Int,
-): Long {
+fun nearestRankPercentile(sortedAscending: List<Long>, percentile: Int): Long {
     if (sortedAscending.isEmpty()) {
         return 0L
     }
