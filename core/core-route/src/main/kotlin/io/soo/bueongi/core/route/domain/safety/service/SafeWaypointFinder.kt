@@ -109,6 +109,9 @@ class SafeWaypointFinder(
     companion object {
         const val CLUSTER_RADIUS_METERS: Double = 150.0
 
+        // 뭉치는 우회 경로의 경유지 후보다. 실제로 쓰는 것은 시설이 많은 순으로 3곳과
+        // 상위 2곳 묶음 하나뿐이라, 뒤 단계에서 위치로 걸러질 몫을 더해 6개면 넉넉하다.
+        // 6이라는 수 자체는 실측 근거가 없는 감각값이다.
         const val MAX_CLUSTERS: Int = 6
 
         const val CLUSTER_CELL_DEG: Double = 0.0008

@@ -3,19 +3,15 @@ package io.soo.bueongi.storage.db.core.safetyspot.model
 import io.soo.bueongi.core.enums.SafetySpotType
 
 // 안심시설 한 곳. 종류마다 하위 타입이 있고, 자기 종류를 스스로 안다.
+// 좌표 외의 칸은 원천(공공 API·CSV)마다 주는 것이 달라 전부 비어 있을 수 있다.
+// sigungu 의 없음은 판단에도 쓰인다 — 지역을 모르는 시설은 지역 찾기에서 빠진다(RegionLocator).
 sealed class SafetySpotPoint {
     abstract val type: SafetySpotType
-
     abstract val lat: Double
-
     abstract val lng: Double
-
     abstract val name: String?
-
     abstract val sigungu: String?
-
     abstract val address: String?
-
     abstract val phone: String?
 
     fun toGeoPoint(): GeoPoint = GeoPoint(lat, lng)
