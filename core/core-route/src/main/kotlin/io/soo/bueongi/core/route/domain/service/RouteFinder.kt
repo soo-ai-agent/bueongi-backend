@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
 ) {
-    val isEnabled: Boolean get() = tmapClient.isEnabled
-
     fun findRoutes(query: RouteRequest): List<TmapRoute> {
         val routes: ArrayList<TmapRoute> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
