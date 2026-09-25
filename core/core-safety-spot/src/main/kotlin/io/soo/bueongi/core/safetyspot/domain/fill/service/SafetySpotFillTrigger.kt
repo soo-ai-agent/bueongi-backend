@@ -8,6 +8,7 @@ import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFil
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -29,8 +30,10 @@ class SafetySpotFillTrigger(
             Thread(runnable, "safety-spot-fill").apply { isDaemon = true }
         }
 
-    override fun onRoutePlanned(points: List<GeoPoint>) {
-        fillAround(points)
+    override fun onRoutePlanned(path: List<GeoPoint>) {
+        // 경로 좌표 전부가 아니라 간격마다 고른 좌표만 쓴다 — 좌표 하나마다 보안등을
+        // 최대 여덟 번 부르므로, 한 경로가 외부 호출을 너무 쓰지 않게 막는다.
+        fillAround(path.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS))
     }
 
     fun fillAround(points: List<GeoPoint>) {
@@ -83,5 +86,11 @@ class SafetySpotFillTrigger(
         for (region in regions) {
             securityLampFill.fill(region)
         }
+    }
+
+    private companion object {
+        const val FILL_POINT_SPACING_METERS: Double = 2_000.0
+
+        const val MAX_FILL_POINTS: Int = 12
     }
 }
