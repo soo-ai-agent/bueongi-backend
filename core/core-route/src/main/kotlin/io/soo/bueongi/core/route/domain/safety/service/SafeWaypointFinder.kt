@@ -113,14 +113,10 @@ class SafeWaypointFinder(
         // 상위 2곳 묶음 하나뿐이라, 뒤 단계에서 위치로 걸러질 몫을 더해 6개면 넉넉하다.
         // 6이라는 수 자체는 실측 근거가 없는 감각값이다.
         const val MAX_CLUSTERS: Int = 6
-
         const val CLUSTER_CELL_DEG: Double = 0.0008
-
         const val DEFAULT_LATERAL_RATIO: Double = 0.25
-
         const val MIDDLE_MIN_PROGRESS: Double = 0.2
         const val MIDDLE_MAX_PROGRESS: Double = 0.8
-
         const val SINGLE_CLUSTER_COMBOS: Int = 3
 
         val CLUSTER_SPOT_TYPES: List<SafetySpotType> =

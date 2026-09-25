@@ -4,6 +4,7 @@ import io.soo.bueongi.core.enums.SafetySpotType
 
 // 안심시설 한 곳. 종류마다 하위 타입이 있고, 자기 종류를 스스로 안다.
 // 좌표 외의 칸은 원천(공공 API·CSV)마다 주는 것이 달라 전부 비어 있을 수 있다.
+// 전화(phone)는 원천이 주는 세 종류(보안등·치안시설·지킴이집)만 갖는다.
 // sigungu 의 없음은 판단에도 쓰인다 — 지역을 모르는 시설은 지역 찾기에서 빠진다(RegionLocator).
 sealed class SafetySpotPoint {
     abstract val type: SafetySpotType
@@ -12,7 +13,6 @@ sealed class SafetySpotPoint {
     abstract val name: String?
     abstract val sigungu: String?
     abstract val address: String?
-    abstract val phone: String?
 
     fun toGeoPoint(): GeoPoint = GeoPoint(lat, lng)
 
@@ -31,14 +31,14 @@ sealed class SafetySpotPoint {
         ): SafetySpotPoint =
             when (type) {
                 SafetySpotType.CCTV ->
-                    CctvSpot(lat, lng, name, sigungu, address, phone, purpose, cameraCount)
-                SafetySpotType.STREET_LAMP -> StreetLampSpot(lat, lng, name, sigungu, address, phone)
+                    CctvSpot(lat, lng, name, sigungu, address, purpose, cameraCount)
+                SafetySpotType.STREET_LAMP -> StreetLampSpot(lat, lng, name, sigungu, address)
                 SafetySpotType.SECURITY_LAMP -> SecurityLampSpot(lat, lng, name, sigungu, address, phone)
-                SafetySpotType.BELL -> BellSpot(lat, lng, name, sigungu, address, phone)
+                SafetySpotType.BELL -> BellSpot(lat, lng, name, sigungu, address)
                 SafetySpotType.SAFEHOUSE -> SafeHouseSpot(lat, lng, name, sigungu, address, phone)
                 SafetySpotType.POLICE -> PoliceSpot(lat, lng, name, sigungu, address, phone)
-                SafetySpotType.PEDESTRIAN_SIGNAL -> PedestrianSignalSpot(lat, lng, name, sigungu, address, phone)
-                SafetySpotType.CRIME_PRONE_AREA -> CrimeProneAreaSpot(lat, lng, name, sigungu, address, phone)
+                SafetySpotType.PEDESTRIAN_SIGNAL -> PedestrianSignalSpot(lat, lng, name, sigungu, address)
+                SafetySpotType.CRIME_PRONE_AREA -> CrimeProneAreaSpot(lat, lng, name, sigungu, address)
             }
     }
 }
@@ -50,7 +50,6 @@ data class CctvSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
     val purpose: String? = null,
     val cameraCount: Int? = null,
 ) : SafetySpotPoint() {
@@ -63,7 +62,6 @@ data class StreetLampSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.STREET_LAMP
 }
@@ -74,7 +72,7 @@ data class SecurityLampSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
+    val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.SECURITY_LAMP
 }
@@ -85,7 +83,6 @@ data class BellSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.BELL
 }
@@ -96,7 +93,7 @@ data class SafeHouseSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
+    val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.SAFEHOUSE
 }
@@ -107,7 +104,7 @@ data class PoliceSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
+    val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.POLICE
 }
@@ -118,7 +115,6 @@ data class PedestrianSignalSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.PEDESTRIAN_SIGNAL
 }
@@ -129,7 +125,15 @@ data class CrimeProneAreaSpot(
     override val name: String? = null,
     override val sigungu: String? = null,
     override val address: String? = null,
-    override val phone: String? = null,
 ) : SafetySpotPoint() {
     override val type: SafetySpotType = SafetySpotType.CRIME_PRONE_AREA
 }
+
+// 전화는 원천이 주는 세 종류만 갖는다 — 저장·마커가 종류를 묻지 않고 꺼내 쓰는 창구다.
+fun SafetySpotPoint.phoneOrNull(): String? =
+    when (this) {
+        is SecurityLampSpot -> phone
+        is PoliceSpot -> phone
+        is SafeHouseSpot -> phone
+        is CctvSpot, is StreetLampSpot, is BellSpot, is PedestrianSignalSpot, is CrimeProneAreaSpot -> null
+    }

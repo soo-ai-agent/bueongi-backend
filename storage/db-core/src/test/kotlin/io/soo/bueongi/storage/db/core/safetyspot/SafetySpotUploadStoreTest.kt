@@ -3,6 +3,7 @@ package io.soo.bueongi.storage.db.core.safetyspot
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
+import io.soo.bueongi.storage.db.core.safetyspot.model.SafeHouseSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
@@ -22,10 +23,13 @@ class SafetySpotUploadStoreTest {
         val points =
             listOf(
                 SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, name = "c1", purpose = "생활방범", cameraCount = 4),
-                SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, name = "c2", address = "서울 종로구", phone = "02-1"),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, name = "c2", address = "서울 종로구"),
             )
+        val safeHouses =
+            listOf(SafetySpotPoint.of(SafetySpotType.SAFEHOUSE, 37.52, 127.02, name = "지킴이집", phone = "02-1"))
 
         store.save(SafetySpotType.CCTV, points)
+        store.save(SafetySpotType.SAFEHOUSE, safeHouses)
 
         assertThat(File(tmp.toFile(), "cctv.json")).exists()
         val loaded = store.findByType(SafetySpotType.CCTV)!!
@@ -35,7 +39,8 @@ class SafetySpotUploadStoreTest {
         assertThat(cctv.purpose).isEqualTo("생활방범")
         assertThat(cctv.cameraCount).isEqualTo(4)
         assertThat(loaded[1].address).isEqualTo("서울 종로구")
-        assertThat(loaded[1].phone).isEqualTo("02-1")
+        val safeHouse: SafeHouseSpot = store.findByType(SafetySpotType.SAFEHOUSE)!!.single() as SafeHouseSpot
+        assertThat(safeHouse.phone).isEqualTo("02-1")
     }
 
     @Test

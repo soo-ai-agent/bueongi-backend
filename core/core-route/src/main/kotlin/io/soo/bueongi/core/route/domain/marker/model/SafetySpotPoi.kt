@@ -2,6 +2,7 @@ package io.soo.bueongi.core.route.domain.marker.model
 
 import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.phoneOrNull
 import kotlin.math.roundToInt
 
 // x·y 는 위경도가 아니라 프론트 미니맵용 0~100 백분율 좌표다(프론트 계약).
@@ -34,7 +35,7 @@ internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi
         purpose = if (this is CctvSpot) purpose.orEmpty() else "",
         cameraCount = if (this is CctvSpot) cameraCount else null,
         address = address.orEmpty(),
-        phone = phone.orEmpty(),
+        phone = phoneOrNull().orEmpty(),
     )
 
 // 백분율은 목록 전체의 위경도 범위가 있어야 나오므로 마커 하나가 아니라 목록이 계산한다.

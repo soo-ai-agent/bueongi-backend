@@ -7,6 +7,7 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
+import io.soo.bueongi.storage.db.core.safetyspot.model.PoliceSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
@@ -73,8 +74,7 @@ class PoliceFillServiceTest {
         val service: PoliceFillService = service(dir, client, liveStore)
 
         assertThat(service.fill()).isEqualTo(1)
-        val stored: SafetySpotPoint = liveStore.appended.single()
-        assertThat(stored.type).isEqualTo(SafetySpotType.POLICE)
+        val stored: PoliceSpot = liveStore.appended.single() as PoliceSpot
         assertThat(stored.name).isEqualTo("역삼지구대")
         assertThat(stored.phone).isEqualTo("02-000-0000")
 

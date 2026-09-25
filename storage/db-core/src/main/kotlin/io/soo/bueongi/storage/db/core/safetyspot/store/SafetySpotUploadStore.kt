@@ -8,6 +8,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemDto
 import io.soo.bueongi.storage.db.core.safetyspot.dto.SafetySpotItemPropertiesDto
 import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.phoneOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -86,6 +87,6 @@ internal fun SafetySpotPoint.toItemDto(): SafetySpotItemDto =
         lng = lng,
         sigunguCode = sigungu,
         address = address,
-        phone = phone,
+        phone = phoneOrNull(),
         properties = cctvPropertiesOrNull(),
     )
