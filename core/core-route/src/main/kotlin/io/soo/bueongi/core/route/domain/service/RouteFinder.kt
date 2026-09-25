@@ -5,15 +5,12 @@ import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
-import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
 @Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
-    private val waypointFinder: SafeWaypointFinder,
 ) {
     val isEnabled: Boolean get() = tmapClient.isEnabled
 
@@ -28,11 +25,7 @@ class RouteFinder(
         return routes
     }
 
-    fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>): List<TmapRoute> {
-        val firstRoutePath: List<GeoPoint> = routes.first().path.toGeoPoints()
-        val safetySpotClusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
-        val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, safetySpotClusters)
-
+    fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>, waypointCombos: List<List<GeoPoint>>): List<TmapRoute> {
         val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
         val shortestDistanceM: Double = routes.minOf { it.distanceM }
         val maxDistanceM: Double = shortestDistanceM * (1 + budget)

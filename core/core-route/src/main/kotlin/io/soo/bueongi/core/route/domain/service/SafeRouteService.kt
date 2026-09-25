@@ -7,11 +7,15 @@ import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
+import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
+import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
+import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Service
 
 @Service
 class SafeRouteService(
     private val routeFinder: RouteFinder,
+    private val waypointFinder: SafeWaypointFinder,
     private val candidateMerger: RouteCandidateMerger,
     private val typeAssigner: RouteTypeAssigner,
     private val assembler: RouteOptionAssembler,
@@ -27,7 +31,10 @@ class SafeRouteService(
         }
         // 길을 잃어 다시 부른 것이면 빨리 답해야 해서 우회를 찾지 않는다.
         if (!query.reroute) {
-            routes.addAll(routeFinder.findSaferRoutes(query, routes))
+            val firstRoutePath: List<GeoPoint> = routes.first().path.toGeoPoints()
+            val clusters: List<SafetySpotCluster> = waypointFinder.findSafetySpotClusters(firstRoutePath)
+            val waypointCombos: List<List<GeoPoint>> = waypointFinder.pickWaypoints(query.origin, query.destination, clusters)
+            routes.addAll(routeFinder.findSaferRoutes(query, routes, waypointCombos))
         }
 
         // 경로가 지나는 지역의 안심시설을 받아 두게 한다. 다음 요청부터 그 지역 안전 점수가 정확해진다.

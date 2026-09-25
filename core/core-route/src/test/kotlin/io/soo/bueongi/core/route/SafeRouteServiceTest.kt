@@ -74,7 +74,8 @@ class SafeRouteServiceTest {
         waypointFinder: SafeWaypointFinder,
         source: FakeSafetySpotSource,
     ) = SafeRouteService(
-        routeFinder = RouteFinder(tmap, waypointFinder),
+        routeFinder = RouteFinder(tmap),
+        waypointFinder = waypointFinder,
         candidateMerger = RouteCandidateMerger(),
         typeAssigner = RouteTypeAssigner(scorer),
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
