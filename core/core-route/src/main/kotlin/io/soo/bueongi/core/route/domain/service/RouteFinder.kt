@@ -24,18 +24,23 @@ class RouteFinder(
     }
 
     fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>, waypointCombos: List<List<GeoPoint>>): List<TmapRoute> {
-        val budget: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
+        // 우회는 안전을 사려고 거리를 내는 거래다 — 안전 선호가 높을수록 더 돌아가도 된다.
+        // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
+        val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
         val shortestDistanceM: Double = routes.minOf { it.distanceM }
-        val maxDistanceM: Double = shortestDistanceM * (1 + budget)
+        val maxDistanceM: Double = shortestDistanceM * (1 + detourBudgetRatio)
+
+        // 안심시설 뭉치에 들렀다 가는 길을 조합마다 Tmap 에 묻고, 한도를 넘게 돌아가는 길은 버린다.
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
         for (waypoints in waypointCombos) {
             val saferRoute: TmapRoute? = fetchRoute(query, VIA_SEARCH_OPTION, waypoints)
             if (saferRoute == null) {
                 continue
             }
-            if (saferRoute.distanceM <= maxDistanceM) {
-                saferRoutes.add(saferRoute)
+            if (saferRoute.distanceM > maxDistanceM) {
+                continue
             }
+            saferRoutes.add(saferRoute)
         }
         return saferRoutes
     }
