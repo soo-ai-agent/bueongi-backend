@@ -16,6 +16,9 @@ data class SafetySpotCsvSpec(
     val purposeHeaders: List<String> = emptyList(),
     val cameraCountHeaders: List<String> = emptyList(),
     val phoneHeaders: List<String> = emptyList(),
+    // 개방자치단체코드(7자리) 헤더만 받는다 — 행정표준 시군구코드(5자리)는 체계가 달라
+    // 지역 조회(RegionLocator → 보안등 API)와 섞이면 어긋나므로 후보에 넣지 않는다.
+    val regionCodeHeaders: List<String> = listOf("개방자치단체코드", "제공기관코드"),
     val securityPurposeFilter: Boolean = false,
 ) {
     fun locateColumns(headerIndex: Map<String, Int>): CsvColumns {
@@ -34,6 +37,7 @@ data class SafetySpotCsvSpec(
             purposeIndex = headerIndex.firstIndexOf(purposeHeaders),
             cameraCountIndex = headerIndex.firstIndexOf(cameraCountHeaders),
             phoneIndex = headerIndex.firstIndexOf(phoneHeaders),
+            regionCodeIndex = headerIndex.firstIndexOf(regionCodeHeaders),
         )
     }
 

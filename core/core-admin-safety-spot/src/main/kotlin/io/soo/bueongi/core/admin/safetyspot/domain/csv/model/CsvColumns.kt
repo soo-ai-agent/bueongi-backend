@@ -14,6 +14,7 @@ class CsvColumns(
     private val purposeIndex: Int?,
     private val cameraCountIndex: Int?,
     private val phoneIndex: Int?,
+    private val regionCodeIndex: Int?,
 ) {
     fun name(row: List<String>): String? = textAt(row, nameIndex)
 
@@ -22,6 +23,8 @@ class CsvColumns(
     fun purpose(row: List<String>): String? = textAt(row, purposeIndex)
 
     fun phone(row: List<String>): String? = textAt(row, phoneIndex)
+
+    fun regionCode(row: List<String>): String? = textAt(row, regionCodeIndex)
 
     fun latitude(row: List<String>): Double? = numberAt(row, latIndex)
 

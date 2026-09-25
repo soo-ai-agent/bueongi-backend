@@ -18,6 +18,7 @@ class CsvColumnsTest {
             purposeIndex = null,
             cameraCountIndex = 3,
             phoneIndex = null,
+            regionCodeIndex = null,
         )
 
     @Test

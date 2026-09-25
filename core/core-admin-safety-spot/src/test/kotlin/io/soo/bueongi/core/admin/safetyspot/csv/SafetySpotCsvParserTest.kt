@@ -42,6 +42,20 @@ class SafetySpotCsvParserTest {
     }
 
     @Test
+    fun `cctv - 개방자치단체코드 헤더가 있으면 지역 코드를 채운다`() {
+        val csv =
+            """
+            개방자치단체코드,위도,경도,관리기관명,설치목적구분
+            3000000,37.5,127.0,종로구청,생활방범
+            """.trimIndent()
+
+        val result = parser.parse(bytes(csv), SafetySpotCsvSpec.forType(SafetySpotType.CCTV))
+
+        val cctv: CctvSpot = result.points.single() as CctvSpot
+        assertThat(cctv.openLocalGovCode).isEqualTo("3000000")
+    }
+
+    @Test
     fun `safehouse wgs84 - 업소명·도로명주소를 읽는다`() {
         val csv =
             """

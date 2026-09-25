@@ -78,6 +78,7 @@ class SafetySpotCsvParser {
             cameraCount = columns.cameraCount(row),
             address = columns.address(row),
             phone = columns.phone(row),
+            regionCode = columns.regionCode(row),
         )
     }
 
