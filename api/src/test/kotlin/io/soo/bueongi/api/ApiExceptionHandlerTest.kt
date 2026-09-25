@@ -43,9 +43,7 @@ import org.springframework.test.web.servlet.post
     SafetySpotRepository::class,
     SafetySpotUploadStore::class,
 )
-class ApiExceptionHandlerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class ApiExceptionHandlerTest(@param:Autowired private val mockMvc: MockMvc) {
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 

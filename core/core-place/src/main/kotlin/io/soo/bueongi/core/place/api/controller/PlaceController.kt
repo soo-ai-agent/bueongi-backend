@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/places")
-class PlaceController(
-    private val placeSearchService: PlaceSearchService,
-) {
+class PlaceController(private val placeSearchService: PlaceSearchService) {
     @GetMapping("/search")
     fun search(request: PlaceSearchRequest): List<PlaceResponse> {
         return placeSearchService.search(request.searchKeyword)

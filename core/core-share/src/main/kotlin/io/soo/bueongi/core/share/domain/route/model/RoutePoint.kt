@@ -1,6 +1,3 @@
 package io.soo.bueongi.core.share.domain.route.model
 
-data class RoutePoint(
-    val lat: Double,
-    val lng: Double,
-)
+data class RoutePoint(val lat: Double, val lng: Double)

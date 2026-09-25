@@ -9,9 +9,7 @@ import java.nio.file.Path
 import java.time.Duration
 
 @Configuration
-class CdnResourceConfig(
-    @param:Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String,
-) : WebMvcConfigurer {
+class CdnResourceConfig(@param:Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String) : WebMvcConfigurer {
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         val root: Path = Path.of(dataDir).toAbsolutePath().normalize()
         val rootUri: String = root.toUri().toString()

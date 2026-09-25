@@ -19,9 +19,7 @@ import org.springframework.test.web.servlet.put
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Tag("context")
-class SlackConfigControllerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class SlackConfigControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `GET 은 미설정 상태와 5종 카테고리를 반환한다`() {
         mockMvc.get("/api/admin/slack-config")

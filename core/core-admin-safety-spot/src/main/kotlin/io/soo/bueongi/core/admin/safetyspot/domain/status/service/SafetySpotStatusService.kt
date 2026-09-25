@@ -11,10 +11,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Service
 
 @Service
-class SafetySpotStatusService(
-    private val safetySpotSource: SafetySpotSpatialSource,
-    private val refreshStatusStore: SafetySpotRefreshStatusStore,
-) {
+class SafetySpotStatusService(private val safetySpotSource: SafetySpotSpatialSource, private val refreshStatusStore: SafetySpotRefreshStatusStore) {
     fun summarize(): SafetySpotStatusSummary {
         val freshness: SafetySpotFreshness? = safetySpotSource.freshness
         val safetySpots: ArrayList<SafetySpotStatus> = ArrayList()

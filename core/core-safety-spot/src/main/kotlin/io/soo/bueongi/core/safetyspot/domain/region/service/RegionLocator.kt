@@ -8,9 +8,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 
 @Component
-class RegionLocator(
-    private val safetySpots: SafetySpotSpatialSource,
-) {
+class RegionLocator(private val safetySpots: SafetySpotSpatialSource) {
     fun regionCodeAt(point: GeoPoint): String? {
         for (radius in SEARCH_RADII_M) {
             val nearby: List<SafetySpotPoint> = safetySpots.index(SafetySpotType.CCTV).withinRadius(point, radius)

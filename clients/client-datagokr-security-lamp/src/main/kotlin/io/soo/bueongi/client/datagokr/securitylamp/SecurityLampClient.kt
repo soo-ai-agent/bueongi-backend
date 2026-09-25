@@ -7,9 +7,7 @@ import org.springframework.stereotype.Component
 
 // 전국 보안등(표준데이터): https://www.data.go.kr/data/15149415/openapi.do
 @Component
-class SecurityLampClient(
-    private val fetcher: DataGoKrPagedFetcher,
-) {
+class SecurityLampClient(private val fetcher: DataGoKrPagedFetcher) {
     val isEnabled: Boolean
         get() = fetcher.isEnabled
 

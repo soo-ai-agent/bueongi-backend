@@ -4,10 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class InvalidKeywordException(
-    val maxLength: Int,
-    val actualLength: Int,
-) : ApiException(
+class InvalidKeywordException(val maxLength: Int, val actualLength: Int) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "INVALID_KEYWORD",
         title = "Invalid Keyword",

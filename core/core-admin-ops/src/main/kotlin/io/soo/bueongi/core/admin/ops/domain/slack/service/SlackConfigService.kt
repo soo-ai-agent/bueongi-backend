@@ -10,10 +10,7 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.stereotype.Service
 
 @Service
-class SlackConfigService(
-    private val slackAlertConfig: SlackAlertConfig,
-    private val alertNotifier: AlertNotifier,
-) {
+class SlackConfigService(private val slackAlertConfig: SlackAlertConfig, private val alertNotifier: AlertNotifier) {
     fun view(): SlackConfigSummary {
         val muted: Set<String> = slackAlertConfig.mutedCategories()
         val categories: List<SlackCategoryConfig> =

@@ -5,10 +5,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-class FillFailureCooldown(
-    private val cooldown: Duration = DEFAULT_COOLDOWN,
-    private val clock: Clock = Clock.systemUTC(),
-) {
+class FillFailureCooldown(private val cooldown: Duration = DEFAULT_COOLDOWN, private val clock: Clock = Clock.systemUTC()) {
     private val failedAt: ConcurrentHashMap<String, Instant> = ConcurrentHashMap()
 
     fun isCoolingDown(key: String): Boolean {

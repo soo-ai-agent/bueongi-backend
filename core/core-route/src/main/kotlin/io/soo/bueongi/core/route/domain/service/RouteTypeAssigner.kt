@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component
 
 // 후보마다 안전 점수를 매기고, 앱에 보여줄 유형(안심·빠름·일반)마다 경로 하나씩 고른다.
 @Component
-class RouteTypeAssigner(
-    private val scorer: SafetyScorer,
-) {
+class RouteTypeAssigner(private val scorer: SafetyScorer) {
     internal fun assignOneRoutePerType(candidates: List<RouteCandidate>): List<ScoredRoute> {
         if (candidates.isEmpty()) {
             return emptyList()

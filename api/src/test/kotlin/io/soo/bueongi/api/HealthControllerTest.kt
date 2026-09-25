@@ -19,9 +19,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(HealthControllerTest.Config::class)
 @ActiveProfiles("test")
-class HealthControllerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class HealthControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `200 과 status UP, 서비스 이름, locationStore 를 내려준다`() {
         mockMvc.get("/api/health")

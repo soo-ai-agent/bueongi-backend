@@ -14,10 +14,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
-class JwtAuthenticationFilter(
-    private val verifier: JwtTokenVerifier,
-    private val objectMapper: ObjectMapper,
-) : OncePerRequestFilter() {
+class JwtAuthenticationFilter(private val verifier: JwtTokenVerifier, private val objectMapper: ObjectMapper) : OncePerRequestFilter() {
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val header: String? = request.getHeader("Authorization")
         if (header.isNullOrBlank() || !header.startsWith("Bearer ")) {

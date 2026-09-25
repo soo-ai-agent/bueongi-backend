@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/admin")
-class AlertController(
-    private val alertNotifier: AlertNotifier,
-    private val slackConfigService: SlackConfigService,
-) {
+class AlertController(private val alertNotifier: AlertNotifier, private val slackConfigService: SlackConfigService) {
     @GetMapping("/alerts")
     fun alerts(
         @RequestParam(required = false, defaultValue = "100") limit: Int,

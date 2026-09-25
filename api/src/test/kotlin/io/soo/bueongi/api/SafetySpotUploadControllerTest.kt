@@ -26,9 +26,7 @@ import java.nio.file.Files
 @AutoConfigureMockMvc(addFilters = false)
 @Import(SafetySpotUploadControllerTest.TestConfig::class)
 @Tag("context")
-class SafetySpotUploadControllerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class SafetySpotUploadControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     private fun csvFile(content: String) = MockMultipartFile("file", "upload.csv", "text/csv", content.toByteArray())
 
     @Test

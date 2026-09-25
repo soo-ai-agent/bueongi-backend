@@ -14,10 +14,7 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
-class JwtTokenVerifier(
-    key: RSAPublicKey,
-    issuer: String,
-) {
+class JwtTokenVerifier(key: RSAPublicKey, issuer: String) {
     private val tokenParser: JwtParser =
         Jwts.parser()
             .verifyWith(key)

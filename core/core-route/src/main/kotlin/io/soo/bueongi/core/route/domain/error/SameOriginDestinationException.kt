@@ -4,9 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class SameOriginDestinationException(
-    val distanceMeters: Int,
-) : ApiException(
+class SameOriginDestinationException(val distanceMeters: Int) : ApiException(
         status = HttpStatus.UNPROCESSABLE_ENTITY,
         code = "SAME_ORIGIN_DESTINATION",
         title = "Same Origin And Destination",

@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component
 const val NATIONWIDE: String = "nationwide"
 
 @Component
-class SafetySpotFillEventPublisher(
-    private val events: ApplicationEventPublisher,
-) {
+class SafetySpotFillEventPublisher(private val events: ApplicationEventPublisher) {
     fun fetchFailed(type: SafetySpotType, scope: String) {
         events.publishEvent(
             OperationEvent(

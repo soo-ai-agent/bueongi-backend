@@ -10,9 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/routes")
-class RouteController(
-    private val safeRouteService: SafeRouteService,
-) {
+class RouteController(private val safeRouteService: SafeRouteService) {
     @PostMapping("/safe-compare")
     fun safeCompare(@RequestBody request: RouteRequest): List<RouteOption> {
         return safeRouteService.safeCompare(request)

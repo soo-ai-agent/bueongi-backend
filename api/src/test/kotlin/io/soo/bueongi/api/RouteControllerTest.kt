@@ -41,9 +41,7 @@ import org.springframework.test.web.servlet.post
     SafetySpotRepository::class,
     SafetySpotUploadStore::class,
 )
-class RouteControllerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 

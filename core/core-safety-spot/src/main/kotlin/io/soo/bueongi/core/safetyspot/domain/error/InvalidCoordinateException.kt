@@ -3,10 +3,7 @@ package io.soo.bueongi.core.safetyspot.domain.error
 import io.soo.bueongi.core.common.error.ApiException
 import org.springframework.http.HttpStatus
 
-class InvalidCoordinateException(
-    lat: Double,
-    lng: Double,
-) : ApiException(
+class InvalidCoordinateException(lat: Double, lng: Double) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "INVALID_COORDINATE",
         title = "Bad Request",

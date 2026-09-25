@@ -26,9 +26,7 @@ import org.springframework.test.web.servlet.get
     ApiControllerAdvice::class,
     PlaceControllerTest.StubRemoteConfig::class,
 )
-class PlaceControllerTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class PlaceControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `검색어가 일치하면 200 과 장소 배열을 반환`() {
         mockMvc.get("/api/places/search") { param("keyword", "강남역") }

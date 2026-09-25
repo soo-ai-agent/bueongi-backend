@@ -11,11 +11,7 @@ import java.time.Duration
 import java.time.Instant
 
 @Component
-class MissedArrivalWatchdog(
-    private val store: LocationStore,
-    private val clock: Clock,
-    private val shareEvents: ShareEventPublisher,
-) {
+class MissedArrivalWatchdog(private val store: LocationStore, private val clock: Clock, private val shareEvents: ShareEventPublisher) {
     private val log: Logger = LoggerFactory.getLogger(MissedArrivalWatchdog::class.java)
 
     @Scheduled(fixedDelayString = "\${bueongi.share.watchdog-interval-ms:60000}")

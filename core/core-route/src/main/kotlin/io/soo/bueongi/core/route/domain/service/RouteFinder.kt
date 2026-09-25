@@ -9,9 +9,7 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
 @Component
-class RouteFinder(
-    private val tmapClient: TmapRouteClient,
-) {
+class RouteFinder(private val tmapClient: TmapRouteClient) {
     fun findRoutes(query: RouteRequest): List<TmapRoute> {
         val routes: ArrayList<TmapRoute> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
@@ -23,8 +21,8 @@ class RouteFinder(
         return routes
     }
 
+    // 안심시설에 들르는 길은 그만큼 더 걷게 된다. 얼마나 더 걷게 할지는 사용자의 안전 선호가 정한다.
     fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>, waypointCombos: List<List<GeoPoint>>): List<TmapRoute> {
-        // 우회는 안전을 사려고 거리를 내는 거래다 — 안전 선호가 높을수록 더 돌아가도 된다.
         // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
         val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
         val shortestDistanceM: Double = routes.minOf { it.distanceM }
@@ -68,8 +66,18 @@ class RouteFinder(
     }
 }
 
-private fun RouteRequest.endName(): String = destinationName.trim().ifEmpty { "목적지" }
+private fun RouteRequest.endName(): String {
+    return destinationName.trim().ifEmpty { "목적지" }
+}
 
-internal fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> = map { GeoPoint(it.lat, it.lng) }
+internal fun List<TmapCoord>.toGeoPoints(): List<GeoPoint> {
+    val points: ArrayList<GeoPoint> = ArrayList(size)
+    for (coord in this) {
+        points.add(GeoPoint(coord.lat, coord.lng))
+    }
+    return points
+}
 
-private fun GeoPoint.toTmapCoord(): TmapCoord = TmapCoord(lat, lng)
+private fun GeoPoint.toTmapCoord(): TmapCoord {
+    return TmapCoord(lat, lng)
+}

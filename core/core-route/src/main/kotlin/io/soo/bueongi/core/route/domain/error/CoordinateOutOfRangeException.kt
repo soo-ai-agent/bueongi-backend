@@ -4,10 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class CoordinateOutOfRangeException(
-    field: String,
-    rejectedValue: Double,
-) : ApiException(
+class CoordinateOutOfRangeException(field: String, rejectedValue: Double) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "VALIDATION_FAILED",
         title = "Validation Failed",

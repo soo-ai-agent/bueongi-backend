@@ -10,10 +10,7 @@ import io.soo.bueongi.core.admin.auth.domain.error.AdminAuthenticationException
 import io.soo.bueongi.core.admin.auth.domain.model.AdminTokenBundle
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
-class AdminAuthService(
-    private val properties: AdminAuthProperties,
-    private val tokenService: AdminTokenService,
-) {
+class AdminAuthService(private val properties: AdminAuthProperties, private val tokenService: AdminTokenService) {
     private val passwordEncoder = BCryptPasswordEncoder()
 
     fun login(request: AdminLoginRequest): AdminLoginResponse {

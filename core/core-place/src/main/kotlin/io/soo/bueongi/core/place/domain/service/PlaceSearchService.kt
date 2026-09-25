@@ -9,9 +9,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class PlaceSearchService(
-    private val tmapPlaceClient: TmapPlaceClient,
-) {
+class PlaceSearchService(private val tmapPlaceClient: TmapPlaceClient) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     fun search(keyword: String): List<PlaceResponse> {

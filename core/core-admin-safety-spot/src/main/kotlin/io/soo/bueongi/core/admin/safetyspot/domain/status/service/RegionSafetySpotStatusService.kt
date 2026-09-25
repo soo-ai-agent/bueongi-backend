@@ -13,10 +13,7 @@ import io.soo.bueongi.support.util.isInKorea
 import org.springframework.stereotype.Service
 
 @Service
-class RegionSafetySpotStatusService(
-    private val safetySpots: SafetySpotSpatialSource,
-    private val regionNames: RegionNameCatalog,
-) {
+class RegionSafetySpotStatusService(private val safetySpots: SafetySpotSpatialSource, private val regionNames: RegionNameCatalog) {
     fun summarize(): List<RegionSafetySpotCount> {
         val talliesByRegion: LinkedHashMap<String, RegionTally> = LinkedHashMap()
         for (type in SafetySpotType.entries) {

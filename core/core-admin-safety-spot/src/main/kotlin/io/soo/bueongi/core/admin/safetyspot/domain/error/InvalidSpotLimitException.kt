@@ -4,9 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class InvalidSpotLimitException(
-    limit: Int,
-) : ApiException(
+class InvalidSpotLimitException(limit: Int) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "INVALID_SPOT_LIMIT",
         title = "Bad Request",

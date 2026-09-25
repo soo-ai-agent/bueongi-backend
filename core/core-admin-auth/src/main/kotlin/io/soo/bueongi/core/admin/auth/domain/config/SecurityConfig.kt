@@ -25,9 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(JwtProperties::class, AdminAuthProperties::class)
-class SecurityConfig(
-    private val objectMapper: ObjectMapper,
-) {
+class SecurityConfig(private val objectMapper: ObjectMapper) {
     @Bean
     fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
         val isLocalProfile: Boolean = environment.activeProfiles.contains("local")

@@ -14,9 +14,7 @@ import org.springframework.test.web.servlet.get
 @WebMvcTest(TrafficController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
-class AdminTrafficEndpointTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class AdminTrafficEndpointTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `traffic 은 엔드포인트 집계와 예측 사용자 시간대 일자 추이를 반환한다`() {
         mockMvc.get("/api/admin/traffic")

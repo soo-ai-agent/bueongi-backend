@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component
 import kotlin.math.floor
 
 @Component
-class SafeWaypointFinder(
-    private val safetySpots: SafetySpotSpatialSource,
-) {
+class SafeWaypointFinder(private val safetySpots: SafetySpotSpatialSource) {
     // 경로 양옆을 훑어 안심시설이 뭉친 자리를 찾고, 뭉치마다 중심점과 시설 수를 낸다. 많이 뭉친 순으로 최대 6개.
     fun findSafetySpotClusters(routePath: List<GeoPoint>): List<SafetySpotCluster> {
         if (routePath.size < 2) {

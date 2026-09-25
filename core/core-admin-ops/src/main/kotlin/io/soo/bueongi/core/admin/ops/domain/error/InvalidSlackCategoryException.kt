@@ -4,10 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class InvalidSlackCategoryException(
-    val rejectedValue: List<String>,
-    val knownKeys: List<String>,
-) : ApiException(
+class InvalidSlackCategoryException(val rejectedValue: List<String>, val knownKeys: List<String>) : ApiException(
         status = HttpStatus.UNPROCESSABLE_ENTITY,
         code = "INVALID_SLACK_CATEGORY",
         title = "Invalid Slack Category",

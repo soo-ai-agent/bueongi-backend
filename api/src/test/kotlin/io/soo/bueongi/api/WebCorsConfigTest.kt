@@ -13,9 +13,7 @@ import org.springframework.test.web.servlet.options
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Tag("context")
-class WebCorsConfigTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class WebCorsConfigTest(@param:Autowired private val mockMvc: MockMvc) {
     private val allowedOrigin: String = "http://localhost:3619"
 
     @Test

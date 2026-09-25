@@ -5,9 +5,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
 @Component
-class ApiEventPublisher(
-    private val events: ApplicationEventPublisher,
-) {
+class ApiEventPublisher(private val events: ApplicationEventPublisher) {
     fun shareStoreUnavailable(detail: String) {
         events.publishEvent(OperationEvent(key = "share-store-unavailable", title = "위치 공유 저장소(Redis) 접근 실패", detail = detail))
     }

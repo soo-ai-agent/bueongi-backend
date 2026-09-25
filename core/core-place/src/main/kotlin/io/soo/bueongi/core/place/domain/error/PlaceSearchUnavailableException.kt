@@ -3,9 +3,7 @@ package io.soo.bueongi.core.place.domain.error
 import io.soo.bueongi.core.common.error.ApiException
 import org.springframework.http.HttpStatus
 
-class PlaceSearchUnavailableException(
-    cause: Throwable? = null,
-) : ApiException(
+class PlaceSearchUnavailableException(cause: Throwable? = null) : ApiException(
         status = HttpStatus.SERVICE_UNAVAILABLE,
         code = "PLACE_SEARCH_UNAVAILABLE",
         title = "Place Search Unavailable",

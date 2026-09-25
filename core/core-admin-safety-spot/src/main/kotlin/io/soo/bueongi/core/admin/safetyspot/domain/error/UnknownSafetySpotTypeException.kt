@@ -4,10 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class UnknownSafetySpotTypeException(
-    rejectedType: String,
-    knownTypes: List<String>,
-) : ApiException(
+class UnknownSafetySpotTypeException(rejectedType: String, knownTypes: List<String>) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "UNKNOWN_SAFETY_SPOT_TYPE",
         title = "Unknown SafetySpot Type",

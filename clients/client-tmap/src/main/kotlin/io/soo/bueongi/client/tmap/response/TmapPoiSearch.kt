@@ -5,19 +5,13 @@ import io.soo.bueongi.client.tmap.TmapPlace
 
 // 0건 응답은 칸을 생략하고 오므로 null 이 가능하다.
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPoiSearch(
-    val searchPoiInfo: TmapPoiList? = null,
-)
+internal data class TmapPoiSearch(val searchPoiInfo: TmapPoiList? = null)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPoiList(
-    val pois: TmapPois? = null,
-)
+internal data class TmapPoiList(val pois: TmapPois? = null)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPois(
-    val poi: List<TmapPoi> = emptyList(),
-)
+internal data class TmapPois(val poi: List<TmapPoi> = emptyList())
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class TmapPoi(
@@ -39,11 +33,7 @@ internal data class TmapPoi(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapNewAddressList(
-    val newAddress: List<TmapNewAddress> = emptyList(),
-)
+internal data class TmapNewAddressList(val newAddress: List<TmapNewAddress> = emptyList())
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapNewAddress(
-    val fullAddressRoad: String? = null,
-)
+internal data class TmapNewAddress(val fullAddressRoad: String? = null)

@@ -16,11 +16,7 @@ import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
-class AdminTokenService(
-    keyMaterial: JwtKeyMaterial,
-    private val authProperties: AdminAuthProperties,
-    private val clock: Clock = Clock.systemUTC(),
-) {
+class AdminTokenService(keyMaterial: JwtKeyMaterial, private val authProperties: AdminAuthProperties, private val clock: Clock = Clock.systemUTC()) {
     private val privateKey: RSAPrivateKey = keyMaterial.privateKey
     private val publicKey: RSAPublicKey = keyMaterial.publicKey
     private val issuer: String = keyMaterial.issuer

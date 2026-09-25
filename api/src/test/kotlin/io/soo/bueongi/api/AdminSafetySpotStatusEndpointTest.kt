@@ -15,9 +15,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @Tag("context")
-class AdminSafetySpotStatusEndpointTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class AdminSafetySpotStatusEndpointTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `safetySpot-status 는 종류별 적재건수 갱신결과 CDN신선도를 반환한다`() {
         mockMvc.get("/api/admin/safety-spot-status")

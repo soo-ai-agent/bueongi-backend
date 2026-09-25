@@ -14,9 +14,7 @@ import org.springframework.test.web.servlet.get
 @AutoConfigureMockMvc(addFilters = false)
 @Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @Tag("context")
-class AdminShareEndpointTest(
-    @param:Autowired private val mockMvc: MockMvc,
-) {
+class AdminShareEndpointTest(@param:Autowired private val mockMvc: MockMvc) {
     @Test
     fun `share-status 는 활성 세션 수를 반환한다`() {
         mockMvc.get("/api/admin/share-status")

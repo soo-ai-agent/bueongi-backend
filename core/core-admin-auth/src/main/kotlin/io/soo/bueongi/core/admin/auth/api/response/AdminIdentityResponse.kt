@@ -3,10 +3,7 @@ package io.soo.bueongi.core.admin.auth.api.response
 import io.soo.bueongi.core.admin.auth.domain.error.AdminAuthenticationException
 import org.springframework.security.core.Authentication
 
-data class AdminIdentityResponse(
-    val userId: Long,
-    val roles: List<String>,
-) {
+data class AdminIdentityResponse(val userId: Long, val roles: List<String>) {
     companion object {
         fun from(authentication: Authentication): AdminIdentityResponse {
             val principal: Any? = authentication.principal

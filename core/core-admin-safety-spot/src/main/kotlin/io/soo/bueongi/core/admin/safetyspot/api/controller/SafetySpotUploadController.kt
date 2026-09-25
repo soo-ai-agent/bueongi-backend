@@ -15,9 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/admin/safety-spots")
-class SafetySpotUploadController(
-    private val uploadService: SafetySpotUploadService,
-) {
+class SafetySpotUploadController(private val uploadService: SafetySpotUploadService) {
     @PostMapping("/{type}/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         @PathVariable type: String,

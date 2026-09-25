@@ -4,11 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class InvalidRouteMetaException(
-    val field: String,
-    override val message: String,
-    val rejectedValue: Any?,
-) : ApiException(
+class InvalidRouteMetaException(val field: String, override val message: String, val rejectedValue: Any?) : ApiException(
         status = HttpStatus.UNPROCESSABLE_ENTITY,
         code = "INVALID_ROUTE_META",
         title = "Invalid Route Metadata",

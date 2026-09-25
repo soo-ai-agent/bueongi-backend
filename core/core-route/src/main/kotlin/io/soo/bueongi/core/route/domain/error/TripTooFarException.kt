@@ -4,10 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
-class TripTooFarException(
-    val distanceMeters: Int,
-    val maxMeters: Int,
-) : ApiException(
+class TripTooFarException(val distanceMeters: Int, val maxMeters: Int) : ApiException(
         status = HttpStatus.UNPROCESSABLE_ENTITY,
         code = "TRIP_TOO_FAR",
         title = "Trip Too Far",
