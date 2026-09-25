@@ -4,18 +4,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.client.tmap.TmapPlace
 import io.soo.bueongi.client.tmap.TmapPlaceClient
-import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationEventPublisher
 import ch.qos.logback.classic.Logger as LogbackLogger
 
 class PlaceSearchServiceSourceTest {
@@ -24,7 +21,7 @@ class PlaceSearchServiceSourceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenReturn(listOf(TmapPlace("리모트장소", "서울 어딘가 1", 37.5, 127.0)))
 
-        val result = PlaceSearchService(client, mock()).search("강남")
+        val result = PlaceSearchService(client).search("강남")
 
         verify(client).search("강남")
         assertThat(result.map { it.name }).containsExactly("리모트장소")
@@ -36,7 +33,7 @@ class PlaceSearchServiceSourceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenThrow(hidden)
 
-        assertThatThrownBy { PlaceSearchService(client, mock()).search("강남") }
+        assertThatThrownBy { PlaceSearchService(client).search("강남") }
             .isInstanceOf(PlaceSearchUnavailableException::class.java)
             .hasRootCause(hidden)
     }
@@ -51,7 +48,7 @@ class PlaceSearchServiceSourceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("우리집 앞 골목")).thenThrow(hidden)
 
-        assertThatThrownBy { PlaceSearchService(client, mock()).search("우리집 앞 골목") }
+        assertThatThrownBy { PlaceSearchService(client).search("우리집 앞 골목") }
             .isInstanceOf(PlaceSearchUnavailableException::class.java)
 
         val line: String = appender.list.single().formattedMessage
@@ -59,20 +56,5 @@ class PlaceSearchServiceSourceTest {
         assertThat(line).startsWith("외부 장소 검색 실패")
         assertThat(line).doesNotContain("Kakao 5xx")
         assertThat(line).contains("RuntimeException")
-    }
-
-    @Test
-    fun `외부 검색이 실패하면 운영 이벤트를 발행한다`() {
-        val client = mock<TmapPlaceClient>()
-        whenever(client.search("강남")).thenThrow(RuntimeException("Kakao 5xx"))
-        val events = mock<ApplicationEventPublisher>()
-
-        assertThatThrownBy { PlaceSearchService(client, events).search("강남") }
-            .isInstanceOf(PlaceSearchUnavailableException::class.java)
-
-        val captor = argumentCaptor<OperationEvent>()
-        verify(events).publishEvent(captor.capture())
-        assertThat(captor.firstValue.key).isEqualTo("tmap-place-failed")
-        assertThat(captor.firstValue.detail).isEqualTo("RuntimeException")
     }
 }

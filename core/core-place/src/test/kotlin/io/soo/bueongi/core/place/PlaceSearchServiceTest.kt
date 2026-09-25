@@ -18,7 +18,7 @@ class PlaceSearchServiceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenReturn(listOf(gangnam))
 
-        val result = PlaceSearchService(client, mock()).search("강남")
+        val result = PlaceSearchService(client).search("강남")
 
         assertThat(result.map { it.name }).containsExactly("강남역 2번 출구")
     }
@@ -28,7 +28,7 @@ class PlaceSearchServiceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남역")).thenReturn(listOf(gangnam))
 
-        val result = PlaceSearchService(client, mock()).search("강남역").first()
+        val result = PlaceSearchService(client).search("강남역").first()
 
         assertThat(result.lat).isEqualTo(37.4979)
         assertThat(result.lng).isEqualTo(127.0276)
@@ -39,7 +39,7 @@ class PlaceSearchServiceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("존재하지않는장소xyz")).thenReturn(emptyList())
 
-        assertThat(PlaceSearchService(client, mock()).search("존재하지않는장소xyz")).isEmpty()
+        assertThat(PlaceSearchService(client).search("존재하지않는장소xyz")).isEmpty()
     }
 
     @Test
@@ -47,7 +47,7 @@ class PlaceSearchServiceTest {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenThrow(RuntimeException("Kakao 5xx"))
 
-        assertThatThrownBy { PlaceSearchService(client, mock()).search("강남") }
+        assertThatThrownBy { PlaceSearchService(client).search("강남") }
             .isInstanceOf(PlaceSearchUnavailableException::class.java)
     }
 }

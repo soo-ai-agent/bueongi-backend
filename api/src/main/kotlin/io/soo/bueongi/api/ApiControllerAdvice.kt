@@ -3,6 +3,8 @@ package io.soo.bueongi.api
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.soo.bueongi.core.common.error.ApiException
 import io.soo.bueongi.core.common.error.ApiFieldError
+import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
+import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.traceColumn
@@ -40,6 +42,19 @@ class ApiControllerAdvice(
                 setProperty("errors", ex.fieldErrors)
             }
         }
+
+    // 사용자가 실제로 오류 응답을 받은 순간에만 알린다 — 원인은 도메인이 예외에 담아 보낸다.
+    @ExceptionHandler(RouteSearchUnavailableException::class)
+    fun handleRouteSearchUnavailable(ex: RouteSearchUnavailableException): ProblemDetail {
+        apiEvents?.routeSearchUnavailable("경로 후보 전멸 또는 키 미설정 — 앱은 503 안내를 받는다.")
+        return handleApi(ex)
+    }
+
+    @ExceptionHandler(PlaceSearchUnavailableException::class)
+    fun handlePlaceSearchUnavailable(ex: PlaceSearchUnavailableException): ProblemDetail {
+        apiEvents?.placeSearchUnavailable(ex.cause?.javaClass?.simpleName ?: "원인 미상")
+        return handleApi(ex)
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail =
