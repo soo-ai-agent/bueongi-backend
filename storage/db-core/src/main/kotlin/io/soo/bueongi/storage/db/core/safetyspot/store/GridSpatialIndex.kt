@@ -2,6 +2,7 @@ package io.soo.bueongi.storage.db.core.safetyspot.store
 
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.regionCodeOrNull
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -17,7 +18,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
     val all: List<SafetySpotPoint> = distinct
 
-    val regions: Set<String> = distinct.mapNotNullTo(HashSet()) { it.sigungu }
+    val regions: Set<String> = distinct.mapNotNullTo(HashSet()) { it.regionCodeOrNull() }
 
     fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {

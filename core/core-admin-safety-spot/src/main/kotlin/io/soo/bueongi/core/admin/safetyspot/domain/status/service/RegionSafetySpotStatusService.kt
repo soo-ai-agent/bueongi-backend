@@ -7,6 +7,7 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpot
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.regionCodeOrNull
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.support.util.isInKorea
 import org.springframework.stereotype.Service
@@ -98,7 +99,7 @@ class RegionSafetySpotStatusService(
     }
 
     private fun regionCodeOf(point: SafetySpotPoint): String {
-        val code: String? = point.sigungu?.trim()?.takeIf { it.isNotEmpty() }
+        val code: String? = point.regionCodeOrNull()?.trim()?.takeIf { it.isNotEmpty() }
         return code ?: UNKNOWN_REGION
     }
 

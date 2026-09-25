@@ -74,7 +74,7 @@ class SecurityLampFillServiceTest {
         liveStore: SafetySpotLiveStore,
         alreadyLoaded: String,
     ): SecurityLampFillService {
-        val loaded = SafetySpotPoint.of(SafetySpotType.SECURITY_LAMP, 35.54, 128.49, sigungu = alreadyLoaded)
+        val loaded = SafetySpotPoint.of(SafetySpotType.SECURITY_LAMP, 35.54, 128.49, regionCode = alreadyLoaded)
         val source: SafetySpotSpatialSource =
             FakeSafetySpotSource(mapOf(SafetySpotType.SECURITY_LAMP to listOf(loaded)))
         return SecurityLampFillService(

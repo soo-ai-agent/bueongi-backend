@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.core.safetyspot.model.regionCodeOrNull
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
@@ -49,7 +50,7 @@ class LampCsvLoadTest {
 
         val points = loadLamp(tmp, csvDir)
 
-        assertThat(points.single().sigungu).isEqualTo("5410000")
+        assertThat(points.single().regionCodeOrNull()).isEqualTo("5410000")
     }
 
     @Test
@@ -60,7 +61,7 @@ class LampCsvLoadTest {
 
         val points = loadLamp(tmp, csvDir)
 
-        assertThat(points.single().sigungu).isNull()
+        assertThat(points.single().regionCodeOrNull()).isNull()
     }
 
     @Test

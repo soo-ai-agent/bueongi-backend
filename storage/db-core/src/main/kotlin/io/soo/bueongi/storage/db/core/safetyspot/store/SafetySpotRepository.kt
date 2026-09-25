@@ -336,7 +336,7 @@ internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
         lat = point.lat,
         lng = point.lng,
         name = name,
-        sigungu = sigungu,
+        regionCode = sigungu,
         purpose = purpose,
         cameraCount = cameraCount,
     )
@@ -388,7 +388,7 @@ private class LampCsvColumns(
             lat = point.lat,
             lng = point.lng,
             name = name,
-            sigungu = valueAt(parts, sigunguAt),
+            regionCode = valueAt(parts, sigunguAt),
         )
     }
 

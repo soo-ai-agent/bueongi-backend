@@ -19,7 +19,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
     private fun points(type: SafetySpotType, count: Int, region: String = MAPO): List<SafetySpotPoint> {
         val made: ArrayList<SafetySpotPoint> = ArrayList(count)
         for (i in 0 until count) {
-            made.add(SafetySpotPoint.of(type, lat = 37.50 + i * 0.001, lng = 127.00, name = "p$i", sigungu = region))
+            made.add(SafetySpotPoint.of(type, lat = 37.50 + i * 0.001, lng = 127.00, name = "p$i", regionCode = region))
         }
         return made
     }
@@ -31,8 +31,8 @@ class RegionSafetySpotStatusServiceSpotsTest {
                 mapOf(
                     SafetySpotType.CCTV to
                         listOf(
-                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", sigungu = MAPO),
-                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.54, 128.49, sigungu = CHANGNYEONG),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, name = "마포 사거리", regionCode = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 35.54, 128.49, regionCode = CHANGNYEONG),
                         ),
                 ),
             ).findSpotsByCode(MAPO, limit = 100)
@@ -124,7 +124,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
                     SafetySpotType.CCTV to
                         listOf(
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00),
-                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, sigungu = MAPO),
+                            SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, regionCode = MAPO),
                         ),
                 ),
             ).findSpotsByCode("unknown", limit = 100)

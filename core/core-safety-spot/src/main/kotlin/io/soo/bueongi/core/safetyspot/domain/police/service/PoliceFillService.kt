@@ -35,7 +35,7 @@ class PoliceFillService(
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,
-                    sigungu = row.sigungu,
+                    standardSigunguCode = row.sigungu,
                     address = row.address,
                     phone = row.phone,
                 ),

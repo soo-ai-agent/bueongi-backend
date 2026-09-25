@@ -34,7 +34,7 @@ class StreetLampFillService(
                 StreetLampSpot(
                     lat = row.lat,
                     lng = row.lng,
-                    sigungu = row.sigungu,
+                    standardSigunguCode = row.sigungu,
                     address = row.address,
                 ),
             )

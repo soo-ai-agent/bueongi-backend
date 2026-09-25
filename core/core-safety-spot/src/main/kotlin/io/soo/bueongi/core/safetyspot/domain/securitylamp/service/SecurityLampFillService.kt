@@ -91,7 +91,7 @@ class SecurityLampFillService(
                     lat = row.lat,
                     lng = row.lng,
                     name = row.name,
-                    sigungu = row.sigungu,
+                    openLocalGovCode = row.sigungu,
                     address = row.address,
                     phone = row.phone,
                 ),

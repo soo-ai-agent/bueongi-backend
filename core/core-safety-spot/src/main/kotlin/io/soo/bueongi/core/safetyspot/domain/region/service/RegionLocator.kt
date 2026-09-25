@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.safetyspot.domain.region.service
 
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
@@ -15,10 +16,10 @@ class RegionLocator(
             val nearby: List<SafetySpotPoint> = safetySpots.index(SafetySpotType.CCTV).withinRadius(point, radius)
             val nearest: SafetySpotPoint? =
                 nearby
-                    .filter { !it.sigungu.isNullOrBlank() }
+                    .filter { it is CctvSpot && !it.openLocalGovCode.isNullOrBlank() }
                     .minByOrNull { point.distanceMetersTo(it.toGeoPoint()) }
             if (nearest != null) {
-                return nearest.sigungu
+                return (nearest as CctvSpot).openLocalGovCode
             }
         }
         return null

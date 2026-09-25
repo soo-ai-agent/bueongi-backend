@@ -88,7 +88,7 @@ class AdminEndpointFixtures {
                                 type = SafetySpotType.CCTV,
                                 lat = 37.5 + i * 0.001,
                                 lng = 127.0,
-                                sigungu = "3130000",
+                                regionCode = "3130000",
                             )
                         },
                     )

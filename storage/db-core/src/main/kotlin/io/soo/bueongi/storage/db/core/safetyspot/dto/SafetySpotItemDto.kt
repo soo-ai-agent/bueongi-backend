@@ -23,7 +23,7 @@ data class SafetySpotItemDto(
             lat = point.lat,
             lng = point.lng,
             name = name,
-            sigungu = sigunguCode,
+            regionCode = sigunguCode,
             purpose = properties?.purpose,
             cameraCount = properties?.cameraCount,
             address = address?.trim()?.takeIf { it.isNotEmpty() },
