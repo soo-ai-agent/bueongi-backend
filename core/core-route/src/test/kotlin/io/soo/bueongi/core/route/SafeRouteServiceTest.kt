@@ -18,6 +18,7 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -75,7 +76,7 @@ class SafeRouteServiceTest {
     ) = SafeRouteService(
         routeFinder = RouteFinder(tmap, waypointFinder),
         candidateMerger = RouteCandidateMerger(),
-        scorer = scorer,
+        typeAssigner = RouteTypeAssigner(scorer),
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
         routePlannedHandler = mock(),
     )

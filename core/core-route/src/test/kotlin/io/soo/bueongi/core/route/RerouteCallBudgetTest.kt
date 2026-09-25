@@ -12,6 +12,7 @@ import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -65,7 +66,7 @@ class RerouteCallBudgetTest {
         SafeRouteService(
             routeFinder = RouteFinder(tmap, SafeWaypointFinder(source)),
             candidateMerger = RouteCandidateMerger(),
-            scorer = nightScorer(source),
+            typeAssigner = RouteTypeAssigner(nightScorer(source)),
             assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
             routePlannedHandler = mock(),
         )

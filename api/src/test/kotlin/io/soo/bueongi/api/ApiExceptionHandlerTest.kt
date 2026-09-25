@@ -9,6 +9,7 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
@@ -32,6 +33,7 @@ import org.springframework.test.web.servlet.post
     RouteTypeCatalog::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,
+    RouteTypeAssigner::class,
     RouteFinder::class,
     RouteOptionAssembler::class,
     RouteMarkerBuilder::class,
