@@ -56,7 +56,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
 
     @Test
     fun `좌표가 빠지면 그 필드를 짚어 400 을 낸다 - 0으로 채워 계산하지 않는다`() {
-        mockMvc.post("/api/routes/safe-compare") {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lng":127.0276},"destination":{"lat":37.504,"lng":127.025}}"""
         }.andExpect {
@@ -67,8 +67,8 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `safe-compare 는 Tmap 키 없으면 503 으로 사용 불가를 알린다`() {
-        mockMvc.post("/api/routes/safe-compare") {
+    fun `경로 옵션 요청은 Tmap 키 없으면 503 으로 사용 불가를 알린다`() {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = validBody
         }.andExpect {
@@ -78,8 +78,8 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `safe-compare origin 누락이면 400`() {
-        mockMvc.post("/api/routes/safe-compare") {
+    fun `origin 누락이면 400`() {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"destination":{"lat":37.5572,"lng":126.9245}}"""
         }.andExpect { status { isBadRequest() } }
@@ -87,7 +87,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
 
     @Test
     fun `safetySpots 도 원거리 상한을 거른다(422 TRIP_TOO_FAR)`() {
-        mockMvc.post("/api/routes/safe-compare") {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.0,"lng":127.0},"destination":{"lat":38.5,"lng":127.0},"routeType":"safe"}"""
         }.andExpect { status { isUnprocessableEntity() } }
@@ -95,7 +95,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
 
     @Test
     fun `destination 좌표 누락이면 400`() {
-        mockMvc.post("/api/routes/safe-compare") {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.4979,"lng":127.0276},"destination":{"name":"x"}}"""
         }.andExpect { status { isBadRequest() } }
@@ -103,7 +103,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
 
     @Test
     fun `경도 범위 초과(lng 200)면 400`() {
-        mockMvc.post("/api/routes/safe-compare") {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":37.5,"lng":127.0},"destination":{"lat":37.5,"lng":200.0}}"""
         }.andExpect { status { isBadRequest() } }
@@ -111,7 +111,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
 
     @Test
     fun `좌표가 양의 무한대로 오버플로(lat 1e400)면 400 VALIDATION_FAILED`() {
-        mockMvc.post("/api/routes/safe-compare") {
+        mockMvc.post("/api/routes") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"origin":{"lat":1e400,"lng":127.0},"destination":{"lat":37.5,"lng":126.9}}"""
         }.andExpect {

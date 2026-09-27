@@ -21,7 +21,7 @@ class SafeRouteService(
     private val assembler: RouteOptionAssembler,
     private val routePlannedHandler: RoutePlannedHandler,
 ) {
-    fun safeCompare(query: RouteRequest): List<RouteOption> {
+    fun findRouteOptions(query: RouteRequest): List<RouteOption> {
         val routes: ArrayList<TmapRoute> = ArrayList(routeFinder.findRoutes(query))
         if (routes.isEmpty()) {
             throw RouteSearchUnavailableException()

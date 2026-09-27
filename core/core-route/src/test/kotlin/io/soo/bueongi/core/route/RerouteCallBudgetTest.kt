@@ -76,7 +76,7 @@ class RerouteCallBudgetTest {
     fun `재탐색은 우회 후보를 부르지 않는다`() {
         val tmap = tmapReturning()
 
-        serviceOf(tmap).safeCompare(queryOf(reroute = true))
+        serviceOf(tmap).findRouteOptions(queryOf(reroute = true))
 
         verify(tmap, never()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
@@ -85,14 +85,14 @@ class RerouteCallBudgetTest {
     fun `처음 찾는 요청은 우회 후보를 그대로 부른다`() {
         val tmap = tmapReturning()
 
-        serviceOf(tmap).safeCompare(queryOf(reroute = false))
+        serviceOf(tmap).findRouteOptions(queryOf(reroute = false))
 
         verify(tmap, org.mockito.kotlin.atLeastOnce()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
 
     @Test
     fun `재탐색도 걸을 수 있는 경로를 돌려준다`() {
-        val result = serviceOf(tmapReturning()).safeCompare(queryOf(reroute = true))
+        val result = serviceOf(tmapReturning()).findRouteOptions(queryOf(reroute = true))
 
         assertThat(result).isNotEmpty()
         assertThat(result.first().path).isNotNull()
