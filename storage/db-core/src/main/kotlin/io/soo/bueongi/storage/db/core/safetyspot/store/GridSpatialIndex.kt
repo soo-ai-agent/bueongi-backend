@@ -20,6 +20,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
 
     val regions: Set<String> = distinct.mapNotNullTo(HashSet()) { it.regionCodeOrNull() }
 
+    // 중심점에서 radiusM 미터 안에 있는 시설을 낸다.
     fun withinRadius(center: GeoPoint, radiusM: Double): List<SafetySpotPoint> {
         if (radiusM <= 0) {
             return emptyList()
@@ -28,6 +29,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         return candidates.filter { center.distanceMetersTo(it.toGeoPoint()) <= radiusM }
     }
 
+    // 경로 선 양옆 corridorM 미터 띠 안에 있는 시설을 낸다.
     fun withinCorridor(path: List<GeoPoint>, corridorM: Double): List<SafetySpotPoint> {
         if (path.isEmpty() || corridorM <= 0) {
             return emptyList()
@@ -94,6 +96,7 @@ class GridSpatialIndex(points: List<SafetySpotPoint>) {
         // 좌표가 몇 번째 칸에 드는지 낸다.
         private fun cellIndex(value: Double, cellDeg: Double): Int = floor(value / cellDeg).toInt()
 
+        // 칸의 (세로, 가로) 번호 둘을 Long 하나에 합쳐 버킷 키로 쓴다.
         fun cellKey(latCell: Int, lngCell: Int): Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
     }
 }
