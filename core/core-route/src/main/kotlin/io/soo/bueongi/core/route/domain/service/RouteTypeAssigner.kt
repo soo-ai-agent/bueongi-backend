@@ -18,6 +18,17 @@ class RouteTypeAssigner(private val scorer: SafetyScorer) {
         val coverage: SafetyDataCoverage = scorer.coverageOf(candidates.map { it.path })
         val scored: List<ScoredCandidate> = candidates.map { ScoredCandidate(it, scorer.score(it.path, coverage)) }
 
+        val picks: Map<Int, RouteType> = pickIndexPerType(scored)
+        val assigned: ArrayList<ScoredRoute> = ArrayList()
+        for (pick in picks) {
+            val candidate: ScoredCandidate = scored[pick.key]
+            assigned.add(ScoredRoute(candidate.candidate, candidate.score, pick.value))
+        }
+        return assigned
+    }
+
+    // 안심=점수 최고, 빠름=남은 것 중 시간 최단, 기본=남은 것 중 점수 최고. 동점이면 앞선 후보가 이긴다.
+    private fun pickIndexPerType(scored: List<ScoredCandidate>): Map<Int, RouteType> {
         val safeIdx: Int = scored.indices.maxBy { scored[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
         val fastIdx: Int? =
             scored.indices.filter { it != safeIdx }
@@ -35,12 +46,7 @@ class RouteTypeAssigner(private val scorer: SafetyScorer) {
         if (mainIdx != null) {
             picks[mainIdx] = RouteType.MAIN
         }
-        val assigned: ArrayList<ScoredRoute> = ArrayList()
-        for (pick in picks) {
-            val candidate: ScoredCandidate = scored[pick.key]
-            assigned.add(ScoredRoute(candidate.candidate, candidate.score, pick.value))
-        }
-        return assigned
+        return picks
     }
 
     private companion object {

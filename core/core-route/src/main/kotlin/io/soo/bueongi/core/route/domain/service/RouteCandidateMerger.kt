@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component
 // Tmap 이 옵션만 다르면 골목 하나 차이의 길을 중복해서 돌려준다.
 @Component
 class RouteCandidateMerger {
-    fun toCandidates(routes: List<TmapRoute>): List<RouteCandidate> {
+    // 같은 경로(identityKey)와 거의 같은 경로(90% 이상 겹침)를 버리고, 남은 것을 후보 모델로 바꿔 낸다.
+    fun merge(routes: List<TmapRoute>): List<RouteCandidate> {
         val addedKeys: HashSet<Long> = HashSet()
         val candidates: ArrayList<RouteCandidate> = ArrayList()
         for (route in routes) {

@@ -13,7 +13,7 @@ import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.core.route.domain.safety.service.SafeWaypointFinder
+import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
@@ -47,7 +47,7 @@ class SafeRouteServiceTest {
         }
     private val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
     private val scorer = nightScorer(source)
-    private val waypointFinder = SafeWaypointFinder(source)
+    private val waypointPlanner = SafetySpotWaypointPlanner(source)
 
     private val routeA =
         TmapRoute(
@@ -66,16 +66,16 @@ class SafeRouteServiceTest {
             steps = emptyList(),
         )
 
-    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, waypointFinder, source)
+    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, waypointPlanner, source)
 
     private fun safeRouteService(
         tmap: TmapRouteClient,
         scorer: SafetyScorer,
-        waypointFinder: SafeWaypointFinder,
+        waypointPlanner: SafetySpotWaypointPlanner,
         source: FakeSafetySpotSource,
     ) = SafeRouteService(
         routeFinder = RouteFinder(tmap),
-        waypointFinder = waypointFinder,
+        waypointPlanner = waypointPlanner,
         candidateMerger = RouteCandidateMerger(),
         typeAssigner = RouteTypeAssigner(scorer),
         assembler = RouteOptionAssembler(RouteMarkerBuilder(source), source, RouteTypeCatalog()),
@@ -155,7 +155,7 @@ class SafeRouteServiceTest {
                         whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
                     },
                 scorer = nightScorer(richSource),
-                waypointFinder = SafeWaypointFinder(richSource),
+                waypointPlanner = SafetySpotWaypointPlanner(richSource),
                 source = richSource,
             )
 

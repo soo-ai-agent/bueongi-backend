@@ -22,25 +22,26 @@ class RouteFinder(private val tmapClient: TmapRouteClient) {
     }
 
     // 안심시설에 들르는 길은 그만큼 더 걷게 된다. 얼마나 더 걷게 할지는 사용자의 안전 선호가 정한다.
-    fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>, waypointCombos: List<List<GeoPoint>>): List<TmapRoute> {
-        // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
-        val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-        val shortestDistanceM: Double = routes.minOf { it.distanceM }
-        val maxDistanceM: Double = shortestDistanceM * (1 + detourBudgetRatio)
+    fun findSaferRoutes(query: RouteRequest, routes: List<TmapRoute>, waypointPlans: List<List<GeoPoint>>): List<TmapRoute> {
+        val maxDistanceM: Double = maxDetourDistanceM(query, routes)
 
-        // 안심시설 뭉치에 들렀다 가는 길을 조합마다 Tmap 에 묻고, 한도를 넘게 돌아가는 길은 버린다.
+        // 안심시설 뭉치에 들렀다 가는 길을 계획마다 Tmap 에 묻고, 한도를 넘게 돌아가는 길은 버린다.
         val saferRoutes: ArrayList<TmapRoute> = ArrayList()
-        for (waypoints in waypointCombos) {
-            val saferRoute: TmapRoute? = fetchRoute(query, VIA_SEARCH_OPTION, waypoints)
-            if (saferRoute == null) {
-                continue
-            }
+        for (waypoints in waypointPlans) {
+            val saferRoute: TmapRoute = fetchRoute(query, VIA_SEARCH_OPTION, waypoints) ?: continue
             if (saferRoute.distanceM > maxDistanceM) {
                 continue
             }
             saferRoutes.add(saferRoute)
         }
         return saferRoutes
+    }
+
+    // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
+    private fun maxDetourDistanceM(query: RouteRequest, routes: List<TmapRoute>): Double {
+        val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
+        val shortestDistanceM: Double = routes.minOf { it.distanceM }
+        return shortestDistanceM * (1 + detourBudgetRatio)
     }
 
     private fun fetchRoute(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): TmapRoute? {
