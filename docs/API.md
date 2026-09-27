@@ -116,7 +116,7 @@
 ```
 
 - `name`/`address`: 프론트 `Destination{name,address}` 로 매핑.
-- `lat`/`lng`: `POST /api/routes/safe-compare` 의 `destination` 좌표로 바로 사용 가능(additive, 무시해도 무방).
+- `lat`/`lng`: `POST /api/routes` 의 `destination` 좌표로 바로 사용 가능(additive, 무시해도 무방).
 
 **동작/정책**:
 
@@ -127,7 +127,7 @@
 
 ---
 
-## `POST /api/routes/safe-compare` — 실경로 비교 (앱이 실제로 쓰는 경로 탐색)
+## `POST /api/routes` — 경로 옵션 목록 (앱이 실제로 쓰는 경로 탐색)
 
 Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 요청 본문은 `compare` 와 같은 `RouteRequest` 이고, 앱은 이 경로만 호출한다. 출처: `core-route/api/controller/RouteController.kt`, `domain/service/SafeRouteService.kt`.
 
