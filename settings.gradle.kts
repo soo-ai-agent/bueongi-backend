@@ -11,7 +11,7 @@ include(
     "core:core-admin-ops",
     "core:core-admin-safety-spot",
     "core:core-admin-auth",
-    "app",
+    "core:core-app",
     "storage:db-core",
     "clients:client-tmap",
     "clients:client-slack",

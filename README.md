@@ -42,7 +42,7 @@ set +a
 ./gradlew build
 
 # 빌드된 jar 직접 실행
-java -jar app/build/libs/app-0.0.1-SNAPSHOT.jar  # 부팅 모듈(:app) 산출물
+java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar  # 부팅 모듈(:core:core-app) 산출물
 ```
 
 `local` 프로파일은 `backend/.env.local`을 자동으로 읽는다. 로컬 실행은 아래 명령을 표준으로 사용한다.
@@ -165,30 +165,28 @@ set +a
 
 ```
 backend/
-├── app/                         # 유일한 실행 모듈(bootJar/bootRun) — BueongiApplication·application.yml·웹 테스트만
 ├── core/
-│   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립
-│   │   ├── api/                 #   controller/ · request/ · response/
+│   ├── core-app/                # 유일한 실행 모듈(bootJar/bootRun) — BueongiApplication·application.yml·웹 테스트만
+│   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립 (+ domain/safety·marker)
+│   │   ├── api/                 #   controller/ · request/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
-│   ├── core-route-stats/        # 경로 추천 통계 — route 본체와 무관, 저장소만 읽는다
-│   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스)
-│   ├── core-safetySpot/           # 시설 적재·CSV 파싱·안전 채점·좌표 변환
-│   ├── core-place/              # 장소 검색(Kakao + 시드 폴백)
-│   ├── core-ads/                # 광고 노출 집계(/api/ads/impression · /api/admin/ad-stats)
-│   ├── core-ops/                # 운영 관측 — 외부API 상태·수신 요청 지표·알림/Slack 설정
-│   ├── core-auth/               # 인증 일체 — 로그인·토큰·JWT·SecurityConfig·/me
+│   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스) · 관리자 공유 조회
+│   ├── core-place/              # 장소 검색(Tmap POI)
+│   ├── core-safety-spot/        # 안심시설 적재 — 공공 API 원천별 채우기(Fill)·실패 쿨다운
+│   ├── core-app-info/           # /api/health · /api/app-info(버전)
+│   ├── core-admin-auth/         # 관리자 로그인·토큰·JWT·SecurityConfig·/me
+│   ├── core-admin-ops/          # 운영 관측 — 알림·Slack 설정·수신 요청 트래픽
+│   ├── core-admin-safety-spot/  # 관리자 시설 현황·CSV 업로드
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
 │   │                            #   + 앱 전역 웹 설정: ApiControllerAdvice·CORS·CDN·Clock·스케줄링·요청 계측 필터
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 │   ├── safetySpot/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
 │   ├── share/{store,model}          #   13파일이라 역할로 나눔
-│   └── apilog · routestats · requestmetric · adevent   # 각 4~5파일이라 그대로 둔다
+│   └── requestmetric            # 수신 요청 지표
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
-│   ├── client-tmap/ · client-kakao/ · client-slack/(운영 알림 발송·스로틀)
-│   ├── client-datagokr-common/  # data.go.kr 공통 전송(페이징·재시도·쿼터·봉투)
-│   │   └── -cctv · -bell · -safehouse · -lamp   # 자원별 어댑터(엔드포인트+필드 매핑만)
-│   └── client-safemap/ · client-safetydata/     # 시설 공공 API 어댑터(소비자 미배선 — 카탈로그 5절)
+│   ├── client-tmap/ · client-slack/(운영 알림 발송·스로틀)
+│   └── client-safemap/ · client-safe182/ · client-datagokr-security-lamp/ · client-safetydata-street-lamp/   # 안심시설 공공 API
 └── support/ (logging · monitoring · util)
     └── util/                    # 도메인 지식 없는 범용 함수만 — 좌표변환(EPSG)·통계·시간버킷·포맷·JS이스케이프·PEM파싱
                                  #  판단 기준: 다른 프로젝트에 그대로 옮겨도 말이 되면 util, 아니면 소유 도메인에 둔다
@@ -211,10 +209,10 @@ backend/
 - **`/api/admin/**` 은 모듈이 아니라 경로 규약이다.** 관리자 조회도 그 데이터를 가진 도메인 모듈이 답한다
   (`safetySpot-status`→core-safetySpot, `route-stats`→core-route, `share-*`→core-share, `ad-stats`→core-ads,
   `api-status`·`traffic`·`alerts`·`slack-config`→core-ops). 관리자 전용 모듈을 두지 않는다.
-- **`@WebMvcTest`·`@SpringBootTest` 는 `app` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
+- **`@WebMvcTest`·`@SpringBootTest` 는 `core-app` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
   도메인 단위 테스트는 각 도메인 모듈에 둔다. 모듈을 넘나드는 테스트 헬퍼는 `java-test-fixtures` 로 노출한다.
 
-- 부팅 모듈이 `app` 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
+- 부팅 모듈이 `core-app` 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
 - 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
 
 ## 코드 작성 규칙
