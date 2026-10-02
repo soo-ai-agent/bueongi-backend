@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

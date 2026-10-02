@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.soo.bueongi.client.slack.SlackAlertConfig

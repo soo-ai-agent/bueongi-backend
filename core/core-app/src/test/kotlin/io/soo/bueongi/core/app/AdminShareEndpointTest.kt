@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.share.api.controller.ShareAdminController
 import org.junit.jupiter.api.Tag

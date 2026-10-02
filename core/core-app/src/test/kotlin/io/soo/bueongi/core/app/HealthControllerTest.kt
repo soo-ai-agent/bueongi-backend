@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.HealthController
 import io.soo.bueongi.core.share.domain.service.ShareService

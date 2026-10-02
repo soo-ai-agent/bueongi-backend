@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.jsonwebtoken.Jwts
 import org.assertj.core.api.Assertions.assertThat

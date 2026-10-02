@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.config.RequestLogLine
 import io.soo.bueongi.core.enums.RequestCaller

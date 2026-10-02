@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.ops.api.controller.AlertController
 import org.junit.jupiter.api.Tag

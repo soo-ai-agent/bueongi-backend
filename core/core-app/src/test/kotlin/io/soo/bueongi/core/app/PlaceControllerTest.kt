@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.client.tmap.TmapPlace
 import io.soo.bueongi.client.tmap.TmapPlaceClient

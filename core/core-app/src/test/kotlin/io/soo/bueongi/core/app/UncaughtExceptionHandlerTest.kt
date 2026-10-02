@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
 import org.junit.jupiter.api.Tag

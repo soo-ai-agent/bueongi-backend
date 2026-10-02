@@ -1,4 +1,4 @@
-package io.soo.bueongi.api
+package io.soo.bueongi.core.app
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.safetyspot.api.controller.SafetySpotUploadController
