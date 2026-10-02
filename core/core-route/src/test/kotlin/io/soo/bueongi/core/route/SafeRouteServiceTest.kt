@@ -13,8 +13,8 @@ import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
+import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
