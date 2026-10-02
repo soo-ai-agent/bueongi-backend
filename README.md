@@ -42,7 +42,7 @@ set +a
 ./gradlew build
 
 # 빌드된 jar 직접 실행
-java -jar api/build/libs/api-0.0.1-SNAPSHOT.jar  # 부팅 모듈(:api) 산출물
+java -jar app/build/libs/app-0.0.1-SNAPSHOT.jar  # 부팅 모듈(:app) 산출물
 ```
 
 `local` 프로파일은 `backend/.env.local`을 자동으로 읽는다. 로컬 실행은 아래 명령을 표준으로 사용한다.
@@ -165,11 +165,7 @@ set +a
 
 ```
 backend/
-├── api/                         # 유일한 실행 모듈(bootJar/bootRun)
-│   └── io/soo/bueongi/
-│       ├── BueongiApplication.kt
-│       └── api/                 # ApiControllerAdvice · HealthController
-│           └── config/          # CORS·CDN·Clock·스케줄링·요청 계측 필터
+├── app/                         # 유일한 실행 모듈(bootJar/bootRun) — BueongiApplication·application.yml·웹 테스트만
 ├── core/
 │   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립
 │   │   ├── api/                 #   controller/ · request/ · response/
@@ -182,6 +178,7 @@ backend/
 │   ├── core-ops/                # 운영 관측 — 외부API 상태·수신 요청 지표·알림/Slack 설정
 │   ├── core-auth/               # 인증 일체 — 로그인·토큰·JWT·SecurityConfig·/me
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
+│   │                            #   + 앱 전역 웹 설정: ApiControllerAdvice·CORS·CDN·Clock·스케줄링·요청 계측 필터
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 │   ├── safetySpot/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
@@ -205,6 +202,8 @@ backend/
 - **역할 분리는 파일이 10개를 넘을 때부터** 한다. 4~5파일을 3폴더로 쪼개면 폴더당 1~2개라
   탐색이 오히려 늘어난다(clients·support·core-enum·apilog 계열은 그대로 둔 이유).
 - **`core-common` 에는 둘 이상의 도메인이 쓰는 것만** 둔다. 한 도메인만 쓰면 그 도메인 모듈로 되돌린다.
+  앱 전역 웹 설정(공통 advice·CORS·필터)도 여기다. 도메인 모듈이 core-common 을 의존하므로 core-common 은 도메인 모듈을 import 할 수 없다.
+- **한 도메인 예외에만 붙는 처리(알림 등)는 그 도메인 모듈의 ControllerAdvice 에 둔다** — `@Order(Ordered.HIGHEST_PRECEDENCE)` 로 공통 advice 의 `ApiException` 핸들러보다 먼저 잡는다(예: `RouteControllerAdvice`).
 - **도메인 모듈끼리는 참조하지 않는다(현재 0건).** 공유가 필요하면 `core-common`(공용 타입)이나
   `storage:db-core`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,
   그 코드의 주어가 어느 도메인인지 다시 본다 — 대개 잘못된 모듈에 놓여 있다.
@@ -212,10 +211,10 @@ backend/
 - **`/api/admin/**` 은 모듈이 아니라 경로 규약이다.** 관리자 조회도 그 데이터를 가진 도메인 모듈이 답한다
   (`safetySpot-status`→core-safetySpot, `route-stats`→core-route, `share-*`→core-share, `ad-stats`→core-ads,
   `api-status`·`traffic`·`alerts`·`slack-config`→core-ops). 관리자 전용 모듈을 두지 않는다.
-- **`@WebMvcTest`·`@SpringBootTest` 는 `api` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
+- **`@WebMvcTest`·`@SpringBootTest` 는 `app` 모듈에만 둔다** — `@SpringBootApplication` 이 있는 모듈에서만 뜬다.
   도메인 단위 테스트는 각 도메인 모듈에 둔다. 모듈을 넘나드는 테스트 헬퍼는 `java-test-fixtures` 로 노출한다.
 
-- 부팅 모듈이 `api` 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
+- 부팅 모듈이 `app` 하나라 루트에서 `./gradlew bootRun|bootJar|test` 가 그대로 동작한다.
 - 각 모듈은 자기 설정 파일(yml)을 소유하고 application.yml 이 `spring.config.import` 로 합성한다.
 
 ## 코드 작성 규칙
