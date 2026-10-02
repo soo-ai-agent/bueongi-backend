@@ -4,7 +4,7 @@
 # 빌드 컨텍스트는 저장소 루트다(cdn/ 정적 데이터를 함께 굽기 위해):
 #   docker build -f backend/Dockerfile -t bueongi-service .
 #
-# 부팅 모듈은 core:core-api 하나뿐이라 루트 `bootJar` 가 정확히 그 모듈만 패키징한다
+# 부팅 모듈은 core:core-app 하나뿐이라 루트 `bootJar` 가 정확히 그 모듈만 패키징한다
 # (라이브러리 모듈들은 bootJar 비활성). cdn/ 을 이미지에 포함하는 이유: 안심시설 점수 계산
 # 입력(FacilityRepository)과 프론트 정적 데이터(/cdn HTTP 서빙)가 같은 디렉터리라서,
 # 이미지 하나로 외부 볼륨 없이 자립 동작한다. 월 1회 파이프라인이 cdn/ 을 갱신해
@@ -21,16 +21,27 @@ COPY backend/gradlew backend/settings.gradle.kts backend/build.gradle.kts backen
 COPY backend/gradle ./gradle
 # 모듈 build 파일들(의존 선언)도 캐시 레이어에 포함.
 COPY backend/core/core-enum/build.gradle.kts ./core/core-enum/
-COPY backend/core/core-api/build.gradle.kts ./core/core-api/
+COPY backend/core/core-common/build.gradle.kts ./core/core-common/
+COPY backend/core/core-safety-spot/build.gradle.kts ./core/core-safety-spot/
+COPY backend/core/core-share/build.gradle.kts ./core/core-share/
+COPY backend/core/core-place/build.gradle.kts ./core/core-place/
+COPY backend/core/core-route/build.gradle.kts ./core/core-route/
+COPY backend/core/core-app-info/build.gradle.kts ./core/core-app-info/
+COPY backend/core/core-admin-ops/build.gradle.kts ./core/core-admin-ops/
+COPY backend/core/core-admin-safety-spot/build.gradle.kts ./core/core-admin-safety-spot/
+COPY backend/core/core-admin-auth/build.gradle.kts ./core/core-admin-auth/
+COPY backend/core/core-app/build.gradle.kts ./core/core-app/
 COPY backend/storage/db-core/build.gradle.kts ./storage/db-core/
 COPY backend/clients/client-tmap/build.gradle.kts ./clients/client-tmap/
-COPY backend/clients/client-kakao/build.gradle.kts ./clients/client-kakao/
-COPY backend/clients/client-datagokr/build.gradle.kts ./clients/client-datagokr/
+COPY backend/clients/client-slack/build.gradle.kts ./clients/client-slack/
+COPY backend/clients/client-datagokr-security-lamp/build.gradle.kts ./clients/client-datagokr-security-lamp/
 COPY backend/clients/client-safemap/build.gradle.kts ./clients/client-safemap/
-COPY backend/support/logging/build.gradle.kts ./support/logging/
+COPY backend/clients/client-safe182/build.gradle.kts ./clients/client-safe182/
+COPY backend/clients/client-safetydata-street-lamp/build.gradle.kts ./clients/client-safetydata-street-lamp/
 COPY backend/support/monitoring/build.gradle.kts ./support/monitoring/
+COPY backend/support/util/build.gradle.kts ./support/util/
 RUN ./gradlew --no-daemon --version \
-    && (./gradlew --no-daemon :core:core-api:dependencies > /dev/null 2>&1 || true)
+    && (./gradlew --no-daemon :core:core-app:dependencies > /dev/null 2>&1 || true)
 
 COPY backend/core ./core
 COPY backend/storage ./storage
@@ -48,7 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && useradd --system --home /app bueongi
 WORKDIR /app
 
-COPY --from=build /workspace/core/core-api/build/libs/*.jar app.jar
+COPY --from=build /workspace/core/core-app/build/libs/*.jar app.jar
 # 안심시설 정적 데이터(파이프라인 산출) — 점수 계산 입력 + /cdn HTTP 서빙 원본.
 COPY cdn /app/cdn
 ENV BUEONGI_FACILITY_DATA_DIR=/app/cdn
