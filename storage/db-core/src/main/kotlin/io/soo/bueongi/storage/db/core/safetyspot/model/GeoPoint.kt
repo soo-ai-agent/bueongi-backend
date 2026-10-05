@@ -8,7 +8,6 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-// 프로퍼티명 lat/lng 은 RouteOption.path 로 직렬화되는 프론트 응답 계약 — 리네임 금지.
 data class GeoPoint(
     val lat: Double,
     val lng: Double,
@@ -106,9 +105,6 @@ fun List<GeoPoint>.pathLengthMeters(): Double {
     return total
 }
 
-// 경로를 따라 일정 간격으로 좌표를 고른다. 경로가 길어지면 고르는 간격을 좀 더 넓힌다.
-// 긴 경로는 좌표가 너무 많아지므로, 한도를 넘으면 간격을 넓혀 개수를 한도 안으로 줄이는 것이다.
-// 뒤를 잘라 줄이지 않는다 — 도착지 쪽 좌표가 통째로 사라진다.
 fun List<GeoPoint>.pickPointsAlong(spacingMeters: Double, limit: Int): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()

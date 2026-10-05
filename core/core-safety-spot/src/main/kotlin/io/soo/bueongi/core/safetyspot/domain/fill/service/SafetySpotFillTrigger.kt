@@ -30,10 +30,8 @@ class SafetySpotFillTrigger(
             Thread(runnable, "safety-spot-fill").apply { isDaemon = true }
         }
 
-    override fun onRoutePlanned(path: List<GeoPoint>) {
-        // 경로 좌표 전부가 아니라 간격마다 고른 좌표만 쓴다 — 좌표 하나마다 보안등을
-        // 최대 여덟 번 부르므로, 한 경로가 외부 호출을 너무 쓰지 않게 막는다.
-        fillAround(path.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS))
+    override fun onRoutePlanned(points: List<GeoPoint>) {
+        fillAround(points.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS))
     }
 
     fun fillAround(points: List<GeoPoint>) {

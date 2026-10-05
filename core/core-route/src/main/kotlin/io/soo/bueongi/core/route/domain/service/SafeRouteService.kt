@@ -35,9 +35,7 @@ class SafeRouteService(
             routes.addAll(routeFinder.findSaferRoutes(query, baseRoutes, waypointPlans))
         }
 
-        // 경로가 지나는 지역의 안심시설을 받아 두게 한다. 다음 요청부터 그 지역 안전 점수가 정확해진다.
         routePlannedHandler.onRoutePlanned(firstRoutePath)
-
         val candidates: List<RouteCandidate> = candidateMerger.merge(routes)
         val scoredRoutes: List<ScoredRoute> = typeAssigner.assignOneRoutePerType(candidates)
         return assembler.assemble(scoredRoutes, query.origin, query.destination)
