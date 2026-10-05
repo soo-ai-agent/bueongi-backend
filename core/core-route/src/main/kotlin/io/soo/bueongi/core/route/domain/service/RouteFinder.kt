@@ -38,7 +38,7 @@ class RouteFinder(
             if (saferRoute.distanceM > maxDistanceM) {
                 continue
             }
-            saferRoutes.add(saferRoute)
+            saferRoutes.add(saferRoute.copy(isDetour = true))
         }
         return saferRoutes
     }
