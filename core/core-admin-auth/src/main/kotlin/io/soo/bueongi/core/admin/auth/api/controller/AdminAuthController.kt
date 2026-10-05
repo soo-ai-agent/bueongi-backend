@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RequestMapping("/api/v1/auth")
-class AdminAuthController(private val authService: AdminAuthService) {
+class AdminAuthController(
+    private val authService: AdminAuthService,
+) {
     @PostMapping("/admin/login")
     fun login(
         @Valid @RequestBody request: AdminLoginRequest,

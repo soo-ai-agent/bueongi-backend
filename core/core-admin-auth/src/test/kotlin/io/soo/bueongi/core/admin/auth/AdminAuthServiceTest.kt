@@ -9,7 +9,6 @@ import io.soo.bueongi.core.admin.auth.domain.model.JwtKeyMaterial
 import io.soo.bueongi.core.admin.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.admin.auth.domain.service.AdminTokenService
 import io.soo.bueongi.core.admin.auth.domain.service.JwtTokenVerifier
-import io.soo.bueongi.core.admin.auth.domain.service.createJwtKeyMaterial
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -32,7 +31,12 @@ class AdminAuthServiceTest {
             loginId = "admin",
             passwordHash = BCryptPasswordEncoder().encode("password"),
         )
-    private val keys = createJwtKeyMaterial(jwt, false)
+    private val keys =
+        JwtKeyMaterial(
+            publicKey = keyPair.public as RSAPublicKey,
+            privateKey = keyPair.private as RSAPrivateKey,
+            issuer = jwt.issuer,
+        )
     private val tokens = AdminTokenService(keys, auth)
     private val service = AdminAuthService(auth, tokens)
 

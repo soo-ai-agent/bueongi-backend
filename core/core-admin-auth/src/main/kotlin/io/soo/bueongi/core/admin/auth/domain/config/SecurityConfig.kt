@@ -1,35 +1,53 @@
 package io.soo.bueongi.core.admin.auth.domain.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.admin.auth.domain.error.AdminRoleRequiredException
+import io.soo.bueongi.core.admin.auth.domain.error.MissingTokenException
 import io.soo.bueongi.core.admin.auth.domain.model.JwtKeyMaterial
 import io.soo.bueongi.core.admin.auth.domain.service.AdminAuthService
 import io.soo.bueongi.core.admin.auth.domain.service.AdminTokenService
 import io.soo.bueongi.core.admin.auth.domain.service.JwtTokenVerifier
-import io.soo.bueongi.core.admin.auth.domain.service.createJwtKeyMaterial
-import io.soo.bueongi.core.admin.auth.domain.service.writeAuthProblem
+import io.soo.bueongi.support.util.parseJwtPrivateKey
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
-import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import java.security.KeyPairGenerator
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
 
 // 필터체인 2개 — @Order(1) 전 경로 permitAll 체인이 없으면 spring-security 기본 필터체인이 전체 앱을 잠근다.
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(JwtProperties::class, AdminAuthProperties::class)
-class SecurityConfig(private val objectMapper: ObjectMapper) {
+class SecurityConfig(
+    private val objectMapper: ObjectMapper,
+) {
     @Bean
     fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
+        if (props.publicKey.isNotBlank() && props.privateKey.isNotBlank()) {
+            return JwtKeyMaterial(
+                publicKey = JwtTokenVerifier.parsePemPublicKey(props.publicKey),
+                privateKey = parseJwtPrivateKey(props.privateKey),
+                issuer = props.issuer,
+            )
+        }
         val isLocalProfile: Boolean = environment.activeProfiles.contains("local")
-        return createJwtKeyMaterial(props, isLocalProfile)
+        require(isLocalProfile) { "JWT_PUBLIC_KEY and JWT_PRIVATE_KEY must be provided" }
+        val pair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+        return JwtKeyMaterial(
+            publicKey = pair.public as RSAPublicKey,
+            privateKey = pair.private as RSAPrivateKey,
+            issuer = props.issuer,
+        )
     }
 
     @Bean
@@ -73,25 +91,11 @@ class SecurityConfig(private val objectMapper: ObjectMapper) {
 
     private fun unauthorizedEntryPoint() =
         AuthenticationEntryPoint { _, response, _ ->
-            writeAuthProblem(
-                response = response,
-                objectMapper = objectMapper,
-                status = HttpStatus.UNAUTHORIZED,
-                code = "UNAUTHORIZED",
-                title = "Unauthorized",
-                detail = "인증 토큰이 필요합니다.",
-            )
+            writeAuthProblem(response, objectMapper, MissingTokenException())
         }
 
     private fun forbiddenHandler() =
         AccessDeniedHandler { _, response, _ ->
-            writeAuthProblem(
-                response = response,
-                objectMapper = objectMapper,
-                status = HttpStatus.FORBIDDEN,
-                code = "FORBIDDEN",
-                title = "Forbidden",
-                detail = "관리자 권한이 필요합니다.",
-            )
+            writeAuthProblem(response, objectMapper, AdminRoleRequiredException())
         }
 }
