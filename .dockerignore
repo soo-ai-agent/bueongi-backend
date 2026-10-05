@@ -2,7 +2,7 @@
 .git
 .github
 docs
-frontend-src
+frontend-web
 pipeline
 backend/**/build
 backend/.gradle
