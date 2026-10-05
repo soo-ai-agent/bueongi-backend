@@ -83,6 +83,8 @@ docker compose pull && docker compose up -d
    으로 동작하므로, 스테이징은 키 없이 먼저 올려 구조를 검증할 수 있다.
 4. **Redis 는 선택** — 미설정 시 인메모리 위치공유(단일 인스턴스 한정, 재시작 시 세션 소실).
    운영은 `--profile redis` 권장.
+5. **API 요청 제한** — nginx 가 `/api/*`·`/cdn/*`·위치공유 API 에 IP 당 10r/s(burst 20)를 걸고
+   초과분은 429 로 끊는다(외부 API 쿼터 소진 공격 방어). 규칙은 프론트 이미지의 `deploy/nginx.default.conf.template`.
 
 ## 로컬에서 이미지 빌드(레지스트리 없이)
 
