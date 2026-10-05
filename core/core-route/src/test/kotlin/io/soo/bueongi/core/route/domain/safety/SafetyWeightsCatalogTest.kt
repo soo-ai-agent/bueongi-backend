@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety
 
+import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
 import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
 import io.soo.bueongi.support.util.SERVICE_ZONE
@@ -20,14 +21,29 @@ class SafetyWeightsCatalogTest {
     }
 
     @Test
-    fun `조명 가중치는 밤이 낮보다 무겁고 나머지는 반대다`() {
+    fun `조명 가중치는 밤이 낮보다 무겁고 CCTV·치안시설은 반대다`() {
         val night: SafetyWeights = catalog.weightsAt(seoul("2026-06-15T23:00"))
         val day: SafetyWeights = catalog.weightsAt(seoul("2026-06-15T12:00"))
 
         assertThat(night.lamp).isGreaterThan(day.lamp)
         assertThat(day.cctv).isGreaterThan(night.cctv)
-        assertThat(day.bell).isGreaterThan(night.bell)
         assertThat(day.police).isGreaterThan(night.police)
+    }
+
+    @Test
+    fun `비상벨 가중치는 밤이 낮보다 무겁다`() {
+        val night: SafetyWeights = catalog.weightsAt(seoul("2026-06-15T23:00"))
+        val day: SafetyWeights = catalog.weightsAt(seoul("2026-06-15T12:00"))
+
+        assertThat(night.bell).isGreaterThan(day.bell)
+    }
+
+    @Test
+    fun `안심귀갓길 가중치가 밤낮 모두 모든 축 중 가장 무겁다`() {
+        for (weights in listOf(catalog.weightsAt(seoul("2026-06-15T23:00")), catalog.weightsAt(seoul("2026-06-15T12:00")))) {
+            val othersMax: Double = weights.byAxis.filterKeys { it != SafetyAxis.SAFE_PATH }.values.max()
+            assertThat(weights.safePath).isGreaterThan(othersMax)
+        }
     }
 
     @Test

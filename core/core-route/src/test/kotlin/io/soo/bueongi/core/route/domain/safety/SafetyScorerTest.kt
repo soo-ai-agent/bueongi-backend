@@ -20,21 +20,21 @@ class SafetyScorerTest {
 
     @Test
     fun `밤에는 종류별 밤 가중치가 점수에 그대로 실린다`() {
-        assertThat(scoreWithDense(SafetySpotType.CCTV, NIGHT)).isEqualTo(26)
-        assertThat(scoreWithDense(SafetySpotType.STREET_LAMP, NIGHT)).isEqualTo(31)
-        assertThat(scoreWithDense(SafetySpotType.SECURITY_LAMP, NIGHT)).isEqualTo(31)
-        assertThat(scoreWithDense(SafetySpotType.BELL, NIGHT)).isEqualTo(19)
-        assertThat(scoreWithDense(SafetySpotType.POLICE, NIGHT)).isEqualTo(12)
-        assertThat(scoreWithDense(SafetySpotType.SAFEHOUSE, NIGHT)).isEqualTo(9)
+        assertThat(scoreWithDense(SafetySpotType.CCTV, NIGHT)).isEqualTo(14)
+        assertThat(scoreWithDense(SafetySpotType.STREET_LAMP, NIGHT)).isEqualTo(25)
+        assertThat(scoreWithDense(SafetySpotType.SECURITY_LAMP, NIGHT)).isEqualTo(25)
+        assertThat(scoreWithDense(SafetySpotType.BELL, NIGHT)).isEqualTo(23)
+        assertThat(scoreWithDense(SafetySpotType.POLICE, NIGHT)).isEqualTo(7)
+        assertThat(scoreWithDense(SafetySpotType.SAFEHOUSE, NIGHT)).isEqualTo(3)
     }
 
     @Test
-    fun `낮에는 조명 가중치가 내려가고 나머지가 올라간다`() {
-        assertThat(scoreWithDense(SafetySpotType.STREET_LAMP, DAY)).isEqualTo(10)
-        assertThat(scoreWithDense(SafetySpotType.CCTV, DAY)).isEqualTo(35)
-        assertThat(scoreWithDense(SafetySpotType.BELL, DAY)).isEqualTo(25)
-        assertThat(scoreWithDense(SafetySpotType.POLICE, DAY)).isEqualTo(15)
-        assertThat(scoreWithDense(SafetySpotType.SAFEHOUSE, DAY)).isEqualTo(12)
+    fun `낮에는 종류별 낮 가중치가 점수에 그대로 실린다`() {
+        assertThat(scoreWithDense(SafetySpotType.STREET_LAMP, DAY)).isEqualTo(7)
+        assertThat(scoreWithDense(SafetySpotType.CCTV, DAY)).isEqualTo(25)
+        assertThat(scoreWithDense(SafetySpotType.BELL, DAY)).isEqualTo(18)
+        assertThat(scoreWithDense(SafetySpotType.POLICE, DAY)).isEqualTo(12)
+        assertThat(scoreWithDense(SafetySpotType.SAFEHOUSE, DAY)).isEqualTo(8)
     }
 
     @Test
@@ -84,8 +84,8 @@ class SafetyScorerTest {
     }
 
     @Test
-    fun `절반 지점 밀도는 축의 절반을 채운다`() {
-        // 0.88km 경로에 정수 개수만 깔 수 있어 정확히 2.7/km 를 만들지 못한다(실제 2.26/km).
+    fun `밀도와 개수가 함께 반포화인 지점은 축의 절반을 채운다`() {
+        // 1.5km 경로에 정수 개수만 깔 수 있어 정확히 2.7/km 를 만들지 못한다(실제 2.66/km).
         assertThat(cctvFill(HALF_CCTV_PER_KM)).isBetween(0.42, 0.58)
     }
 
@@ -101,14 +101,34 @@ class SafetyScorerTest {
         assertThat(three).describedAs("1 을 넘지는 않는다").isLessThan(1.0)
     }
 
+    @Test
+    fun `같은 밀도라면 시설을 더 많이 지나는 긴 경로가 점수를 더 받는다`() {
+        val shortPath = path
+        val longPath = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.02))
+        val shortSpots: List<GeoPoint> = evenSpots(count = 3, lngSpan = PATH_LNG_SPAN)
+        val longSpots: List<GeoPoint> = evenSpots(count = 6, lngSpan = 0.02)
+
+        val shortScore: Int? = scorer(fullyCovered(SafetySpotType.CCTV to shortSpots), NIGHT).score(shortPath).score
+        val longScore: Int? = scorer(fullyCovered(SafetySpotType.CCTV to longSpots), NIGHT).score(longPath).score
+
+        assertThat(longScore).isGreaterThan(shortScore)
+    }
+
+    // 개수 반포화 기준 길이(1.5km)와 같은 경로 — 밀도 반포화 개수를 깔면 개수도 반포화가 된다.
+    private val halfPath = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.0 + HALF_PATH_LNG_SPAN))
+
     private fun cctvFill(perKm: Double): Double {
-        val score: Int = scorer(fullyCovered(SafetySpotType.CCTV to spotsFor(perKm)), NIGHT).score(path).score ?: 0
+        val score: Int = scorer(fullyCovered(SafetySpotType.CCTV to spotsFor(perKm)), NIGHT).score(halfPath).score ?: 0
         return score / (NIGHT_CCTV_WEIGHT * 100)
     }
 
     private fun spotsFor(perKm: Double): List<GeoPoint> {
-        val count: Int = Math.round(perKm * ROUTE_KM).toInt()
-        val step: Double = PATH_LNG_SPAN / (count + 1)
+        val count: Int = Math.round(perKm * HALF_PATH_KM).toInt()
+        return evenSpots(count, HALF_PATH_LNG_SPAN)
+    }
+
+    private fun evenSpots(count: Int, lngSpan: Double): List<GeoPoint> {
+        val step: Double = lngSpan / (count + 1)
         val spots: MutableList<GeoPoint> = ArrayList()
         for (i in 1..count) {
             spots.add(GeoPoint(37.5, 127.0 + i * step))
@@ -224,12 +244,12 @@ class SafetyScorerTest {
 
     @Test
     fun `우범지역은 점수를 깎는다 - 포화 시 감점 상한만큼`() {
-        val cctv = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
-        val withoutRisk: Int? = scorer(fullyCovered(SafetySpotType.CCTV to cctv), NIGHT).score(path).score
+        val lamps = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
+        val withoutRisk: Int? = scorer(fullyCovered(SafetySpotType.STREET_LAMP to lamps), NIGHT).score(path).score
 
         val risky =
             fullyCovered(
-                SafetySpotType.CCTV to cctv,
+                SafetySpotType.STREET_LAMP to lamps,
                 SafetySpotType.CRIME_PRONE_AREA to listOf(GeoPoint(37.5, 127.002), GeoPoint(37.5, 127.008)),
             )
         val result = scorer(risky, NIGHT).score(path)
@@ -271,11 +291,11 @@ class SafetyScorerTest {
     }
 
     @Test
-    fun `안심귀갓길 겹침은 회수 후 남긴 safePath 가중치(3점)만큼 기여`() {
+    fun `안심귀갓길 겹침은 밤 safePath 가중치(28점)만큼 기여`() {
         val source = fullyCovered(safePaths = listOf(SafePath(path)))
         val result = scorer(source, NIGHT).score(path)
         assertThat(result.breakdown.safePathOverlap).isGreaterThan(0.9)
-        assertThat(result.score).isEqualTo(3)
+        assertThat(result.score).isEqualTo(28)
     }
 
     @Test
@@ -313,9 +333,11 @@ class SafetyScorerTest {
         val NIGHT: Clock = Clock.fixed(Instant.parse("2026-08-15T13:00:00Z"), ZoneOffset.UTC)
         val DAY: Clock = Clock.fixed(Instant.parse("2026-08-15T03:00:00Z"), ZoneOffset.UTC)
 
-        const val ROUTE_KM: Double = 0.882
-
         const val PATH_LNG_SPAN: Double = 0.01
+
+        // 경도 0.017도 ≈ 1.5km (위도 37.5 기준) — SafetyScorer.HALF_COUNT_ROUTE_KM 과 같은 길이.
+        const val HALF_PATH_LNG_SPAN: Double = 0.017
+        const val HALF_PATH_KM: Double = 1.5
 
         val COVERAGE_ANCHOR: GeoPoint = GeoPoint(37.5045, 127.005)
         val COVERAGE_ANCHOR_END: GeoPoint = GeoPoint(37.5045, 127.006)
@@ -323,7 +345,7 @@ class SafetyScorerTest {
         // 좌표 5자리(약 1.1m)에서 같은 지점으로 합쳐지지 않는 가장 촘촘한 간격(약 1.3m).
         const val DENSE_SPOT_STEP_DEG: Double = 0.000015
 
-        const val NIGHT_CCTV_WEIGHT: Double = 0.26
+        const val NIGHT_CCTV_WEIGHT: Double = 0.14
 
         const val HALF_CCTV_PER_KM: Double = SafetyScorer.HALF_CCTV_PER_KM
         const val HALF_LAMP_PER_KM: Double = SafetyScorer.HALF_LAMP_PER_KM
