@@ -1,0 +1,187 @@
+# 백엔드 PR 이 백엔드 스킬 규칙을 지켰는지 검사해 PR 에 코멘트로 남긴다.
+# 참고용이다 — 위반이 있어도 이 체크는 통과한다. 머지는 사람이 판단한다.
+#
+# 검사는 셋이다.
+#   1. ktlint          — ./gradlew ktlintCheck. 바뀐 파일의 위반만 보여 준다
+#   2. layer-check     — 파일 하나에 최상위 선언 하나, 파일 이름 = 선언 이름 (바뀐 .kt 만)
+#   3. Claude 리뷰어   — kotlin-* 스킬의 '적발 신호' Critical 항목과 리뷰 규칙 MUST 로 diff 를 판정
+#
+# 스킬 정본은 automation-kotlin 저장소 하나다. 여기에 복사하지 않고 실행할 때마다 내려받는다.
+# Claude 리뷰어는 저장소 Secrets 의 CLAUDE_CODE_OAUTH_TOKEN 이 있어야 돈다. 없으면 1·2 만 돈다.
+name: backend-skill-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths: ['backend/**', '.github/workflows/backend-skill-review.yml']
+
+concurrency:
+  group: backend-skill-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  SKILL_SOURCE_REPO: soo-ai-agent/automation-kotlin
+  SKILL_SOURCE_REF: main
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # 한글 테스트 메서드명 컴파일을 위해 UTF-8 로케일 고정(backend-ci 와 같은 이유).
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      PR: ${{ github.event.pull_request.number }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 기준 브랜치와 비교하려면 이력이 필요하다
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 스킬 정본 내려받기
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SKILL_SOURCE_REPO }}
+          ref: ${{ env.SKILL_SOURCE_REF }}
+          path: .skill-source
+
+      - name: 바뀐 백엔드 파일
+        run: |
+          git fetch -q origin "$BASE_REF"
+          # 지운 파일은 검사할 수 없으니 추가·수정·이름 변경만 본다
+          git diff --name-only --diff-filter=AMR "origin/$BASE_REF...HEAD" -- 'backend/*.kt' > /tmp/changed-kt.txt
+          echo "바뀐 .kt 파일 $(wc -l < /tmp/changed-kt.txt)개"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: 1. ktlint
+        working-directory: backend
+        run: |
+          set +e
+          ./gradlew ktlintCheck --continue --no-daemon > /tmp/ktlint.log 2>&1
+          echo "ktlint 종료 코드 $?"
+          # 보고서의 위반 줄(경로:줄:칸)에서 색 코드를 지우고, 이번 PR 이 바꾼 파일 것만 남긴다.
+          # 기존 위반까지 매번 보여 주면 이번 변경의 위반이 묻힌다.
+          find . -path '*/build/reports/ktlint/*' -name '*.txt' -print0 \
+            | xargs -0 -r cat | sed 's/\x1b\[[0-9;]*m//g' | grep -E '\.kt:[0-9]+' > /tmp/ktlint-all.txt
+          if [ -s /tmp/changed-kt.txt ]; then
+            grep -F -f /tmp/changed-kt.txt /tmp/ktlint-all.txt > /tmp/ktlint-changed.txt
+          else
+            : > /tmp/ktlint-changed.txt
+          fi
+          echo "전체 위반 $(wc -l < /tmp/ktlint-all.txt)건 · 바뀐 파일 위반 $(wc -l < /tmp/ktlint-changed.txt)건"
+          exit 0
+
+      - name: 2. 파일 하나에 선언 하나 (layer-check)
+        run: |
+          set +e
+          if [ ! -f .skill-source/bin/layer-check ]; then
+            echo "미검사 — 정본($SKILL_SOURCE_REF)에 bin/layer-check 가 없다" > /tmp/layer.txt
+            exit 0
+          fi
+          if [ ! -s /tmp/changed-kt.txt ]; then
+            echo "바뀐 .kt 파일 없음" > /tmp/layer.txt
+            exit 0
+          fi
+          # 검사기는 자기 위치의 부모 폴더를 저장소 뿌리로 본다 — bueongi 뿌리 아래에 두어야 bueongi 파일을 센다.
+          mkdir -p .ci && cp .skill-source/bin/layer-check .ci/layer-check
+          xargs python3 .ci/layer-check < /tmp/changed-kt.txt > /tmp/layer.txt 2>&1
+          cat /tmp/layer.txt
+          exit 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 3. Claude 리뷰
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set +e
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "미실행 — 저장소 Secrets 에 CLAUDE_CODE_OAUTH_TOKEN 이 없다" > /tmp/review.md
+            exit 0
+          fi
+          npm install -g @anthropic-ai/claude-code > /dev/null 2>&1
+
+          # 통과 기준(CLAUDE_REVIEW_BAR)·diff 상한은 정본의 설정을 그대로 쓴다
+          CLAUDE_DIFF_LIMIT_BYTES=100000
+          [ -f .skill-source/.github/agent/settings.env ] && . .skill-source/.github/agent/settings.env
+          git diff "origin/$BASE_REF...HEAD" -- backend | head -c "$CLAUDE_DIFF_LIMIT_BYTES" > /tmp/diff.patch
+
+          # 규칙과 diff 는 stdin 으로 — 프롬프트 문자열에 넣으면 md 의 백틱이 셸에서 실행된다
+          {
+            printf '## 리뷰 규칙\n\n'
+            find .skill-source/rules -name '*.md' -type f -print0 2>/dev/null | sort -z | xargs -0 -r cat \
+              || echo "(리뷰 규칙 문서 없음 — 통과 기준만 적용)"
+            printf '\n\n## 통과 기준\n\n%s\n' "${CLAUDE_REVIEW_BAR:-}"
+            printf '\n\n## DIFF\n\n'
+            cat /tmp/diff.patch
+          } > /tmp/review-input.txt
+
+          {
+            cat .skill-source/.github/agent/review-role.md
+            printf '\n\n이 저장소(bueongi)는 스킬 정본을 .skill-source/ 에 내려받아 둔다.'
+            printf ' 스킬 경로는 .skill-source/.claude/skills/ 와 .skill-source/backend/.claude/skills/ 로 읽어라.'
+            printf ' 저장소 CLAUDE.md 의 "코딩 스킬 ↔ bueongi 실구조 매핑" 절을 따른다.\n'
+          } > /tmp/role.md
+
+          # 읽기 도구만 준다 — 리뷰어는 코드를 고치지 않는다
+          if ! claude --add-dir .skill-source --add-dir .skill-source/backend \
+            --allowedTools "Read,Grep,Glob" \
+            --output-format text -p "$(cat /tmp/role.md)" < /tmp/review-input.txt > /tmp/review.md 2> /tmp/claude.err \
+            || [ ! -s /tmp/review.md ]; then
+            echo "미실행 — claude 실행 실패: $(tail -n 3 /tmp/claude.err)" > /tmp/review.md
+          fi
+          exit 0
+
+      - name: PR 코멘트
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SOURCE_SHA=$(git -C .skill-source rev-parse --short HEAD 2>/dev/null || echo "?")
+          TOTAL_KT=$(git ls-files -- 'backend/*.kt' | wc -l)
+          {
+            echo "## 🔍 백엔드 스킬 검사 (참고용 — 머지를 막지 않음)"
+            echo
+            echo "스킬 정본: \`${SKILL_SOURCE_REPO}@${SKILL_SOURCE_REF}\` (${SOURCE_SHA}) · 바뀐 .kt $(wc -l < /tmp/changed-kt.txt)개 / 전체 ${TOTAL_KT}개"
+            echo
+            echo "### 1. ktlint"
+            if [ -s /tmp/ktlint-changed.txt ]; then
+              echo "바뀐 파일 위반 $(wc -l < /tmp/ktlint-changed.txt)건 (전체 $(wc -l < /tmp/ktlint-all.txt)건)"
+              echo '```'
+              sed "s|^.*/backend/|backend/|" /tmp/ktlint-changed.txt | head -n 50
+              echo '```'
+            else
+              echo "바뀐 파일 위반 없음 (전체 $(wc -l < /tmp/ktlint-all.txt 2>/dev/null || echo '?')건)"
+            fi
+            echo
+            echo "### 2. 파일 하나에 선언 하나"
+            echo '```'
+            cat /tmp/layer.txt 2>/dev/null || echo "미검사"
+            echo '```'
+            echo
+            # 리뷰어의 첫 줄은 판정이다 — 배지로 바꾸고 본문만 붙인다
+            FIRST_LINE=$(head -n 1 /tmp/review.md 2>/dev/null)
+            case "$FIRST_LINE" in
+              *"VERDICT: PASS"*) BADGE="✅ 통과"; BODY_FROM=2 ;;
+              *"VERDICT: CHANGES_REQUESTED"*) BADGE="❌ 수정 필요"; BODY_FROM=2 ;;
+              *) BADGE="⚠️ 판정 없음"; BODY_FROM=1 ;;
+            esac
+            echo "### 3. Claude 리뷰 — ${BADGE} (kotlin-* 적발 신호 Critical · 리뷰 규칙 MUST)"
+            tail -n "+${BODY_FROM}" /tmp/review.md 2>/dev/null || echo "미실행"
+          } > /tmp/note.md
+          # PR 마다 코멘트 하나를 고쳐 쓴다 — 푸시할 때마다 코멘트가 쌓이지 않게
+          gh pr comment "$PR" --body-file /tmp/note.md --edit-last --create-if-none \
+            || gh pr comment "$PR" --body-file /tmp/note.md
