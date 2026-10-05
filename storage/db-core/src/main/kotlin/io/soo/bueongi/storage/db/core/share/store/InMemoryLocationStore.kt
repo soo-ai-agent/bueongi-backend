@@ -5,7 +5,9 @@ import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-class InMemoryLocationStore(private val clock: Clock) : LocationStore {
+class InMemoryLocationStore(
+    private val clock: Clock,
+) : LocationStore {
     private val sessions: ConcurrentHashMap<String, ShareSession> = ConcurrentHashMap<String, ShareSession>()
     private val viewers: ConcurrentHashMap<String, Instant> = ConcurrentHashMap<String, Instant>()
 

@@ -1,5 +1,6 @@
 package io.soo.bueongi.storage.db.core.share.store
 
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Conditional
@@ -13,6 +14,13 @@ import java.time.Clock
 // RedisAutoConfiguration 은 BueongiApplication 에서 제외돼 있다 — URL 미지정 시 localhost:6379 자동 연결을 막으려는 것.
 @Configuration
 class ShareStoreConfig {
+    // 같은 이름의 빈을 조건부 설정 두 곳에 나눠 두면 IDE 가 조건을 못 읽어 "빈이 둘"로 경고한다 — 메서드 하나에서 고른다.
+    @Bean
+    fun locationStore(redisTemplate: ObjectProvider<StringRedisTemplate>, clock: Clock): LocationStore {
+        val template: StringRedisTemplate = redisTemplate.ifAvailable ?: return InMemoryLocationStore(clock)
+        return RedisLocationStore(template, clock)
+    }
+
     @Configuration
     @Conditional(RedisConfigured::class)
     class RedisShareStore(
@@ -38,16 +46,6 @@ class ShareStoreConfig {
         @Bean
         fun shareRedisTemplate(factory: LettuceConnectionFactory): StringRedisTemplate =
             StringRedisTemplate(factory).apply { afterPropertiesSet() }
-
-        @Bean
-        fun locationStore(template: StringRedisTemplate, clock: Clock): LocationStore = RedisLocationStore(template, clock)
-    }
-
-    @Configuration
-    @Conditional(RedisNotConfigured::class)
-    class InMemoryShareStore {
-        @Bean
-        fun locationStore(clock: Clock): LocationStore = InMemoryLocationStore(clock)
     }
 
     private companion object {

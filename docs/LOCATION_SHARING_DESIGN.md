@@ -97,7 +97,7 @@ resources/share/guardian.html  # 보호자 지도 페이지(Leaflet+OSM, 5초 �
 
 ## 8. Redis 미구성 시 동작 정책
 
-- `BUEONGI_REDIS_URL` 이 비어있으면 `ShareStoreConfig` 의 `RedisNotConfigured` 조건이 매칭되어 `InMemoryLocationStore`(단일 인스턴스, 재시작 시 휘발) 가 동일 `LocationStore` 계약으로 동작한다. 외부 인프라·키 없이 전 기능·전 테스트가 그린.
+- `BUEONGI_REDIS_URL` 이 비어있으면 Redis 템플릿 빈이 만들어지지 않아 `ShareStoreConfig.locationStore` 가 `InMemoryLocationStore`(단일 인스턴스, 재시작 시 휘발) 를 고른다. 같은 `LocationStore` 계약으로 동작한다. 외부 인프라·키 없이 전 기능·전 테스트가 그린.
 - 운영에서 Redis 를 켜려면 `BUEONGI_REDIS_URL` 주입만으로 `RedisLocationStore`(native TTL) 로 무코드변경 전환된다. 다중 인스턴스·재시작 내구성이 필요하면 Redis 를 권장.
 
 ## 9. 범위 밖(v2)
