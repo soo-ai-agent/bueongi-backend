@@ -13,7 +13,9 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 
 @Component
-class RouteMarkerBuilder(private val safetySpots: SafetySpotSpatialSource) {
+class RouteMarkerBuilder(
+    private val safetySpots: SafetySpotSpatialSource,
+) {
     fun buildMarkers(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>): List<SafetySpotPoi> {
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         val raw: ArrayList<SafetySpotPoi> = ArrayList()

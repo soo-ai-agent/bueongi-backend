@@ -136,13 +136,20 @@ class SafetyScorer(
 
     private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> =
         mapOf(
-            SafetyAxis.CCTV to fill(counts.cctv / km, HALF_CCTV_PER_KM),
-            SafetyAxis.LAMP to fill(counts.lamp / km, HALF_LAMP_PER_KM),
-            SafetyAxis.BELL to fill(counts.bell / km, HALF_BELL_PER_KM),
+            SafetyAxis.CCTV to densityAndCountFill(counts.cctv, km, HALF_CCTV_PER_KM),
+            SafetyAxis.LAMP to densityAndCountFill(counts.lamp, km, HALF_LAMP_PER_KM),
+            SafetyAxis.BELL to densityAndCountFill(counts.bell, km, HALF_BELL_PER_KM),
             SafetyAxis.SAFEHOUSE to fill(counts.safehouse.toDouble(), HALF_SAFEHOUSE_COUNT),
             SafetyAxis.POLICE to fill(counts.police.toDouble(), HALF_POLICE_COUNT),
             SafetyAxis.SAFE_PATH to safePathOverlap,
         )
+
+    // 밀도만 보면 시설을 더 많이 지나는 긴 경로가 밀도 희석으로 점수를 못 받는다 — 밀도 채움과 개수 채움을 반씩 섞는다.
+    private fun densityAndCountFill(count: Int, km: Double, halfDensityPerKm: Double): Double {
+        val densityFill: Double = fill(count / km, halfDensityPerKm)
+        val countFill: Double = fill(count.toDouble(), halfDensityPerKm * HALF_COUNT_ROUTE_KM)
+        return (densityFill + countFill) / 2
+    }
 
     private fun normalizedScore(fills: Map<SafetyAxis, Double>, weights: SafetyWeights, coverage: SafetyDataCoverage): Double? {
         val totalWeight: Double = coveredWeight(weights, coverage)
@@ -215,6 +222,9 @@ class SafetyScorer(
         const val HALF_LAMP_PER_KM: Double = 6.0
 
         const val HALF_BELL_PER_KM: Double = 1.3
+
+        // 개수 반포화점 = 밀도 반포화점 × 실측 구간 길이 — 밀도와 같은 실측(1.5km 구간 300개)에서 파생한 값이다.
+        const val HALF_COUNT_ROUTE_KM: Double = 1.5
 
         const val HALF_SAFEHOUSE_COUNT: Double = 1.0
 

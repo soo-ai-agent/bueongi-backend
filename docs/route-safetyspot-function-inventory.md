@@ -45,12 +45,13 @@ Tmap 에서 경로를 받아 오는 조회 창구.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `findRoutes(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 모은다 |
+| `findRoutes(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 후보 모델(RouteCandidate)로 모은다 |
 | `findSaferRoutes(query, routes, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
 | `maxDetourDistanceM(query, routes)` | 비공개 | 계산 | 우회 허용 한도 — 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전) |
-| `fetchRoute(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표 변환 포함) |
+| `fetchRoute(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표·후보 모델 변환 포함) |
 | `RouteRequest.endName()` | 파일 내 | 변환 | 빈 목적지 이름을 "목적지" 로 채운다 |
-| `List<TmapCoord>.toGeoPoints()` | internal | 변환 | Tmap 좌표 목록 → GeoPoint 목록 |
+| `TmapRoute.toRouteCandidate()` | 파일 내 | 변환 | Tmap 경로 → 후보 모델 |
+| `List<TmapCoord>.toGeoPoints()` | 파일 내 | 변환 | Tmap 좌표 목록 → GeoPoint 목록 |
 | `GeoPoint.toTmapCoord()` | 파일 내 | 변환 | GeoPoint → Tmap 좌표 |
 
 `findSaferRoutes` 는 조회(우회 경로 받기)와 선별(거리 한도 거르기)이 한 함수에 있다. 이름은 조회(find)만 말한다.
@@ -61,7 +62,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `merge(routes)` | 공개 | 선별 + 변환 | 같은 경로(identityKey)·거의 같은 경로(90% 겹침)를 버리고 후보 모델로 바꿔 낸다 (원래 이름 `toCandidates` 에서 리네임) |
+| `merge(routes)` | 공개 | 선별 | 같은 경로(identityKey)·거의 같은 경로(90% 겹침)를 버린다 — 후보 모델 변환은 RouteFinder 로 옮겼다 (원래 이름 `toCandidates` 에서 리네임) |
 | `mergeNearDuplicates(candidates)` | 공개 | 선별 | 경로가 90% 이상 겹치는 후보를 버린다 |
 | `isNearDuplicate(first, second)` | 비공개 | 계산 | 두 경로의 겹침 비율이 기준 이상인지 판정한다 |
 

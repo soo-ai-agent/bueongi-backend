@@ -13,7 +13,10 @@ import org.springframework.data.redis.core.ListOperations
 import org.springframework.data.redis.core.StringRedisTemplate
 
 class RedisJsonLogTest {
-    data class Item(val name: String, val count: Int)
+    data class Item(
+        val name: String,
+        val count: Int,
+    )
 
     private val listOps: ListOperations<String, String> = mock()
 

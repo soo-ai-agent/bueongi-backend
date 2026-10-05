@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.route.domain.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
@@ -17,7 +16,7 @@ data class RouteOption(
     val tags: List<RouteTag>,
     val type: RouteType,
     val path: List<GeoPoint>? = null,
-    val steps: List<NavStep>? = null,
+    val steps: List<NavigationStep>? = null,
     val score: Int? = null,
     val markers: List<SafetySpotPoi>? = null,
     val breakdown: SafetyBreakdown? = null,

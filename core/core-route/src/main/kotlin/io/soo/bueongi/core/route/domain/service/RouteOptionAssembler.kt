@@ -87,15 +87,10 @@ class RouteOptionAssembler(
 
     private companion object {
         const val DATA_ORIGIN: String = "공공데이터포털·서울 열린데이터광장"
-
         const val NO_DATA_DESC: String = "이 지역 안심시설 자료가 없어 안전 점수를 낼 수 없습니다"
-
         const val YEAR_MONTH_LENGTH: Int = 7
-
         const val TAG_CCTV_DENSITY_MIN_PER_KM: Double = 5.0
-
         const val TAG_LAMP_DENSITY_MIN_PER_KM: Double = 10.0
-
         const val TAG_SAFE_PATH_OVERLAP_MIN: Double = 0.2
     }
 }

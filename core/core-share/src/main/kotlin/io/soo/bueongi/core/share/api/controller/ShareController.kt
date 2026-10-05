@@ -25,7 +25,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/share")
-class ShareController(private val service: ShareService, private val guardianPage: GuardianPage) {
+class ShareController(
+    private val service: ShareService,
+    private val guardianPage: GuardianPage,
+) {
     @PostMapping("/create")
     fun create(
         @Valid @RequestBody(required = false) request: CreateShareRequest?,

@@ -5,7 +5,10 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import kotlin.math.floor
 
 // 아동안전지킴이집 원천은 지역 코드를 안 받고 사각 범위만 받아, 캐시 열쇠를 격자 칸으로 고정한다.
-data class MapTile(val latCell: Int, val lngCell: Int) {
+data class MapTile(
+    val latCell: Int,
+    val lngCell: Int,
+) {
     val code: String
         get() = "${latCell}_$lngCell"
 

@@ -13,7 +13,10 @@ enum class SafetyPreference(
 
     companion object {
         fun of(value: String?): SafetyPreference {
-            val normalized: String = value?.trim()?.lowercase().orEmpty()
+            if (value == null) {
+                return SAFE
+            }
+            val normalized: String = value.trim().lowercase()
             for (preference in entries) {
                 if (preference.requestValue == normalized) {
                     return preference

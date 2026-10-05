@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/routes")
-class RouteController(private val safeRouteService: SafeRouteService) {
+class RouteController(
+    private val safeRouteService: SafeRouteService,
+) {
     @PostMapping
     fun findRouteOptions(@RequestBody request: RouteRequest): List<RouteOption> {
         return safeRouteService.findRouteOptions(request)

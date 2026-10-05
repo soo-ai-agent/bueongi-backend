@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.route
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.DataProvenance
+import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
@@ -29,7 +29,7 @@ class RouteOptionWireContractTest {
             path = listOf(GeoPoint(37.5, 127.0)),
             steps =
                 listOf(
-                    NavStep(
+                    NavigationStep(
                         index = 0,
                         lat = 37.5,
                         lng = 127.0,

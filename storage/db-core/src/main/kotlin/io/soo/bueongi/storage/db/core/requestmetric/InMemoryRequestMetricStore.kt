@@ -2,7 +2,9 @@ package io.soo.bueongi.storage.db.core.requestmetric
 
 import io.soo.bueongi.storage.db.core.InMemoryRecentLog
 
-class InMemoryRequestMetricStore(cap: Int = REQUEST_METRIC_CAP) : RequestMetricStore {
+class InMemoryRequestMetricStore(
+    cap: Int = REQUEST_METRIC_CAP,
+) : RequestMetricStore {
     private val recent: InMemoryRecentLog<RequestMetric> = InMemoryRecentLog(cap)
 
     override fun record(metric: RequestMetric) {

@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class SecurityLampFillService(
+class
+SecurityLampFillService(
     private val client: SecurityLampClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,

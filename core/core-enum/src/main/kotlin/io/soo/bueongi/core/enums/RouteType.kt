@@ -15,7 +15,10 @@ enum class RouteType(
 
     companion object {
         fun of(value: String?): RouteType {
-            val normalized: String = value?.trim()?.lowercase().orEmpty()
+            if (value == null) {
+                return SAFE
+            }
+            val normalized: String = value.trim().lowercase()
             for (type in entries) {
                 if (type.apiType == normalized || type.requestId == normalized) {
                     return type

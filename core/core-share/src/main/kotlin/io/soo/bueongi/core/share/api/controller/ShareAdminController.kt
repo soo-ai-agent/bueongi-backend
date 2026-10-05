@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/admin")
-class ShareAdminController(private val shareService: ShareService) {
+class ShareAdminController(
+    private val shareService: ShareService,
+) {
     @GetMapping("/share-status")
     fun shareStatus(): ShareStatusResponse {
         val activeSessions: Int = shareService.countActiveSessions()

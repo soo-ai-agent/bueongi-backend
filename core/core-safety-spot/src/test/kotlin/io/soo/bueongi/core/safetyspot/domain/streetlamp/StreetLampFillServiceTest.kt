@@ -109,7 +109,9 @@ class StreetLampFillServiceTest {
         verify(client, times(2)).fetchStreetLamps()
     }
 
-    private class TickingClock(var now: Instant) : Clock() {
+    private class TickingClock(
+        var now: Instant,
+    ) : Clock() {
         override fun instant(): Instant = now
 
         override fun getZone(): ZoneOffset = ZoneOffset.UTC

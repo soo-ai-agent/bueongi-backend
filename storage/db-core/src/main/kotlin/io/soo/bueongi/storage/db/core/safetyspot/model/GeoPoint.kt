@@ -9,7 +9,10 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 // 프로퍼티명 lat/lng 은 RouteOption.path 로 직렬화되는 프론트 응답 계약 — 리네임 금지.
-data class GeoPoint(val lat: Double, val lng: Double) {
+data class GeoPoint(
+    val lat: Double,
+    val lng: Double,
+) {
     fun distanceMetersTo(other: GeoPoint): Double {
         val dLat: Double = Math.toRadians(other.lat - lat)
         val dLng: Double = Math.toRadians(other.lng - lng)
@@ -67,7 +70,10 @@ data class GeoPoint(val lat: Double, val lng: Double) {
         return Planar(x = lng * lngScale, y = lat * latScale)
     }
 
-    private data class Planar(val x: Double, val y: Double)
+    private data class Planar(
+        val x: Double,
+        val y: Double,
+    )
 
     companion object {
         private const val EARTH_RADIUS_M: Double = 6_371_000.0

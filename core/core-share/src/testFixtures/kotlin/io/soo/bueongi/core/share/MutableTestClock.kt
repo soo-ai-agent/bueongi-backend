@@ -5,7 +5,10 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-class MutableTestClock(var now: Instant = Instant.parse("2026-06-19T12:00:00Z"), private val zone: ZoneId = ZoneOffset.UTC) : Clock() {
+class MutableTestClock(
+    var now: Instant = Instant.parse("2026-06-19T12:00:00Z"),
+    private val zone: ZoneId = ZoneOffset.UTC,
+) : Clock() {
     override fun instant(): Instant = now
 
     override fun getZone(): ZoneId = zone

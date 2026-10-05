@@ -2,7 +2,9 @@ package io.soo.bueongi.core.place.api.request
 
 import io.soo.bueongi.core.place.domain.error.InvalidKeywordException
 
-data class PlaceSearchRequest(private val keyword: String) {
+data class PlaceSearchRequest(
+    private val keyword: String,
+) {
     val searchKeyword: String = keyword.trim()
 
     init {
