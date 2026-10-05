@@ -3,37 +3,47 @@ package io.soo.bueongi.client.tmap.response
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.soo.bueongi.client.tmap.TmapPlace
 
-// 0건 응답은 칸을 생략하고 오므로 null 이 가능하다.
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPoiSearch(val searchPoiInfo: TmapPoiList? = null)
+internal data class TmapPoiSearch(
+    val searchPoiInfo: TmapPoiList = TmapPoiList(),
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPoiList(val pois: TmapPois? = null)
+internal data class TmapPoiList(
+    val pois: TmapPois = TmapPois(),
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapPois(val poi: List<TmapPoi> = emptyList())
+internal data class TmapPois(
+    val poi: List<TmapPoi> = emptyList(),
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class TmapPoi(
-    val name: String? = null,
+    val name: String = "",
+    // 좌표는 명세상 선택(N)이고 대신 쓸 값이 없다 — 없으면 toTmapPlace 가 그 POI 를 버린다.
     val frontLat: Double? = null,
     val frontLon: Double? = null,
-    val newAddressList: TmapNewAddressList? = null,
+    val newAddressList: TmapNewAddressList = TmapNewAddressList(),
 ) {
     fun toTmapPlace(): TmapPlace? {
         val lat: Double = frontLat ?: return null
         val lng: Double = frontLon ?: return null
-        val placeName: String = name?.trim().orEmpty()
+        val placeName: String = name.trim()
         if (placeName.isEmpty()) {
             return null
         }
-        val address: String = newAddressList?.newAddress?.firstOrNull()?.fullAddressRoad?.trim().orEmpty()
+        val address: String = newAddressList.newAddress.firstOrNull()?.fullAddressRoad.orEmpty().trim()
         return TmapPlace(name = placeName, address = address, lat = lat, lng = lng)
     }
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapNewAddressList(val newAddress: List<TmapNewAddress> = emptyList())
+internal data class TmapNewAddressList(
+    val newAddress: List<TmapNewAddress> = emptyList(),
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class TmapNewAddress(val fullAddressRoad: String? = null)
+internal data class TmapNewAddress(
+    val fullAddressRoad: String = "",
+)

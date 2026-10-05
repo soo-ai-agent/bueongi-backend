@@ -1,5 +1,6 @@
 package io.soo.bueongi.client.tmap
 
+import io.soo.bueongi.client.tmap.response.TmapPoi
 import io.soo.bueongi.client.tmap.response.TmapPoiSearch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -13,14 +14,12 @@ class TmapPlaceClient(
     restClientBuilder: RestClient.Builder,
 ) {
     private val appKey: String = appKey.trim()
-
-    val isEnabled: Boolean
-        get() = appKey.isNotEmpty()
-
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     fun search(keyword: String): List<TmapPlace> {
-        check(isEnabled) { "Tmap app key 미설정 — isEnabled 확인 후 호출해야 한다." }
+        check(appKey.isNotEmpty()) {
+            "Tmap app key 미설정 — isEnabled 확인 후 호출해야 한다."
+        }
         val response: TmapPoiSearch? =
             restClient.get()
                 .uri(POI_SEARCH_ENDPOINT) { builder ->
@@ -34,9 +33,13 @@ class TmapPlaceClient(
                 .header("appKey", appKey)
                 .retrieve()
                 .body<TmapPoiSearch>()
-        val pois = response?.searchPoiInfo?.pois?.poi.orEmpty()
-        val places: ArrayList<TmapPlace> = ArrayList(pois.size)
-        for (poi in pois) {
+
+        if (response == null) {
+            return emptyList()
+        }
+        val poiList: List<TmapPoi> = response.searchPoiInfo.pois.poi
+        val places: ArrayList<TmapPlace> = ArrayList(poiList.size)
+        for (poi in poiList) {
             val place: TmapPlace? = poi.toTmapPlace()
             if (place == null) {
                 continue

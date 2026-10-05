@@ -8,7 +8,10 @@ class TmapRouteCache(
     private val maxEntries: Int = DEFAULT_MAX_ENTRIES,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    private data class Entry(val route: TmapRoute, val expiresAt: Long)
+    private data class Entry(
+        val route: TmapRoute,
+        val expiresAt: Long,
+    )
 
     private val entries: ConcurrentHashMap<String, Entry> = ConcurrentHashMap<String, Entry>()
 
