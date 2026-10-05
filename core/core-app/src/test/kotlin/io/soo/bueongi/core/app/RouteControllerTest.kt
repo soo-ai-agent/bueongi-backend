@@ -17,7 +17,8 @@ import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -44,7 +45,9 @@ import org.springframework.test.web.servlet.post
     SafetySpotRepository::class,
     SafetySpotUploadStore::class,
 )
-class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
+class RouteControllerTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
@@ -92,7 +95,7 @@ class RouteControllerTest(@param:Autowired private val mockMvc: MockMvc) {
             status { isServiceUnavailable() }
         }
 
-        verify(apiEvents).routeSearchUnavailable(any())
+        verify(apiEvents).apiErrorResponded(eq("ROUTE_SEARCH_UNAVAILABLE"), anyOrNull())
     }
 
     @Test

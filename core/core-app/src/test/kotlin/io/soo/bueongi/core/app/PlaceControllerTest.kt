@@ -9,7 +9,8 @@ import io.soo.bueongi.core.place.api.request.PlaceSearchRequest
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -31,7 +32,9 @@ import org.springframework.test.web.servlet.get
     ApiControllerAdvice::class,
     PlaceControllerTest.StubRemoteConfig::class,
 )
-class PlaceControllerTest(@param:Autowired private val mockMvc: MockMvc) {
+class PlaceControllerTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
     @MockitoBean
     private lateinit var apiEvents: ApiEventPublisher
 
@@ -89,7 +92,7 @@ class PlaceControllerTest(@param:Autowired private val mockMvc: MockMvc) {
                 jsonPath("$.code") { value("PLACE_SEARCH_UNAVAILABLE") }
             }
 
-        verify(apiEvents).placeSearchUnavailable(any())
+        verify(apiEvents).apiErrorResponded(eq("PLACE_SEARCH_UNAVAILABLE"), anyOrNull())
     }
 
     @TestConfiguration

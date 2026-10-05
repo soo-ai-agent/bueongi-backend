@@ -1,11 +1,12 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
+import io.soo.bueongi.core.common.event.ApiErrorResponded
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
@@ -59,12 +60,16 @@ class ApiControllerAdviceAlertTest {
     }
 
     @Test
-    fun `알림기가 없어도(null) 500 처리는 그대로 동작한다`() {
-        val advice = ApiControllerAdvice()
+    fun `ApiException 오류 응답이 나가면 code 와 원인 예외 이름을 실은 이벤트를 발행한다`() {
+        val notifier = RecordingPublisher()
+        val advice = ApiControllerAdvice(ApiEventPublisher(notifier))
 
-        assertThatCode {
-            val body = advice.handleUncaught(RuntimeException("x"))
-            assertThat(body.properties?.get("code")).isEqualTo("INTERNAL_ERROR")
-        }.doesNotThrowAnyException()
+        val body = advice.handleApi(PlaceSearchUnavailableException(RuntimeException("tmap down")))
+
+        assertThat(notifier.events).hasSize(1)
+        val event: ApiErrorResponded = notifier.events[0] as ApiErrorResponded
+        assertThat(event.code).isEqualTo("PLACE_SEARCH_UNAVAILABLE")
+        assertThat(event.causeName).isEqualTo("RuntimeException")
+        assertThat(body.status).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
     }
 }

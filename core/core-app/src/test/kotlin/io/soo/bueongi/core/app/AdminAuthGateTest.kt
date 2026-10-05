@@ -20,7 +20,10 @@ import java.util.Date
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("context")
-class AdminAuthGateTest(@param:Autowired private val restTemplate: TestRestTemplate, @param:LocalServerPort private val port: Int) {
+class AdminAuthGateTest(
+    @param:Autowired private val restTemplate: TestRestTemplate,
+    @param:LocalServerPort private val port: Int,
+) {
     private fun url(path: String) = "http://localhost:$port$path"
 
     private fun get(path: String, token: String? = null): org.springframework.http.ResponseEntity<String> {

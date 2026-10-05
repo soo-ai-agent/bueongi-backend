@@ -25,13 +25,15 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class ApiControllerAdvice(
-    // 알림 없이도 예외 응답은 나가야 해서 선택 주입이다.
-    private val apiEvents: ApiEventPublisher? = null,
+    private val apiEvents: ApiEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     @ExceptionHandler(ApiException::class)
-    fun handleApi(ex: ApiException): ProblemDetail = ex.toProblemDetail()
+    fun handleApi(ex: ApiException): ProblemDetail {
+        apiEvents.apiErrorResponded(code = ex.code, causeName = ex.cause?.javaClass?.simpleName)
+        return ex.toProblemDetail()
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail =
@@ -216,7 +218,7 @@ class ApiControllerAdvice(
             action = "503 SHARE_STORE_UNAVAILABLE 응답(Retry-After ${RETRY_AFTER_SECONDS}s)",
             ex = ex,
         )
-        apiEvents?.shareStoreUnavailable(
+        apiEvents.shareStoreUnavailable(
             "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
         )
         val body: ProblemDetail =
@@ -240,7 +242,7 @@ class ApiControllerAdvice(
             action = "500 INTERNAL_ERROR 응답",
             ex = ex,
         )
-        apiEvents?.unhandledServerError(
+        apiEvents.unhandledServerError(
             exceptionName = ex.javaClass.simpleName,
             detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
         )

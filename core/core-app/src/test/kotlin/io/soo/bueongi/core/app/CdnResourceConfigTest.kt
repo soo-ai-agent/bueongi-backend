@@ -17,7 +17,9 @@ import java.nio.file.Path
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CdnResourceConfigTest(@param:Autowired private val mockMvc: MockMvc) {
+class CdnResourceConfigTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
     companion object {
         private val cdnDir: Path =
             Files.createTempDirectory("bueongi-cdn-test").also {

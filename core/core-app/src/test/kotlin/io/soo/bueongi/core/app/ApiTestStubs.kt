@@ -8,7 +8,9 @@ import java.time.Clock
 internal fun stubShareService(backend: String = "memory"): ShareService =
     ShareService(StubLocationStore(backend), Clock.systemUTC(), "http://localhost:3619")
 
-internal class StubLocationStore(override val backend: String) : LocationStore {
+internal class StubLocationStore(
+    override val backend: String,
+) : LocationStore {
     override fun save(session: ShareSession) = throw AssertionError("이 테스트는 save 를 호출하지 않는다")
 
     override fun findByToken(token: String): ShareSession? = throw AssertionError("이 테스트는 findByToken 을 호출하지 않는다")

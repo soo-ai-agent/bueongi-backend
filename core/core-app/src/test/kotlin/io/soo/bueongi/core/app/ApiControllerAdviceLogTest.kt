@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
+import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
 import io.soo.bueongi.support.logging.beginTrace
 import io.soo.bueongi.support.logging.currentTraceId
@@ -12,6 +13,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import ch.qos.logback.classic.Logger as LogbackLogger
 
 class ApiControllerAdviceLogTest {
@@ -34,7 +36,7 @@ class ApiControllerAdviceLogTest {
         val root = IllegalArgumentException("Illegal unquoted character")
         val outer = IllegalStateException("Error while extracting response", root)
 
-        ApiControllerAdvice().handleUncaught(outer)
+        advice().handleUncaught(outer)
 
         val event: ILoggingEvent = appender.list.single()
         assertThat(event.level).isEqualTo(Level.ERROR)
@@ -48,7 +50,7 @@ class ApiControllerAdviceLogTest {
         val appender = captureLogs()
         val leaked = IllegalStateException("GET https://openapi.sk.com/route?appKey=LEAKED-1234")
 
-        ApiControllerAdvice().handleUncaught(leaked)
+        advice().handleUncaught(leaked)
 
         val event: ILoggingEvent = appender.list.single()
         assertThat(event.formattedMessage).doesNotContain("LEAKED-1234")
@@ -59,7 +61,7 @@ class ApiControllerAdviceLogTest {
     fun `저장소 장애도 같은 형식으로 남긴다`() {
         val appender = captureLogs()
 
-        ApiControllerAdvice().handleShareStoreUnavailable(
+        advice().handleShareStoreUnavailable(
             LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
         )
 
@@ -74,10 +76,12 @@ class ApiControllerAdviceLogTest {
         val appender = captureLogs()
         beginTrace("POST /share/{token}/location")
 
-        ApiControllerAdvice().handleUncaught(IllegalStateException("터졌다"))
+        advice().handleUncaught(IllegalStateException("터졌다"))
 
         val line: String = appender.list.single().formattedMessage
         assertThat(line).contains("POST /share/{token}/location")
         assertThat(line).contains("🔗 ${currentTraceId()}")
     }
+
+    private fun advice(): ApiControllerAdvice = ApiControllerAdvice(ApiEventPublisher(ApplicationEventPublisher { }))
 }

@@ -4,17 +4,15 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 
 @Component
-class ApiEventPublisher(private val events: ApplicationEventPublisher) {
+class ApiEventPublisher(
+    private val events: ApplicationEventPublisher,
+) {
+    fun apiErrorResponded(code: String, causeName: String?) {
+        events.publishEvent(ApiErrorResponded(code = code, causeName = causeName))
+    }
+
     fun shareStoreUnavailable(detail: String) {
         events.publishEvent(OperationEvent(key = "share-store-unavailable", title = "위치 공유 저장소(Redis) 접근 실패", detail = detail))
-    }
-
-    fun routeSearchUnavailable(detail: String) {
-        events.publishEvent(OperationEvent(key = "tmap-route-failed", title = "Tmap 경로 API 실패", detail = detail))
-    }
-
-    fun placeSearchUnavailable(detail: String) {
-        events.publishEvent(OperationEvent(key = "tmap-place-failed", title = "Tmap 장소검색 실패", detail = detail))
     }
 
     fun unhandledServerError(exceptionName: String, detail: String) {

@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.ops.api.controller.AlertController
+import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,9 +13,11 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(AlertController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
 @Tag("context")
-class AdminAlertEndpointTest(@param:Autowired private val mockMvc: MockMvc) {
+class AdminAlertEndpointTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
     @Test
     fun `alerts 는 최근 장애 이력을 배열로 반환한다`() {
         mockMvc.get("/api/admin/alerts")

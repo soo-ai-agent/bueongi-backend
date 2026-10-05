@@ -2,6 +2,7 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
+import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.route.api.controller.RouteController
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
@@ -31,6 +32,7 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(RouteController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
+    ApiEventPublisher::class,
     RouteTypeCatalog::class,
     ApiControllerAdvice::class,
     SafeRouteService::class,
@@ -44,7 +46,9 @@ import org.springframework.test.web.servlet.post
     SafetySpotRepository::class,
     SafetySpotUploadStore::class,
 )
-class ApiExceptionHandlerTest(@param:Autowired private val mockMvc: MockMvc) {
+class ApiExceptionHandlerTest(
+    @param:Autowired private val mockMvc: MockMvc,
+) {
     @MockitoBean
     private lateinit var tmapRouteClient: TmapRouteClient
 
