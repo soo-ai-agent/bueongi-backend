@@ -9,8 +9,15 @@ class RouteCandidateMergerTest {
     private val merger = RouteCandidateMerger()
 
     @Test
+    fun `같은 identityKey(거리·좌표수)는 하나만 남긴다`() {
+        val kept = merger.merge(listOf(route("0", straight(SEGMENTS)), route("0", straight(SEGMENTS))))
+
+        assertThat(kept).hasSize(1)
+    }
+
+    @Test
     fun `똑같은 길은 하나로 합친다`() {
-        val kept = merger.mergeNearDuplicates(listOf(candidate("0", straight(SEGMENTS)), candidate("4", straight(SEGMENTS))))
+        val kept = merger.merge(listOf(route("0", straight(SEGMENTS)), route("4", straight(SEGMENTS))))
 
         assertThat(kept).hasSize(1)
         assertThat(kept.first().searchOption).describedAs("먼저 온 후보를 남긴다").isEqualTo("0")
@@ -19,8 +26,8 @@ class RouteCandidateMergerTest {
     @Test
     fun `20m 옆 나란한 골목은 다른 길이다`() {
         val kept =
-            merger.mergeNearDuplicates(
-                listOf(candidate("0", straight(SEGMENTS)), candidate("4", straight(SEGMENTS, latOffset = TWENTY_METERS_IN_DEGREES))),
+            merger.merge(
+                listOf(route("0", straight(SEGMENTS)), route("4", straight(SEGMENTS, latOffset = TWENTY_METERS_IN_DEGREES))),
             )
 
         assertThat(kept).hasSize(2)
@@ -29,8 +36,8 @@ class RouteCandidateMergerTest {
     @Test
     fun `88퍼센트 겹치는 길은 따로 남긴다`() {
         val kept =
-            merger.mergeNearDuplicates(
-                listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(22))),
+            merger.merge(
+                listOf(route("0", straight(SEGMENTS)), route("4", divergingAfter(22))),
             )
 
         assertThat(kept).hasSize(2)
@@ -39,8 +46,8 @@ class RouteCandidateMergerTest {
     @Test
     fun `96퍼센트 겹치는 길은 합친다`() {
         val kept =
-            merger.mergeNearDuplicates(
-                listOf(candidate("0", straight(SEGMENTS)), candidate("4", divergingAfter(24))),
+            merger.merge(
+                listOf(route("0", straight(SEGMENTS)), route("4", divergingAfter(24))),
             )
 
         assertThat(kept).hasSize(1)
@@ -49,13 +56,20 @@ class RouteCandidateMergerTest {
     @Test
     fun `길이가 0 인 후보는 병합 판단에서 제외된다`() {
         val degenerate = listOf(GeoPoint(37.5, 127.0), GeoPoint(37.5, 127.0))
-        val kept = merger.mergeNearDuplicates(listOf(candidate("0", straight(SEGMENTS)), candidate("4", degenerate)))
+        val kept = merger.merge(listOf(route("0", straight(SEGMENTS)), route("4", degenerate)))
 
         assertThat(kept).hasSize(2)
     }
 
-    private fun candidate(searchOption: String, path: List<GeoPoint>): RouteCandidate =
-        RouteCandidate(searchOption = searchOption, path = path, distanceM = 1.0, timeS = 1, steps = emptyList())
+    // searchOption 마다 거리를 다르게 둔다 — identityKey(거리 기반)가 겹쳐 근접 중복 판정 전에 걸러지지 않게.
+    private fun route(searchOption: String, path: List<GeoPoint>): RouteCandidate =
+        RouteCandidate(
+            searchOption = searchOption,
+            path = path,
+            distanceM = (searchOption.toDouble() + 1) * 10,
+            timeS = 1,
+            steps = emptyList(),
+        )
 
     private fun straight(segments: Int, latOffset: Double = 0.0): List<GeoPoint> {
         val points: MutableList<GeoPoint> = ArrayList()

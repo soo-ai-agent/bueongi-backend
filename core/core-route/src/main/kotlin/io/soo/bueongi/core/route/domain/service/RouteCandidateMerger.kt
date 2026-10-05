@@ -1,64 +1,47 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
 import org.springframework.stereotype.Component
 
-// Tmap 이 옵션만 다르면 골목 하나 차이의 길을 중복해서 돌려준다.
 @Component
 class RouteCandidateMerger {
-    // 같은 경로(identityKey)와 거의 같은 경로(90% 이상 겹침)를 버리고, 남은 것을 후보 모델로 바꿔 낸다.
-    fun merge(routes: List<TmapRoute>): List<RouteCandidate> {
+    // 같은 경로(identityKey)와 거의 같은 경로(90% 이상 겹침)를 버린다.
+    fun merge(routes: List<RouteCandidate>): List<RouteCandidate> {
         val addedKeys: HashSet<Long> = HashSet()
-        val candidates: ArrayList<RouteCandidate> = ArrayList()
-        for (route in routes) {
-            if (!addedKeys.add(route.identityKey)) {
+        val kept: ArrayList<RouteCandidate> = ArrayList()
+        for (candidate in routes) {
+            if (!addedKeys.add(candidate.identityKey)) {
                 continue
             }
-            candidates.add(
-                RouteCandidate(
-                    searchOption = route.searchOption,
-                    path = route.path.toGeoPoints(),
-                    distanceM = route.distanceM,
-                    timeS = route.timeS,
-                    steps = route.steps,
-                ),
-            )
-        }
-        return mergeNearDuplicates(candidates)
-    }
-
-    fun mergeNearDuplicates(candidates: List<RouteCandidate>): List<RouteCandidate> {
-        val kept: ArrayList<RouteCandidate> = ArrayList()
-        for (candidate in candidates) {
-            if (kept.none { isNearDuplicate(it, candidate) }) {
+            val candidateLength: Double = candidate.path.pathLengthMeters()
+            var isNearDuplicate = false
+            for (keptCandidate in kept) {
+                val shorter: Double = minOf(keptCandidate.path.pathLengthMeters(), candidateLength)
+                if (shorter <= 0.0) {
+                    continue
+                }
+                val overlap: Double =
+                    maxOf(
+                        keptCandidate.path.overlapMetersWith(candidate.path, MERGE_CORRIDOR_METERS),
+                        candidate.path.overlapMetersWith(keptCandidate.path, MERGE_CORRIDOR_METERS),
+                    )
+                if (overlap >= shorter * MERGE_OVERLAP_RATIO) {
+                    isNearDuplicate = true
+                    break
+                }
+            }
+            if (!isNearDuplicate) {
                 kept.add(candidate)
             }
         }
         return kept
     }
 
-    private fun isNearDuplicate(first: RouteCandidate, second: RouteCandidate): Boolean {
-        val lengthFirst: Double = first.path.pathLengthMeters()
-        val lengthSecond: Double = second.path.pathLengthMeters()
-        val shorter: Double = minOf(lengthFirst, lengthSecond)
-        if (shorter <= 0.0) {
-            return false
-        }
-        val overlap: Double =
-            maxOf(
-                first.path.overlapMetersWith(second.path, MERGE_CORRIDOR_METERS),
-                second.path.overlapMetersWith(first.path, MERGE_CORRIDOR_METERS),
-            )
-        return overlap >= shorter * MERGE_OVERLAP_RATIO
-    }
-
     private companion object {
         // 서울 도심 이면도로 간격이 약 20m 라, 나란한 골목을 한 길로 뭉치지 않으려면 그보다 좁아야 한다.
         const val MERGE_CORRIDOR_METERS: Double = 15.0
-
         const val MERGE_OVERLAP_RATIO: Double = 0.90
     }
 }

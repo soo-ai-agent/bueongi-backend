@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.route.domain.service
 
-import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
@@ -22,23 +21,25 @@ class SafeRouteService(
     private val routePlannedHandler: RoutePlannedHandler,
 ) {
     fun findRouteOptions(query: RouteRequest): List<RouteOption> {
-        val routes: ArrayList<TmapRoute> = ArrayList(routeFinder.findRoutes(query))
-        if (routes.isEmpty()) {
+        val baseRoutes: List<RouteCandidate> = routeFinder.findRoutes(query)
+        if (baseRoutes.isEmpty()) {
             throw RouteSearchUnavailableException()
         }
+        val firstRoutePath: List<GeoPoint> = baseRoutes.first().path
+
         // 길을 잃어 다시 부른 것이면 빨리 답해야 해서 우회를 찾지 않는다.
+        val routes: ArrayList<RouteCandidate> = ArrayList(baseRoutes)
         if (!query.reroute) {
-            val firstRoutePath: List<GeoPoint> = routes.first().path.toGeoPoints()
             val clusters: List<SafetySpotCluster> = waypointPlanner.clusterSafetySpots(firstRoutePath)
             val waypointPlans: List<List<GeoPoint>> = waypointPlanner.pickWaypoints(query.origin, query.destination, clusters)
-            routes.addAll(routeFinder.findSaferRoutes(query, routes, waypointPlans))
+            routes.addAll(routeFinder.findSaferRoutes(query, baseRoutes, waypointPlans))
         }
 
         // 경로가 지나는 지역의 안심시설을 받아 두게 한다. 다음 요청부터 그 지역 안전 점수가 정확해진다.
-        routePlannedHandler.onRoutePlanned(routes.first().path.toGeoPoints())
+        routePlannedHandler.onRoutePlanned(firstRoutePath)
 
         val candidates: List<RouteCandidate> = candidateMerger.merge(routes)
-        val assigned: List<ScoredRoute> = typeAssigner.assignOneRoutePerType(candidates)
-        return assembler.assemble(assigned, query.origin, query.destination)
+        val scoredRoutes: List<ScoredRoute> = typeAssigner.assignOneRoutePerType(candidates)
+        return assembler.assemble(scoredRoutes, query.origin, query.destination)
     }
 }
