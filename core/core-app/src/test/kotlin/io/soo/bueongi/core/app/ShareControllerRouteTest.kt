@@ -122,6 +122,22 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
     }
 
     @Test
+    fun `경로 API 가 내려주는 보안등 마커 type 은 저장된다`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                """
+                {
+                  "owner_secret": "$secret",
+                  "destination": { "lat": 37.56, "lng": 126.97 },
+                  "markers": [ {"type": "security_lamp", "lat": 37.5, "lng": 127.0} ]
+                }
+                """.trimIndent()
+        }.andExpect { status { isOk() } }
+    }
+
+    @Test
     fun `범위 밖 경로 좌표는 400 VALIDATION_FAILED`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {

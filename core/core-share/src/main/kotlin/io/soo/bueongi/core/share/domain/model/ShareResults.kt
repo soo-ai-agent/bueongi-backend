@@ -16,7 +16,7 @@ const val MAX_ROUTE_PATH_POINTS: Int = 4000
 
 const val MAX_ROUTE_MARKERS: Int = 300
 
-const val ROUTE_MARKER_TYPE_PATTERN: String = "cctv|bell|store|police|safehouse|lamp|pedestrian_signal"
+const val ROUTE_MARKER_TYPE_PATTERN: String = "cctv|bell|store|police|safehouse|lamp|security_lamp|pedestrian_signal"
 
 // RouteType.from 은 미상을 SAFE 로 관용 처리해 재사용 불가 — 여기는 엄격 거부(위반 시 422)용 명시 집합.
 val ROUTE_TYPE_VALUES: Set<String> = setOf("safe", "fast", "main")
