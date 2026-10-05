@@ -53,6 +53,7 @@ abstract class NationwideFillService<T>(
 
     private fun fetchAndStore(): Int {
         val fetched: List<T>? = fetch()
+        events.fetchPerformed(type, NATIONWIDE, fetched?.size)
         if (fetched == null) {
             retryGate.recordFailure(NATIONWIDE)
             events.fetchFailed(type, NATIONWIDE)

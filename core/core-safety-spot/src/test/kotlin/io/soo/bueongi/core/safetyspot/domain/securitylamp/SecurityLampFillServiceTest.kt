@@ -68,11 +68,42 @@ class SecurityLampFillServiceTest {
         verify(client).fetchSecurityLamps(any<String>())
     }
 
+    @Test
+    fun `외부를 실제로 부른 호출은 받은 건수와 함께 수집 기록 이벤트를 낸다`(
+        @TempDir dir: Path,
+    ) {
+        val client: SecurityLampClient = mock()
+        whenever(client.isEnabled).thenReturn(true)
+        whenever(client.fetchSecurityLamps(any())).thenReturn(
+            listOf(DataGoKrPoint(lat = 37.52, lng = 126.81, name = "원종동 292-4", sigungu = BUCHEON)),
+        )
+        val events: SafetySpotFillEventPublisher = mock()
+
+        service(dir, client, FakeLiveStore(), alreadyLoaded = CHANGNYEONG, events = events).fill(BUCHEON)
+
+        verify(events).fetchPerformed(SafetySpotType.SECURITY_LAMP, BUCHEON, 1)
+    }
+
+    @Test
+    fun `호출이 실패하면 받은 건수 없이 수집 기록 이벤트를 낸다`(
+        @TempDir dir: Path,
+    ) {
+        val client: SecurityLampClient = mock()
+        whenever(client.isEnabled).thenReturn(true)
+        whenever(client.fetchSecurityLamps(any())).thenReturn(null)
+        val events: SafetySpotFillEventPublisher = mock()
+
+        service(dir, client, FakeLiveStore(), alreadyLoaded = CHANGNYEONG, events = events).fill(BUCHEON)
+
+        verify(events).fetchPerformed(SafetySpotType.SECURITY_LAMP, BUCHEON, null)
+    }
+
     private fun service(
         dir: Path,
         client: SecurityLampClient,
         liveStore: SafetySpotLiveStore,
         alreadyLoaded: String,
+        events: SafetySpotFillEventPublisher = mock(),
     ): SecurityLampFillService {
         val loaded = SafetySpotPoint.of(SafetySpotType.SECURITY_LAMP, 35.54, 128.49, regionCode = alreadyLoaded)
         val source: SafetySpotSpatialSource =
@@ -82,7 +113,7 @@ class SecurityLampFillServiceTest {
             cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
             liveStore = liveStore,
             safetySpots = source,
-            events = mock<SafetySpotFillEventPublisher>(),
+            events = events,
         )
     }
 

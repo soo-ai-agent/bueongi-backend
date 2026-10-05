@@ -66,6 +66,7 @@ SecurityLampFillService(
 
     private fun fetchAndStore(regionCode: String): Int {
         val fetched: List<DataGoKrPoint>? = client.fetchSecurityLamps(regionCode)
+        events.fetchPerformed(SafetySpotType.SECURITY_LAMP, regionCode, fetched?.size)
         if (fetched == null) {
             retryGate.recordFailure(regionCode)
             events.fetchFailed(SafetySpotType.SECURITY_LAMP, regionCode)

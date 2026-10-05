@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.safetyspot.domain.fill.service
 
 import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.common.event.SafetySpotFetchPerformed
 import io.soo.bueongi.core.enums.SafetySpotType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -12,6 +13,10 @@ const val NATIONWIDE: String = "nationwide"
 class SafetySpotFillEventPublisher(
     private val events: ApplicationEventPublisher,
 ) {
+    fun fetchPerformed(type: SafetySpotType, scope: String, receivedCount: Int?) {
+        events.publishEvent(SafetySpotFetchPerformed(type = type, scope = scope, receivedCount = receivedCount))
+    }
+
     fun fetchFailed(type: SafetySpotType, scope: String) {
         events.publishEvent(
             OperationEvent(
