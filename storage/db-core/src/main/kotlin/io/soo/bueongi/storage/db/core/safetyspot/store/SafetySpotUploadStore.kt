@@ -20,6 +20,7 @@ import java.nio.file.StandardCopyOption
 import java.time.Clock
 
 // 저장 계약: `{uploadDir}/{cdnType}.json` — CDN 컬렉션과 동형 JSON 이라 DTO 필드 리네임 금지.
+// 올린 CSV 원본은 `{uploadDir}/originals/{cdnType}.csv` 에 종류마다 최신 하나만 둔다(관리자 CSV 보기용).
 @Component
 class SafetySpotUploadStore(
     objectMapper: ObjectMapper,
@@ -55,6 +56,31 @@ class SafetySpotUploadStore(
         log.info("시설 업로드 저장: type={}, count={}, file={}", type.cdnType, points.size, target.path)
     }
 
+    fun saveOriginal(type: SafetySpotType, bytes: ByteArray) {
+        val dir = File(uploadDir, ORIGINALS_DIR)
+        Files.createDirectories(dir.toPath())
+        val target = File(dir, "${type.cdnType}.csv")
+        val temp: File = File.createTempFile("${type.cdnType}-", ".csv.tmp", dir)
+        try {
+            Files.write(temp.toPath(), bytes)
+            Files.move(
+                temp.toPath(),
+                target.toPath(),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE,
+            )
+        } finally {
+            temp.delete()
+        }
+    }
+
+    fun originalFiles(): List<File> {
+        val dir = File(uploadDir, ORIGINALS_DIR)
+        return dir.listCsvFiles()
+    }
+
+    fun hasUpload(type: SafetySpotType): Boolean = File(uploadDir, "${type.cdnType}.json").isFile
+
     fun findByType(type: SafetySpotType): List<SafetySpotPoint>? {
         val file = File(uploadDir, "${type.cdnType}.json")
         if (!file.isFile) {
@@ -67,6 +93,10 @@ class SafetySpotUploadStore(
             log.warn("시설 업로드 파일 읽기 실패(무시하고 CDN/CSV 폴백): {} ({})", file.path, e.message)
             null
         }
+    }
+
+    private companion object {
+        const val ORIGINALS_DIR: String = "originals"
     }
 }
 

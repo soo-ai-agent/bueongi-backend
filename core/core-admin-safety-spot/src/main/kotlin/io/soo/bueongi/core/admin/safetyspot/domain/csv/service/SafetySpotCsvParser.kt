@@ -7,6 +7,11 @@ import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.CCTV_SECURITY_PURPOSES
+import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPage
+import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPageBuilder
+import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRow
+import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRowResult
+import io.soo.bueongi.storage.db.core.safetyspot.store.CsvSkipReason
 import io.soo.bueongi.support.util.CP949
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.support.util.Epsg5179
@@ -29,10 +34,32 @@ class SafetySpotCsvParser {
 
         val points: ArrayList<SafetySpotPoint> = ArrayList()
         for (row in dataRows) {
-            val point: SafetySpotPoint = toSafetySpotPoint(row, columns, spec) ?: continue
-            points.add(point)
+            val result: CsvRowResult = judgeRow(row, columns, spec)
+            if (result is CsvRowResult.Loaded) {
+                points.add(result.point)
+            }
         }
         return SafetySpotCsvParseResult(columns.coordSystem, received = dataRows.size, points = points)
+    }
+
+    fun readPage(bytes: ByteArray, spec: SafetySpotCsvSpec, page: Int, size: Int, skippedOnly: Boolean, keyword: String): CsvPage {
+        val builder = CsvPageBuilder(page, size, skippedOnly, keyword)
+        val records: List<List<String>> = tokenizeCsv(decode(bytes))
+        val headerPos: Int = findHeaderRow(records)
+        if (headerPos < 0) {
+            return builder.build(emptyList())
+        }
+
+        val columns: CsvColumns = spec.locateColumns(buildHeaderIndex(records[headerPos]))
+        val dataRows: List<List<String>> = collectDataRows(records, headerPos)
+
+        for ((index, row) in dataRows.withIndex()) {
+            val result: CsvRowResult = judgeRow(row, columns, spec)
+            if (builder.count(result, row.joinToString(" "))) {
+                builder.add(CsvRow(index + 1, row, result))
+            }
+        }
+        return builder.build(records[headerPos])
     }
 
     private fun findHeaderRow(records: List<List<String>>): Int {
@@ -63,23 +90,25 @@ class SafetySpotCsvParser {
         return false
     }
 
-    private fun toSafetySpotPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): SafetySpotPoint? {
-        val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return null
+    private fun judgeRow(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): CsvRowResult {
+        val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
         val purpose: String? = columns.purpose(row)
         if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
-            return null
+            return CsvRowResult.Skipped(CsvSkipReason.NOT_SECURITY_PURPOSE)
         }
-        return SafetySpotPoint.of(
-            type = spec.type,
-            lat = geo.lat,
-            lng = geo.lng,
-            name = columns.name(row),
-            purpose = purpose,
-            cameraCount = columns.cameraCount(row),
-            address = columns.address(row),
-            phone = columns.phone(row),
-            regionCode = columns.regionCode(row),
-        )
+        val point: SafetySpotPoint =
+            SafetySpotPoint.of(
+                type = spec.type,
+                lat = geo.lat,
+                lng = geo.lng,
+                name = columns.name(row),
+                purpose = purpose,
+                cameraCount = columns.cameraCount(row),
+                address = columns.address(row),
+                phone = columns.phone(row),
+                regionCode = columns.regionCode(row),
+            )
+        return CsvRowResult.Loaded(point)
     }
 
     private fun readGeoPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): GeoPoint? {

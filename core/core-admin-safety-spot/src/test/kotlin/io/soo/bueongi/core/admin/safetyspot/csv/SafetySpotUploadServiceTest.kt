@@ -71,6 +71,17 @@ class SafetySpotUploadServiceTest {
     }
 
     @Test
+    fun `업로드는 올린 CSV 원본을 그대로 보관한다`(
+        @TempDir tmp: Path,
+    ) {
+        val csv = "위도,경도,관리기관명,설치목적구분\n37.5,127.0,종로구청,생활방범\n"
+
+        service(tmp, FakeLiveStore(), SafetySpotRefreshStatusStore()).upload(SafetySpotType.CCTV, csv.toByteArray())
+
+        assertThat(File(tmp.toFile(), "originals/cctv.csv")).hasContent(csv)
+    }
+
+    @Test
     fun `유효 0건이면 교체하지 않고 EmptySafetySpotUploadException`(
         @TempDir tmp: Path,
     ) {

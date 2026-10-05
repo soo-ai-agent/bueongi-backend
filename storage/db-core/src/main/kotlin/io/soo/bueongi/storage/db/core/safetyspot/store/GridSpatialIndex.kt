@@ -6,7 +6,9 @@ import io.soo.bueongi.storage.db.core.safetyspot.model.regionCodeOrNull
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GridSpatialIndex(points: List<SafetySpotPoint>) {
+class GridSpatialIndex(
+    points: List<SafetySpotPoint>,
+) {
     // 한 지점의 시설 여러 대를 원천이 행으로 나눠 주므로, 좌표 5자리(≈1.1m)가 같으면 한 지점으로 센다.
     private val distinct: List<SafetySpotPoint> =
         points.distinctBy { Pair(roundCoord(it.lat), roundCoord(it.lng)) }

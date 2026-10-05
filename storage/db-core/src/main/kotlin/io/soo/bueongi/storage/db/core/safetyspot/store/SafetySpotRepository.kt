@@ -212,7 +212,7 @@ class SafetySpotRepository(
     }
 
     private fun loadCctvCsv(): List<SafetySpotPoint> {
-        val file: File? = resolveCctvCsv()
+        val file: File? = resolveCctvCsvFile(cctvCsvPath)
         if (file == null) {
             log.warn("CCTV CSV 파일을 찾지 못했습니다(configured='{}'). CSV 적재를 건너뜁니다.", cctvCsvPath)
             return emptyList()
@@ -249,9 +249,9 @@ class SafetySpotRepository(
                 val columns: LampCsvColumns = LampCsvColumns.of(rows.next()) ?: return@useLines emptyList()
                 val points: ArrayList<SafetySpotPoint> = ArrayList()
                 for (row in rows) {
-                    val point: SafetySpotPoint? = columns.parse(row)
-                    if (point != null) {
-                        points.add(point)
+                    val result: CsvRowResult = columns.judge(row)
+                    if (result is CsvRowResult.Loaded) {
+                        points.add(result.point)
                     }
                 }
                 points
@@ -260,25 +260,6 @@ class SafetySpotRepository(
             log.warn("보안등 CSV 적재 실패(건너뜀): {} ({})", file.path, e.message)
             emptyList()
         }
-    }
-
-    private fun resolveCctvCsv(): File? {
-        if (cctvCsvPath.isBlank()) {
-            return null
-        }
-        val candidates: List<String> =
-            buildList {
-                add(cctvCsvPath)
-                add("$cctvCsvPath.gz")
-                add(DEFAULT_CCTV_CSV)
-                add("$DEFAULT_CCTV_CSV.gz")
-                add("../backend/$DEFAULT_CCTV_CSV")
-                add("backend/$DEFAULT_CCTV_CSV")
-            }
-        return candidates
-            .map { File(it) }
-            .firstOrNull { it.isFile }
-            ?.absoluteFile
     }
 
     private fun resolveDataDir(): File? {
@@ -313,47 +294,76 @@ class SafetySpotRepository(
 
 val CCTV_SECURITY_PURPOSES: Set<String> = setOf("생활방범", "다목적", "어린이보호", "차량방범")
 
-// 주소 콤마로 컬럼이 밀려 뒤에서 센다: 0=자치단체코드, N-13=설치목적, N-12=카메라대수, N-6=위도, N-5=경도.
 internal fun parseCctvCsvLine(line: String): SafetySpotPoint? {
+    val result: CsvRowResult = judgeCctvCsvLine(line)
+    if (result is CsvRowResult.Loaded) {
+        return result.point
+    }
+    return null
+}
+
+// 주소 콤마로 컬럼이 밀려 뒤에서 센다: 0=자치단체코드, N-13=설치목적, N-12=카메라대수, N-6=위도, N-5=경도.
+internal fun judgeCctvCsvLine(line: String): CsvRowResult {
     val parts: List<String> = line.split(',')
     if (parts.size < 13) {
-        return null
+        return CsvRowResult.Skipped(CsvSkipReason.TOO_FEW_COLUMNS)
     }
     val purpose: String = parts[parts.size - 13].trim().trim('"')
     if (purpose !in CCTV_SECURITY_PURPOSES) {
-        return null
+        return CsvRowResult.Skipped(CsvSkipReason.NOT_SECURITY_PURPOSE)
     }
     val point: GeoPoint =
         GeoPoint.orNull(
             lat = parts[parts.size - 6].trim().toDoubleOrNull(),
             lng = parts[parts.size - 5].trim().toDoubleOrNull(),
-        ) ?: return null
+        ) ?: return CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
     val name: String? = parts[2].trim().trim('"').takeIf { it.isNotEmpty() }
     val cameraCount: Int? = parts[parts.size - 12].trim().toIntOrNull()?.takeIf { it > 0 }
     val sigungu: String? = parts.firstOrNull()?.trim()?.trim('"')?.takeIf { it.isNotEmpty() }
-    return SafetySpotPoint.of(
-        type = SafetySpotType.CCTV,
-        lat = point.lat,
-        lng = point.lng,
-        name = name,
-        regionCode = sigungu,
-        purpose = purpose,
-        cameraCount = cameraCount,
-    )
+    val spot: SafetySpotPoint =
+        SafetySpotPoint.of(
+            type = SafetySpotType.CCTV,
+            lat = point.lat,
+            lng = point.lng,
+            name = name,
+            regionCode = sigungu,
+            purpose = purpose,
+            cameraCount = cameraCount,
+        )
+    return CsvRowResult.Loaded(spot)
 }
 
-private const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
+internal const val DEFAULT_CCTV_CSV: String = "data/source/cctv/CCTV정보.csv"
 
-private const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
+internal const val DEFAULT_LAMP_CSV_DIR: String = "data/source/lamp"
 
-private fun resolveCsvDir(configured: String, default: String): File? {
+internal fun resolveCctvCsvFile(configured: String): File? {
+    if (configured.isBlank()) {
+        return null
+    }
+    val candidates: List<String> =
+        buildList {
+            add(configured)
+            add("$configured.gz")
+            add(DEFAULT_CCTV_CSV)
+            add("$DEFAULT_CCTV_CSV.gz")
+            add("../backend/$DEFAULT_CCTV_CSV")
+            add("backend/$DEFAULT_CCTV_CSV")
+        }
+    return candidates
+        .map { File(it) }
+        .firstOrNull { it.isFile }
+        ?.absoluteFile
+}
+
+internal fun resolveCsvDir(configured: String, default: String): File? {
     if (configured.isBlank()) {
         return null
     }
     return listOf(configured, default).map { File(it) }.firstOrNull { it.isDirectory }
 }
 
-private fun File.listCsvFiles(): List<File> =
+internal fun File.listCsvFiles(): List<File> =
     listFiles()?.filter { it.isFile && (it.name.endsWith(".csv") || it.name.endsWith(".csv.gz")) }
         ?.sortedBy { it.name }
         .orEmpty()
@@ -366,30 +376,32 @@ private fun resolveCsv(configured: String, default: String): File? {
     return candidates.map { File(it) }.firstOrNull { it.isFile }
 }
 
-private class LampCsvColumns(
+internal class LampCsvColumns(
     private val nameAt: Int,
     private val latAt: Int,
     private val lngAt: Int,
     private val sigunguAt: Int,
 ) {
-    fun parse(row: String): SafetySpotPoint? {
+    fun judge(row: String): CsvRowResult {
         val parts: List<String> = row.split(',')
         if (parts.size <= maxOf(nameAt, latAt, lngAt)) {
-            return null
+            return CsvRowResult.Skipped(CsvSkipReason.TOO_FEW_COLUMNS)
         }
         val point: GeoPoint =
             GeoPoint.orNull(
                 lat = parts[latAt].trim().toDoubleOrNull(),
                 lng = parts[lngAt].trim().toDoubleOrNull(),
-            ) ?: return null
+            ) ?: return CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
         val name: String? = parts[nameAt].trim().takeIf { it.isNotEmpty() }
-        return SafetySpotPoint.of(
-            type = SafetySpotType.SECURITY_LAMP,
-            lat = point.lat,
-            lng = point.lng,
-            name = name,
-            regionCode = valueAt(parts, sigunguAt),
-        )
+        val spot: SafetySpotPoint =
+            SafetySpotPoint.of(
+                type = SafetySpotType.SECURITY_LAMP,
+                lat = point.lat,
+                lng = point.lng,
+                name = name,
+                regionCode = valueAt(parts, sigunguAt),
+            )
+        return CsvRowResult.Loaded(spot)
     }
 
     private fun valueAt(parts: List<String>, at: Int): String? {
@@ -418,7 +430,7 @@ private class LampCsvColumns(
     }
 }
 
-private fun openCsv(file: File): BufferedReader {
+internal fun openCsv(file: File): BufferedReader {
     val charset: Charset = detectCharset(file)
     if (file.name.endsWith(".gz")) {
         return GZIPInputStream(file.inputStream()).bufferedReader(charset)

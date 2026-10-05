@@ -28,6 +28,7 @@ class SafetySpotUploadService(
             throw EmptySafetySpotUploadException(received = parsed.received)
         }
         uploadStore.save(type, parsed.points)
+        uploadStore.saveOriginal(type, bytes)
         val saved: Int = liveStore.replace(type, parsed.points)
         refreshStatusStore.recordUpload(type, saved, System.currentTimeMillis())
         log.info(
