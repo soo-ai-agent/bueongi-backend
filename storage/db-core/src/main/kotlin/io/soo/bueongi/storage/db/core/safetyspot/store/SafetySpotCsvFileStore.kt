@@ -23,7 +23,8 @@ class SafetySpotCsvFileStore(
         addSourceDir(files, resolveCsvDir(bellCsvDir, bellCsvDir), SafetySpotType.BELL)
         addSourceDir(files, resolveCsvDir(policeCsvDir, policeCsvDir), SafetySpotType.POLICE)
         for (original in uploadStore.originalFiles()) {
-            val type: SafetySpotType = typeOfOriginal(original) ?: continue
+            val cdnType: String = original.name.removeSuffix(".csv")
+            val type: SafetySpotType = SafetySpotType.ofCdnType(cdnType) ?: continue
             files.add(uploadFile(original, type))
         }
         return files
@@ -109,16 +110,6 @@ class SafetySpotCsvFileStore(
             replacedByUpload = false,
             file = file,
         )
-    }
-
-    private fun typeOfOriginal(file: File): SafetySpotType? {
-        val cdnType: String = file.name.removeSuffix(".csv")
-        for (type in SafetySpotType.entries) {
-            if (type.cdnType == cdnType) {
-                return type
-            }
-        }
-        return null
     }
 }
 

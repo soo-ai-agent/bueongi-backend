@@ -21,4 +21,16 @@ enum class SafetySpotType(
 
     // 안심시설이 아니라 위험 신호 — 점수 차감에만 쓰고 지도 마커로는 내보내지 않는다.
     CRIME_PRONE_AREA("crime_prone_area", "범죄주의구간"),
+    ;
+
+    companion object {
+        fun ofCdnType(cdnType: String): SafetySpotType? {
+            for (type in entries) {
+                if (type.cdnType == cdnType) {
+                    return type
+                }
+            }
+            return null
+        }
+    }
 }

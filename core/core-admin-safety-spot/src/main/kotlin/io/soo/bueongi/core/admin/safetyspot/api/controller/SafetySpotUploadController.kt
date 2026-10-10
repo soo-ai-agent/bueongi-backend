@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.api.controller
 
-import io.soo.bueongi.core.admin.safetyspot.api.request.toValidatedSafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotUploadResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
+import io.soo.bueongi.core.admin.safetyspot.domain.error.UnknownSafetySpotTypeException
 import io.soo.bueongi.core.enums.SafetySpotType
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,7 +22,7 @@ class SafetySpotUploadController(
         @PathVariable type: String,
         @RequestParam("file") file: MultipartFile,
     ): SafetySpotUploadResponse {
-        val safetySpotType: SafetySpotType = toValidatedSafetySpotType(type)
+        val safetySpotType: SafetySpotType = SafetySpotType.ofCdnType(type) ?: throw UnknownSafetySpotTypeException(type)
         return uploadService.upload(safetySpotType, file.bytes)
     }
 }
