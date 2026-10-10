@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.HealthController
+import io.soo.bueongi.core.appinfo.domain.service.HealthService
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.share.domain.service.ShareService
 import org.junit.jupiter.api.Tag
@@ -18,7 +19,7 @@ import org.springframework.test.web.servlet.get
 @Tag("context")
 @WebMvcTest(HealthController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, HealthControllerTest.Config::class)
+@Import(ApiEventPublisher::class, HealthControllerTest.Config::class, HealthService::class)
 @ActiveProfiles("test")
 class HealthControllerTest(
     @param:Autowired private val mockMvc: MockMvc,

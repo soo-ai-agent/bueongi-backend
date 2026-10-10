@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.AppInfoController
+import io.soo.bueongi.core.appinfo.domain.service.AppInfoService
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -19,7 +20,7 @@ import java.util.Properties
 @Tag("context")
 @WebMvcTest(AppInfoController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AppInfoControllerTest.Config::class)
+@Import(ApiEventPublisher::class, AppInfoControllerTest.Config::class, AppInfoService::class)
 @ActiveProfiles("test")
 class AppInfoControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
