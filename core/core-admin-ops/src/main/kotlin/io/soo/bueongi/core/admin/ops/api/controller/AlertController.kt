@@ -2,12 +2,11 @@ package io.soo.bueongi.core.admin.ops.api.controller
 
 import io.soo.bueongi.core.admin.ops.api.request.SlackConfigUpdateRequest
 import io.soo.bueongi.core.admin.ops.api.response.AlertsResponse
-import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigSummary
+import io.soo.bueongi.core.admin.ops.api.response.SlackConfigResponse
+import io.soo.bueongi.core.admin.ops.api.response.SlackTestResponse
+import io.soo.bueongi.core.admin.ops.domain.alert.AlertHistoryService
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigUpdate
-import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackTestResult
 import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
-import io.soo.bueongi.support.monitoring.AlertNotifier
-import io.soo.bueongi.support.monitoring.AlertRecord
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,32 +19,31 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin")
 class AlertController(
-    private val alertNotifier: AlertNotifier,
+    private val alertHistoryService: AlertHistoryService,
     private val slackConfigService: SlackConfigService,
 ) {
     @GetMapping("/alerts")
     fun alerts(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): AlertsResponse {
-        val alerts: List<AlertRecord> = alertNotifier.findRecentAlerts(limit)
-        return AlertsResponse(alerts = alerts)
+        return alertHistoryService.findRecent(limit)
     }
 
     @GetMapping("/slack-config")
-    fun slackConfig(): SlackConfigSummary {
+    fun slackConfig(): SlackConfigResponse {
         return slackConfigService.view()
     }
 
     @PutMapping("/slack-config")
     fun updateSlackConfig(
         @Valid @RequestBody request: SlackConfigUpdateRequest,
-    ): SlackConfigSummary {
+    ): SlackConfigResponse {
         val update: SlackConfigUpdate = request.toUpdate()
         return slackConfigService.update(update)
     }
 
     @PostMapping("/slack-config/test")
-    fun testSlackConfig(): SlackTestResult {
+    fun testSlackConfig(): SlackTestResponse {
         return slackConfigService.test()
     }
 }

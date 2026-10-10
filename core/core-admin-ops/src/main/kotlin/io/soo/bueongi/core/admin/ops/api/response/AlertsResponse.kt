@@ -4,4 +4,10 @@ import io.soo.bueongi.support.monitoring.AlertRecord
 
 data class AlertsResponse(
     val alerts: List<AlertRecord>,
-)
+) {
+    companion object {
+        fun from(alerts: List<AlertRecord>): AlertsResponse {
+            return AlertsResponse(alerts = alerts)
+        }
+    }
+}

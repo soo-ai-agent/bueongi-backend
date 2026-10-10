@@ -1,11 +1,12 @@
 package io.soo.bueongi.core.admin.ops.domain.slack.service
 
 import io.soo.bueongi.client.slack.SlackAlertConfig
+import io.soo.bueongi.core.admin.ops.api.response.SlackConfigResponse
+import io.soo.bueongi.core.admin.ops.api.response.SlackTestResponse
 import io.soo.bueongi.core.admin.ops.domain.error.InvalidSlackCategoryException
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackCategoryConfig
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigSummary
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigUpdate
-import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackTestResult
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.stereotype.Service
 
@@ -14,22 +15,24 @@ class SlackConfigService(
     private val slackAlertConfig: SlackAlertConfig,
     private val alertNotifier: AlertNotifier,
 ) {
-    fun view(): SlackConfigSummary {
+    fun view(): SlackConfigResponse {
         val muted: Set<String> = slackAlertConfig.mutedCategories()
         val categories: List<SlackCategoryConfig> =
             KNOWN_CATEGORIES.map { (key, label) ->
                 SlackCategoryConfig(key = key, label = label, muted = muted.contains(key))
             }
-        return SlackConfigSummary(
-            webhookConfigured = slackAlertConfig.webhookConfigured(),
-            webhookMasked = slackAlertConfig.maskedWebhook(),
-            enabled = slackAlertConfig.enabled(),
-            throttleMinutes = slackAlertConfig.throttleMinutes(),
-            categories = categories,
-        )
+        val summary: SlackConfigSummary =
+            SlackConfigSummary(
+                webhookConfigured = slackAlertConfig.webhookConfigured(),
+                webhookMasked = slackAlertConfig.maskedWebhook(),
+                enabled = slackAlertConfig.enabled(),
+                throttleMinutes = slackAlertConfig.throttleMinutes(),
+                categories = categories,
+            )
+        return SlackConfigResponse.from(summary)
     }
 
-    fun update(update: SlackConfigUpdate): SlackConfigSummary {
+    fun update(update: SlackConfigUpdate): SlackConfigResponse {
         val unknown: Set<String> = update.mutedCategories - KNOWN_CATEGORIES.keys
         if (unknown.isNotEmpty()) {
             throw InvalidSlackCategoryException(
@@ -45,9 +48,10 @@ class SlackConfigService(
         return view()
     }
 
-    fun test(): SlackTestResult {
+    fun test(): SlackTestResponse {
         val sent: Boolean = alertNotifier.sendTest()
-        return SlackTestResult(sent = sent, enabled = slackAlertConfig.sendEnabled())
+        val enabled: Boolean = slackAlertConfig.sendEnabled()
+        return SlackTestResponse.from(sent, enabled)
     }
 
     companion object {

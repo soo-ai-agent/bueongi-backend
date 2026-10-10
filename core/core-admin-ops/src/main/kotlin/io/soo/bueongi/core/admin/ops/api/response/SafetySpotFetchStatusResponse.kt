@@ -12,8 +12,8 @@ data class SafetySpotFetchStatusResponse(
     val lastReceivedCount: Int?,
 ) {
     companion object {
-        fun from(status: SafetySpotFetchStatus): SafetySpotFetchStatusResponse =
-            SafetySpotFetchStatusResponse(
+        fun from(status: SafetySpotFetchStatus): SafetySpotFetchStatusResponse {
+            return SafetySpotFetchStatusResponse(
                 type = status.type,
                 successCount = status.successCount,
                 failureCount = status.failureCount,
@@ -21,5 +21,14 @@ data class SafetySpotFetchStatusResponse(
                 lastScope = status.lastScope,
                 lastReceivedCount = status.lastReceivedCount,
             )
+        }
+
+        fun from(statuses: List<SafetySpotFetchStatus>): List<SafetySpotFetchStatusResponse> {
+            val responses: ArrayList<SafetySpotFetchStatusResponse> = ArrayList(statuses.size)
+            for (status in statuses) {
+                responses.add(from(status))
+            }
+            return responses
+        }
     }
 }

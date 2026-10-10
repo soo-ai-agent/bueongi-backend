@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.admin.ops.domain.traffic.service
 
+import io.soo.bueongi.core.admin.ops.api.response.TrafficResponse
 import io.soo.bueongi.core.admin.ops.domain.traffic.model.AdminTraffic
 import io.soo.bueongi.core.admin.ops.domain.traffic.model.DailyActive
 import io.soo.bueongi.core.admin.ops.domain.traffic.model.EndpointTraffic
@@ -29,21 +30,23 @@ class RequestMetricsService(
     private val adminRequestMetricStore: AdminRequestMetricStore,
     private val clock: Clock,
 ) {
-    fun summarize(): TrafficSummary {
+    fun summarize(): TrafficResponse {
         val metrics: List<RequestMetric> = requestMetricStore.findRecent(REQUEST_METRIC_CAP)
-        return TrafficSummary(
-            totalCalls = metrics.size,
-            successCount = metrics.count { isSuccess(it) },
-            failureCount = metrics.count { !isSuccess(it) },
-            windowSize = metrics.size,
-            byEndpoint = byEndpoint(metrics),
-            estimatedUsers = estimatedUsers(metrics),
-            latency = latency(metrics),
-            hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
-            hourlyErrors = hourlyErrors(metrics),
-            dailyActiveUsers = dailyActiveUsers(metrics),
-            adminCalls = adminCalls(),
-        )
+        val summary: TrafficSummary =
+            TrafficSummary(
+                totalCalls = metrics.size,
+                successCount = metrics.count { isSuccess(it) },
+                failureCount = metrics.count { !isSuccess(it) },
+                windowSize = metrics.size,
+                byEndpoint = byEndpoint(metrics),
+                estimatedUsers = estimatedUsers(metrics),
+                latency = latency(metrics),
+                hourlyCalls = countByHour(metrics.map { it.atEpochMs }),
+                hourlyErrors = hourlyErrors(metrics),
+                dailyActiveUsers = dailyActiveUsers(metrics),
+                adminCalls = adminCalls(),
+            )
+        return TrafficResponse.from(summary)
     }
 
     private fun adminCalls(): AdminTraffic {

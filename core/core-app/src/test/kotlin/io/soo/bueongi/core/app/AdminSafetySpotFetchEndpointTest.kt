@@ -2,6 +2,7 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.ops.api.controller.SafetySpotFetchController
 import io.soo.bueongi.core.admin.ops.domain.externalfetch.SafetySpotFetchLedger
+import io.soo.bueongi.core.admin.ops.domain.externalfetch.SafetySpotFetchService
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.common.event.SafetySpotFetchPerformed
 import io.soo.bueongi.core.enums.SafetySpotType
@@ -18,7 +19,7 @@ import org.springframework.test.web.servlet.get
 @Tag("context")
 @WebMvcTest(SafetySpotFetchController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, SafetySpotFetchLedger::class)
+@Import(ApiEventPublisher::class, SafetySpotFetchLedger::class, SafetySpotFetchService::class)
 @ActiveProfiles("test")
 class AdminSafetySpotFetchEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

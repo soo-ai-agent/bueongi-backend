@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.ops.api.controller.AlertController
+import io.soo.bueongi.core.admin.ops.domain.alert.AlertHistoryService
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -13,7 +14,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(AlertController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class, AlertHistoryService::class)
 @Tag("context")
 class AdminAlertEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,
