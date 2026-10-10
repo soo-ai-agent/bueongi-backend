@@ -20,8 +20,8 @@ data class SafetySpotPoi(
 )
 
 // 설치 목적·대수는 CCTV 만 갖는다.
-internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi =
-    SafetySpotPoi(
+internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi {
+    return SafetySpotPoi(
         type = markerType,
         x = 0,
         y = 0,
@@ -33,6 +33,7 @@ internal fun SafetySpotPoint.toPoi(markerType: SafetySpotPoiType): SafetySpotPoi
         address = address.orEmpty(),
         phone = phoneOrNull().orEmpty(),
     )
+}
 
 // 백분율은 목록 전체의 위경도 범위가 있어야 나오므로 마커 하나가 아니라 목록이 계산한다.
 internal fun List<SafetySpotPoi>.toMiniMapPercent(): List<SafetySpotPoi> {

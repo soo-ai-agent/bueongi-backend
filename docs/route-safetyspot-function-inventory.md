@@ -49,7 +49,7 @@ Tmap 에서 경로를 받아 오는 조회 창구.
 | `findSaferRoutes(query, routes, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
 | `maxDetourDistanceM(query, routes)` | 비공개 | 계산 | 우회 허용 한도 — 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전) |
 | `fetchRoute(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표·후보 모델 변환 포함) |
-| `RouteRequest.endName()` | 파일 내 | 변환 | 빈 목적지 이름을 "목적지" 로 채운다 |
+| ~~`RouteRequest.endName()`~~ | 파일 내 | 변환 | 한 번만 쓰여 호출부(`fetchRoute`)로 합쳤다 |
 | `TmapRoute.toRouteCandidate()` | 파일 내 | 변환 | Tmap 경로 → 후보 모델 |
 | `List<TmapCoord>.toGeoPoints()` | 파일 내 | 변환 | Tmap 좌표 목록 → GeoPoint 목록 |
 | `GeoPoint.toTmapCoord()` | 파일 내 | 변환 | GeoPoint → Tmap 좌표 |
@@ -139,7 +139,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | `fillsOf(counts, km, safePathOverlap)` | 비공개 | 계산 | 개수·밀도 → 축별 충족도(0~1) |
 | `normalizedScore(fills, weights, coverage)` | 비공개 | 계산 | 자료 있는 축만 가중 평균 |
 | `coveredWeight(weights, coverage)` | 비공개 | 계산 | 자료 있는 축의 가중치 합 |
-| `spotTypesOf(axis)` | 비공개 | 조회 | 축 → 시설 종류 lookup |
+| ~~`spotTypesOf(axis)`~~ | 비공개 | 조회 | 한 번만 쓰여 `SPOT_TYPES_BY_AXIS.getValue(axis)` 로 합쳤다 |
 | `applyRiskPenalty(normalized, riskCount, km)` | 비공개 | 계산 | 범죄주의구간 밀도만큼 감점 (최대 0.20) |
 | `fill(value, halfPoint)` | 비공개 | 계산 | 포화 곡선 v/(v+half) |
 | `saturate(value, ceiling)` | 비공개 | 계산 | 0~1 로 자르는 비율 |

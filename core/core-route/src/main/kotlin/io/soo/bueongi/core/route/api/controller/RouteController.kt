@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.route.api.controller
 
 import io.soo.bueongi.core.route.api.request.RouteRequest
-import io.soo.bueongi.core.route.domain.model.RouteOption
+import io.soo.bueongi.core.route.api.response.RouteOption
 import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

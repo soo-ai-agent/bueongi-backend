@@ -22,37 +22,51 @@ class RouteTypeAssigner(
 
         val picks: Map<Int, RouteType> = pickIndexPerType(scoredCandidates)
         val scoredRoutes: ArrayList<ScoredRoute> = ArrayList()
-        for (pick in picks) {
-            val candidate: ScoredCandidate = scoredCandidates[pick.key]
-            scoredRoutes.add(ScoredRoute(candidate.candidate, candidate.score, pick.value))
+        for ((index, type) in picks) {
+            val candidate: ScoredCandidate = scoredCandidates[index]
+            scoredRoutes.add(ScoredRoute(candidate.candidate, candidate.score, type))
         }
         return scoredRoutes
     }
 
     // 안심=점수 최고, 빠름=남은 것 중 시간 최단, 기본=남은 비우회 후보 중 점수 최고. 동점이면 앞선 후보가 이긴다.
-    // 우회 후보는 경유지를 강제해 모양이 꼬일 수 있어 안심 자리 외에는 쓰지 않는다.
+    // 우회 후보는 경유지를 강제해 모양이 꼬일 수 있어 기본 자리에는 쓰지 않는다.
     private fun pickIndexPerType(scoredCandidates: List<ScoredCandidate>): Map<Int, RouteType> {
-        val safeIdx: Int = scoredCandidates.indices.maxBy { scoredCandidates[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
-        val fastIdx: Int? =
-            scoredCandidates.indices.filter { it != safeIdx }
-                .minByOrNull { scoredCandidates[it].candidate.timeS.toDouble() + it * TIE_BREAK_EPSILON }
-        val used: Set<Int> = setOfNotNull(safeIdx, fastIdx)
-        val mainIdx: Int? =
-            scoredCandidates.indices.filter { it !in used && !scoredCandidates[it].candidate.isDetour }
-                .maxByOrNull { scoredCandidates[it].score.rank.toDouble() - it * TIE_BREAK_EPSILON }
+        var safeIndex: Int = 0
+        for (index in scoredCandidates.indices) {
+            if (scoredCandidates[index].score.rank > scoredCandidates[safeIndex].score.rank) {
+                safeIndex = index
+            }
+        }
+
+        var fastIndex: Int? = null
+        for (index in scoredCandidates.indices) {
+            if (index == safeIndex) {
+                continue
+            }
+            if (fastIndex == null || scoredCandidates[index].candidate.timeS < scoredCandidates[fastIndex].candidate.timeS) {
+                fastIndex = index
+            }
+        }
+
+        var mainIndex: Int? = null
+        for (index in scoredCandidates.indices) {
+            if (index == safeIndex || index == fastIndex || scoredCandidates[index].candidate.isDetour) {
+                continue
+            }
+            if (mainIndex == null || scoredCandidates[index].score.rank > scoredCandidates[mainIndex].score.rank) {
+                mainIndex = index
+            }
+        }
 
         val picks: LinkedHashMap<Int, RouteType> = LinkedHashMap()
-        picks[safeIdx] = RouteType.SAFE
-        if (fastIdx != null) {
-            picks[fastIdx] = RouteType.FAST
+        picks[safeIndex] = RouteType.SAFE
+        if (fastIndex != null) {
+            picks[fastIndex] = RouteType.FAST
         }
-        if (mainIdx != null) {
-            picks[mainIdx] = RouteType.MAIN
+        if (mainIndex != null) {
+            picks[mainIndex] = RouteType.MAIN
         }
         return picks
-    }
-
-    private companion object {
-        const val TIE_BREAK_EPSILON: Double = 1e-9
     }
 }

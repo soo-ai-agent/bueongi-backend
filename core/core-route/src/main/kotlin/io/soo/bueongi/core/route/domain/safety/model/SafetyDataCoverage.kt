@@ -6,7 +6,9 @@ data class SafetyDataCoverage(
     val missing: List<SafetyAxis>
         get() = SafetyAxis.entries.filter { it !in covered }
 
-    fun has(axis: SafetyAxis): Boolean = axis in covered
+    fun has(axis: SafetyAxis): Boolean {
+        return axis in covered
+    }
 
     val isEmpty: Boolean
         get() = covered.isEmpty()

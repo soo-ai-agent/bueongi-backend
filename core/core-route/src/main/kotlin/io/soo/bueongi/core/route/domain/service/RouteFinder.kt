@@ -55,7 +55,7 @@ class RouteFinder(
             tmapClient.fetchRoute(
                 origin = query.origin.toTmapCoord(),
                 destination = query.destination.toTmapCoord(),
-                destinationName = query.endName(),
+                destinationName = query.destinationName.trim().ifEmpty { "목적지" },
                 searchOption = searchOption,
                 passList = waypoints.map { it.toTmapCoord() },
             )
@@ -76,10 +76,6 @@ class RouteFinder(
                 SafetyPreference.SAFEST to 0.6,
             )
     }
-}
-
-private fun RouteRequest.endName(): String {
-    return destinationName.trim().ifEmpty { "목적지" }
 }
 
 private fun TmapRoute.toRouteCandidate(): RouteCandidate {

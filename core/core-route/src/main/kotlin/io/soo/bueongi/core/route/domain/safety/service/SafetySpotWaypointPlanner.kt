@@ -45,17 +45,17 @@ class SafetySpotWaypointPlanner(
             }
             // 평균점은 건물 안·블록 한가운데처럼 도로 밖일 수 있어, 경유지로 주면 Tmap 이 들렀다 나오는
             // 왕복 구간(꼬임)을 만든다 — 평균점에 가장 가까운 실제 시설 위치를 대표 좌표로 쓴다.
-            val averageCenter = GeoPoint(sumLat / spots.size, sumLng / spots.size)
+            val averageCenter: GeoPoint = GeoPoint(sumLat / spots.size, sumLng / spots.size)
             var anchor: SafetySpotPoint = spots[0]
             var anchorDistanceM: Double = Double.MAX_VALUE
             for (spot in spots) {
-                val distanceM: Double = averageCenter.distanceMetersTo(GeoPoint(spot.lat, spot.lng))
+                val distanceM: Double = averageCenter.distanceMetersTo(spot.toGeoPoint())
                 if (distanceM < anchorDistanceM) {
                     anchorDistanceM = distanceM
                     anchor = spot
                 }
             }
-            val cluster = SafetySpotCluster(GeoPoint(anchor.lat, anchor.lng), weight = spots.size)
+            val cluster: SafetySpotCluster = SafetySpotCluster(anchor.toGeoPoint(), weight = spots.size)
             clusters.add(cluster)
         }
         val byDensityThenPosition: Comparator<SafetySpotCluster> =
@@ -114,15 +114,15 @@ class SafetySpotWaypointPlanner(
 
         val plans: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
         val singles: List<PlacedCluster> = byWeight.take(SINGLE_CLUSTER_PLANS)
-        for ((cluster) in singles) {
-            plans.add(listOf(cluster.center))
+        for (single in singles) {
+            plans.add(listOf(single.cluster.center))
         }
         if (byWeight.size >= 2) {
             val topTwo: List<PlacedCluster> = byWeight.take(2)
             val inTravelOrder: List<PlacedCluster> = topTwo.sortedBy { it.progress }
             val pair: ArrayList<GeoPoint> = ArrayList()
-            for ((cluster) in inTravelOrder) {
-                pair.add(cluster.center)
+            for (placedCluster in inTravelOrder) {
+                pair.add(placedCluster.cluster.center)
             }
             plans.add(pair)
         }

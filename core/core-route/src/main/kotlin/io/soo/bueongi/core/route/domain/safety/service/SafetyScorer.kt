@@ -36,17 +36,18 @@ class SafetyScorer(
         return SafetyDataCoverage(covered)
     }
 
-    fun score(path: List<GeoPoint>): SafetyScore = score(path, coverageOf(listOf(path)))
+    fun score(path: List<GeoPoint>): SafetyScore {
+        val coverage: SafetyDataCoverage = coverageOf(listOf(path))
+        return score(path, coverage)
+    }
 
     fun score(path: List<GeoPoint>, coverage: SafetyDataCoverage): SafetyScore {
         val lengthM: Double = path.pathLengthMeters()
         val routeKm: Double = lengthM / 1000.0
-        val km: Double =
-            if (routeKm > 0) {
-                routeKm
-            } else {
-                MIN_DIVISOR_KM
-            }
+        var km: Double = MIN_DIVISOR_KM
+        if (routeKm > 0) {
+            km = routeKm
+        }
 
         val counts: SafetySpotCounts = countNearby(path)
         val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
@@ -78,7 +79,7 @@ class SafetyScorer(
         if (axis == SafetyAxis.SAFE_PATH) {
             return hasSafePathNear(scorePoints)
         }
-        for (type in spotTypesOf(axis)) {
+        for (type in SPOT_TYPES_BY_AXIS.getValue(axis)) {
             for (point in scorePoints) {
                 if (safetySpots.index(type).withinRadius(point, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()) {
                     return true
@@ -101,8 +102,8 @@ class SafetyScorer(
         return false
     }
 
-    private fun countNearby(path: List<GeoPoint>): SafetySpotCounts =
-        SafetySpotCounts(
+    private fun countNearby(path: List<GeoPoint>): SafetySpotCounts {
+        return SafetySpotCounts(
             cctv = countWithinCorridor(SafetySpotType.CCTV, path),
             lamp =
                 countWithinCorridor(SafetySpotType.STREET_LAMP, path) +
@@ -112,12 +113,15 @@ class SafetyScorer(
             police = countWithinCorridor(SafetySpotType.POLICE, path),
             crimeProneArea = countRiskNear(path),
         )
+    }
 
-    private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int =
-        safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+    private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int {
+        return safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+    }
 
-    private fun countRiskNear(path: List<GeoPoint>): Int =
-        safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
+    private fun countRiskNear(path: List<GeoPoint>): Int {
+        return safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
+    }
 
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
         if (lengthM <= 0 || safetySpots.safePaths.isEmpty()) {
@@ -134,8 +138,8 @@ class SafetyScorer(
         return min(1.0, bestSingleRouteOverlapRatio)
     }
 
-    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> =
-        mapOf(
+    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> {
+        return mapOf(
             SafetyAxis.CCTV to densityAndCountFill(counts.cctv, km, HALF_CCTV_PER_KM),
             SafetyAxis.LAMP to densityAndCountFill(counts.lamp, km, HALF_LAMP_PER_KM),
             SafetyAxis.BELL to densityAndCountFill(counts.bell, km, HALF_BELL_PER_KM),
@@ -143,6 +147,7 @@ class SafetyScorer(
             SafetyAxis.POLICE to fill(counts.police.toDouble(), HALF_POLICE_COUNT),
             SafetyAxis.SAFE_PATH to safePathOverlap,
         )
+    }
 
     // 밀도만 보면 시설을 더 많이 지나는 긴 경로가 밀도 희석으로 점수를 못 받는다 — 밀도 채움과 개수 채움을 반씩 섞는다.
     private fun densityAndCountFill(count: Int, km: Double, halfDensityPerKm: Double): Double {
@@ -176,8 +181,6 @@ class SafetyScorer(
         return total
     }
 
-    private fun spotTypesOf(axis: SafetyAxis): List<SafetySpotType> = SPOT_TYPES_BY_AXIS.getValue(axis)
-
     private fun applyRiskPenalty(normalized: Double, riskCount: Int, km: Double): Double {
         if (riskCount <= 0) {
             return normalized
@@ -200,9 +203,13 @@ class SafetyScorer(
         return max(0.0, min(1.0, value / saturationCeiling))
     }
 
-    private fun round2(v: Double): Double = (v * 100).roundToInt() / 100.0
+    private fun round2(value: Double): Double {
+        return (value * 100).roundToInt() / 100.0
+    }
 
-    private fun round3(v: Double): Double = (v * 1000).roundToInt() / 1000.0
+    private fun round3(value: Double): Double {
+        return (value * 1000).roundToInt() / 1000.0
+    }
 
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0

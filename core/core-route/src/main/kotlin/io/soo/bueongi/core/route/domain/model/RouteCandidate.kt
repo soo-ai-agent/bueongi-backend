@@ -9,7 +9,7 @@ data class RouteCandidate(
     val distanceM: Double,
     val timeS: Int,
     val steps: List<NavigationStep>,
-    // 안심시설 경유지를 강제한 우회 후보인가 — 기본(MAIN) 유형은 우회 후보를 집지 않는다.
+    // 기본(MAIN) 유형은 우회 후보를 집지 않아서, 안심시설 경유지를 강제한 우회 후보인지 표시해 둔다.
     val isDetour: Boolean = false,
 ) {
     // 좌표수가 PATH_SIZE_SLOT 미만이라는 전제다 — 넘으면 키가 충돌한다.

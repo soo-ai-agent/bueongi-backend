@@ -2,9 +2,9 @@ package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.route.api.request.RouteRequest
+import io.soo.bueongi.core.route.api.response.RouteOption
 import io.soo.bueongi.core.route.domain.error.RouteSearchUnavailableException
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
 import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner

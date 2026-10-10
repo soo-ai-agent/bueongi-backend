@@ -23,8 +23,8 @@ class SafetyWeightsCatalog {
     }
 
     private companion object {
-        val NIGHT = SafetyWeights(cctv = 0.14, lamp = 0.25, bell = 0.23, safehouse = 0.03, police = 0.07, safePath = 0.28)
-        val DAY = SafetyWeights(cctv = 0.25, lamp = 0.07, bell = 0.18, safehouse = 0.08, police = 0.12, safePath = 0.30)
+        val NIGHT: SafetyWeights = SafetyWeights(cctv = 0.14, lamp = 0.25, bell = 0.23, safehouse = 0.03, police = 0.07, safePath = 0.28)
+        val DAY: SafetyWeights = SafetyWeights(cctv = 0.25, lamp = 0.07, bell = 0.18, safehouse = 0.08, police = 0.12, safePath = 0.30)
 
         // 서울 기준 월 중순 실측 일출 시각(KST, 오차 ±15분).
         val SUNRISE_BY_MONTH: List<LocalTime> =

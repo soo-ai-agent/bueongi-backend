@@ -2,11 +2,11 @@ package io.soo.bueongi.core.route
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.RouteType
+import io.soo.bueongi.core.route.api.response.DataProvenance
+import io.soo.bueongi.core.route.api.response.RouteOption
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
-import io.soo.bueongi.core.route.domain.model.DataProvenance
 import io.soo.bueongi.core.route.domain.model.NavigationStep
-import io.soo.bueongi.core.route.domain.model.RouteOption
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown

@@ -1,8 +1,10 @@
-package io.soo.bueongi.core.route.domain.model
+package io.soo.bueongi.core.route.api.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
+import io.soo.bueongi.core.route.domain.model.NavigationStep
+import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
 import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 
