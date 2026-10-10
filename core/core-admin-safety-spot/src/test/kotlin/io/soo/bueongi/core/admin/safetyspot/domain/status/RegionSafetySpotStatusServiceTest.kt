@@ -1,11 +1,11 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
+import io.soo.bueongi.core.admin.safetyspot.api.response.RegionCenterResponse
+import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
@@ -18,7 +18,7 @@ class RegionSafetySpotStatusServiceTest {
 
     @Test
     fun `자치단체별로 종류를 나눠 세고 많은 곳부터 보여 준다`() {
-        val summary: List<RegionSafetySpotCount> =
+        val summary: List<RegionSafetySpotResponse> =
             service(
                 mapOf(
                     SafetySpotType.CCTV to
@@ -35,10 +35,10 @@ class RegionSafetySpotStatusServiceTest {
             ).summarize()
 
         assertThat(summary.map { it.code }).containsExactly(MAPO, CHANGNYEONG)
-        val mapo: RegionSafetySpotCount = summary.first()
+        val mapo: RegionSafetySpotResponse = summary.first()
         assertThat(mapo.total).isEqualTo(3)
-        assertThat(mapo.countsByType[SafetySpotType.CCTV]).isEqualTo(2)
-        assertThat(mapo.countsByType[SafetySpotType.BELL]).isEqualTo(1)
+        assertThat(mapo.counts[SafetySpotType.CCTV.cdnType]).isEqualTo(2)
+        assertThat(mapo.counts[SafetySpotType.BELL.cdnType]).isEqualTo(1)
     }
 
     @Test
@@ -242,7 +242,7 @@ class RegionSafetySpotStatusServiceTest {
                 ),
             ).summarize()
 
-        val center: GeoPoint = summary.single().center ?: error("중심 좌표가 있어야 한다")
+        val center: RegionCenterResponse = summary.single().center ?: error("중심 좌표가 있어야 한다")
         assertThat(center.lat).isCloseTo(37.55, within(1e-9))
         assertThat(center.lng).isCloseTo(127.10, within(1e-9))
     }
@@ -261,9 +261,9 @@ class RegionSafetySpotStatusServiceTest {
                 ),
             ).summarize()
 
-        val row: RegionSafetySpotCount = summary.single()
+        val row: RegionSafetySpotResponse = summary.single()
         assertThat(row.total).isEqualTo(3)
-        val center: GeoPoint = row.center ?: error("중심 좌표가 있어야 한다")
+        val center: RegionCenterResponse = row.center ?: error("중심 좌표가 있어야 한다")
         assertThat(center.lat).isCloseTo(37.50, within(1e-9))
         assertThat(center.lng).isCloseTo(127.00, within(1e-9))
     }

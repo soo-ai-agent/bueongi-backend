@@ -2,8 +2,7 @@ package io.soo.bueongi.core.admin.safetyspot.api.controller
 
 import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotResponse
 import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotsResponse
-import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
-import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatusSummary
+import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotStatusResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,18 +16,13 @@ class SafetySpotStatusController(
     private val regionStatusService: RegionSafetySpotStatusService,
 ) {
     @GetMapping("/api/admin/safety-spot-status")
-    fun safetySpotStatus(): SafetySpotStatusSummary {
+    fun safetySpotStatus(): SafetySpotStatusResponse {
         return safetySpotStatusService.summarize()
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions")
     fun regions(): List<RegionSafetySpotResponse> {
-        val counts: List<RegionSafetySpotCount> = regionStatusService.summarize()
-        val responses: ArrayList<RegionSafetySpotResponse> = ArrayList(counts.size)
-        for (count in counts) {
-            responses.add(RegionSafetySpotResponse.from(count))
-        }
-        return responses
+        return regionStatusService.summarize()
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions/{code}/spots")
@@ -36,6 +30,6 @@ class SafetySpotStatusController(
         @PathVariable code: String,
         @RequestParam(required = false, defaultValue = "2000") limit: Int,
     ): RegionSafetySpotsResponse {
-        return RegionSafetySpotsResponse.from(regionStatusService.findSpotsByCode(code, limit))
+        return regionStatusService.findSpotsByCode(code, limit)
     }
 }

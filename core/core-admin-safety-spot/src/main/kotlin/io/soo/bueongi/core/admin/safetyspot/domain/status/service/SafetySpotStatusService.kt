@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status.service
 
+import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotStatusResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatus
-import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatusSummary
 import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
@@ -15,7 +15,7 @@ class SafetySpotStatusService(
     private val safetySpotSource: SafetySpotSpatialSource,
     private val refreshStatusStore: SafetySpotRefreshStatusStore,
 ) {
-    fun summarize(): SafetySpotStatusSummary {
+    fun summarize(): SafetySpotStatusResponse {
         val freshness: SafetySpotFreshness? = safetySpotSource.freshness
         val safetySpots: ArrayList<SafetySpotStatus> = ArrayList()
         for (type in SafetySpotType.entries) {
@@ -32,6 +32,6 @@ class SafetySpotStatusService(
                 ),
             )
         }
-        return SafetySpotStatusSummary(safetySpots = safetySpots)
+        return SafetySpotStatusResponse.from(safetySpots)
     }
 }

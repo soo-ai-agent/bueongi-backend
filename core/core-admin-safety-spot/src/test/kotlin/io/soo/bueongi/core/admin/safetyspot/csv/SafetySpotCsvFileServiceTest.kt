@@ -1,13 +1,13 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.admin.safetyspot.api.response.CsvRowStatus
+import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvPageResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvFileService
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidCsvPageException
 import io.soo.bueongi.core.admin.safetyspot.domain.error.SafetySpotCsvFileNotFoundException
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPage
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRowResult
 import io.soo.bueongi.storage.db.core.safetyspot.store.CsvSkipReason
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvFileStore
 import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvOrigin
@@ -27,11 +27,12 @@ class SafetySpotCsvFileServiceTest {
         val csv = "위도,경도,관리기관명,설치목적구분\n37.5,127.0,종로구청,생활방범\n37.5,127.0,교통과,교통단속\n"
         uploadStore.saveOriginal(SafetySpotType.CCTV, csv.toByteArray())
 
-        val page: CsvPage = service(tmp, uploadStore).readPage(SafetySpotCsvOrigin.UPLOAD, "cctv.csv", 0, 50, false, "")
+        val page: SafetySpotCsvPageResponse = service(tmp, uploadStore).readPage(SafetySpotCsvOrigin.UPLOAD, "cctv.csv", 0, 50, false, "")
 
         assertThat(page.header).containsExactly("위도", "경도", "관리기관명", "설치목적구분")
-        assertThat(page.rows[0].result).isInstanceOf(CsvRowResult.Loaded::class.java)
-        assertThat(page.rows[1].result).isEqualTo(CsvRowResult.Skipped(CsvSkipReason.NOT_SECURITY_PURPOSE))
+        assertThat(page.rows[0].status).isEqualTo(CsvRowStatus.LOADED)
+        assertThat(page.rows[1].status).isEqualTo(CsvRowStatus.SKIPPED)
+        assertThat(page.rows[1].skipReason).isEqualTo(CsvSkipReason.NOT_SECURITY_PURPOSE)
     }
 
     @Test

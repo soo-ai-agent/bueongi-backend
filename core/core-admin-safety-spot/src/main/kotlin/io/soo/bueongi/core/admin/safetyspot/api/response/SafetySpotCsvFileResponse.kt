@@ -14,8 +14,8 @@ data class SafetySpotCsvFileResponse(
     val replacedByUpload: Boolean,
 ) {
     companion object {
-        fun from(file: SafetySpotCsvFile): SafetySpotCsvFileResponse =
-            SafetySpotCsvFileResponse(
+        fun from(file: SafetySpotCsvFile): SafetySpotCsvFileResponse {
+            return SafetySpotCsvFileResponse(
                 origin = file.origin,
                 type = file.type,
                 name = file.name,
@@ -24,5 +24,14 @@ data class SafetySpotCsvFileResponse(
                 readByServer = file.readByServer,
                 replacedByUpload = file.replacedByUpload,
             )
+        }
+
+        fun from(files: List<SafetySpotCsvFile>): List<SafetySpotCsvFileResponse> {
+            val responses: ArrayList<SafetySpotCsvFileResponse> = ArrayList(files.size)
+            for (file in files) {
+                responses.add(from(file))
+            }
+            return responses
+        }
     }
 }

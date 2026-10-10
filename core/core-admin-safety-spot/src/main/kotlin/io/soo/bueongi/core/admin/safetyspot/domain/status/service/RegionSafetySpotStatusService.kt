@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status.service
 
+import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotResponse
+import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotsResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidSpotLimitException
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionName
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
@@ -17,7 +19,7 @@ class RegionSafetySpotStatusService(
     private val safetySpots: SafetySpotSpatialSource,
     private val regionNames: RegionNameCatalog,
 ) {
-    fun summarize(): List<RegionSafetySpotCount> {
+    fun summarize(): List<RegionSafetySpotResponse> {
         val talliesByRegion: LinkedHashMap<String, RegionTally> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
             for (point in safetySpots.index(type).all) {
@@ -30,10 +32,10 @@ class RegionSafetySpotStatusService(
             rows.add(rowOf(code, tally))
         }
         rows.sortByDescending { it.total }
-        return rows
+        return RegionSafetySpotResponse.from(rows)
     }
 
-    fun findSpotsByCode(code: String, limit: Int): RegionSafetySpots {
+    fun findSpotsByCode(code: String, limit: Int): RegionSafetySpotsResponse {
         if (limit <= 0) {
             throw InvalidSpotLimitException(limit)
         }
@@ -51,13 +53,15 @@ class RegionSafetySpotStatusService(
             shown.addAll(spreadEvenly(points, quotas.getValue(type)))
         }
         val region: RegionName = regionNameOf(code)
-        return RegionSafetySpots(
-            code = code,
-            sido = region.sido,
-            name = region.name,
-            total = pointsByType.values.sumOf { it.size },
-            spots = shown,
-        )
+        val found: RegionSafetySpots =
+            RegionSafetySpots(
+                code = code,
+                sido = region.sido,
+                name = region.name,
+                total = pointsByType.values.sumOf { it.size },
+                spots = shown,
+            )
+        return RegionSafetySpotsResponse.from(found)
     }
 
     private fun roundRobinQuotasOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): Map<SafetySpotType, Int> {

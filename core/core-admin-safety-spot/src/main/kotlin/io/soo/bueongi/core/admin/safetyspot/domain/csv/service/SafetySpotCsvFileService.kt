@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 
+import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvFileResponse
+import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvPageResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvSpec
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidCsvPageException
 import io.soo.bueongi.core.admin.safetyspot.domain.error.SafetySpotCsvFileNotFoundException
@@ -14,20 +16,32 @@ class SafetySpotCsvFileService(
     private val fileStore: SafetySpotCsvFileStore,
     private val parser: SafetySpotCsvParser,
 ) {
-    fun list(): List<SafetySpotCsvFile> = fileStore.list()
+    fun list(): List<SafetySpotCsvFileResponse> {
+        val files: List<SafetySpotCsvFile> = fileStore.list()
+        return SafetySpotCsvFileResponse.from(files)
+    }
 
-    fun readPage(origin: SafetySpotCsvOrigin, name: String, page: Int, size: Int, skippedOnly: Boolean, keyword: String): CsvPage {
+    fun readPage(
+        origin: SafetySpotCsvOrigin,
+        name: String,
+        page: Int,
+        size: Int,
+        skippedOnly: Boolean,
+        keyword: String,
+    ): SafetySpotCsvPageResponse {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw InvalidCsvPageException(page, size, MAX_PAGE_SIZE)
         }
         val file: SafetySpotCsvFile = fileStore.find(origin, name) ?: throw SafetySpotCsvFileNotFoundException(name)
-        return when (file.origin) {
-            SafetySpotCsvOrigin.SOURCE -> fileStore.readSourcePage(file, page, size, skippedOnly, keyword)
-            SafetySpotCsvOrigin.UPLOAD -> {
-                val bytes: ByteArray = fileStore.readBytes(file)
-                parser.readPage(bytes, SafetySpotCsvSpec.forType(file.type), page, size, skippedOnly, keyword)
+        val csvPage: CsvPage =
+            when (file.origin) {
+                SafetySpotCsvOrigin.SOURCE -> fileStore.readSourcePage(file, page, size, skippedOnly, keyword)
+                SafetySpotCsvOrigin.UPLOAD -> {
+                    val bytes: ByteArray = fileStore.readBytes(file)
+                    parser.readPage(bytes, SafetySpotCsvSpec.forType(file.type), page, size, skippedOnly, keyword)
+                }
             }
-        }
+        return SafetySpotCsvPageResponse.from(csvPage)
     }
 
     private companion object {

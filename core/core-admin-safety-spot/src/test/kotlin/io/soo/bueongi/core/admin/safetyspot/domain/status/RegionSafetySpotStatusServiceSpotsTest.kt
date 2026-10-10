@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotsResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidSpotLimitException
-import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpots
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
@@ -26,7 +26,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `자치단체 이름과 시도를 붙여 그 지역 지점만 내준다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(
                     SafetySpotType.CCTV to
@@ -45,7 +45,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `상한에 걸려 잘려도 전체 건수는 그대로 말한다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 50)),
             ).findSpotsByCode(MAPO, limit = 10)
@@ -56,7 +56,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `종류가 섞여 있으면 상한을 종류별로 나눠 담는다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(
                     SafetySpotType.CCTV to points(SafetySpotType.CCTV, 100),
@@ -74,7 +74,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `자를 때는 앞에서 자르지 않고 지역 전체에 편다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 10)),
             ).findSpotsByCode(MAPO, limit = 2)
@@ -84,7 +84,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `상한을 넘겨 요청하면 상한까지만 보낸다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 6_000)),
             ).findSpotsByCode(MAPO, limit = 9_999)
@@ -106,7 +106,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `없는 자치단체는 코드를 그대로 돌려주고 빈 목록을 낸다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
             ).findSpotsByCode("9999999", limit = 100)
@@ -118,7 +118,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
 
     @Test
     fun `지역을 모르는 지점은 unknown 으로 조회된다`() {
-        val found: RegionSafetySpots =
+        val found: RegionSafetySpotsResponse =
             service(
                 mapOf(
                     SafetySpotType.CCTV to

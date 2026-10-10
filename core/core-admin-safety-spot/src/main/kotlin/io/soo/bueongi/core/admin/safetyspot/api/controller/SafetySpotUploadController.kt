@@ -2,7 +2,6 @@ package io.soo.bueongi.core.admin.safetyspot.api.controller
 
 import io.soo.bueongi.core.admin.safetyspot.api.request.toValidatedSafetySpotType
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotUploadResponse
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotUploadResult
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.enums.SafetySpotType
 import org.springframework.http.MediaType
@@ -24,7 +23,6 @@ class SafetySpotUploadController(
         @RequestParam("file") file: MultipartFile,
     ): SafetySpotUploadResponse {
         val safetySpotType: SafetySpotType = toValidatedSafetySpotType(type)
-        val result: SafetySpotUploadResult = uploadService.upload(safetySpotType, file.bytes)
-        return SafetySpotUploadResponse.from(result)
+        return uploadService.upload(safetySpotType, file.bytes)
     }
 }

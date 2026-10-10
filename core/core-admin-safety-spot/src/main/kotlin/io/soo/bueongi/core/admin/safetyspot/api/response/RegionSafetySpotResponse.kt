@@ -32,5 +32,13 @@ data class RegionSafetySpotResponse(
                     },
             )
         }
+
+        fun from(counts: List<RegionSafetySpotCount>): List<RegionSafetySpotResponse> {
+            val responses: ArrayList<RegionSafetySpotResponse> = ArrayList(counts.size)
+            for (count in counts) {
+                responses.add(from(count))
+            }
+            return responses
+        }
     }
 }
