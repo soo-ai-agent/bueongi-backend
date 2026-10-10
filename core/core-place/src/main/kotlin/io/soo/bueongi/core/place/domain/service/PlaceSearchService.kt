@@ -22,19 +22,6 @@ class PlaceSearchService(
                 log.warn("외부 장소 검색 실패 — 503 으로 알림 | 원인=${e.javaClass.simpleName}")
                 throw PlaceSearchUnavailableException(cause = e)
             }
-        val responses: ArrayList<PlaceResponse> = ArrayList(places.size)
-        for (place in places) {
-            responses.add(place.toPlaceResponse())
-        }
-        return responses
+        return PlaceResponse.from(places)
     }
-}
-
-private fun Place.toPlaceResponse(): PlaceResponse {
-    return PlaceResponse(
-        name = name,
-        address = address,
-        lat = lat,
-        lng = lng,
-    )
 }
