@@ -224,7 +224,7 @@ backend/
 **`.claude/skills/backend-spring-kotlin/SKILL.md`** 스킬이 정의한다 — 아래 16조와 함께 적용한다.
 
 ### 레이어·모듈
-1. **Controller 는 요청/응답 변환과 인증 정보 추출만** 담당한다. 검증은 스키마 계층
+1. **Controller 는 요청 변환·인증 정보 추출·서비스 위임만** 담당한다. 응답 DTO 는 서비스가 `XxxResponse.from(...)` 으로 만들어 돌려준다. 검증은 스키마 계층
    (본문 DTO `@Valid`·`toValidatedQuery`, 쿼리 파라미터 `toValidatedGeoPoint`)에서 한다.
 2. **Business 흐름은 각 도메인 모듈의 `domain/*`** 에서 오케스트레이션한다.
 3. **상세 구현은 구현 레이어로 분리**하고 재사용 가능한 단위로 작성한다

@@ -234,7 +234,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 **예측 사용자(client-id)**: 프론트가 보내는 `X-Client-Id`(익명 식별자) 헤더로 고유 수를 관측한다. **로그인 사용자 수가 아니라 관측 하한**이다 — `X-Client-Id` 가 없는 요청은 고유 사용자 집계에서 제외되며, 그 호출 수를 `estimatedUsers.callsWithoutClientId` 로 정직하게 함께 노출한다(호출수 자체에는 포함).
 
-**200 응답** (`TrafficSummary`):
+**200 응답** (`TrafficResponse`):
 
 ```json
 {
@@ -328,7 +328,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 ### `GET /api/admin/slack-config` — 현재 설정 조회
 
-**200 응답** (`SlackConfigSummary`):
+**200 응답** (`SlackConfigResponse`):
 
 ```json
 {
@@ -363,7 +363,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 - `mutedCategories` (선택, 기본 `[]`): 뮤트할 카테고리 key 목록. **위 5종 밖 key → 422 `INVALID_SLACK_CATEGORY`**(부분 적용 없음 — 하나라도 알 수 없으면 전체 거부).
 - webhook 은 편집 불가(본문에 없음).
 
-**200 응답**: 갱신된 `SlackConfigSummary`(GET 과 동일 shape). PUT 직후 GET 하면 변경이 반영돼 있다.
+**200 응답**: 갱신된 `SlackConfigResponse`(GET 과 동일 shape). PUT 직후 GET 하면 변경이 반영돼 있다.
 
 ### `POST /api/admin/slack-config/test` — 테스트 발송
 
@@ -371,7 +371,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 **요청**: 없음(본문 불요).
 
-**200 응답** (`SlackTestResult`):
+**200 응답** (`SlackTestResponse`):
 
 ```json
 { "sent": true, "enabled": true }

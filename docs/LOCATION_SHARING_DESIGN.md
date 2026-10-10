@@ -75,7 +75,7 @@ ShareController.kt        # 4개 엔드포인트(+ HTML 토큰 주입)
 resources/share/guardian.html  # 보호자 지도 페이지(Leaflet+OSM, 5초 폴링)
 ```
 - `BueongiApplication` 은 `RedisAutoConfiguration` 제외(URL 미지정 시 localhost 자동연결 방지). `ShareStoreConfig` 가 URL 주입 시에만 Lettuce 팩토리 생성.
-- `ApiExceptionHandler` 에 `SHARE_SESSION_NOT_FOUND` 핸들러, `HealthController.locationStore` 라벨(불리언 파생, 키/주소 미노출).
+- `ApiExceptionHandler` 에 `SHARE_SESSION_NOT_FOUND` 핸들러, `HealthService` 의 locationStore 라벨(불리언 파생, 키/주소 미노출).
 
 ## 6. 인프라 / 설정 (env)
 
