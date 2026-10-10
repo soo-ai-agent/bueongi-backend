@@ -111,7 +111,7 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 ### Tmap (보행 경로) — `clients:client-tmap`
 
 - **언제**: 사용자가 경로 비교를 요청할 때만 (`/api/routes`).
-- **안 되면**: 직선 기반 폴백 경로로 응답하고(안전 점수·마커 없음), Slack 에 "전면 실패" 사건을 낸다.
+- **안 되면**: 경로 후보가 하나도 없으면 503 `ROUTE_SEARCH_UNAVAILABLE` + Slack 사건 `tmap-route-failed`. 폴백 경로는 없다.
   서버는 죽지 않는다.
 - 응답 본문에 NUL(0x00)이 섞여 오는 실측 사례가 있어 문자열로 받아 다듬은 뒤 파싱한다
   (`TmapResponseText.sanitizeTmapJson`).
@@ -202,9 +202,9 @@ RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
                      ("A: msg <- B: msg" — 겉 메시지만 남기면 진짜 원인이 사라진 사건의 교훈)
 ```
 
-세 옵션이 **전부** null 이면 route 도메인이 **직선 기반 폴백 경로**를 만들어 응답하고
-(안전 점수·마커 없음), 사건 `tmap-route-fallback` 을 발행한다 → Slack 알림.
-**사용자 응답은 어떤 경우에도 나간다** — 외부 장애가 우리 장애가 되지 않게.
+세 옵션이 **전부** null 이면 `SafeRouteService` 가 `RouteSearchUnavailableException` 을 던져
+503 `ROUTE_SEARCH_UNAVAILABLE`("지금은 경로를 찾을 수 없습니다")로 응답한다. 폴백 경로는 만들지 않는다.
+그 오류 응답이 사건이 되어 `ApiErrorEventListener` 가 `tmap-route-failed`(`AlertCategory.ROUTE_SEARCH_FAILED`) 알림을 보낸다 → Slack.
 
 ### 장소 검색 — 계약 → 호출
 
