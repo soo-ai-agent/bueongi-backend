@@ -35,7 +35,7 @@ class ApiErrorEventListenerTest {
             .onApiErrorResponded(ApiErrorResponded(code = "PLACE_SEARCH_UNAVAILABLE", causeName = "HttpClientErrorException"))
 
         assertThat(notifier.sent).hasSize(1)
-        assertThat(notifier.sent[0].first).isEqualTo("tmap-place-failed")
+        assertThat(notifier.sent[0].first).isEqualTo("place-search-failed")
         assertThat(notifier.sent[0].third).isEqualTo("HttpClientErrorException")
     }
 

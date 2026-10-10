@@ -21,8 +21,8 @@ class ApiErrorEventListener(
         }
         if (event.code == "PLACE_SEARCH_UNAVAILABLE") {
             alertNotifier.notify(
-                key = "tmap-place-failed",
-                title = "Tmap 장소검색 실패",
+                key = "place-search-failed",
+                title = "장소검색 실패",
                 detail = event.causeName ?: "원인 미상",
             )
         }
