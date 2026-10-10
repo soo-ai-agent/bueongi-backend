@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.soo.bueongi.storage.db.core.share.model.StoredLocation
 import java.time.Instant
 
 data class LocationView(
@@ -21,6 +22,18 @@ data class LocationView(
 
         fun waiting(overdue: Boolean): LocationView {
             return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
+        }
+
+        fun from(location: StoredLocation, overdue: Boolean): LocationView {
+            return LocationView(
+                lat = location.lat,
+                lng = location.lng,
+                updatedAt = location.updatedAt,
+                expired = false,
+                remainingM = location.remainingM,
+                remainingS = location.remainingS,
+                overdue = overdue,
+            )
         }
     }
 }

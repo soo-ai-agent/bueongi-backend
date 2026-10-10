@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.share.api.controller
 
-import io.soo.bueongi.core.share.api.response.ActiveShareView
 import io.soo.bueongi.core.share.api.response.LocationView
 import io.soo.bueongi.core.share.api.response.RouteView
 import io.soo.bueongi.core.share.api.response.ShareSessionsResponse
@@ -18,14 +17,12 @@ class ShareAdminController(
 ) {
     @GetMapping("/share-status")
     fun shareStatus(): ShareStatusResponse {
-        val activeSessions: Int = shareService.countActiveSessions()
-        return ShareStatusResponse(activeSessions = activeSessions)
+        return shareService.getShareStatus()
     }
 
     @GetMapping("/share-sessions")
     fun shareSessions(): ShareSessionsResponse {
-        val sessions: List<ActiveShareView> = shareService.listActiveSessions()
-        return ShareSessionsResponse(sessions = sessions)
+        return shareService.listActiveSessions()
     }
 
     @GetMapping("/share-sessions/{token}/location")

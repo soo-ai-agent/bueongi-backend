@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test
 class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
     @Test
     fun `listActiveSessions 는 세션이 없으면 빈 목록`() {
-        assertTrue(service.listActiveSessions().isEmpty())
+        assertTrue(service.listActiveSessions().sessions.isEmpty())
     }
 
     @Test
     fun `listActiveSessions 는 활성 세션을 매핑한다(shareUrl·ttl·viewerActive·lat 파생)`() {
         val s = service.create(1)
         service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04))
-        val list = service.listActiveSessions()
+        val list = service.listActiveSessions().sessions
         assertEquals(1, list.size)
         val v = list[0]
         assertEquals(s.token, v.token)
@@ -32,7 +32,7 @@ class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
     @Test
     fun `위치 미보고 세션은 lat·lng·updatedAtMs 가 null`() {
         service.create(null)
-        val v = service.listActiveSessions().single()
+        val v = service.listActiveSessions().sessions.single()
         assertNull(v.lat)
         assertNull(v.lng)
         assertNull(v.updatedAtMs)
@@ -42,7 +42,7 @@ class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
     fun `보호자 조회가 있으면 listActiveSessions 의 viewerActive=true`() {
         val s = service.create(null)
         service.getLocation(s.token)
-        assertTrue(service.listActiveSessions().single().viewerActive)
+        assertTrue(service.listActiveSessions().sessions.single().viewerActive)
     }
 
     @Test
@@ -51,7 +51,7 @@ class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
         clock.advanceSeconds(1800)
         val live = service.create(1)
         clock.advanceSeconds(1800)
-        val list = service.listActiveSessions()
+        val list = service.listActiveSessions().sessions
         assertEquals(listOf(live.token), list.map { it.token })
     }
 
@@ -64,9 +64,9 @@ class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
         service.updateLocation(older.token, older.ownerSecret, report())
         clock.advanceSeconds(10)
         service.updateLocation(recent.token, recent.ownerSecret, report())
-        val tokens = service.listActiveSessions().map { it.token }
+        val tokens = service.listActiveSessions().sessions.map { it.token }
         assertEquals(listOf(recent.token, older.token, noLocation.token), tokens)
-        assertNull(service.listActiveSessions().last().updatedAtMs)
+        assertNull(service.listActiveSessions().sessions.last().updatedAtMs)
     }
 
     @Test
@@ -74,7 +74,7 @@ class ShareServiceActiveSessionsTest : ShareServiceTestSupport() {
         val x = service.create(null)
         val y = service.create(null)
         val expected = listOf(x.token, y.token).sorted()
-        assertEquals(expected, service.listActiveSessions().map { it.token })
+        assertEquals(expected, service.listActiveSessions().sessions.map { it.token })
     }
 
     @Test

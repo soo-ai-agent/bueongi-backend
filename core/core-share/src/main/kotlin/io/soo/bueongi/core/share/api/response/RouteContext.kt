@@ -11,32 +11,20 @@ data class RouteContext(
     val totalDistanceM: Int?,
     @param:JsonProperty("total_time_s")
     val totalTimeS: Int?,
-    val type: String? = null,
-    val provenance: String? = null,
-)
-
-fun StoredRoute.toRouteContext(): RouteContext {
-    return RouteContext(
-        destination = RouteDestination(name = destination.name, lat = destination.lat, lng = destination.lng),
-        path = path.map { RoutePoint(lat = it.lat, lng = it.lng) },
-        markers =
-            markers.map { marker ->
-                RouteMarker(
-                    type = marker.type,
-                    lat = marker.lat,
-                    lng = marker.lng,
-                    x = marker.x,
-                    y = marker.y,
-                    name = marker.name,
-                    purpose = marker.purpose,
-                    cameraCount = marker.cameraCount,
-                    address = marker.address,
-                    phone = marker.phone,
-                )
-            },
-        totalDistanceM = totalDistanceM,
-        totalTimeS = totalTimeS,
-        type = type,
-        provenance = provenance,
-    )
+    val type: String?,
+    val provenance: String?,
+) {
+    companion object {
+        fun from(route: StoredRoute): RouteContext {
+            return RouteContext(
+                destination = RouteDestination.from(route.destination),
+                path = RoutePoint.from(route.path),
+                markers = RouteMarker.from(route.markers),
+                totalDistanceM = route.totalDistanceM,
+                totalTimeS = route.totalTimeS,
+                type = route.type,
+                provenance = route.provenance,
+            )
+        }
+    }
 }

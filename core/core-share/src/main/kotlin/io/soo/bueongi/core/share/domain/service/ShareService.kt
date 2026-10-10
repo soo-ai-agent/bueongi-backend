@@ -4,9 +4,10 @@ import io.soo.bueongi.core.share.api.response.ActiveShareView
 import io.soo.bueongi.core.share.api.response.CreateShareResponse
 import io.soo.bueongi.core.share.api.response.LocationView
 import io.soo.bueongi.core.share.api.response.RouteView
+import io.soo.bueongi.core.share.api.response.ShareSessionsResponse
+import io.soo.bueongi.core.share.api.response.ShareStatusResponse
 import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.response.WatchResponse
-import io.soo.bueongi.core.share.api.response.toRouteContext
 import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.LocationReport
@@ -40,7 +41,7 @@ class ShareService(
         val now: Instant = clock.instant()
         val expiresAt: Instant = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
         val expectedArrivalAt: Instant? = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
-        store.save(
+        val session: ShareSession =
             ShareSession(
                 token = token,
                 ownerSecret = ownerSecret,
@@ -48,43 +49,32 @@ class ShareService(
                 expiresAt = expiresAt,
                 location = null,
                 expectedArrivalAt = expectedArrivalAt,
-            ),
-        )
-        return CreateShareResponse(
-            token = token,
-            ownerSecret = ownerSecret,
-            shareUrl = shareUrlFor(token),
-            expiresAt = expiresAt,
-        )
+            )
+        store.save(session)
+        val shareUrl: String = shareUrlFor(token)
+        return CreateShareResponse.from(session, shareUrl)
     }
 
-    fun listActiveSessions(): List<ActiveShareView> {
+    fun listActiveSessions(): ShareSessionsResponse {
         val now: Instant = clock.instant()
         val views: ArrayList<ActiveShareView> = ArrayList()
         for (session in store.findActiveSessions()) {
             views.add(toActiveShareView(session, now))
         }
         views.sortWith(ACTIVE_SHARE_ORDER)
-        return views
+        return ShareSessionsResponse.from(views)
     }
 
-    fun countActiveSessions(): Int {
-        return store.countActiveSessions()
+    fun getShareStatus(): ShareStatusResponse {
+        val activeSessions: Int = store.countActiveSessions()
+        return ShareStatusResponse.from(activeSessions)
     }
 
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
-        val location: StoredLocation? = session.location
         val ttlSeconds: Long = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
-        val updatedAt: Instant? = location?.updatedAt
-        return ActiveShareView(
-            token = session.token,
-            shareUrl = shareUrlFor(session.token),
-            lat = location?.lat,
-            lng = location?.lng,
-            updatedAtMs = updatedAt?.toEpochMilli(),
-            ttlSeconds = ttlSeconds,
-            viewerActive = store.isWatched(session.token),
-        )
+        val shareUrl: String = shareUrlFor(session.token)
+        val viewerActive: Boolean = store.isWatched(session.token)
+        return ActiveShareView.from(session, shareUrl, ttlSeconds, viewerActive)
     }
 
     private fun shareUrlFor(token: String): String {
@@ -104,7 +94,7 @@ class ShareService(
                 remainingS = report.remainingS,
             )
         store.save(session.withLocation(location))
-        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+        return UpdateLocationResponse.from(session, now)
     }
 
     fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
@@ -112,14 +102,14 @@ class ShareService(
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
         store.save(session.withRoute(route))
-        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
+        return UpdateLocationResponse.from(session, now)
     }
 
     fun getRoute(token: String): RouteView {
         val session: ShareSession =
             store.findByToken(token)
                 ?: return RouteView.EXPIRED
-        return RouteView(expired = false, route = session.route?.toRouteContext())
+        return RouteView.from(session.route)
     }
 
     fun getLocation(token: String): LocationView {
@@ -142,15 +132,7 @@ class ShareService(
         val location: StoredLocation =
             session.location
                 ?: return LocationView.waiting(overdue)
-        return LocationView(
-            lat = location.lat,
-            lng = location.lng,
-            updatedAt = location.updatedAt,
-            expired = false,
-            remainingM = location.remainingM,
-            remainingS = location.remainingS,
-            overdue = overdue,
-        )
+        return LocationView.from(location, overdue)
     }
 
     fun storeBackendLabel(): String {
@@ -166,18 +148,10 @@ class ShareService(
     fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
         val session: ShareSession =
             store.findByToken(token)
-                ?: return WatchResponse(watching = false, expired = true)
+                ?: return WatchResponse.EXPIRED
         requireOwner(session, ownerSecret)
-        val location: StoredLocation? = session.location
-        return WatchResponse(
-            watching = store.isWatched(token),
-            lat = location?.lat,
-            lng = location?.lng,
-            updatedAt = location?.updatedAt,
-            expired = false,
-            remainingM = location?.remainingM,
-            remainingS = location?.remainingS,
-        )
+        val watching: Boolean = store.isWatched(token)
+        return WatchResponse.from(watching, session.location)
     }
 
     // 상수 시간 비교로 타이밍 누출을 피하고, 누락/불일치는 404(불투명 응답).
