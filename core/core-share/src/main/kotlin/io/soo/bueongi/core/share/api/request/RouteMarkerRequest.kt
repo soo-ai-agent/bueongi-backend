@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share.api.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.model.ROUTE_MARKER_TYPE_PATTERN
+import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
@@ -28,4 +28,23 @@ data class RouteMarkerRequest(
     val cameraCount: Int? = null,
     val address: String? = null,
     val phone: String? = null,
-)
+) {
+    fun toStoredMarker(): StoredMarker {
+        return StoredMarker(
+            type = requireNotNull(type) { "marker.type 은 검증을 통과했어야 한다" },
+            lat = requireNotNull(lat),
+            lng = requireNotNull(lng),
+            x = x,
+            y = y,
+            name = name,
+            purpose = purpose,
+            cameraCount = cameraCount,
+            address = address,
+            phone = phone,
+        )
+    }
+
+    companion object {
+        const val ROUTE_MARKER_TYPE_PATTERN: String = "cctv|bell|store|police|safehouse|lamp|security_lamp|pedestrian_signal"
+    }
+}

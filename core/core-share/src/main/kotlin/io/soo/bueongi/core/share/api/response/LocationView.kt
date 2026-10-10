@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.share.domain.model
+package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
@@ -19,7 +19,8 @@ data class LocationView(
         // 좌표 필드는 와이어 계약상 null 로 나간다.
         val EXPIRED = LocationView(lat = null, lng = null, updatedAt = null, expired = true)
 
-        fun waiting(overdue: Boolean): LocationView =
-            LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
+        fun waiting(overdue: Boolean): LocationView {
+            return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
+        }
     }
 }

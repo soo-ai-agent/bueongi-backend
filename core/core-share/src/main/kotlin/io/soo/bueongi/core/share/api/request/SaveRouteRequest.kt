@@ -3,13 +3,9 @@ package io.soo.bueongi.core.share.api.request
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
+import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.share.domain.error.InvalidRouteMetaException
-import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_MARKERS
-import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PATH_POINTS
-import io.soo.bueongi.core.share.domain.model.MAX_ROUTE_PROVENANCE_LENGTH
-import io.soo.bueongi.core.share.domain.model.ROUTE_TYPE_VALUES
 import io.soo.bueongi.storage.db.core.share.model.StoredCoord
-import io.soo.bueongi.storage.db.core.share.model.StoredMarker
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
 import jakarta.validation.Valid
@@ -51,21 +47,7 @@ data class SaveRouteRequest(
                 path.orEmpty().map {
                     StoredCoord(lat = requireNotNull(it.lat), lng = requireNotNull(it.lng))
                 },
-            markers =
-                markers.orEmpty().map { marker ->
-                    StoredMarker(
-                        type = requireNotNull(marker.type) { "marker.type 은 검증을 통과했어야 한다" },
-                        lat = requireNotNull(marker.lat),
-                        lng = requireNotNull(marker.lng),
-                        x = marker.x,
-                        y = marker.y,
-                        name = marker.name,
-                        purpose = marker.purpose,
-                        cameraCount = marker.cameraCount,
-                        address = marker.address,
-                        phone = marker.phone,
-                    )
-                },
+            markers = markers.orEmpty().map(RouteMarkerRequest::toStoredMarker),
             totalDistanceM = totalDistanceM,
             totalTimeS = totalTimeS,
             type = type,
@@ -74,23 +56,28 @@ data class SaveRouteRequest(
     }
 
     private fun validateRouteMeta() {
-        type?.let {
-            if (it !in ROUTE_TYPE_VALUES) {
-                throw InvalidRouteMetaException(
-                    field = "type",
-                    message = "type 은 ${ROUTE_TYPE_VALUES.joinToString("|")} 중 하나여야 합니다.",
-                    rejectedValue = it,
-                )
-            }
+        if (type != null && type !in ROUTE_TYPE_VALUES) {
+            throw InvalidRouteMetaException(
+                field = "type",
+                message = "type 은 ${ROUTE_TYPE_VALUES.joinToString("|")} 중 하나여야 합니다.",
+                rejectedValue = type,
+            )
         }
-        provenance?.let {
-            if (it.length > MAX_ROUTE_PROVENANCE_LENGTH) {
-                throw InvalidRouteMetaException(
-                    field = "provenance",
-                    message = "provenance 는 최대 ${MAX_ROUTE_PROVENANCE_LENGTH}자까지 입력할 수 있습니다.",
-                    rejectedValue = it.length,
-                )
-            }
+        if (provenance != null && provenance.length > MAX_ROUTE_PROVENANCE_LENGTH) {
+            throw InvalidRouteMetaException(
+                field = "provenance",
+                message = "provenance 는 최대 ${MAX_ROUTE_PROVENANCE_LENGTH}자까지 입력할 수 있습니다.",
+                rejectedValue = provenance.length,
+            )
         }
+    }
+
+    companion object {
+        const val MAX_ROUTE_PATH_POINTS: Int = 4000
+        const val MAX_ROUTE_MARKERS: Int = 300
+        const val MAX_ROUTE_PROVENANCE_LENGTH: Int = 200
+
+        // RouteType.of 는 모르는 값을 SAFE 로 받아 줘서 쓸 수 없고, 여기는 422 로 거절할 값 목록이다.
+        val ROUTE_TYPE_VALUES: Set<String> = RouteType.entries.map(RouteType::apiType).toSet()
     }
 }

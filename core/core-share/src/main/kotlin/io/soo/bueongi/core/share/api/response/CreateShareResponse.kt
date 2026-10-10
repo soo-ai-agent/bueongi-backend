@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.model.ShareCreated
 import java.time.Instant
 
 data class CreateShareResponse(
@@ -12,14 +11,4 @@ data class CreateShareResponse(
     val shareUrl: String,
     @param:JsonProperty("expires_at")
     val expiresAt: Instant,
-) {
-    companion object {
-        fun from(created: ShareCreated): CreateShareResponse =
-            CreateShareResponse(
-                token = created.token,
-                ownerSecret = created.ownerSecret,
-                shareUrl = created.shareUrl,
-                expiresAt = created.expiresAt,
-            )
-    }
-}
+)

@@ -1,16 +1,16 @@
 package io.soo.bueongi.core.share.domain.service
 
+import io.soo.bueongi.core.share.api.response.ActiveShareView
+import io.soo.bueongi.core.share.api.response.CreateShareResponse
+import io.soo.bueongi.core.share.api.response.LocationView
+import io.soo.bueongi.core.share.api.response.RouteView
+import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
+import io.soo.bueongi.core.share.api.response.WatchResponse
+import io.soo.bueongi.core.share.api.response.toRouteContext
 import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
-import io.soo.bueongi.core.share.domain.model.ActiveShareView
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.LocationReport
-import io.soo.bueongi.core.share.domain.model.LocationView
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
-import io.soo.bueongi.core.share.domain.model.ShareCreated
-import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
-import io.soo.bueongi.core.share.domain.model.ShareWatchStatus
-import io.soo.bueongi.core.share.domain.model.toRouteContext
-import io.soo.bueongi.core.share.domain.route.model.RouteView
 import io.soo.bueongi.storage.db.core.share.model.ShareSession
 import io.soo.bueongi.storage.db.core.share.model.StoredLocation
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
@@ -30,10 +30,10 @@ class ShareService(
     private val clock: Clock,
     @param:Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
-    private val random = SecureRandom()
+    private val random: SecureRandom = SecureRandom()
     private val tokenEncoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
-    fun create(expiresInHours: Int?, etaSeconds: Int? = null): ShareCreated {
+    fun create(expiresInHours: Int?, etaSeconds: Int? = null): CreateShareResponse {
         val hours: Int = expiresInHours ?: DEFAULT_EXPIRES_HOURS
         val token: String = newToken()
         val ownerSecret: String = newToken()
@@ -50,7 +50,7 @@ class ShareService(
                 expectedArrivalAt = expectedArrivalAt,
             ),
         )
-        return ShareCreated(
+        return CreateShareResponse(
             token = token,
             ownerSecret = ownerSecret,
             shareUrl = shareUrlFor(token),
@@ -68,29 +68,34 @@ class ShareService(
         return views
     }
 
-    fun countActiveSessions(): Int = store.countActiveSessions()
+    fun countActiveSessions(): Int {
+        return store.countActiveSessions()
+    }
 
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
         val location: StoredLocation? = session.location
         val ttlSeconds: Long = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
+        val updatedAt: Instant? = location?.updatedAt
         return ActiveShareView(
             token = session.token,
             shareUrl = shareUrlFor(session.token),
             lat = location?.lat,
             lng = location?.lng,
-            updatedAtMs = location?.updatedAt?.toEpochMilli(),
+            updatedAtMs = updatedAt?.toEpochMilli(),
             ttlSeconds = ttlSeconds,
             viewerActive = store.isWatched(session.token),
         )
     }
 
-    private fun shareUrlFor(token: String): String = "${baseUrl.trimEnd('/')}/share/$token"
+    private fun shareUrlFor(token: String): String {
+        return "${baseUrl.trimEnd('/')}/share/$token"
+    }
 
-    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): ShareLocationUpdated {
+    fun updateLocation(token: String, ownerSecret: String?, report: LocationReport): UpdateLocationResponse {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
-        val location =
+        val location: StoredLocation =
             StoredLocation(
                 lat = report.lat,
                 lng = report.lng,
@@ -99,15 +104,15 @@ class ShareService(
                 remainingS = report.remainingS,
             )
         store.save(session.withLocation(location))
-        return ShareLocationUpdated(updatedAt = now, expiresAt = session.expiresAt)
+        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
     }
 
-    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): ShareLocationUpdated {
+    fun saveRoute(token: String, ownerSecret: String?, route: StoredRoute): UpdateLocationResponse {
         val session: ShareSession = store.findByToken(token) ?: throw ShareSessionNotFoundException()
         requireOwner(session, ownerSecret)
         val now: Instant = clock.instant()
         store.save(session.withRoute(route))
-        return ShareLocationUpdated(updatedAt = now, expiresAt = session.expiresAt)
+        return UpdateLocationResponse(updatedAt = now, expiresAt = session.expiresAt)
     }
 
     fun getRoute(token: String): RouteView {
@@ -148,7 +153,9 @@ class ShareService(
         )
     }
 
-    fun storeBackendLabel(): String = store.backend
+    fun storeBackendLabel(): String {
+        return store.backend
+    }
 
     fun end(token: String, ownerSecret: String?) {
         val session: ShareSession = store.findByToken(token) ?: return
@@ -156,13 +163,13 @@ class ShareService(
         store.deleteByToken(token)
     }
 
-    fun getWatchingStatus(token: String, ownerSecret: String?): ShareWatchStatus {
+    fun getWatchingStatus(token: String, ownerSecret: String?): WatchResponse {
         val session: ShareSession =
             store.findByToken(token)
-                ?: return ShareWatchStatus(watching = false, expired = true)
+                ?: return WatchResponse(watching = false, expired = true)
         requireOwner(session, ownerSecret)
         val location: StoredLocation? = session.location
-        return ShareWatchStatus(
+        return WatchResponse(
             watching = store.isWatched(token),
             lat = location?.lat,
             lng = location?.lng,
@@ -187,7 +194,7 @@ class ShareService(
     }
 
     private fun newToken(): String {
-        val bytes = ByteArray(TOKEN_BYTES)
+        val bytes: ByteArray = ByteArray(TOKEN_BYTES)
         random.nextBytes(bytes)
         return tokenEncoder.encodeToString(bytes)
     }

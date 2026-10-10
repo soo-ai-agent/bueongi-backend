@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.share.domain.route.model
+package io.soo.bueongi.core.share.api.response
 
 data class RouteView(
     val expired: Boolean,

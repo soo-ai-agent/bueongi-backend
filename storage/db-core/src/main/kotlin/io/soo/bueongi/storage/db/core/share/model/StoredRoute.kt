@@ -6,7 +6,7 @@ data class StoredRoute(
     val markers: List<StoredMarker>,
     val totalDistanceM: Int?,
     val totalTimeS: Int?,
-    // 허용값 safe|fast|main — 이 필드를 보내지 않던 구세션이 있어 null 을 허용한다.
+    // 이 필드를 보내지 않던 구세션이 있어 null 을 허용한다. 허용값은 RouteType 의 apiType 이다.
     val type: String? = null,
     val provenance: String? = null,
 )

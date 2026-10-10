@@ -13,10 +13,6 @@ class GuardianPage {
 
     fun render(token: String): String {
         val escapedToken: String = escapeForJs(token)
-        return template.replace(TOKEN_PLACEHOLDER, escapedToken)
-    }
-
-    private companion object {
-        const val TOKEN_PLACEHOLDER: String = "__SHARE_TOKEN__"
+        return template.replace("__SHARE_TOKEN__", escapedToken)
     }
 }

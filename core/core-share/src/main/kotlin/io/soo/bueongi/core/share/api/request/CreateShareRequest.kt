@@ -1,8 +1,6 @@
 package io.soo.bueongi.core.share.api.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.model.MAX_EXPIRES_HOURS
-import io.soo.bueongi.core.share.domain.model.MIN_EXPIRES_HOURS
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 
@@ -14,4 +12,9 @@ data class CreateShareRequest(
     @field:Min(1)
     @param:JsonProperty("eta_seconds")
     val etaSeconds: Int? = null,
-)
+) {
+    companion object {
+        const val MIN_EXPIRES_HOURS: Int = 1
+        const val MAX_EXPIRES_HOURS: Int = 3
+    }
+}

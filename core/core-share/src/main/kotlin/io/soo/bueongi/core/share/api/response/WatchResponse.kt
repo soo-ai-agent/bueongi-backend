@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.core.share.domain.model.ShareWatchStatus
 import java.time.Instant
 
 data class WatchResponse(
@@ -15,17 +14,4 @@ data class WatchResponse(
     val remainingM: Double? = null,
     @param:JsonProperty("remaining_s")
     val remainingS: Double? = null,
-) {
-    companion object {
-        fun from(status: ShareWatchStatus): WatchResponse =
-            WatchResponse(
-                watching = status.watching,
-                lat = status.lat,
-                lng = status.lng,
-                updatedAt = status.updatedAt,
-                expired = status.expired,
-                remainingM = status.remainingM,
-                remainingS = status.remainingS,
-            )
-    }
-}
+)

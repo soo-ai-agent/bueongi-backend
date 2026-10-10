@@ -6,12 +6,11 @@ import io.soo.bueongi.core.share.api.request.SaveRouteRequest
 import io.soo.bueongi.core.share.api.request.UpdateLocationRequest
 import io.soo.bueongi.core.share.api.request.WatchRequest
 import io.soo.bueongi.core.share.api.response.CreateShareResponse
+import io.soo.bueongi.core.share.api.response.LocationView
+import io.soo.bueongi.core.share.api.response.RouteView
 import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.response.WatchResponse
 import io.soo.bueongi.core.share.domain.model.LocationReport
-import io.soo.bueongi.core.share.domain.model.LocationView
-import io.soo.bueongi.core.share.domain.model.ShareLocationUpdated
-import io.soo.bueongi.core.share.domain.route.model.RouteView
 import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.core.share.model.StoredRoute
 import jakarta.validation.Valid
@@ -33,7 +32,7 @@ class ShareController(
     fun create(
         @Valid @RequestBody(required = false) request: CreateShareRequest?,
     ): CreateShareResponse {
-        return CreateShareResponse.from(service.create(request?.expiresInHours, request?.etaSeconds))
+        return service.create(request?.expiresInHours, request?.etaSeconds)
     }
 
     @PostMapping("/{token}/location")
@@ -42,8 +41,7 @@ class ShareController(
         @Valid @RequestBody request: UpdateLocationRequest,
     ): UpdateLocationResponse {
         val report: LocationReport = request.toReport()
-        val updated: ShareLocationUpdated = service.updateLocation(token, request.ownerSecret, report)
-        return UpdateLocationResponse.from(updated)
+        return service.updateLocation(token, request.ownerSecret, report)
     }
 
     @GetMapping("/{token}/location")
@@ -59,8 +57,7 @@ class ShareController(
         @Valid @RequestBody request: SaveRouteRequest,
     ): UpdateLocationResponse {
         val route: StoredRoute = request.toStoredRoute()
-        val saved: ShareLocationUpdated = service.saveRoute(token, request.ownerSecret, route)
-        return UpdateLocationResponse.from(saved)
+        return service.saveRoute(token, request.ownerSecret, route)
     }
 
     @GetMapping("/{token}/route")
@@ -83,7 +80,7 @@ class ShareController(
         @PathVariable token: String,
         @Valid @RequestBody request: WatchRequest,
     ): WatchResponse {
-        return WatchResponse.from(service.getWatchingStatus(token, request.ownerSecret))
+        return service.getWatchingStatus(token, request.ownerSecret)
     }
 
     @GetMapping("/{token}", produces = [MediaType.TEXT_HTML_VALUE])

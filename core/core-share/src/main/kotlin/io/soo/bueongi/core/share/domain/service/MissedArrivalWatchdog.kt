@@ -31,8 +31,12 @@ class MissedArrivalWatchdog(
     private fun alert(session: ShareSession, now: Instant) {
         val expected: Instant = session.expectedArrivalAt ?: return
         val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
-        val stoppedSeconds: Long? = session.location?.updatedAt?.let { Duration.between(it, now).seconds }
-        val stoppedText: String = stoppedSeconds?.let { "위치가 ${it}초째 정지" } ?: "위치 보고 없음"
+        val lastReportedAt: Instant? = session.location?.updatedAt
+        var stoppedText: String = "위치 보고 없음"
+        if (lastReportedAt != null) {
+            val stoppedSeconds: Long = Duration.between(lastReportedAt, now).seconds
+            stoppedText = "위치가 ${stoppedSeconds}초째 정지"
+        }
         val masked: String = maskToken(session.token)
         shareEvents.missedArrivalSuspected(
             maskedToken = masked,
@@ -42,6 +46,8 @@ class MissedArrivalWatchdog(
     }
 
     private companion object {
-        fun maskToken(token: String): String = token.take(6) + "…"
+        fun maskToken(token: String): String {
+            return token.take(6) + "…"
+        }
     }
 }
