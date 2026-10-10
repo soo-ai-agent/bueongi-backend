@@ -174,15 +174,14 @@ backend/
 │   ├── core-safety-spot/        # 안심시설 적재 — 공공 API 원천별 채우기(Fill)·실패 쿨다운
 │   ├── core-app-info/           # /api/health · /api/app-info(버전)
 │   ├── core-admin-auth/         # 관리자 로그인·토큰·JWT·SecurityConfig·/me
-│   ├── core-admin-ops/          # 운영 관측 — 알림·Slack 설정·수신 요청 트래픽
+│   ├── core-admin-ops/          # 운영 관측 — 알림·Slack 설정·외부 수집 집계
 │   ├── core-admin-safety-spot/  # 관리자 시설 현황·CSV 업로드
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
-│   │                            #   + 앱 전역 웹 설정: ApiControllerAdvice·CORS·CDN·Clock·스케줄링·요청 계측 필터
+│   │                            #   + 앱 전역 웹 설정: ApiControllerAdvice·CORS·CDN·Clock·스케줄링·요청 로그 필터
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
 ├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
 │   ├── safetySpot/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
-│   ├── share/{store,model}          #   13파일이라 역할로 나눔
-│   └── requestmetric            # 수신 요청 지표
+│   └── share/{store,model}          #   13파일이라 역할로 나눔
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   ├── client-place/            # 장소 검색 계약(PlaceSearchClient·Place) — 외부 호출 없음
 │   ├── client-tmap-place/       # 장소 검색 Tmap 구현 — 공급자를 바꾸면 core-app 이 이 줄을 갈아 끼운다

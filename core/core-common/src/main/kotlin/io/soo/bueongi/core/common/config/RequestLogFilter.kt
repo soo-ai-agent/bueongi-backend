@@ -1,9 +1,6 @@
 package io.soo.bueongi.core.common.config
 
 import io.soo.bueongi.core.enums.RequestCaller
-import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
-import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
-import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.support.logging.beginTrace
 import io.soo.bueongi.support.logging.endTrace
 import jakarta.servlet.FilterChain
@@ -13,11 +10,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.filter.OncePerRequestFilter
 
-class RequestMetricsFilter(
-    private val requestMetricStore: RequestMetricStore,
-    private val adminRequestMetricStore: AdminRequestMetricStore,
-) : OncePerRequestFilter() {
-    private val log: Logger = LoggerFactory.getLogger(RequestMetricsFilter::class.java)
+class RequestLogFilter : OncePerRequestFilter() {
+    private val log: Logger = LoggerFactory.getLogger(RequestLogFilter::class.java)
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val startedAt: Long = System.currentTimeMillis()
@@ -39,9 +33,6 @@ class RequestMetricsFilter(
                     caller = caller,
                 ),
             )
-            if (isOurApi(path)) {
-                recordSafely(caller, clientId, path, request.method, response.status, startedAt, durationMs)
-            }
             endTrace()
         }
     }
@@ -65,15 +56,6 @@ class RequestMetricsFilter(
         return RequestCaller.USER
     }
 
-    private fun isOurApi(path: String): Boolean {
-        for (prefix in METRIC_PREFIXES) {
-            if (path == prefix || path.startsWith("$prefix/")) {
-                return true
-            }
-        }
-        return false
-    }
-
     private fun logRequest(line: RequestLogLine) {
         if (line.needsAttention()) {
             log.warn(line.format())
@@ -82,45 +64,9 @@ class RequestMetricsFilter(
         log.info(line.format())
     }
 
-    private fun storeFor(caller: RequestCaller): RequestMetricStore =
-        when (caller) {
-            RequestCaller.ADMIN -> adminRequestMetricStore
-            RequestCaller.USER -> requestMetricStore
-        }
-
-    private fun recordSafely(
-        caller: RequestCaller,
-        clientId: String?,
-        path: String,
-        method: String,
-        status: Int,
-        startedAt: Long,
-        durationMs: Long,
-    ) {
-        try {
-            storeFor(caller).record(
-                RequestMetric(
-                    atEpochMs = startedAt,
-                    method = method,
-                    endpoint = path,
-                    clientId = clientId,
-                    status = status,
-                    durationMs = durationMs,
-                    caller = caller,
-                ),
-            )
-        } catch (e: Exception) {
-            log.warn(
-                "요청 계측 실패 | $status $method $path | 응답은 그대로 나감(통계만 유실) | " +
-                    "원인=${e.javaClass.simpleName}",
-            )
-        }
-    }
-
     private companion object {
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
         val ADMIN_PREFIXES: List<String> = listOf("/api/admin", "/api/v1/auth")
         val EXCLUDED_PREFIXES: List<String> = listOf("/actuator", "/healthz", "/cdn")
-        val METRIC_PREFIXES: List<String> = listOf("/api", "/share")
     }
 }

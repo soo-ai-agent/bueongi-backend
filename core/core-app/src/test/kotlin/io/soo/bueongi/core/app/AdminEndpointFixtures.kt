@@ -3,16 +3,11 @@ package io.soo.bueongi.core.app
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.soo.bueongi.client.slack.SlackAlertConfig
 import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
-import io.soo.bueongi.core.admin.ops.domain.traffic.service.RequestMetricsService
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
-import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.requestmetric.AdminRequestMetricStore
-import io.soo.bueongi.storage.db.core.requestmetric.RequestMetric
-import io.soo.bueongi.storage.db.core.requestmetric.RequestMetricStore
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
 import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
@@ -30,53 +25,10 @@ import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 
 class AdminEndpointFixtures {
     @TestConfiguration
     class FakeStoreConfig {
-        @Bean
-        @Primary
-        fun requestMetricStore(): RequestMetricStore =
-            object : RequestMetricStore {
-                override fun record(metric: RequestMetric) = Unit
-
-                override fun findRecent(limit: Int): List<RequestMetric> =
-                    listOf(
-                        RequestMetric(
-                            atEpochMs = System.currentTimeMillis(),
-                            method = "GET",
-                            endpoint = "/api/places/search",
-                            clientId = "anon-1",
-                            status = 200,
-                            durationMs = 15,
-                        ),
-                    )
-            }
-
-        @Bean
-        fun adminRequestMetricStore(): AdminRequestMetricStore =
-            object : AdminRequestMetricStore {
-                override fun record(metric: RequestMetric) = Unit
-
-                override fun findRecent(limit: Int): List<RequestMetric> =
-                    listOf(
-                        RequestMetric(
-                            atEpochMs = FIXED_NOW.toEpochMilli(),
-                            method = "GET",
-                            endpoint = "/api/admin/traffic",
-                            clientId = null,
-                            status = 200,
-                            durationMs = 8,
-                            caller = RequestCaller.ADMIN,
-                        ),
-                    )
-            }
-
-        @Bean
-        fun requestMetricsService(store: RequestMetricStore, adminStore: AdminRequestMetricStore): RequestMetricsService =
-            RequestMetricsService(store, adminStore, FIXED_CLOCK)
-
         @Bean
         fun safetySpotSource(): SafetySpotSpatialSource =
             object : SafetySpotSpatialSource {
