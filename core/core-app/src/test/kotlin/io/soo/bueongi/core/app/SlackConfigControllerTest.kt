@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
-import io.soo.bueongi.core.admin.ops.api.controller.AlertController
-import io.soo.bueongi.core.admin.ops.domain.alert.AlertHistoryService
+import io.soo.bueongi.core.admin.ops.api.controller.SlackConfigController
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -16,9 +15,9 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 
-@WebMvcTest(AlertController::class)
+@WebMvcTest(SlackConfigController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class, AlertHistoryService::class)
+@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Tag("context")
 class SlackConfigControllerTest(
