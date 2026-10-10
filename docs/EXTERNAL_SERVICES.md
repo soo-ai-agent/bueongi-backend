@@ -31,7 +31,7 @@ flowchart LR
         SH[share 도메인]
         OPS[ops 도메인<br/>사건 리스너]
         TM[client-tmap]
-        KK[client-kakao]
+        TP[client-tmap-place]
         SN[SlackAlertNotifier]
     end
     subgraph 외부
@@ -42,7 +42,7 @@ flowchart LR
     CDN[/CDN 파일<br/>로컬 디스크/]
 
     FE -->|경로 요청| RC --> TM -->|POST| TMAP
-    FE -->|장소 검색| PC --> KK -->|GET| TMAP
+    FE -->|장소 검색| PC --> TP -->|GET| TMAP
     FE -->|위치 공유| SH --> REDIS
     RC -. 폴백 사건 .-> OPS
     PC -. 폴백 사건 .-> OPS
@@ -116,11 +116,10 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 - 응답 본문에 NUL(0x00)이 섞여 오는 실측 사례가 있어 문자열로 받아 다듬은 뒤 파싱한다
   (`TmapResponseText.sanitizeTmapJson`).
 
-### Tmap POI (장소 검색) — `clients:client-tmap`
+### Tmap POI (장소 검색) — `clients:client-tmap-place`
 
-- **언제**: 장소 검색 요청일 때만 (`/api/places?...`). `TMAP_APP_KEY` 미설정이면 아예 안 부르고
-  내장 시드 카탈로그로 검색한다.
-- **안 되면**: 시드 폴백으로 응답 + Slack 사건. 검색 불능보다 근사 결과가 안전하다는 설계다.
+- **언제**: 장소 검색 요청일 때만 (`/api/places/search?keyword=…`). 키는 경로와 같은 `bueongi.tmap.app-key`(`client-tmap.yml`).
+- **안 되면**: 키 미설정·호출 실패 모두 503 `PLACE_SEARCH_UNAVAILABLE` + Slack 사건 `place-search-failed`. 폴백 결과는 없다.
 
 ### Slack (운영 알림) — `clients:client-slack`
 
@@ -148,10 +147,14 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 - **타임아웃은 yml 한 곳에서 전부 적용된다** (`application.yml`): 연결 3초, 응답 10초.
   미설정이면 무한대라, 외부가 느려지는 "슬로우 장애"에서 우리 스레드가 전부 잡혀 전체 장애로 번진다.
 - **키는 생성자에서 주입**받고(`@Value`), 키가 비어 있으면 `isEnabled = false` — **호출 자체를 안 한다.**
-- **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.** 클라이언트가 외부 JSON 을 자기 타입(`TmapRoute`·`TmapPlace`)으로
-  받아 내보내고, core 의 경계 한 곳(`RouteFinder`·`PlaceSearchService`)이 그것을 우리 타입(경로는 도메인 모델 `RouteCandidate`·`NavigationStep`,
-  장소는 응답 DTO `PlaceResponse`)으로 바꾼다. 그래서 Tmap 을 아는 core 파일은 그 둘뿐이다(`RouteTmapBoundaryTest`·`PlaceTmapBoundaryTest` 가 지킨다).
-  외부 규격이 바뀌어도 고칠 곳은 clients 모듈과 그 경계 파일이다.
+- **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.**
+  - 경로: 클라이언트가 외부 JSON 을 자기 타입(`TmapRoute`)으로 받아 내보내고, core 의 경계 한 곳(`RouteFinder`)이
+    도메인 모델 `RouteCandidate`·`NavigationStep` 으로 바꾼다. Tmap 을 아는 core 파일은 그 하나다(`RouteTmapBoundaryTest` 가 지킨다).
+  - 장소: core 는 Tmap 을 모른다. 계약 모듈 `clients:client-place` 의 `PlaceSearchClient`·`Place` 만 알고,
+    `clients:client-tmap-place` 의 `TmapPlaceClient` 가 그 계약을 구현한다. 공급자를 바꾸면 계약을 구현한 새 clients 모듈을 만들고
+    `core-app` 의 의존 한 줄(새 모듈이 자기 yml 을 가지면 `application.yml` import 한 줄도)을 바꾼다 — core 와 core 의 테스트는 그대로다.
+    장소 구현을 경로용 `client-tmap` 과 다른 모듈에 둔 이유: `client-tmap` 은 core-route 때문에 늘 클래스패스에 남아,
+    그 안에 장소 구현이 있으면 새 공급자와 `PlaceSearchClient` 빈이 둘이 되어 부팅이 멈춘다.
 
 ### Tmap 경로 — 요청 한 번의 여정
 
@@ -203,21 +206,17 @@ RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
 (안전 점수·마커 없음), 사건 `tmap-route-fallback` 을 발행한다 → Slack 알림.
 **사용자 응답은 어떤 경우에도 나간다** — 외부 장애가 우리 장애가 되지 않게.
 
-### Tmap 장소 검색 — 게이트 → 호출
+### 장소 검색 — 계약 → 호출
 
 ```
-PlaceSearchService.search(키워드)
+PlaceSearchService.search(키워드)          ← core 는 PlaceSearchClient 계약만 안다
     │
-    ├─ 키 없음(isEnabled=false)  ─→ 내장 시드 카탈로그 검색   ← 호출 자체가 없다
-    │
-    └─ 키 있음 ─→ GET dapi.kakao.com/v2/local/search/keyword.json?query=…&size=15
-                   헤더 Authorization: KakaoAK <키>
-                   │
-                   ├─ 성공 → 응답 문서를 KakaoPlace 로 번역해 반환
-                   └─ 예외 → catch → 시드 폴백 + 사건 kakao-place-fallback → Slack
+    └─ TmapPlaceClient.search ─→ GET apis.openapi.sk.com/tmap/pois?searchKeyword=…&count=15
+                                   헤더 appKey: ***
+                                   │
+                                   ├─ 성공 → 응답을 Place 로 번역해 반환 → PlaceResponse
+                                   └─ 키 없음·예외 → PlaceSearchUnavailableException(503) → 사건 place-search-failed → Slack
 ```
-
-폴백을 두는 이유: 안심 앱에서 "검색 불능"보다 "근사 결과"가 안전하다는 설계 결정이다.
 
 ### Slack 알림 — 도메인은 Slack 을 모른다
 
@@ -281,5 +280,5 @@ curl -s localhost:8119/api/health
 | CDN 파일(시설) | **읽음(로컬)** | 기동 1회 | 경고 로그 + 빈 적재로 기동 |
 | Redis | 연결(설정 시) | 공유 세션 I/O | 인메모리 폴백 |
 | Tmap | 안 부름 | 경로 요청 | 폴백 경로 + Slack |
-| Kakao | 안 부름 | 장소 검색 요청 | 시드 폴백 + Slack |
+| Tmap 장소 | 안 부름 | 장소 검색 요청 | 503 + Slack |
 | Slack | 안 부름 | 사건 발생 | 로그만 (알림 유실) |

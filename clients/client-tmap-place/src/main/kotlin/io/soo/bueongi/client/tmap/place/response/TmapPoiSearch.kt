@@ -1,7 +1,7 @@
-package io.soo.bueongi.client.tmap.response
+package io.soo.bueongi.client.tmap.place.response
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import io.soo.bueongi.client.tmap.TmapPlace
+import io.soo.bueongi.client.place.Place
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class TmapPoiSearch(
@@ -21,12 +21,12 @@ internal data class TmapPois(
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class TmapPoi(
     val name: String = "",
-    // 좌표는 명세상 선택(N)이고 대신 쓸 값이 없다 — 없으면 toTmapPlace 가 그 POI 를 버린다.
+    // 좌표는 명세상 선택(N)이고 대신 쓸 값이 없다 — 없으면 toPlace 가 그 POI 를 버린다.
     val frontLat: Double? = null,
     val frontLon: Double? = null,
     val newAddressList: TmapNewAddressList = TmapNewAddressList(),
 ) {
-    fun toTmapPlace(): TmapPlace? {
+    fun toPlace(): Place? {
         val lat: Double = frontLat ?: return null
         val lng: Double = frontLon ?: return null
         val placeName: String = name.trim()
@@ -34,7 +34,7 @@ internal data class TmapPoi(
             return null
         }
         val address: String = newAddressList.newAddress.firstOrNull()?.fullAddressRoad.orEmpty().trim()
-        return TmapPlace(name = placeName, address = address, lat = lat, lng = lng)
+        return Place(name = placeName, address = address, lat = lat, lng = lng)
     }
 }
 

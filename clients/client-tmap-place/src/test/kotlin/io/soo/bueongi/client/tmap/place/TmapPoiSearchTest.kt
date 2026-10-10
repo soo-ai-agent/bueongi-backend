@@ -1,8 +1,9 @@
-package io.soo.bueongi.client.tmap
+package io.soo.bueongi.client.tmap.place
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.soo.bueongi.client.tmap.response.TmapPoiSearch
+import io.soo.bueongi.client.place.Place
+import io.soo.bueongi.client.tmap.place.response.TmapPoiSearch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -29,9 +30,9 @@ class TmapPoiSearchTest {
             """
         val response: TmapPoiSearch = mapper.readValue(body)
 
-        val place: TmapPlace? = response.searchPoiInfo.pois.poi.single().toTmapPlace()
+        val place: Place? = response.searchPoiInfo.pois.poi.single().toPlace()
 
-        val expected = TmapPlace(name = "화목순대국 광화문1호점", address = "서울 종로구 새문안로5길 11", lat = 37.57120359, lng = 126.97482678)
+        val expected = Place(name = "화목순대국 광화문1호점", address = "서울 종로구 새문안로5길 11", lat = 37.57120359, lng = 126.97482678)
         assertThat(place).isEqualTo(expected)
     }
 
@@ -40,7 +41,7 @@ class TmapPoiSearchTest {
         val body = """{"searchPoiInfo":{"pois":{"poi":[{"name":"이름만 있는 곳"}]}}}"""
         val response: TmapPoiSearch = mapper.readValue(body)
 
-        assertThat(response.searchPoiInfo.pois.poi.single().toTmapPlace()).isNull()
+        assertThat(response.searchPoiInfo.pois.poi.single().toPlace()).isNull()
     }
 
     @Test
@@ -48,8 +49,8 @@ class TmapPoiSearchTest {
         val body = """{"searchPoiInfo":{"pois":{"poi":[{"name":"강남역","frontLat":"37.49","frontLon":"127.02"}]}}}"""
         val response: TmapPoiSearch = mapper.readValue(body)
 
-        val place: TmapPlace? = response.searchPoiInfo.pois.poi.single().toTmapPlace()
+        val place: Place? = response.searchPoiInfo.pois.poi.single().toPlace()
 
-        assertThat(place).isEqualTo(TmapPlace(name = "강남역", address = "", lat = 37.49, lng = 127.02))
+        assertThat(place).isEqualTo(Place(name = "강남역", address = "", lat = 37.49, lng = 127.02))
     }
 }

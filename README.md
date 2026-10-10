@@ -170,7 +170,7 @@ backend/
 │   │   ├── api/                 #   controller/ · request/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스) · 관리자 공유 조회
-│   ├── core-place/              # 장소 검색(Tmap POI)
+│   ├── core-place/              # 장소 검색(공급자는 PlaceSearchClient 계약 뒤 — core 는 Tmap 을 모른다)
 │   ├── core-safety-spot/        # 안심시설 적재 — 공공 API 원천별 채우기(Fill)·실패 쿨다운
 │   ├── core-app-info/           # /api/health · /api/app-info(버전)
 │   ├── core-admin-auth/         # 관리자 로그인·토큰·JWT·SecurityConfig·/me
@@ -184,6 +184,8 @@ backend/
 │   ├── share/{store,model}          #   13파일이라 역할로 나눔
 │   └── requestmetric            # 수신 요청 지표
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
+│   ├── client-place/            # 장소 검색 계약(PlaceSearchClient·Place) — 외부 호출 없음
+│   ├── client-tmap-place/       # 장소 검색 Tmap 구현 — 공급자를 바꾸면 core-app 이 이 줄을 갈아 끼운다
 │   ├── client-tmap/ · client-slack/(운영 알림 발송·스로틀)
 │   └── client-safemap/ · client-safe182/ · client-datagokr-security-lamp/ · client-safetydata-street-lamp/   # 안심시설 공공 API
 └── support/ (logging · monitoring · util)
