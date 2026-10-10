@@ -12,21 +12,23 @@ data class MapTile(
     val code: String
         get() = "${latCell}_$lngCell"
 
-    fun toBounds(): MapBounds =
-        MapBounds(
+    fun toBounds(): MapBounds {
+        return MapBounds(
             minLat = latCell * SIZE_DEGREES,
             minLng = lngCell * SIZE_DEGREES,
             maxLat = (latCell + 1) * SIZE_DEGREES,
             maxLng = (lngCell + 1) * SIZE_DEGREES,
         )
+    }
 
     companion object {
         const val SIZE_DEGREES: Double = 0.1
 
-        fun of(point: GeoPoint): MapTile =
-            MapTile(
+        fun of(point: GeoPoint): MapTile {
+            return MapTile(
                 latCell = floor(point.lat / SIZE_DEGREES).toInt(),
                 lngCell = floor(point.lng / SIZE_DEGREES).toInt(),
             )
+        }
     }
 }

@@ -16,8 +16,7 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class
-SecurityLampFillService(
+class SecurityLampFillService(
     private val client: SecurityLampClient,
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
@@ -29,7 +28,9 @@ SecurityLampFillService(
 
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
-    fun isFilled(regionCode: String): Boolean = skipReason(regionCode) != null
+    fun isFilled(regionCode: String): Boolean {
+        return skipReason(regionCode) != null
+    }
 
     private fun skipReason(regionCode: String): String? {
         if (safetySpots.index(SafetySpotType.SECURITY_LAMP).regions.contains(regionCode)) {
@@ -73,13 +74,12 @@ SecurityLampFillService(
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
+        // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 캐시로 남겨 매번 다시 받지 않게 한다.
+        cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
         if (points.isEmpty()) {
-            // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 캐시로 남겨 매번 다시 받지 않게 한다.
-            cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
             events.hadNoCoordinates(SafetySpotType.SECURITY_LAMP, regionCode, fetched.size)
             return 0
         }
-        cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
         liveStore.append(SafetySpotType.SECURITY_LAMP, points)
         log.info("보안등 지역 채움: region={}, 받은={}, 좌표있음={}", regionCode, fetched.size, points.size)
         return points.size

@@ -31,18 +31,15 @@ class SafetySpotFillTrigger(
         }
 
     override fun onRoutePlanned(points: List<GeoPoint>) {
-        fillAround(points.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS))
-    }
-
-    fun fillAround(points: List<GeoPoint>) {
-        if (points.isEmpty()) {
+        val fillPoints: List<GeoPoint> = points.pickPointsAlong(FILL_POINT_SPACING_METERS, MAX_FILL_POINTS)
+        if (fillPoints.isEmpty()) {
             return
         }
         executor.execute {
             try {
                 fillNationwide()
-                fillSecurityLampsOf(points)
-                fillChildSafeHousesOf(points)
+                fillSecurityLampsOf(fillPoints)
+                fillChildSafeHousesOf(fillPoints)
             } catch (e: Exception) {
                 // 스택에는 인증키가 실린 원천 URL 이 딸려 온다 — 종류만 남긴다.
                 log.warn(

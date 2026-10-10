@@ -14,12 +14,20 @@ class RegionLocator(
     fun regionCodeAt(point: GeoPoint): String? {
         for (radius in SEARCH_RADII_M) {
             val nearby: List<SafetySpotPoint> = safetySpots.index(SafetySpotType.CCTV).withinRadius(point, radius)
-            val nearest: SafetySpotPoint? =
-                nearby
-                    .filter { it is CctvSpot && !it.openLocalGovCode.isNullOrBlank() }
-                    .minByOrNull { point.distanceMetersTo(it.toGeoPoint()) }
+            var nearest: CctvSpot? = null
+            var nearestDistance: Double = Double.MAX_VALUE
+            for (spot in nearby) {
+                if (spot !is CctvSpot || spot.openLocalGovCode.isNullOrBlank()) {
+                    continue
+                }
+                val distance: Double = point.distanceMetersTo(spot.toGeoPoint())
+                if (distance < nearestDistance) {
+                    nearest = spot
+                    nearestDistance = distance
+                }
+            }
             if (nearest != null) {
-                return (nearest as CctvSpot).openLocalGovCode
+                return nearest.openLocalGovCode
             }
         }
         return null

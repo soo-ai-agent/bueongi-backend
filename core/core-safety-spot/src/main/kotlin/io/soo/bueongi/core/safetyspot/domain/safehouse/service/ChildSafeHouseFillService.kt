@@ -27,7 +27,9 @@ class ChildSafeHouseFillService(
 
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
-    fun isFilled(tile: MapTile): Boolean = cache.isCached(SafetySpotType.SAFEHOUSE, tile.code)
+    fun isFilled(tile: MapTile): Boolean {
+        return cache.isCached(SafetySpotType.SAFEHOUSE, tile.code)
+    }
 
     fun fill(tile: MapTile): Int {
         if (!client.isEnabled) {
