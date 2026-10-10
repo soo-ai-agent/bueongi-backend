@@ -7,6 +7,7 @@ import io.soo.bueongi.core.admin.ops.domain.error.InvalidSlackCategoryException
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackCategoryConfig
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigSummary
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigUpdate
+import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.stereotype.Service
 
@@ -17,10 +18,10 @@ class SlackConfigService(
 ) {
     fun view(): SlackConfigResponse {
         val muted: Set<String> = slackAlertConfig.mutedCategories()
-        val categories: List<SlackCategoryConfig> =
-            KNOWN_CATEGORIES.map { (key, label) ->
-                SlackCategoryConfig(key = key, label = label, muted = muted.contains(key))
-            }
+        val categories: ArrayList<SlackCategoryConfig> = ArrayList()
+        for (category in AlertCategory.entries) {
+            categories.add(SlackCategoryConfig(key = category.key, label = category.label, muted = muted.contains(category.key)))
+        }
         val summary: SlackConfigSummary =
             SlackConfigSummary(
                 webhookConfigured = slackAlertConfig.webhookConfigured(),
@@ -33,11 +34,15 @@ class SlackConfigService(
     }
 
     fun update(update: SlackConfigUpdate): SlackConfigResponse {
-        val unknown: Set<String> = update.mutedCategories - KNOWN_CATEGORIES.keys
+        val knownKeys: ArrayList<String> = ArrayList()
+        for (category in AlertCategory.entries) {
+            knownKeys.add(category.key)
+        }
+        val unknown: Set<String> = update.mutedCategories - knownKeys.toSet()
         if (unknown.isNotEmpty()) {
             throw InvalidSlackCategoryException(
                 rejectedValue = unknown.sorted(),
-                knownKeys = KNOWN_CATEGORIES.keys.toList(),
+                knownKeys = knownKeys,
             )
         }
         slackAlertConfig.update(
@@ -52,16 +57,5 @@ class SlackConfigService(
         val sent: Boolean = alertNotifier.sendTest()
         val enabled: Boolean = slackAlertConfig.sendEnabled()
         return SlackTestResponse.from(sent, enabled)
-    }
-
-    companion object {
-        val KNOWN_CATEGORIES: Map<String, String> =
-            linkedMapOf(
-                "api-500" to "서버 오류(미처리 500)",
-                "kakao-place-fallback" to "장소검색 폴백(Kakao)",
-                "tmap-route-fallback" to "경로 폴백(Tmap)",
-                "safetySpot-index-empty" to "안심시설 데이터 없음",
-                "safetySpot-refresh" to "시설 라이브 갱신 실패",
-            )
     }
 }

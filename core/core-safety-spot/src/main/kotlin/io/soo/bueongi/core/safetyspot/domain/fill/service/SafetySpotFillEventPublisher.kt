@@ -2,6 +2,7 @@ package io.soo.bueongi.core.safetyspot.domain.fill.service
 
 import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.common.event.SafetySpotFetchPerformed
+import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.core.enums.SafetySpotType
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -20,7 +21,7 @@ class SafetySpotFillEventPublisher(
     fun fetchFailed(type: SafetySpotType, scope: String) {
         events.publishEvent(
             OperationEvent(
-                key = "${type.cdnType}-fetch-failed",
+                key = AlertCategory.SAFETY_SPOT_FETCH_FAILED.keyOf(type.cdnType),
                 title = "${type.label} 수집 실패",
                 detail = "${scopeText(scope)}${type.label} 수집 실패 — 기존 데이터 유지, 다음 요청에서 재시도",
             ),
@@ -30,7 +31,7 @@ class SafetySpotFillEventPublisher(
     fun hadNoCoordinates(type: SafetySpotType, scope: String, fetched: Int) {
         events.publishEvent(
             OperationEvent(
-                key = "${type.cdnType}-no-coordinates",
+                key = AlertCategory.SAFETY_SPOT_NO_COORDINATES.keyOf(type.cdnType),
                 title = "${type.label} 좌표 없음",
                 detail = "${scopeText(scope)}${type.label} ${fetched}건을 받았으나 좌표가 없어 적재 0건",
             ),

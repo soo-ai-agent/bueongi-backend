@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.admin.ops.domain.alert
 
 import io.soo.bueongi.core.common.event.ApiErrorResponded
+import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -14,14 +15,14 @@ class ApiErrorEventListener(
     fun onApiErrorResponded(event: ApiErrorResponded) {
         if (event.code == "ROUTE_SEARCH_UNAVAILABLE") {
             alertNotifier.notify(
-                key = "tmap-route-failed",
+                key = AlertCategory.ROUTE_SEARCH_FAILED.key,
                 title = "Tmap 경로 API 실패",
                 detail = "경로 후보 전멸 또는 키 미설정 — 앱은 503 안내를 받는다.",
             )
         }
         if (event.code == "PLACE_SEARCH_UNAVAILABLE") {
             alertNotifier.notify(
-                key = "place-search-failed",
+                key = AlertCategory.PLACE_SEARCH_FAILED.key,
                 title = "장소검색 실패",
                 detail = event.causeName ?: "원인 미상",
             )

@@ -24,7 +24,7 @@ class SlackConfigControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
-    fun `GET 은 미설정 상태와 5종 카테고리를 반환한다`() {
+    fun `GET 은 미설정 상태와 알림 종류 7개를 반환한다`() {
         mockMvc.get("/api/admin/slack-config")
             .andExpect {
                 status { isOk() }
@@ -32,7 +32,7 @@ class SlackConfigControllerTest(
                 jsonPath("$.webhookMasked") { value("") }
                 jsonPath("$.enabled") { value(false) }
                 jsonPath("$.throttleMinutes") { value(10) }
-                jsonPath("$.categories.length()") { value(5) }
+                jsonPath("$.categories.length()") { value(7) }
                 jsonPath("$.categories[0].key") { value("api-500") }
                 jsonPath("$.categories[0].label") { value("서버 오류(미처리 500)") }
                 jsonPath("$.categories[0].muted") { value(false) }
@@ -43,16 +43,16 @@ class SlackConfigControllerTest(
     fun `PUT 은 편집값을 반영한 요약을 반환한다`() {
         mockMvc.put("/api/admin/slack-config") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"enabled":true,"throttleMinutes":30,"mutedCategories":["api-500","tmap-route-fallback"]}"""
+            content = """{"enabled":true,"throttleMinutes":30,"mutedCategories":["api-500","tmap-route-failed"]}"""
         }.andExpect {
             status { isOk() }
             jsonPath("$.enabled") { value(true) }
             jsonPath("$.throttleMinutes") { value(30) }
             jsonPath("$.categories[0].key") { value("api-500") }
             jsonPath("$.categories[0].muted") { value(true) }
-            jsonPath("$.categories[1].key") { value("kakao-place-fallback") }
+            jsonPath("$.categories[1].key") { value("place-search-failed") }
             jsonPath("$.categories[1].muted") { value(false) }
-            jsonPath("$.categories[2].key") { value("tmap-route-fallback") }
+            jsonPath("$.categories[2].key") { value("tmap-route-failed") }
             jsonPath("$.categories[2].muted") { value(true) }
         }
     }
@@ -61,7 +61,7 @@ class SlackConfigControllerTest(
     fun `PUT 후 GET 하면 변경이 반영되어 있다`() {
         mockMvc.put("/api/admin/slack-config") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"enabled":true,"throttleMinutes":45,"mutedCategories":["safetySpot-refresh"]}"""
+            content = """{"enabled":true,"throttleMinutes":45,"mutedCategories":["safety-spot-fetch-failed"]}"""
         }.andExpect { status { isOk() } }
 
         mockMvc.get("/api/admin/slack-config")
@@ -69,8 +69,8 @@ class SlackConfigControllerTest(
                 status { isOk() }
                 jsonPath("$.enabled") { value(true) }
                 jsonPath("$.throttleMinutes") { value(45) }
-                jsonPath("$.categories[4].key") { value("safetySpot-refresh") }
-                jsonPath("$.categories[4].muted") { value(true) }
+                jsonPath("$.categories[5].key") { value("safety-spot-fetch-failed") }
+                jsonPath("$.categories[5].muted") { value(true) }
             }
     }
 

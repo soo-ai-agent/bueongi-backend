@@ -45,17 +45,19 @@ class SlackConfigServiceTest {
     }
 
     @Test
-    fun `view - 카테고리는 고정 5종 라벨을 순서대로 담고 기본은 뮤트 아님`() {
+    fun `view - 카테고리는 실제 알림 종류 전부를 순서대로 담고 기본은 뮤트 아님`() {
         val (svc, _) = service()
 
         val categories = svc.view().categories
 
         assertThat(categories.map { it.key }).containsExactly(
             "api-500",
-            "kakao-place-fallback",
-            "tmap-route-fallback",
-            "safetySpot-index-empty",
-            "safetySpot-refresh",
+            "place-search-failed",
+            "tmap-route-failed",
+            "missed-arrival",
+            "share-store-unavailable",
+            "safety-spot-fetch-failed",
+            "safety-spot-no-coordinates",
         )
         assertThat(categories.first { it.key == "api-500" }.label).isEqualTo("서버 오류(미처리 500)")
         assertThat(categories.all { !it.muted }).isTrue()
@@ -81,15 +83,15 @@ class SlackConfigServiceTest {
                 SlackConfigUpdate(
                     enabled = false,
                     throttleMinutes = 30,
-                    mutedCategories = setOf("api-500", "safetySpot-refresh"),
+                    mutedCategories = setOf("api-500", "safety-spot-fetch-failed"),
                 ),
             )
 
         assertThat(updated.enabled).isFalse()
         assertThat(updated.throttleMinutes).isEqualTo(30)
         assertThat(updated.categories.first { it.key == "api-500" }.muted).isTrue()
-        assertThat(updated.categories.first { it.key == "safetySpot-refresh" }.muted).isTrue()
-        assertThat(updated.categories.first { it.key == "tmap-route-fallback" }.muted).isFalse()
+        assertThat(updated.categories.first { it.key == "safety-spot-fetch-failed" }.muted).isTrue()
+        assertThat(updated.categories.first { it.key == "tmap-route-failed" }.muted).isFalse()
         assertThat(config.isMuted("api-500:NullPointerException")).isTrue()
         assertThat(config.sendEnabled()).isFalse()
     }
