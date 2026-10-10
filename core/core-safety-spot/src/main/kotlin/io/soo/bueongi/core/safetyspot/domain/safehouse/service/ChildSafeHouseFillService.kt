@@ -35,10 +35,10 @@ class ChildSafeHouseFillService(
         if (!client.isEnabled) {
             return 0
         }
-        if (isFilled(tile)) {
+        if (retryGate.isCoolingDown(tile.code)) {
             return 0
         }
-        if (retryGate.isCoolingDown(tile.code)) {
+        if (isFilled(tile)) {
             return 0
         }
         if (inFlight.putIfAbsent(tile.code, true) != null) {

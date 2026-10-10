@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPolicePoint
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
@@ -17,9 +18,15 @@ import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.nio.file.Path
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 class PoliceFillServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
@@ -98,6 +105,49 @@ class PoliceFillServiceTest {
         assertThat(liveStore.appended).isEmpty()
         verify(events).fetchFailed(SafetySpotType.POLICE, NATIONWIDE)
         verify(events, never()).hadNoCoordinates(any(), any(), any())
+    }
+
+    @Test
+    fun `실패 직후에는 다시 외부를 부르지 않고 냉각이 지나면 다시 시도한다`(
+        @TempDir dir: Path,
+    ) {
+        val client: SafemapPoliceClient = mock()
+        whenever(client.isEnabled).thenReturn(true)
+        whenever(client.fetchPoliceFacilities()).thenReturn(null)
+        val now: Instant = Instant.parse("2026-08-19T00:00:00Z")
+        val ticking = TickingClock(now)
+        val service: PoliceFillService =
+            PoliceFillService(
+                client = client,
+                cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+                liveStore = FakeLiveStore(),
+                retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
+                events = mock(),
+            )
+
+        service.fill()
+        service.fill()
+        verify(client, times(1)).fetchPoliceFacilities()
+
+        ticking.now = now.plus(Duration.ofMinutes(11))
+        service.fill()
+        verify(client, times(2)).fetchPoliceFacilities()
+    }
+
+    private class TickingClock(
+        var now: Instant,
+    ) : Clock() {
+        override fun instant(): Instant {
+            return now
+        }
+
+        override fun getZone(): ZoneOffset {
+            return ZoneOffset.UTC
+        }
+
+        override fun withZone(zone: ZoneId): Clock {
+            return this
+        }
     }
 
     private fun service(

@@ -35,10 +35,10 @@ class PoliceFillService(
         if (!client.isEnabled) {
             return 0
         }
-        if (isFilled()) {
+        if (retryGate.isCoolingDown(NATIONWIDE)) {
             return 0
         }
-        if (retryGate.isCoolingDown(NATIONWIDE)) {
+        if (isFilled()) {
             return 0
         }
         if (!inFlight.compareAndSet(false, true)) {
