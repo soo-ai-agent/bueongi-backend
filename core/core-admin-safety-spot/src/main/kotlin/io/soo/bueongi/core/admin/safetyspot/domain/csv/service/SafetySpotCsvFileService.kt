@@ -32,7 +32,17 @@ class SafetySpotCsvFileService(
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw InvalidCsvPageException(page, size, MAX_PAGE_SIZE)
         }
-        val file: SafetySpotCsvFile = fileStore.find(origin, name) ?: throw SafetySpotCsvFileNotFoundException(name)
+        // 목록에 있는 파일만 연다 — 요청 값으로 경로를 만들지 않아야 data 밖 파일(../ 등)을 열 수 없다.
+        var file: SafetySpotCsvFile? = null
+        for (listed in fileStore.list()) {
+            if (listed.origin == origin && listed.name == name) {
+                file = listed
+                break
+            }
+        }
+        if (file == null) {
+            throw SafetySpotCsvFileNotFoundException(name)
+        }
         val csvPage: CsvPage =
             when (file.origin) {
                 SafetySpotCsvOrigin.SOURCE -> fileStore.readSourcePage(file, page, size, skippedOnly, keyword)

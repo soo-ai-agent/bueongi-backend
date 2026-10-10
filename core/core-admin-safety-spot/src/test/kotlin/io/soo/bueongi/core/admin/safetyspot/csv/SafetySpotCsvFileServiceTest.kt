@@ -51,6 +51,17 @@ class SafetySpotCsvFileServiceTest {
             .isInstanceOf(SafetySpotCsvFileNotFoundException::class.java)
     }
 
+    @Test
+    fun `목록에 없는 이름은 경로처럼 보여도 열지 않는다`(
+        @TempDir tmp: File,
+    ) {
+        val uploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path)
+        uploadStore.saveOriginal(SafetySpotType.CCTV, "위도,경도\n37.5,127.0\n".toByteArray())
+
+        assertThatThrownBy { service(tmp, uploadStore).readPage(SafetySpotCsvOrigin.UPLOAD, "../uploads/cctv.csv", 0, 50, false, "") }
+            .isInstanceOf(SafetySpotCsvFileNotFoundException::class.java)
+    }
+
     private fun service(
         tmp: File,
         uploadStore: SafetySpotUploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path),

@@ -30,16 +30,6 @@ class SafetySpotCsvFileStore(
         return files
     }
 
-    // 목록에 있는 파일만 돌려준다 — 요청 값으로 경로를 만들지 않아 data 밖 파일을 열 수 없다.
-    fun find(origin: SafetySpotCsvOrigin, name: String): SafetySpotCsvFile? {
-        for (file in list()) {
-            if (file.origin == origin && file.name == name) {
-                return file
-            }
-        }
-        return null
-    }
-
     fun readBytes(file: SafetySpotCsvFile): ByteArray = file.file.readBytes()
 
     fun readSourcePage(file: SafetySpotCsvFile, page: Int, size: Int, skippedOnly: Boolean, keyword: String): CsvPage {

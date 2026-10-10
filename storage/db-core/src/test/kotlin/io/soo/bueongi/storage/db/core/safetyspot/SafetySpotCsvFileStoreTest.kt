@@ -31,7 +31,7 @@ class SafetySpotCsvFileStoreTest {
         val cctv: File = write(tmp, "cctv.csv", cctvHeader, cctvRow("생활방범", "37.58"), cctvRow("교통단속", "37.58"), cctvRow("생활방범", ""))
         val store: SafetySpotCsvFileStore = store(tmp, cctvCsv = cctv.path)
 
-        val page: CsvPage = store.readSourcePage(store.find(SafetySpotCsvOrigin.SOURCE, "cctv.csv")!!, 0, 10, false, "")
+        val page: CsvPage = store.readSourcePage(listed(store, "cctv.csv"), 0, 10, false, "")
 
         assertThat(page.rows[0].result).isInstanceOf(CsvRowResult.Loaded::class.java)
         assertThat(page.rows[1].result).isEqualTo(CsvRowResult.Skipped(CsvSkipReason.NOT_SECURITY_PURPOSE))
@@ -47,7 +47,7 @@ class SafetySpotCsvFileStoreTest {
         val cctv: File = write(tmp, "cctv.csv", cctvHeader, cctvRow("생활방범", "37.58"))
         val store: SafetySpotCsvFileStore = store(tmp, cctvCsv = cctv.path)
 
-        val page: CsvPage = store.readSourcePage(store.find(SafetySpotCsvOrigin.SOURCE, "cctv.csv")!!, 0, 10, false, "")
+        val page: CsvPage = store.readSourcePage(listed(store, "cctv.csv"), 0, 10, false, "")
 
         assertThat(page.header).hasSize(18)
         assertThat(page.rows[0].cells).hasSize(18)
@@ -61,7 +61,7 @@ class SafetySpotCsvFileStoreTest {
         val bellDir = File(tmp, "bell")
         write(bellDir, "bell.csv", "설치장소,X좌표,Y좌표", "공원,200000,450000")
         val store: SafetySpotCsvFileStore = store(tmp, bellDir = bellDir.path)
-        val bell: SafetySpotCsvFile = store.find(SafetySpotCsvOrigin.SOURCE, "bell.csv")!!
+        val bell: SafetySpotCsvFile = listed(store, "bell.csv")
 
         val page: CsvPage = store.readSourcePage(bell, 0, 10, false, "")
 
@@ -77,7 +77,7 @@ class SafetySpotCsvFileStoreTest {
         write(lampDir, "lamp.csv", "보안등위치명,주소", "골목1,서울")
         val store: SafetySpotCsvFileStore = store(tmp, lampDir = lampDir.path)
 
-        val page: CsvPage = store.readSourcePage(store.find(SafetySpotCsvOrigin.SOURCE, "lamp.csv")!!, 0, 10, false, "")
+        val page: CsvPage = store.readSourcePage(listed(store, "lamp.csv"), 0, 10, false, "")
 
         assertThat(page.rows.single().result).isEqualTo(CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE_COLUMNS))
     }
@@ -100,16 +100,6 @@ class SafetySpotCsvFileStoreTest {
         )
     }
 
-    @Test
-    fun `목록에 없는 이름은 경로처럼 보여도 찾지 않는다`(
-        @TempDir tmp: File,
-    ) {
-        val cctv: File = write(tmp, "cctv.csv", cctvHeader)
-        val store: SafetySpotCsvFileStore = store(tmp, cctvCsv = cctv.path)
-
-        assertThat(store.find(SafetySpotCsvOrigin.SOURCE, "../cctv.csv")).isNull()
-    }
-
     private fun store(
         tmp: File,
         cctvCsv: String = "",
@@ -117,6 +107,15 @@ class SafetySpotCsvFileStoreTest {
         bellDir: String = File(tmp, "none-bell").path,
         uploadStore: SafetySpotUploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path),
     ): SafetySpotCsvFileStore = SafetySpotCsvFileStore(uploadStore, cctvCsv, lampDir, bellDir, File(tmp, "none-police").path)
+
+    private fun listed(store: SafetySpotCsvFileStore, name: String): SafetySpotCsvFile {
+        for (file in store.list()) {
+            if (file.name == name) {
+                return file
+            }
+        }
+        error("목록에 없는 파일: $name")
+    }
 
     private fun write(dir: File, name: String, vararg lines: String): File {
         dir.mkdirs()
