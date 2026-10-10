@@ -14,7 +14,7 @@ class PlaceSearchServiceTest {
     private val gangnam = TmapPlace("강남역 2번 출구", "서울 강남구 강남대로 396", 37.4979, 127.0276)
 
     @Test
-    fun `외부 검색 결과를 도메인 모델로 돌려준다`() {
+    fun `외부 검색 결과를 응답으로 돌려준다`() {
         val client = mock<TmapPlaceClient>()
         whenever(client.search("강남")).thenReturn(listOf(gangnam))
 

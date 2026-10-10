@@ -2,8 +2,8 @@ package io.soo.bueongi.core.place.domain.service
 
 import io.soo.bueongi.client.tmap.TmapPlace
 import io.soo.bueongi.client.tmap.TmapPlaceClient
+import io.soo.bueongi.core.place.api.response.PlaceResponse
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
-import io.soo.bueongi.core.place.domain.model.Place
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -15,23 +15,24 @@ class PlaceSearchService(
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun search(keyword: String): List<Place> {
-        try {
-            val tmapPlaces: List<TmapPlace> = tmapPlaceClient.search(keyword)
-            val places: ArrayList<Place> = ArrayList(tmapPlaces.size)
-            for (tmapPlace in tmapPlaces) {
-                places.add(tmapPlace.toPlace())
+    fun search(keyword: String): List<PlaceResponse> {
+        val tmapPlaces: List<TmapPlace> =
+            try {
+                tmapPlaceClient.search(keyword)
+            } catch (e: Exception) {
+                log.warn("외부 장소 검색 실패 — 503 으로 알림 | 원인=${e.javaClass.simpleName}")
+                throw PlaceSearchUnavailableException(cause = e)
             }
-            return places
-        } catch (e: Exception) {
-            log.warn("외부 장소 검색 실패 — 503 으로 알림 | 원인=${e.javaClass.simpleName}")
-            throw PlaceSearchUnavailableException(cause = e)
+        val places: ArrayList<PlaceResponse> = ArrayList(tmapPlaces.size)
+        for (tmapPlace in tmapPlaces) {
+            places.add(tmapPlace.toPlaceResponse())
         }
+        return places
     }
 }
 
-private fun TmapPlace.toPlace(): Place {
-    return Place(
+private fun TmapPlace.toPlaceResponse(): PlaceResponse {
+    return PlaceResponse(
         name = name,
         address = address,
         lat = lat,

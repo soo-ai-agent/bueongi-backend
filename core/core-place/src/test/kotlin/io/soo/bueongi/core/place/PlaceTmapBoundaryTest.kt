@@ -18,7 +18,7 @@ class PlaceTmapBoundaryTest {
         }
 
         assertThat(knowsTmap)
-            .describedAs("외부 응답 타입은 경계 한 곳에서 도메인 모델로 바꿔 올린다")
+            .describedAs("외부 응답 타입은 경계 한 곳에서 응답 DTO 로 바꿔 내보낸다")
             .containsExactly("PlaceSearchService.kt")
     }
 

@@ -149,8 +149,8 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
   미설정이면 무한대라, 외부가 느려지는 "슬로우 장애"에서 우리 스레드가 전부 잡혀 전체 장애로 번진다.
 - **키는 생성자에서 주입**받고(`@Value`), 키가 비어 있으면 `isEnabled = false` — **호출 자체를 안 한다.**
 - **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.** 클라이언트가 외부 JSON 을 자기 타입(`TmapRoute`·`TmapPlace`)으로
-  받아 내보내고, core 의 경계 한 곳(`RouteFinder`·`PlaceSearchService`)이 그것을 우리 도메인 모델(`RouteCandidate`·`NavigationStep`·`Place`)로
-  바꾼다. 그래서 Tmap 을 아는 core 파일은 그 둘뿐이다(`RouteTmapBoundaryTest`·`PlaceTmapBoundaryTest` 가 지킨다).
+  받아 내보내고, core 의 경계 한 곳(`RouteFinder`·`PlaceSearchService`)이 그것을 우리 타입(경로는 도메인 모델 `RouteCandidate`·`NavigationStep`,
+  장소는 응답 DTO `PlaceResponse`)으로 바꾼다. 그래서 Tmap 을 아는 core 파일은 그 둘뿐이다(`RouteTmapBoundaryTest`·`PlaceTmapBoundaryTest` 가 지킨다).
   외부 규격이 바뀌어도 고칠 곳은 clients 모듈과 그 경계 파일이다.
 
 ### Tmap 경로 — 요청 한 번의 여정
