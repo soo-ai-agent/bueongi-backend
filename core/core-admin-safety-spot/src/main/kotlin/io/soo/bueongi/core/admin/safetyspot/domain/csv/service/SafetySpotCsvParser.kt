@@ -1,40 +1,34 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.CsvColumns
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvParseResult
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvSpec
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.CCTV_SECURITY_PURPOSES
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPage
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPageBuilder
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRow
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRowResult
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvSkipReason
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
+import io.soo.bueongi.storage.db.safetyspot.store.CsvPageBuilder
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
 import io.soo.bueongi.support.util.CP949
-import io.soo.bueongi.support.util.Epsg5174
-import io.soo.bueongi.support.util.Epsg5179
-import io.soo.bueongi.support.util.Wgs84Point
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
+import java.util.zip.GZIPInputStream
 
 @Component
 class SafetySpotCsvParser {
-    fun parse(bytes: ByteArray, spec: SafetySpotCsvSpec): SafetySpotCsvParseResult {
+    fun parse(bytes: ByteArray, contract: SafetySpotCsvContract): SafetySpotCsvParseResult {
         val records: List<List<String>> = tokenizeCsv(decode(bytes))
         val headerPos: Int = findHeaderRow(records)
         if (headerPos < 0) {
-            return SafetySpotCsvParseResult(spec.coordSystem, received = 0, points = emptyList())
+            return SafetySpotCsvParseResult(contract.coordSystem, received = 0, points = emptyList())
         }
 
-        val columns: CsvColumns = spec.locateColumns(buildHeaderIndex(records[headerPos]))
+        val columns: CsvColumns = contract.locateColumns(buildHeaderIndex(records[headerPos]))
         val dataRows: List<List<String>> = collectDataRows(records, headerPos)
 
         val points: ArrayList<SafetySpotPoint> = ArrayList()
         for (row in dataRows) {
-            val result: CsvRowResult = judgeRow(row, columns, spec)
+            val result: CsvRowResult = contract.judge(row, columns)
             if (result is CsvRowResult.Loaded) {
                 points.add(result.point)
             }
@@ -42,7 +36,7 @@ class SafetySpotCsvParser {
         return SafetySpotCsvParseResult(columns.coordSystem, received = dataRows.size, points = points)
     }
 
-    fun readPage(bytes: ByteArray, spec: SafetySpotCsvSpec, page: Int, size: Int, skippedOnly: Boolean, keyword: String): CsvPage {
+    fun readPage(bytes: ByteArray, contract: SafetySpotCsvContract, page: Int, size: Int, skippedOnly: Boolean, keyword: String): CsvPage {
         val builder = CsvPageBuilder(page, size, skippedOnly, keyword)
         val records: List<List<String>> = tokenizeCsv(decode(bytes))
         val headerPos: Int = findHeaderRow(records)
@@ -50,12 +44,12 @@ class SafetySpotCsvParser {
             return builder.build(emptyList())
         }
 
-        val columns: CsvColumns = spec.locateColumns(buildHeaderIndex(records[headerPos]))
+        val columns: CsvColumns = contract.locateColumns(buildHeaderIndex(records[headerPos]))
         val dataRows: List<List<String>> = collectDataRows(records, headerPos)
 
         for ((index, row) in dataRows.withIndex()) {
-            val result: CsvRowResult = judgeRow(row, columns, spec)
-            if (builder.count(result, row.joinToString(" "))) {
+            val result: CsvRowResult = contract.judge(row, columns)
+            if (builder.count(result, row)) {
                 builder.add(CsvRow(index + 1, row, result))
             }
         }
@@ -90,59 +84,6 @@ class SafetySpotCsvParser {
         return false
     }
 
-    private fun judgeRow(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): CsvRowResult {
-        val geo: GeoPoint = readGeoPoint(row, columns, spec) ?: return CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
-        val purpose: String? = columns.purpose(row)
-        if (spec.securityPurposeFilter && purpose !in CCTV_SECURITY_PURPOSES) {
-            return CsvRowResult.Skipped(CsvSkipReason.NOT_SECURITY_PURPOSE)
-        }
-        val point: SafetySpotPoint =
-            SafetySpotPoint.of(
-                type = spec.type,
-                lat = geo.lat,
-                lng = geo.lng,
-                name = columns.name(row),
-                purpose = purpose,
-                cameraCount = columns.cameraCount(row),
-                address = columns.address(row),
-                phone = columns.phone(row),
-                regionCode = columns.regionCode(row),
-            )
-        return CsvRowResult.Loaded(point)
-    }
-
-    private fun readGeoPoint(row: List<String>, columns: CsvColumns, spec: SafetySpotCsvSpec): GeoPoint? {
-        if (columns.useWgs84) {
-            return GeoPoint.orNull(
-                columns.latitude(row),
-                columns.longitude(row),
-            )
-        }
-        return projectXy(
-            columns.projectedX(row),
-            columns.projectedY(row),
-            spec.coordSystem,
-        )
-    }
-
-    private fun projectXy(x: Double?, y: Double?, coordSystem: SafetySpotCoordSystem): GeoPoint? {
-        if (x == null || y == null) {
-            return null
-        }
-        val wgs: Wgs84Point? = toWgs84(coordSystem, x, y)
-        return GeoPoint.orNull(wgs?.lat, wgs?.lng)
-    }
-
-    private fun toWgs84(coordSystem: SafetySpotCoordSystem, x: Double, y: Double): Wgs84Point? {
-        if (coordSystem == SafetySpotCoordSystem.EPSG5179) {
-            return Epsg5179.toWgs84(x, y)
-        }
-        if (coordSystem == SafetySpotCoordSystem.EPSG5174) {
-            return Epsg5174.toWgs84(x, y)
-        }
-        return null
-    }
-
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
         val map: LinkedHashMap<String, Int> = LinkedHashMap()
         header.forEachIndexed { index, raw ->
@@ -155,10 +96,11 @@ class SafetySpotCsvParser {
     }
 
     private fun decode(bytes: ByteArray): String {
-        if (bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) {
-            return String(bytes, 3, bytes.size - 3, Charsets.UTF_8)
+        val plain: ByteArray = gunzipIfNeeded(bytes)
+        if (plain.size >= 3 && plain[0] == 0xEF.toByte() && plain[1] == 0xBB.toByte() && plain[2] == 0xBF.toByte()) {
+            return String(plain, 3, plain.size - 3, Charsets.UTF_8)
         }
-        return decodeStrict(bytes, Charsets.UTF_8) ?: String(bytes, CP949)
+        return decodeStrict(plain, Charsets.UTF_8) ?: String(plain, CP949)
     }
 
     private fun decodeStrict(bytes: ByteArray, charset: Charset): String? =
@@ -227,4 +169,13 @@ class SafetySpotCsvParser {
         }
         return records
     }
+}
+
+// 공공데이터 원본은 커서 .gz 로도 받는다 — gzip 매직(1f 8b)이면 풀어서 넘긴다.
+internal fun gunzipIfNeeded(bytes: ByteArray): ByteArray {
+    val isGzip: Boolean = bytes.size >= 2 && bytes[0] == 0x1F.toByte() && bytes[1] == 0x8B.toByte()
+    if (!isGzip) {
+        return bytes
+    }
+    return GZIPInputStream(bytes.inputStream()).use { it.readBytes() }
 }

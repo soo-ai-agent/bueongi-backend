@@ -1,14 +1,18 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status.model
 
-import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotType
 
 data class SafetySpotStatus(
     val type: SafetySpotType,
-    val loadedCount: Int,
+    /** 파일(CDN·업로드) 출처의 수. */
+    val fileCount: Int,
+    /** 외부 API 지역 수집 출처의 수. */
+    val apiCount: Int,
     val lastRefreshAtMs: Long?,
     val lastRefreshCount: Int?,
-    val lastRefreshStatus: SafetySpotRefreshStatus,
-    val cdnGeneratedAt: String?,
-    val cdnVersion: String?,
-)
+) {
+    val loadedCount: Int
+        get() {
+            return fileCount + apiCount
+        }
+}

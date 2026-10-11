@@ -8,7 +8,7 @@ import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.support.util.formatDistance
 import kotlin.math.max
 import kotlin.math.roundToInt

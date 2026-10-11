@@ -3,7 +3,7 @@ package io.soo.bueongi.core.admin.safetyspot.api.controller
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvFileResponse
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvPageResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvFileService
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvOrigin
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam

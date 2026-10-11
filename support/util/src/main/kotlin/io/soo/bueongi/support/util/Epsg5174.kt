@@ -54,11 +54,10 @@ object Epsg5174 {
 
         val latDeg: Double = Math.toDegrees(wgsGeodetic.latRad)
         val lngDeg: Double = Math.toDegrees(wgsGeodetic.lngRad)
-        return if (isInKorea(latDeg, lngDeg)) {
-            Wgs84Point(latDeg, lngDeg)
-        } else {
-            null
+        if (!isInKorea(latDeg, lngDeg)) {
+            return null
         }
+        return Wgs84Point(latDeg, lngDeg)
     }
 
     // 지오이드고 미상이라 양방향 모두 h=0 으로 둔다 — 수평 왕복 오차는 무시 수준.
@@ -175,13 +174,14 @@ object Epsg5174 {
         )
     }
 
-    private fun meridianArc(phi: Double): Double =
-        A_BESSEL * (
+    private fun meridianArc(phi: Double): Double {
+        return A_BESSEL * (
             (1 - E2_BESSEL / 4 - 3 * E2_BESSEL * E2_BESSEL / 64 - 5 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 256) * phi -
                 (3 * E2_BESSEL / 8 + 3 * E2_BESSEL * E2_BESSEL / 32 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(2 * phi) +
                 (15 * E2_BESSEL * E2_BESSEL / 256 + 45 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 1024) * sin(4 * phi) -
                 (35 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 3072) * sin(6 * phi)
         )
+    }
 
     private data class Geodetic(
         val latRad: Double,
@@ -195,4 +195,6 @@ object Epsg5174 {
     )
 }
 
-private fun arcsecToRad(arcsec: Double): Double = Math.toRadians(arcsec / 3600.0)
+private fun arcsecToRad(arcsec: Double): Double {
+    return Math.toRadians(arcsec / 3600.0)
+}

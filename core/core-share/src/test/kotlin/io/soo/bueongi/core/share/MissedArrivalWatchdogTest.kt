@@ -1,11 +1,16 @@
 package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.share.domain.model.LOCATION_STOPPED_SECONDS
+import io.soo.bueongi.core.share.domain.model.OVERDUE_SECONDS
+import io.soo.bueongi.core.share.domain.model.isLocationStopped
+import io.soo.bueongi.core.share.domain.model.isMissedArrivalSuspect
+import io.soo.bueongi.core.share.domain.model.isOverdue
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
 import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import io.soo.bueongi.storage.db.core.share.model.StoredLocation
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.model.ShareSession
+import io.soo.bueongi.storage.db.share.model.StoredLocation
+import io.soo.bueongi.storage.db.share.store.LocationStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
@@ -39,25 +44,25 @@ class MissedArrivalWatchdogTest {
 
     @Test
     fun `예정 초과했으나 위치가 계속 갱신 중이면(늦지만 이동 중) 의심하지 않는다`() {
-        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
+        val expected = now.minusSeconds(OVERDUE_SECONDS + 60)
         val movingLate = session(expectedArrivalAt = expected, lastLocationAt = now.minusSeconds(10))
         assertThat(movingLate.isMissedArrivalSuspect(now)).isFalse()
     }
 
     @Test
     fun `예정 초과 + 위치 정지면 의심한다`() {
-        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
+        val expected = now.minusSeconds(OVERDUE_SECONDS + 60)
         val stopped =
             session(
                 expectedArrivalAt = expected,
-                lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 30),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 30),
             )
         assertThat(stopped.isMissedArrivalSuspect(now)).isTrue()
     }
 
     @Test
     fun `예정 초과 + 위치 한 번도 없음도 의심한다`() {
-        val expected = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 60)
+        val expected = now.minusSeconds(OVERDUE_SECONDS + 60)
         assertThat(session(expectedArrivalAt = expected, lastLocationAt = null).isMissedArrivalSuspect(now)).isTrue()
     }
 
@@ -65,8 +70,8 @@ class MissedArrivalWatchdogTest {
     fun `scan 은 의심 세션만 운영자에게 알린다 — 토큰 마스킹·좌표 비노출`() {
         val suspect =
             session(
-                expectedArrivalAt = now.minusSeconds(ShareSession.OVERDUE_SECONDS + 120),
-                lastLocationAt = now.minusSeconds(ShareSession.LOCATION_STOPPED_SECONDS + 60),
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 120),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 60),
             )
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
         val notifier = RecordingPublisher()

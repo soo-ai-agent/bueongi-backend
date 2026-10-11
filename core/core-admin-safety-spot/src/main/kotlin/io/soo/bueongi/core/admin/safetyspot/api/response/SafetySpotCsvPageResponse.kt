@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPage
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRow
+import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
 
 data class SafetySpotCsvPageResponse(
     val header: List<String>,

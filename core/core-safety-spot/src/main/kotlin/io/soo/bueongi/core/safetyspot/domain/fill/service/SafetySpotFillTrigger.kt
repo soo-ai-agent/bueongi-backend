@@ -7,8 +7,8 @@ import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFillService
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.pickPointsAlong
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.pickPointsAlong
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

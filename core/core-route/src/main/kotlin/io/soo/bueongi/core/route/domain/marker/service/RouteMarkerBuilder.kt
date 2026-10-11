@@ -6,10 +6,10 @@ import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.marker.model.toMiniMapPercent
 import io.soo.bueongi.core.route.domain.marker.model.toPoi
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 
 @Component

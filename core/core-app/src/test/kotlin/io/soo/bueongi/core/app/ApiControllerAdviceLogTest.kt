@@ -5,7 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
 import io.soo.bueongi.core.common.event.ApiEventPublisher
-import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
+import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import io.soo.bueongi.support.logging.beginTrace
 import io.soo.bueongi.support.logging.currentTraceId
 import io.soo.bueongi.support.logging.endTrace

@@ -6,10 +6,10 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvPars
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -93,9 +93,9 @@ class SafetySpotUploadControllerTest(
     @TestConfiguration
     class TestConfig {
         private class FakeLiveStore : SafetySpotLiveStore {
-            override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
+            override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {}
 
-            override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
+            override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {}
         }
 
         @Bean

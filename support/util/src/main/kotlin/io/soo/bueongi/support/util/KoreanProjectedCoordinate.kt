@@ -1,8 +1,8 @@
 package io.soo.bueongi.support.util
 
 fun resolveKoreanWgs84OrNull(xText: String?, yText: String?): Wgs84Point? {
-    val x: Double = xText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-    val y: Double = yText?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+    val x: Double = xText?.toDoubleOrNull() ?: return null
+    val y: Double = yText?.toDoubleOrNull() ?: return null
     return when {
         isInKorea(lat = y, lng = x) -> Wgs84Point(lat = y, lng = x)
         isInKorea(lat = x, lng = y) -> Wgs84Point(lat = x, lng = y) // 순서 뒤바뀜 방어

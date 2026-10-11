@@ -5,7 +5,7 @@ import io.soo.bueongi.core.common.event.ApiErrorResponded
 import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
-import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
+import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher

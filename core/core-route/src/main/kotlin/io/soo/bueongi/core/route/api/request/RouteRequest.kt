@@ -9,7 +9,7 @@ import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.error.CoordinateOutOfRangeException
 import io.soo.bueongi.core.route.domain.error.SameOriginDestinationException
 import io.soo.bueongi.core.route.domain.error.TripTooFarException
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import kotlin.math.roundToInt
 
 class RouteRequest

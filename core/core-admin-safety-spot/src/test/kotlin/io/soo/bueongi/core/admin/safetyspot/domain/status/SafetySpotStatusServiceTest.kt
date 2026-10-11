@@ -1,48 +1,31 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status
 
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
-import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SafetySpotStatusServiceTest {
-    private class FakeSource(
-        counts: Map<SafetySpotType, Int>,
-        override val freshness: SafetySpotFreshness?,
-    ) : SafetySpotSpatialSource {
-        private val indices =
-            counts.mapValues { (type, n) ->
-                GridSpatialIndex((1..n).map { i -> SafetySpotPoint.of(type = type, lat = 37.5 + i * 0.001, lng = 127.0) })
-            }
-
-        override fun index(type: SafetySpotType): GridSpatialIndex = indices[type] ?: GridSpatialIndex(emptyList())
-
-        override val safePaths: List<SafePath> = emptyList()
-    }
+    // 좌표가 겹치면 색인이 하나로 접으므로 lng 로 목록끼리 떨어뜨린다.
+    private fun points(type: SafetySpotType, count: Int, lng: Double = 127.0): List<SafetySpotPoint> =
+        (1..count).map { i -> SafetySpotPoint.of(type = type, lat = 37.5 + i * 0.001, lng = lng) }
 
     @Test
-    fun `종류별 적재건수 갱신3상태 CDN신선도를 집계한다`() {
+    fun `종류별 적재건수와 갱신 이력을 집계한다`() {
         val source =
-            FakeSource(
-                counts = mapOf(SafetySpotType.CCTV to 372, SafetySpotType.STREET_LAMP to 10, SafetySpotType.POLICE to 8),
-                freshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19"),
+            FakeSafetySpotSource(
+                mapOf(
+                    SafetySpotType.CCTV to points(SafetySpotType.CCTV, 372),
+                    SafetySpotType.STREET_LAMP to points(SafetySpotType.STREET_LAMP, 10),
+                    SafetySpotType.POLICE to points(SafetySpotType.POLICE, 8),
+                ),
             )
         val holder =
             SafetySpotRefreshStatusStore().apply {
-                record(
-                    mapOf(
-                        SafetySpotType.CCTV to 372,
-                        SafetySpotType.SAFEHOUSE to null,
-                    ),
-                    atEpochMs = 1_700_000_000_000L,
-                )
+                recordUpload(SafetySpotType.CCTV, replacedCount = 372, atEpochMs = 1_700_000_000_000L)
             }
 
         val summary = SafetySpotStatusService(source, holder).summarize()
@@ -61,43 +44,47 @@ class SafetySpotStatusServiceTest {
 
         val cctv = summary.safetySpots.first { it.type == SafetySpotType.CCTV }
         assertThat(cctv.loadedCount).isEqualTo(372)
-        assertThat(cctv.lastRefreshStatus).isEqualTo(SafetySpotRefreshStatus.REPLACED)
         assertThat(cctv.lastRefreshCount).isEqualTo(372)
         assertThat(cctv.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
-        assertThat(cctv.cdnGeneratedAt).isEqualTo("2026-06-19T00:00:00Z")
-        assertThat(cctv.cdnVersion).isEqualTo("2026-06-19")
-
-        val safehouse = summary.safetySpots.first { it.type == SafetySpotType.SAFEHOUSE }
-        assertThat(safehouse.loadedCount).isEqualTo(0)
-        assertThat(safehouse.lastRefreshStatus).isEqualTo(SafetySpotRefreshStatus.KEPT)
-        assertThat(safehouse.lastRefreshCount).isNull()
-        assertThat(safehouse.lastRefreshAtMs).isEqualTo(1_700_000_000_000L)
 
         val lamp = summary.safetySpots.first { it.type == SafetySpotType.STREET_LAMP }
         assertThat(lamp.loadedCount).isEqualTo(10)
-        assertThat(lamp.lastRefreshStatus).isEqualTo(SafetySpotRefreshStatus.SKIPPED)
         assertThat(lamp.lastRefreshAtMs).isNull()
         assertThat(lamp.lastRefreshCount).isNull()
     }
 
     @Test
-    fun `갱신 이력이 전혀 없으면 모두 skipped 이고 CDN 신선도 미상이면 null`() {
-        val source = FakeSource(counts = mapOf(SafetySpotType.CCTV to 5), freshness = null)
+    fun `갱신 이력이 전혀 없으면 시각과 건수가 null 이다`() {
+        val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 5)))
 
         val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).summarize()
 
         assertThat(summary.safetySpots).allSatisfy { f ->
-            assertThat(f.lastRefreshStatus).isEqualTo(SafetySpotRefreshStatus.SKIPPED)
             assertThat(f.lastRefreshAtMs).isNull()
-            assertThat(f.cdnGeneratedAt).isNull()
-            assertThat(f.cdnVersion).isNull()
+            assertThat(f.lastRefreshCount).isNull()
         }
         assertThat(summary.safetySpots.first { it.type == SafetySpotType.CCTV }.loadedCount).isEqualTo(5)
     }
 
     @Test
-    fun `업로드한 종류만 교체로 표시되고 나머지는 CDN 파일 그대로라 skipped 다`() {
-        val source = FakeSource(counts = mapOf(SafetySpotType.PEDESTRIAN_SIGNAL to 2), freshness = null)
+    fun `적재된 점을 출처별로 나눠 센다 — API 수집분과 파일분의 합이 적재 수다`() {
+        val source =
+            FakeSafetySpotSource(
+                points = mapOf(SafetySpotType.SECURITY_LAMP to points(SafetySpotType.SECURITY_LAMP, 6)),
+                apiPoints = mapOf(SafetySpotType.SECURITY_LAMP to points(SafetySpotType.SECURITY_LAMP, 4, lng = 126.9)),
+            )
+
+        val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).summarize()
+
+        val lamp = summary.safetySpots.first { it.type == SafetySpotType.SECURITY_LAMP }
+        assertThat(lamp.apiCount).isEqualTo(4)
+        assertThat(lamp.fileCount).isEqualTo(6)
+        assertThat(lamp.loadedCount).isEqualTo(10)
+    }
+
+    @Test
+    fun `업로드한 종류만 갱신 이력이 남는다`() {
+        val source = FakeSafetySpotSource(mapOf(SafetySpotType.PEDESTRIAN_SIGNAL to points(SafetySpotType.PEDESTRIAN_SIGNAL, 2)))
         val holder =
             SafetySpotRefreshStatusStore().apply {
                 recordUpload(SafetySpotType.CCTV, replacedCount = 315_459, atEpochMs = 1L)
@@ -105,11 +92,8 @@ class SafetySpotStatusServiceTest {
 
         val summary = SafetySpotStatusService(source, holder).summarize()
 
-        assertThat(summary.safetySpots.first { it.type == SafetySpotType.CCTV }.lastRefreshStatus)
-            .isEqualTo(SafetySpotRefreshStatus.REPLACED)
-        assertThat(summary.safetySpots.first { it.type == SafetySpotType.PEDESTRIAN_SIGNAL }.lastRefreshStatus)
-            .isEqualTo(SafetySpotRefreshStatus.SKIPPED)
-        assertThat(summary.safetySpots.first { it.type == SafetySpotType.POLICE }.lastRefreshStatus)
-            .isEqualTo(SafetySpotRefreshStatus.SKIPPED)
+        assertThat(summary.safetySpots.first { it.type == SafetySpotType.CCTV }.lastRefreshAtMs).isEqualTo(1L)
+        assertThat(summary.safetySpots.first { it.type == SafetySpotType.PEDESTRIAN_SIGNAL }.lastRefreshAtMs).isNull()
+        assertThat(summary.safetySpots.first { it.type == SafetySpotType.POLICE }.lastRefreshAtMs).isNull()
     }
 }

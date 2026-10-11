@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.response
 
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRoute
 
 data class RouteView(
     val expired: Boolean,

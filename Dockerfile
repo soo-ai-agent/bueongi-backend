@@ -31,7 +31,8 @@ COPY backend/core/core-admin-ops/build.gradle.kts ./core/core-admin-ops/
 COPY backend/core/core-admin-safety-spot/build.gradle.kts ./core/core-admin-safety-spot/
 COPY backend/core/core-admin-auth/build.gradle.kts ./core/core-admin-auth/
 COPY backend/core/core-app/build.gradle.kts ./core/core-app/
-COPY backend/storage/db-core/build.gradle.kts ./storage/db-core/
+COPY backend/storage/db-safety-spot/build.gradle.kts ./storage/db-safety-spot/
+COPY backend/storage/db-share/build.gradle.kts ./storage/db-share/
 COPY backend/clients/client-tmap/build.gradle.kts ./clients/client-tmap/
 COPY backend/clients/client-slack/build.gradle.kts ./clients/client-slack/
 COPY backend/clients/client-datagokr-security-lamp/build.gradle.kts ./clients/client-datagokr-security-lamp/

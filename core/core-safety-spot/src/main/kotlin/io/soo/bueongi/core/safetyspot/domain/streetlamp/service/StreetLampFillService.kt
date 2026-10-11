@@ -6,10 +6,10 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.StreetLampSpot
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.streetlamp.StreetLampSpot
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -66,7 +66,7 @@ class StreetLampFillService(
             events.hadNoCoordinates(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched.size)
             return 0
         }
-        liveStore.append(SafetySpotType.STREET_LAMP, points)
+        liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
         log.info("가로등 채움: 받은={}, 좌표있음={}", fetched.size, points.size)
         return points.size
     }

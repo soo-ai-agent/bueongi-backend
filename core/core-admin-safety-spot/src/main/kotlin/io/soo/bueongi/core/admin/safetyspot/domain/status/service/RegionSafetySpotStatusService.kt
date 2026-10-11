@@ -7,10 +7,10 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionName
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpots
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.regionCodeOrNull
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSources
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.support.util.isInKorea
 import org.springframework.stereotype.Service
 
@@ -22,9 +22,10 @@ class RegionSafetySpotStatusService(
     fun summarize(): List<RegionSafetySpotResponse> {
         val talliesByRegion: LinkedHashMap<String, RegionTally> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
-            for (point in safetySpots.index(type).all) {
+            val sources: SafetySpotSources = safetySpots.sources(type)
+            for (point in sources.index.all) {
                 val tally: RegionTally = talliesByRegion.getOrPut(regionCodeOf(point)) { RegionTally() }
-                tally.add(type, point)
+                tally.add(type, point, fromApi = sources.isCollectedFromApi(point))
             }
         }
         val rows: ArrayList<RegionSafetySpotCount> = ArrayList(talliesByRegion.size)
@@ -122,7 +123,8 @@ class RegionSafetySpotStatusService(
             sido = region.sido,
             name = region.name,
             countsByType = tally.countsByType,
-            total = tally.countsByType.values.sum(),
+            fileCount = tally.fileCount,
+            apiCount = tally.apiCount,
             center = centerOf(code, tally),
         )
     }
@@ -136,12 +138,19 @@ class RegionSafetySpotStatusService(
 
     private class RegionTally {
         val countsByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
+        var fileCount: Int = 0
+        var apiCount: Int = 0
         private var latSum: Double = 0.0
         private var lngSum: Double = 0.0
         private var locatedCount: Int = 0
 
-        fun add(type: SafetySpotType, point: SafetySpotPoint) {
+        fun add(type: SafetySpotType, point: SafetySpotPoint, fromApi: Boolean) {
             countsByType[type] = (countsByType[type] ?: 0) + 1
+            if (fromApi) {
+                apiCount++
+            } else {
+                fileCount++
+            }
             if (!isInKorea(point.lat, point.lng)) {
                 return
             }

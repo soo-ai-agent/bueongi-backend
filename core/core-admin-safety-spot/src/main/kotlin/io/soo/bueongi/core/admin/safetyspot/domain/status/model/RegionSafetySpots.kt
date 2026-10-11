@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.status.model
 
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 
 data class RegionSafetySpots(
     val code: String,

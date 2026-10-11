@@ -2,7 +2,7 @@ package io.soo.bueongi.core.route
 
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset

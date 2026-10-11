@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.core.enums.RouteType
 import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-import io.soo.bueongi.core.enums.SafetySpotRefreshStatus
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
@@ -71,10 +70,4 @@ class WireEnumRoundTripTest {
         roundTrip(SafetySpotType.POLICE, "police")
     }
 
-    @Test
-    fun `SafetySpotRefreshStatus never replaced kept`() {
-        roundTrip(SafetySpotRefreshStatus.NEVER, "never")
-        roundTrip(SafetySpotRefreshStatus.REPLACED, "replaced")
-        roundTrip(SafetySpotRefreshStatus.KEPT, "kept")
-    }
 }

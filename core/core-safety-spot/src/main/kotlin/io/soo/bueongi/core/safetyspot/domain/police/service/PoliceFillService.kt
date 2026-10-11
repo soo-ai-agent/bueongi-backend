@@ -6,10 +6,10 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
-import io.soo.bueongi.storage.db.core.safetyspot.model.PoliceSpot
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.police.PoliceSpot
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -66,7 +66,7 @@ class PoliceFillService(
             events.hadNoCoordinates(SafetySpotType.POLICE, NATIONWIDE, fetched.size)
             return 0
         }
-        liveStore.append(SafetySpotType.POLICE, points)
+        liveStore.replaceRegion(SafetySpotType.POLICE, NATIONWIDE, points)
         log.info("치안시설 채움: 받은={}, 좌표있음={}", fetched.size, points.size)
         return points.size
     }

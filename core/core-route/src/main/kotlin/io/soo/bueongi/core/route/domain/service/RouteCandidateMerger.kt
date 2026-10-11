@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.route.domain.service
 
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.storage.db.core.safetyspot.model.overlapMetersWith
-import io.soo.bueongi.storage.db.core.safetyspot.model.pathLengthMeters
+import io.soo.bueongi.storage.db.safetyspot.model.overlapMetersWith
+import io.soo.bueongi.storage.db.safetyspot.model.pathLengthMeters
 import org.springframework.stereotype.Component
 
 @Component

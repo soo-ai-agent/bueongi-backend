@@ -8,8 +8,8 @@ import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 
 @Component

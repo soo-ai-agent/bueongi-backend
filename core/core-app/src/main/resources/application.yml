@@ -7,8 +7,8 @@ spring:
   # 관리자 시설 CSV 업로드(POST /api/admin/facilities/{type}/upload) 파일 상한 — 전국 표준데이터 대비 넉넉히.
   servlet:
     multipart:
-      max-file-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:64MB}
-      max-request-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:64MB}
+      max-file-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:128MB}
+      max-request-size: ${BUEONGI_FACILITY_UPLOAD_MAX_SIZE:128MB}
   # 외부 API(Tmap·Kakao) 호출 타임아웃 — 자동구성 RestClient.Builder 에 전역 적용된다.
   # 미설정 시 무한대라, 외부가 응답을 지연시키는 슬로우 장애에서 워커 스레드가 무한 점유돼 전체 장애로 번진다.
   # 모든 클라이언트가 이 빌더를 clone().build() 해 쓰므로 이 한 곳으로 전부 적용된다.
@@ -23,7 +23,8 @@ spring:
       - monitoring.yml
       - client-slack.yml
       - client-datagokr-security-lamp.yml
-      - db-core.yml
+      - db-safety-spot.yml
+      - db-share.yml
       - client-tmap.yml
       - client-safetydata-street-lamp.yml
       - client-safemap.yml

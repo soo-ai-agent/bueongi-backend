@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.model
 
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import kotlin.math.roundToLong
 
 data class RouteCandidate(

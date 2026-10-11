@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 
 data class RegionSafetySpotItemResponse(
     val type: SafetySpotType,

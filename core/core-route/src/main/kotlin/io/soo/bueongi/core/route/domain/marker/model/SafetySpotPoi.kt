@@ -1,8 +1,7 @@
 package io.soo.bueongi.core.route.domain.marker.model
 
-import io.soo.bueongi.storage.db.core.safetyspot.model.CctvSpot
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.phoneOrNull
+import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import kotlin.math.roundToInt
 
 // x·y 는 위경도가 아니라 프론트 미니맵용 0~100 백분율 좌표다(프론트 계약).

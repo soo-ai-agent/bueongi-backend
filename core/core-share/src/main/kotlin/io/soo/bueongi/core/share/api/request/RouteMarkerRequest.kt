@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share.api.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.soo.bueongi.storage.db.core.share.model.StoredMarker
+import io.soo.bueongi.storage.db.share.model.StoredMarker
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
@@ -20,7 +20,9 @@ data class RouteMarkerRequest(
     @field:DecimalMin("-180.0")
     @field:DecimalMax("180.0")
     val lng: Double?,
+    @field:NotNull
     val x: Double? = null,
+    @field:NotNull
     val y: Double? = null,
     val name: String? = null,
     val purpose: String? = null,
@@ -34,8 +36,8 @@ data class RouteMarkerRequest(
             type = requireNotNull(type) { "marker.type 은 검증을 통과했어야 한다" },
             lat = requireNotNull(lat),
             lng = requireNotNull(lng),
-            x = x,
-            y = y,
+            x = requireNotNull(x),
+            y = requireNotNull(y),
             name = name,
             purpose = purpose,
             cameraCount = cameraCount,

@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRow
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvRowResult
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvSkipReason
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
+import io.soo.bueongi.storage.db.safetyspot.store.CsvSkipReason
 
 data class SafetySpotCsvRowResponse(
     val rowNumber: Int,
@@ -16,7 +16,6 @@ data class SafetySpotCsvRowResponse(
             when (val result: CsvRowResult = row.result) {
                 is CsvRowResult.Loaded -> SafetySpotCsvRowResponse(row.rowNumber, row.cells, CsvRowStatus.LOADED, null)
                 is CsvRowResult.Skipped -> SafetySpotCsvRowResponse(row.rowNumber, row.cells, CsvRowStatus.SKIPPED, result.reason)
-                CsvRowResult.NotRead -> SafetySpotCsvRowResponse(row.rowNumber, row.cells, CsvRowStatus.NOT_READ, null)
             }
     }
 }

@@ -6,10 +6,10 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafeHouseSpot
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.safehouse.SafeHouseSpot
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -65,7 +65,7 @@ class ChildSafeHouseFillService(
         if (points.isEmpty()) {
             return 0
         }
-        liveStore.append(SafetySpotType.SAFEHOUSE, points)
+        liveStore.replaceRegion(SafetySpotType.SAFEHOUSE, tile.code, points)
         log.info("아동안전지킴이집 격자 채움: tile={}, 받은={}", tile.code, points.size)
         return points.size
     }

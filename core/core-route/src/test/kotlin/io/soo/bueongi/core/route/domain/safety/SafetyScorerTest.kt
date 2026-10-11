@@ -5,10 +5,10 @@ import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafePath
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Clock

@@ -12,10 +12,11 @@ import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.LocationReport
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import io.soo.bueongi.storage.db.core.share.model.StoredLocation
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.core.share.domain.model.isOverdue
+import io.soo.bueongi.storage.db.share.model.ShareSession
+import io.soo.bueongi.storage.db.share.model.StoredLocation
+import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.store.LocationStore
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.security.MessageDigest

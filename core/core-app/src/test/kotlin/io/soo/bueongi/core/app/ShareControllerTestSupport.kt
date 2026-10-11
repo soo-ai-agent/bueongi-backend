@@ -5,8 +5,8 @@ import io.soo.bueongi.core.share.MutableTestClock
 import io.soo.bueongi.core.share.api.controller.GuardianPage
 import io.soo.bueongi.core.share.api.controller.ShareController
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
+import io.soo.bueongi.storage.db.share.store.LocationStore
 import org.junit.jupiter.api.Tag
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc

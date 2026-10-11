@@ -17,7 +17,8 @@ dependencies {
     implementation(project(":core:core-admin-ops"))
     implementation(project(":core:core-admin-safety-spot"))
     implementation(project(":core:core-admin-auth"))
-    implementation(project(":storage:db-core"))
+    implementation(project(":storage:db-safety-spot"))
+    implementation(project(":storage:db-share"))
     implementation(project(":clients:client-tmap"))
     implementation(project(":clients:client-tmap-place"))
     implementation(project(":clients:client-slack"))
@@ -34,7 +35,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.jsonwebtoken:jjwt-api:0.12.6")
 
-    testImplementation(testFixtures(project(":storage:db-core")))
+    testImplementation(testFixtures(project(":storage:db-safety-spot")))
     testImplementation(testFixtures(project(":core:core-share")))
 }
 

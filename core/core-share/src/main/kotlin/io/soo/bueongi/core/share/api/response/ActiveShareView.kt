@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.share.api.response
 
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import io.soo.bueongi.storage.db.core.share.model.StoredLocation
+import io.soo.bueongi.storage.db.share.model.ShareSession
+import io.soo.bueongi.storage.db.share.model.StoredLocation
 
 // 어드민 응답 계약은 camelCase — 보호자용 snake_case 결과들과 달리 @JsonProperty 를 붙이지 않는다.
 data class ActiveShareView(

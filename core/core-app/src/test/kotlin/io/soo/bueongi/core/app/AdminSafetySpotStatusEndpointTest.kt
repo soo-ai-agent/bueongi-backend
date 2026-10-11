@@ -20,7 +20,7 @@ class AdminSafetySpotStatusEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
-    fun `safetySpot-status 는 종류별 적재건수 갱신결과 CDN신선도를 반환한다`() {
+    fun `safetySpot-status 는 종류별 적재건수와 출처별 수와 갱신 이력을 반환한다`() {
         mockMvc.get("/api/admin/safety-spot-status")
             .andExpect {
                 status { isOk() }
@@ -28,9 +28,10 @@ class AdminSafetySpotStatusEndpointTest(
                 jsonPath("$.safetySpots.length()") { value(8) }
                 jsonPath("$.safetySpots[0].type") { value("cctv") }
                 jsonPath("$.safetySpots[0].loadedCount") { value(2) }
-                jsonPath("$.safetySpots[0].lastRefreshStatus") { value("replaced") }
+                jsonPath("$.safetySpots[0].lastRefreshAtMs") { value(1) }
                 jsonPath("$.safetySpots[0].lastRefreshCount") { value(2) }
-                jsonPath("$.safetySpots[0].cdnVersion") { value("2026-06-19") }
+                jsonPath("$.safetySpots[0].fileCount") { value(2) }
+                jsonPath("$.safetySpots[0].apiCount") { value(0) }
             }
     }
 

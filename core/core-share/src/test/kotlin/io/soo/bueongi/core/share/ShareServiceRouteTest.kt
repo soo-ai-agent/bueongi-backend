@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
-import io.soo.bueongi.storage.db.core.share.model.StoredCoord
-import io.soo.bueongi.storage.db.core.share.model.StoredMarker
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
-import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
+import io.soo.bueongi.storage.db.share.model.StoredCoord
+import io.soo.bueongi.storage.db.share.model.StoredMarker
+import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -26,6 +26,7 @@ class ShareServiceRouteTest : ShareServiceTestSupport() {
                 ),
             totalDistanceM = 1234,
             totalTimeS = 900,
+            type = "safe",
         )
 
     @Test

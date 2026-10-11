@@ -6,8 +6,8 @@ import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidSpotLimitExcepti
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

@@ -8,7 +8,7 @@ import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
 import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Service
 
 @Service

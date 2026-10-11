@@ -5,11 +5,11 @@ import io.soo.bueongi.client.datagokr.securitylamp.SecurityLampClient
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.model.SecurityLampSpot
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.securitylamp.SecurityLampSpot
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -80,7 +80,7 @@ class SecurityLampFillService(
             events.hadNoCoordinates(SafetySpotType.SECURITY_LAMP, regionCode, fetched.size)
             return 0
         }
-        liveStore.append(SafetySpotType.SECURITY_LAMP, points)
+        liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
         log.info("보안등 지역 채움: region={}, 받은={}, 좌표있음={}", regionCode, fetched.size, points.size)
         return points.size
     }

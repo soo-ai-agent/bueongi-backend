@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 
 data class RegionSafetySpotResponse(
     val code: String,
@@ -9,6 +9,8 @@ data class RegionSafetySpotResponse(
     val name: String,
     val counts: Map<String, Int>,
     val total: Int,
+    val fileCount: Int,
+    val apiCount: Int,
     val center: RegionCenterResponse?,
 ) {
     companion object {
@@ -24,6 +26,8 @@ data class RegionSafetySpotResponse(
                 name = count.name,
                 counts = counts,
                 total = count.total,
+                fileCount = count.fileCount,
+                apiCount = count.apiCount,
                 center =
                     if (center == null) {
                         null

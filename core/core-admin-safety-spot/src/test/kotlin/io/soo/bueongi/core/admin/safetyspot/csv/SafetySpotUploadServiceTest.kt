@@ -6,10 +6,10 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadS
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
 import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotUploadStore
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -24,12 +24,11 @@ class SafetySpotUploadServiceTest {
         var lastType: SafetySpotType? = null
         var lastPoints: List<SafetySpotPoint>? = null
 
-        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int = points.size
+        override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {}
 
-        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {
             lastType = type
             lastPoints = points
-            return points.size
         }
     }
 

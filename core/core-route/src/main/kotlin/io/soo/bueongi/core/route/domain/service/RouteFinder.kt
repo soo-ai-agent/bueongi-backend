@@ -8,7 +8,7 @@ import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 
 // 지도 공급자를 바꾸면 clients 모듈과 이 파일만 바뀐다.

@@ -1,0 +1,5 @@
+# storage:db-share 소유 설정 — 위치 공유 저장소(Redis).
+bueongi:
+  share:
+    # Redis 접속 URL(예: redis://localhost:6379). 미설정(빈 값)이면 인메모리 폴백으로 동작(외부 인프라 불요).
+    redis-url: ${BUEONGI_REDIS_URL:}

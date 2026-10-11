@@ -8,15 +8,20 @@ import org.springframework.test.web.servlet.post
 
 @Tag("context")
 class ShareControllerRouteTest : ShareControllerTestSupport() {
-    private fun routeBody(secret: String) =
+    private fun routeBody(
+        secret: String,
+        markerType: String = "cctv",
+        type: String = "safe",
+    ) =
         """
         {
           "owner_secret": "$secret",
           "destination": { "name": "집", "lat": 37.56, "lng": 126.97 },
           "path": [ {"lat": 37.5, "lng": 127.0}, {"lat": 37.55, "lng": 127.02} ],
-          "markers": [ {"type": "cctv", "lat": 37.5, "lng": 127.0, "x": 50.0, "y": 50.0, "name": "CCTV", "purpose": "생활방범", "camera_count": 2, "address": "서울시", "phone": null} ],
+          "markers": [ {"type": "$markerType", "lat": 37.5, "lng": 127.0, "x": 50.0, "y": 50.0, "name": "CCTV", "purpose": "생활방범", "camera_count": 2, "address": "서울시", "phone": null} ],
           "total_distance_m": 1234,
-          "total_time_s": 900
+          "total_time_s": 900,
+          "type": "$type"
         }
         """.trimIndent()
 
@@ -126,14 +131,7 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "markers": [ {"type": "security_lamp", "lat": 37.5, "lng": 127.0} ]
-                }
-                """.trimIndent()
+            content = routeBody(secret, markerType = "security_lamp")
         }.andExpect { status { isOk() } }
     }
 
@@ -188,7 +186,21 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
     }
 
     @Test
-    fun `type·provenance 포함 POST route 후 GET route 는 두 값을 그대로 에코`() {
+    fun `POST route 의 type 은 GET route 에 그대로 실린다`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/route") {
+            contentType = MediaType.APPLICATION_JSON
+            content = routeBody(secret, type = "main")
+        }.andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/route").andExpect {
+            status { isOk() }
+            jsonPath("$.route.type") { value("main") }
+        }
+    }
+
+    @Test
+    fun `type 누락 POST route 는 400 VALIDATION_FAILED`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
@@ -197,33 +209,14 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
                 {
                   "owner_secret": "$secret",
                   "destination": { "lat": 37.56, "lng": 126.97 },
-                  "type": "safe",
-                  "provenance": "서울시 안심이 CCTV 2026-03 기준"
+                  "total_distance_m": 1234,
+                  "total_time_s": 900
                 }
                 """.trimIndent()
-        }.andExpect { status { isOk() } }
-
-        mockMvc.get("/share/$token/route").andExpect {
-            status { isOk() }
-            jsonPath("$.expired") { value(false) }
-            jsonPath("$.route.type") { value("safe") }
-            jsonPath("$.route.provenance") { value("서울시 안심이 CCTV 2026-03 기준") }
-        }
-    }
-
-    @Test
-    fun `type·provenance 생략 시 GET route 는 두 값이 null(하위호환)`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content = routeBody(secret)
-        }.andExpect { status { isOk() } }
-
-        mockMvc.get("/share/$token/route").andExpect {
-            status { isOk() }
-            jsonPath("$.route.destination.name") { value("집") }
-            jsonPath("$.route.type") { value(null) }
-            jsonPath("$.route.provenance") { value(null) }
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.errors[0].field") { value("type") }
         }
     }
 
@@ -232,39 +225,11 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {
             contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "type": "scenic"
-                }
-                """.trimIndent()
+            content = routeBody(secret, type = "scenic")
         }.andExpect {
             status { isUnprocessableEntity() }
             jsonPath("$.code") { value("INVALID_ROUTE_META") }
             jsonPath("$.errors[0].field") { value("type") }
-        }
-    }
-
-    @Test
-    fun `길이 초과 provenance 는 422 INVALID_ROUTE_META`() {
-        val (token, secret) = createSharePair()
-        val tooLong: String = "가".repeat(201)
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "provenance": "$tooLong"
-                }
-                """.trimIndent()
-        }.andExpect {
-            status { isUnprocessableEntity() }
-            jsonPath("$.code") { value("INVALID_ROUTE_META") }
-            jsonPath("$.errors[0].field") { value("provenance") }
         }
     }
 

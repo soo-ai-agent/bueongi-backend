@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
 import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 
 data class SafetySpotCsvParseResult(
     val coordSystem: SafetySpotCoordSystem,

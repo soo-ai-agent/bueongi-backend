@@ -2,13 +2,13 @@ package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvFileResponse
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvPageResponse
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvSpec
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidCsvPageException
 import io.soo.bueongi.core.admin.safetyspot.domain.error.SafetySpotCsvFileNotFoundException
-import io.soo.bueongi.storage.db.core.safetyspot.store.CsvPage
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvFile
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvFileStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvOrigin
+import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvFile
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvFileStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvOrigin
 import org.springframework.stereotype.Service
 
 @Service
@@ -43,14 +43,8 @@ class SafetySpotCsvFileService(
         if (file == null) {
             throw SafetySpotCsvFileNotFoundException(name)
         }
-        val csvPage: CsvPage =
-            when (file.origin) {
-                SafetySpotCsvOrigin.SOURCE -> fileStore.readSourcePage(file, page, size, skippedOnly, keyword)
-                SafetySpotCsvOrigin.UPLOAD -> {
-                    val bytes: ByteArray = fileStore.readBytes(file)
-                    parser.readPage(bytes, SafetySpotCsvSpec.forType(file.type), page, size, skippedOnly, keyword)
-                }
-            }
+        val bytes: ByteArray = fileStore.readBytes(file)
+        val csvPage: CsvPage = parser.readPage(bytes, SafetySpotCsvContract.forType(file.type), page, size, skippedOnly, keyword)
         return SafetySpotCsvPageResponse.from(csvPage)
     }
 

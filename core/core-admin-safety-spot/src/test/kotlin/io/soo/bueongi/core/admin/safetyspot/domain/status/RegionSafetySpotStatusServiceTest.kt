@@ -6,8 +6,8 @@ import io.soo.bueongi.core.admin.safetyspot.api.response.RegionSafetySpotRespons
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -39,6 +39,29 @@ class RegionSafetySpotStatusServiceTest {
         assertThat(mapo.total).isEqualTo(3)
         assertThat(mapo.counts[SafetySpotType.CCTV.cdnType]).isEqualTo(2)
         assertThat(mapo.counts[SafetySpotType.BELL.cdnType]).isEqualTo(1)
+    }
+
+    @Test
+    fun `지역 행마다 파일 출처와 API 수집 출처를 나눠 센다`() {
+        // 파일 2 + API 1 — 뒤바뀌면 단언이 깨지도록 비대칭으로 둔다.
+        val filePoints: List<SafetySpotPoint> =
+            listOf(
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.50, 127.00, regionCode = MAPO),
+                SafetySpotPoint.of(SafetySpotType.CCTV, 37.52, 127.02, regionCode = MAPO),
+            )
+        val apiPoint: SafetySpotPoint = SafetySpotPoint.of(SafetySpotType.SECURITY_LAMP, 37.51, 127.01, regionCode = MAPO)
+        val source =
+            FakeSafetySpotSource(
+                points = mapOf(SafetySpotType.CCTV to filePoints),
+                apiPoints = mapOf(SafetySpotType.SECURITY_LAMP to listOf(apiPoint)),
+            )
+
+        val summary = RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper())).summarize()
+
+        val mapo: RegionSafetySpotResponse = summary.single()
+        assertThat(mapo.total).isEqualTo(3)
+        assertThat(mapo.fileCount).isEqualTo(2)
+        assertThat(mapo.apiCount).isEqualTo(1)
     }
 
     @Test

@@ -6,4 +6,6 @@ import java.time.ZonedDateTime
 
 val SERVICE_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
-fun zonedAt(nowMs: Long): ZonedDateTime = Instant.ofEpochMilli(nowMs).atZone(SERVICE_ZONE)
+fun zonedAt(nowMs: Long): ZonedDateTime {
+    return Instant.ofEpochMilli(nowMs).atZone(SERVICE_ZONE)
+}

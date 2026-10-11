@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.response
 
-import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
+import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 
 data class RouteDestination(
     val name: String?,

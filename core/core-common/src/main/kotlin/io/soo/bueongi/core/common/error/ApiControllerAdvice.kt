@@ -2,7 +2,7 @@ package io.soo.bueongi.core.common.error
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.soo.bueongi.core.common.event.ApiEventPublisher
-import io.soo.bueongi.storage.db.core.share.store.LocationStoreUnavailableException
+import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.traceColumn
 import org.slf4j.Logger

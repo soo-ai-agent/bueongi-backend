@@ -8,19 +8,18 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySp
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafePath
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotFreshness
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.GridSpatialIndex
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotSpatialSource
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
-import io.soo.bueongi.storage.db.core.share.model.StoredCoord
-import io.soo.bueongi.storage.db.core.share.model.StoredLocation
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
-import io.soo.bueongi.storage.db.core.share.model.StoredRouteDestination
-import io.soo.bueongi.storage.db.core.share.store.InMemoryLocationStore
-import io.soo.bueongi.storage.db.core.share.store.LocationStore
+import io.soo.bueongi.storage.db.safetyspot.model.SafePath
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.share.model.ShareSession
+import io.soo.bueongi.storage.db.share.model.StoredCoord
+import io.soo.bueongi.storage.db.share.model.StoredLocation
+import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
+import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
+import io.soo.bueongi.storage.db.share.store.LocationStore
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.springframework.boot.test.context.TestConfiguration
@@ -53,14 +52,13 @@ class AdminEndpointFixtures {
                     }
 
                 override val safePaths: List<SafePath> = emptyList()
-                override val freshness = SafetySpotFreshness(generatedAt = "2026-06-19T00:00:00Z", version = "2026-06-19")
             }
 
         @Bean
         fun safetySpotStatusService(source: SafetySpotSpatialSource): SafetySpotStatusService {
             val holder =
                 SafetySpotRefreshStatusStore().apply {
-                    record(mapOf(SafetySpotType.CCTV to 2), atEpochMs = 1L)
+                    recordUpload(SafetySpotType.CCTV, replacedCount = 2, atEpochMs = 1L)
                 }
             return SafetySpotStatusService(source, holder)
         }

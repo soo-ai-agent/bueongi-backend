@@ -1,5 +1,5 @@
 package io.soo.bueongi.core.route.domain.safety.model
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 
 data class SafetySpotCluster(
     val center: GeoPoint,

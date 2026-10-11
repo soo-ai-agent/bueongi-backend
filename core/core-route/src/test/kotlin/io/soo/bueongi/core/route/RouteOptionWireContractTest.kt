@@ -10,7 +10,7 @@ import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

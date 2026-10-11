@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
-import io.soo.bueongi.storage.db.core.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 
 data class RegionCenterResponse(
     val lat: Double,

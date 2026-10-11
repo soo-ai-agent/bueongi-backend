@@ -12,7 +12,7 @@ import io.soo.bueongi.core.share.api.response.UpdateLocationResponse
 import io.soo.bueongi.core.share.api.response.WatchResponse
 import io.soo.bueongi.core.share.domain.model.LocationReport
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.core.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRoute
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping

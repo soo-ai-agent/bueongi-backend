@@ -8,10 +8,10 @@ import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
-import io.soo.bueongi.storage.db.core.safetyspot.model.PoliceSpot
-import io.soo.bueongi.storage.db.core.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.police.PoliceSpot
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -32,15 +32,13 @@ class PoliceFillServiceTest {
     private class FakeLiveStore : SafetySpotLiveStore {
         val appended: ArrayList<SafetySpotPoint> = ArrayList()
 
-        override fun replace(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {
             appended.clear()
             appended.addAll(points)
-            return points.size
         }
 
-        override fun append(type: SafetySpotType, points: List<SafetySpotPoint>): Int {
+        override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
             appended.addAll(points)
-            return points.size
         }
     }
 

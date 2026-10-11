@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvFile
-import io.soo.bueongi.storage.db.core.safetyspot.store.SafetySpotCsvOrigin
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvFile
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotCsvOrigin
 
 data class SafetySpotCsvFileResponse(
     val origin: SafetySpotCsvOrigin,

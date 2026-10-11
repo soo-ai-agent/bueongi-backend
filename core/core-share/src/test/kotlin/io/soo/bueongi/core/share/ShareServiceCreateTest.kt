@@ -2,7 +2,7 @@ package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
-import io.soo.bueongi.storage.db.core.share.model.ShareSession
+import io.soo.bueongi.core.share.domain.model.OVERDUE_SECONDS
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -39,7 +39,7 @@ class ShareServiceCreateTest : ShareServiceTestSupport() {
     fun `getLocation 은 예정 도착 시각을 여유 넘겨 초과하면 overdue=true`() {
         val res = service.create(3, etaSeconds = 60)
         service.updateLocation(res.token, res.ownerSecret, report())
-        clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + ShareSession.OVERDUE_SECONDS + 1)
+        clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + OVERDUE_SECONDS + 1)
         assertTrue(service.getLocation(res.token).overdue)
     }
 

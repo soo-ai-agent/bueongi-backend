@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.share.api.response
 
-import io.soo.bueongi.storage.db.core.share.model.StoredCoord
+import io.soo.bueongi.storage.db.share.model.StoredCoord
 
 data class RoutePoint(
     val lat: Double,

@@ -58,11 +58,10 @@ object Epsg5179 {
 
         val latDeg: Double = Math.toDegrees(lat)
         val lngDeg: Double = Math.toDegrees(lon)
-        return if (isInKorea(latDeg, lngDeg)) {
-            Wgs84Point(latDeg, lngDeg)
-        } else {
-            null
+        if (!isInKorea(latDeg, lngDeg)) {
+            return null
         }
+        return Wgs84Point(latDeg, lngDeg)
     }
 
     fun fromWgs84(lat: Double, lng: Double): TmXy {
@@ -92,11 +91,12 @@ object Epsg5179 {
         return TmXy(x, y)
     }
 
-    private fun meridianArc(phi: Double): Double =
-        A * (
+    private fun meridianArc(phi: Double): Double {
+        return A * (
             (1 - E2 / 4 - 3 * E2 * E2 / 64 - 5 * E2 * E2 * E2 / 256) * phi -
                 (3 * E2 / 8 + 3 * E2 * E2 / 32 + 45 * E2 * E2 * E2 / 1024) * sin(2 * phi) +
                 (15 * E2 * E2 / 256 + 45 * E2 * E2 * E2 / 1024) * sin(4 * phi) -
                 (35 * E2 * E2 * E2 / 3072) * sin(6 * phi)
         )
+    }
 }
