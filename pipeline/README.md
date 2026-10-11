@@ -45,7 +45,7 @@
 
 B-3 지오코딩은 `data/geocode-cache.json`(주소→`{lat,lng}`)을 먼저 보고, 캐시 미스만 `KAKAO_REST_API_KEY` 로 네트워크 호출한다(월1회 운영 시 쿼터 절약 + 오프라인 재현).
 
-> 현재 `cdn/` 산출물은 `data/raw/`의 **대표 샘플 데이터**로 생성된 것이다(`scripts/gen-sample-raw.mjs` 로 재현). 좌표 변환·dedup·per-district·manifest 전 구간을 검증하기 위한 입력이며, 운영 데이터는 라이브 키 연동 또는 실수집 raw 파일 교체로 대체한다.
+> `data/raw/` 는 **대표 샘플 데이터**다(`scripts/gen-sample-raw.mjs` 로 재현). 좌표 변환·dedup·per-district·manifest 전 구간을 검증하는 테스트 입력이며, 이것으로 만든 산출물은 `cdn/` 에 넣지 않는다 — 서버가 `cdn/` 을 그대로 안심시설로 적재한다(2026-10-11 샘플 산출물 삭제). 운영 데이터는 라이브 키 연동 또는 실수집 raw 파일 교체로 만든다.
 
 ## 실행
 

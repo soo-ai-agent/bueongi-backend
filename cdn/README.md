@@ -36,5 +36,5 @@
 좌표 격리·지오코딩 실패 등 사람(PM·QA)이 보는 감사 리포트는 앱 배포물이 아니라서
 이 디렉터리에 두지 않는다. `pipeline/report/` 를 본다.
 
-> 이 디렉터리의 `manifest.json` 과 `*/*.json` 은 파이프라인 산출 예시/초기값이다.
-> 실제 값은 `pipeline/` 실행(`npm run run:pipeline`)으로 채워진다.
+> 지금 이 디렉터리에는 실데이터 세 파일(`lamp/seoul.json`, `lamp/smart.json`, `emergency_bell/nationwide.json`)만 있고 `manifest.json` 은 없다.
+> 샘플 원천으로 만든 산출물은 서버가 실제 안심시설로 적재하므로 넣지 않는다(2026-10-11 삭제).
