@@ -179,9 +179,8 @@ backend/
 │   ├── core-common/             # 둘 이상의 도메인이 쓰는 것만: 예외 베이스(ApiException)·공용 요청 DTO·사건 타입
 │   │                            #   + 앱 전역 웹 설정: ApiControllerAdvice·CORS·CDN·Clock·스케줄링·요청 로그 필터
 │   └── core-enum/               # 전 계층 공용 어휘(io.soo.bueongi.core.enums)
-├── storage/db-core/             # 저장 격리 — 공유 세션(Redis/인메모리)·시설 적재(파일)·공간 인덱스
-│   ├── safetySpot/{store,model,dto}   #   16파일이라 역할로 나눔(dto = CDN JSON 포맷)
-│   └── share/{store,model}          #   13파일이라 역할로 나눔
+├── storage/db-safety-spot/      # 시설 적재(파일)·공간 인덱스 — <시설명>/(시설 모양·전용 CSV)·model/·store/
+├── storage/db-share/            # 공유 세션 저장(Redis/인메모리)
 ├── clients/                     # 외부 API 어댑터(자립 모듈)
 │   ├── client-place/            # 장소 검색 계약(PlaceSearchClient·Place) — 외부 호출 없음
 │   ├── client-tmap-place/       # 장소 검색 Tmap 구현 — 공급자를 바꾸면 core-app 이 이 줄을 갈아 끼운다
@@ -203,7 +202,7 @@ backend/
   앱 전역 웹 설정(공통 advice·CORS·필터)도 여기다. 도메인 모듈이 core-common 을 의존하므로 core-common 은 도메인 모듈을 import 할 수 없다.
 - **한 도메인 예외에만 붙는 처리(알림 등)는 그 도메인 모듈의 ControllerAdvice 에 둔다** — `@Order(Ordered.HIGHEST_PRECEDENCE)` 로 공통 advice 의 `ApiException` 핸들러보다 먼저 잡는다(예: `RouteControllerAdvice`).
 - **도메인 모듈끼리는 참조하지 않는다(현재 0건).** 공유가 필요하면 `core-common`(공용 타입)이나
-  `storage:db-core`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,
+  `storage:db-<도메인>`(저장 인터페이스)를 거친다. 도메인 A 가 도메인 B 를 import 하려 들면,
   그 코드의 주어가 어느 도메인인지 다시 본다 — 대개 잘못된 모듈에 놓여 있다.
 - `core-auth` 는 다른 도메인 모듈을 전혀 참조하지 않는다. 관리자 화면 보호는 `SecurityConfig` 의 **경로 문자열**로만 이어진다.
 - **`/api/admin/**` 은 모듈이 아니라 경로 규약이다.** 관리자 조회도 그 데이터를 가진 도메인 모듈이 답한다
@@ -228,7 +227,7 @@ backend/
 2. **Business 흐름은 각 도메인 모듈의 `domain/*`** 에서 오케스트레이션한다.
 3. **상세 구현은 구현 레이어로 분리**하고 재사용 가능한 단위로 작성한다
    (예: `SafetyScorer`·`SafeDetourPlanner`·`NearestPoliceFinder`·`SlackAlertNotifier`).
-4. **저장소 접근은 `storage:db-core` 로 격리**한다 — 파일/Redis 접근 코드는 storage 밖에 두지 않는다.
+4. **저장소 접근은 `storage:db-<도메인>`(db-safety-spot·db-share) 으로 격리**한다 — 파일/Redis 접근 코드는 storage 밖에 두지 않는다.
 5. **레이어 참조는 상위 → 하위 단방향**: api → core-<도메인> → (core-common·core-enum·storage·clients·support).
    storage/clients/support 는 서로도, 상위도 참조하지 않는다(clients 는 완전 자립). 도메인 모듈 간 순환 금지.
 6. **외부 시스템/DB/프레임워크 의존 로직은 도메인 모델 밖**(clients 어댑터·storage)으로 분리한다.

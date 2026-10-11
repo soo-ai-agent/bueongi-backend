@@ -265,6 +265,31 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 ---
 
+## `GET /api/admin/alerts` — 장애 알림 이력 (관리자)
+
+최신순 알림 이력. `limit`(기본 100, 1~500). 출처: `core-admin-ops/api/controller/AlertController.kt`, `api/response/AlertResponse.kt`.
+각 항목의 종류·이름·심각도는 서버가 알림 key 의 `:` 앞부분으로 `AlertCategory`(아래 표)를 찾아 싣는다 — 화면은 그대로 그린다.
+
+**200 응답** (`AlertsResponse`):
+
+```json
+{
+  "alerts": [
+    {
+      "atEpochMs": 1720000000000,
+      "key": "safety-spot-fetch-failed:cctv",
+      "title": "CCTV 수집 실패",
+      "detail": "...",
+      "category": "safety-spot-fetch-failed",
+      "label": "시설 수집 실패",
+      "severity": "degraded"
+    }
+  ]
+}
+```
+
+- `severity`: `critical`(즉시 확인) | `degraded`(부분 장애) | `unknown`. 표에 없는 key 면 `unknown` 이고 `category`·`label` 은 key 의 `:` 앞부분 그대로다.
+
 ## `/api/admin/slack-config` — Slack 알림 설정 (관리자)
 
 `/api/admin/*` 는 SecurityConfig 가 `ROLE_ADMIN` 으로 보호한다(Bearer JWT). 운영 알림(Slack)의 **발송 on/off·스로틀·카테고리별 뮤트**를 웹에서 편집한다. 출처: `core-admin-ops/api/controller/SlackConfigController.kt`, `domain/slack/service/SlackConfigService.kt`, `core-enum/AlertCategory.kt`, `client-slack/SlackAlertConfig.kt`.
@@ -274,15 +299,15 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 **알림 카테고리(7종, `core-enum` 의 `AlertCategory` 가 정본)** — 알림을 보내는 곳도 같은 enum 으로 key 를 만들므로, key 는 실제 알림 key 의 `:` 앞부분과 항상 일치한다:
 
-| key | label | 실제 알림 key 예 |
-|-----|-------|------------------|
-| `api-500` | 서버 오류(미처리 500) | `api-500:<예외클래스>` |
-| `place-search-failed` | 장소 검색 실패 | `place-search-failed` |
-| `tmap-route-failed` | 경로 검색 실패 | `tmap-route-failed` |
-| `missed-arrival` | 미도착 의심 | `missed-arrival:<가린 토큰>` |
-| `share-store-unavailable` | 위치 공유 저장소 장애 | `share-store-unavailable` |
-| `safety-spot-fetch-failed` | 시설 수집 실패 | `safety-spot-fetch-failed:<cdnType>` |
-| `safety-spot-no-coordinates` | 시설 좌표 없음 | `safety-spot-no-coordinates:<cdnType>` |
+| key | label | severity | 실제 알림 key 예 |
+|-----|-------|----------|------------------|
+| `api-500` | 서버 오류(미처리 500) | critical | `api-500:<예외클래스>` |
+| `place-search-failed` | 장소 검색 실패 | degraded | `place-search-failed` |
+| `tmap-route-failed` | 경로 검색 실패 | degraded | `tmap-route-failed` |
+| `missed-arrival` | 미도착 의심 | critical | `missed-arrival:<가린 토큰>` |
+| `share-store-unavailable` | 위치 공유 저장소 장애 | critical | `share-store-unavailable` |
+| `safety-spot-fetch-failed` | 시설 수집 실패 | degraded | `safety-spot-fetch-failed:<cdnType>` |
+| `safety-spot-no-coordinates` | 시설 좌표 없음 | degraded | `safety-spot-no-coordinates:<cdnType>` |
 
 ### `GET /api/admin/slack-config` — 현재 설정 조회
 

@@ -1,6 +1,6 @@
 # route·safetyspot 서비스 함수 목록 — 추상화 레벨 검토용
 
-route 모듈(`core/core-route`)과 안심시설 모듈(`storage/db-core/.../safetyspot`)의 서비스 영역 클래스와 함수를 파일 단위로 정리한 목록이다.
+route 모듈(`core/core-route`)과 안심시설 모듈(`storage/db-safety-spot`)의 서비스 영역 클래스와 함수를 파일 단위로 정리한 목록이다.
 
 각 함수가 어떤 동작 유형인지 표시해서, 한 클래스 안에 서로 다른 유형이 섞여 있는지(추상화 레벨이 맞는지)를 검토하는 데 쓴다.
 
@@ -15,7 +15,7 @@ CRUD 처럼 함수 하나가 한 유형만 갖는 것을 목표로 한다. 이 �
 | 조회 | 갖고 있는 것을 조건에 맞게 꺼낸다 | `index(type)`, `findByType` |
 | 선별 | 여러 후보 중 조건에 맞는 것만 남기거나 고른다 | `pickWaypoints`, `withinCorridor` |
 | 계산 | 입력으로부터 수치·판정 결과를 만든다 | `score`, `isNight` |
-| 변환 | 한 형태의 데이터를 다른 형태로 바꾼다 (내용은 그대로) | `toGeoPoints`, `toItemDto` |
+| 변환 | 한 형태의 데이터를 다른 형태로 바꾼다 (내용은 그대로) | `toGeoPoints`, `toStoredItem` |
 | 조립 | 여러 재료를 모아 응답·모델 하나로 만든다 | `assemble`, `buildMarkers` |
 | 저장 | 상태를 바꾼다 (파일 쓰기, 인덱스 교체) | `save`, `replace`, `append` |
 | 흐름 | 다른 컴포넌트를 순서대로 불러 유스케이스를 완성한다 (자기 판단 없음) | `findRouteOptions` |
@@ -176,7 +176,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 ---
 
-## 4. safetyspot 모듈 — storage/db-core
+## 4. safetyspot 모듈 — storage/db-safety-spot
 
 ### SafetySpotSpatialSource (`store/SafetySpotSpatialSource.kt`) — 인터페이스
 
@@ -201,7 +201,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 ### SafetySpotRepository (`store/SafetySpotRepository.kt`)
 
-두 인터페이스의 구현체. CDN JSON·CSV·지역 캐시·업로드분을 모아 메모리 인덱스를 만든다. 이 모듈에서 가장 큰 파일(451줄).
+두 인터페이스의 구현체. CDN JSON·지역 캐시·업로드분(JSON)을 모아 메모리 인덱스를 만든다. CSV 해석은 하지 않는다 — 업로드가 변환해 둔 JSON 만 읽는다(2026-10-11 일원화).
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
@@ -215,12 +215,9 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | `readFreshness(dir)` | 비공개 | 적재 | manifest.json 에서 신선도를 읽는다 |
 | `overwriteWithUploads(byType)` | 비공개 | 적재 | 업로드분이 있으면 그 종류를 통째로 덮는다 |
 | `logLoaded(...)` | 비공개 | 기록 | 적재 결과 로그 |
-| `loadCctvCsv()` / `loadLampCsv()` / `loadLampCsvFile(file)` | 비공개 | 적재 | CSV 원천을 파싱해 점 목록으로 |
-| `resolveCctvCsv()` / `resolveDataDir()` | 비공개 | 조회 | 후보 경로 중 실제 존재하는 파일·디렉터리 찾기 |
+| `resolveDataDir()` | 비공개 | 조회 | 후보 경로 중 실제 존재하는 디렉터리 찾기 |
 | `parseCollection(file)` | 비공개 | 변환 | JSON 파일 → DTO (실패 시 null) |
-| `parseCctvCsvLine(line)` | 파일 내 internal | 변환 | CSV 한 줄 → 시설 점 |
-| `LampCsvColumns.of(header)` / `parse(row)` | 파일 내 | 변환 | 보안등 CSV 헤더 해석과 행 파싱 |
-| `openCsv(file)` / `detectCharset(file)` | 파일 내 | 적재 | gz 해제·인코딩(CP949/UTF-8) 감지 |
+| (CSV 해석) | core `domain/csv/<시설>/XxxCsvContract` + `SafetySpotCsvParser` | 변환 | gz 해제·인코딩 감지·행 판정 — 업로드·미리보기·적재가 같은 계약 |
 
 공개 3개(조회 1, 저장 2)는 인터페이스 계약 그대로다. 나머지 20여 개 비공개가 전부 부팅 적재의 하위 단계로,
 "서빙(조회·저장)"과 "원천 파싱(CSV·JSON 읽기)"이라는 두 층이 한 파일에 있다.
@@ -248,7 +245,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 |---|---|---|---|
 | `save(type, points)` | 공개 | 저장 | 임시 파일 → 원자적 이동으로 종류별 JSON 저장 |
 | `findByType(type)` | 공개 | 조회 | 저장된 파일을 점 목록으로 (없거나 깨지면 null) |
-| `toItemDto()` / `cctvPropertiesOrNull()` | 파일 내 | 변환 | 점 → 저장용 DTO |
+| `toStoredItem()` / `cctvPropertiesOrNull()` | 파일 내 | 변환 | 점 → 파일 저장 형식(`StoredSafetySpotItem`) |
 
 save/find 짝으로 유형이 명확하다.
 
@@ -292,7 +289,7 @@ save/find 짝으로 유형이 명확하다.
 | `SafetySpotWaypointPlanner.clusterSafetySpots` | ~~이름은 find(조회)인데 실제는 묶기·평균·정렬 계산~~ → `clusterSafetySpots` 로 리네임 완료. 클래스도 Finder → SafetySpotWaypointPlanner 로 리네임 |
 | `SafetySpotWaypointPlanner.pickWaypoints` | ~~선별 + 조합 조립 두 단계~~ → 비공개 `filterMiddleClusters`·`buildPlans` 로 분리 완료. combo 낱말은 plan 으로 통일 |
 | `SafetyScorer` (클래스) | 비공개 17 > 공개 3 — 점수 공식·자료 존재 판정·시설 세기 세 묶음이 한 클래스. **판정: 보류** — 공개 함수 유형은 계산 하나로 통일돼 있고, 나눠도 쓰는 곳이 이 클래스뿐이라 지금은 얻는 게 없다. 세기(count 계열)를 다른 곳이 또 쓰게 되면 그때 분리 |
-| `SafetySpotRepository` (클래스) | 서빙(조회·저장)과 원천 파싱(CSV·JSON)이 한 파일 (451줄). **판정: 보류** — 파싱은 전부 `load()` 의 하위 단계이고 부팅 때 한 번만 돈다. CSV 원천이 늘거나 파싱을 갱신 스케줄러도 쓰게 되면 그때 분리 |
+| `SafetySpotRepository` (클래스) | CSV 파싱이 core 계약으로 빠져(2026-10-11) JSON 적재·서빙만 남았다. **판정: 해소** |
 | `SafetyWeightsCatalog.isNight` | 프로덕션 사용처는 `weightsAt` 뿐. **판정: 공개 유지** — 일출·일몰 경계 판정 자체가 테스트로 검증할 규칙이라, 비공개로 내리고 weightsAt 결과로 우회 검증하면 테스트가 더 흐려진다 |
 
 반대로 유형이 하나로 깔끔한 것: SafeRouteService(흐름), RouteTypeCatalog(조회), RouteOptionAssembler(조립),
