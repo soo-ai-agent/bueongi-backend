@@ -129,12 +129,13 @@ Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 
 - `safetyPreference` (optional): `balanced`/`safe`/`safest`. 생략하면 백엔드 기본 성향.
 - `reroute` (optional, 기본 `false`): 경로 이탈 재탐색이면 `true`. 외부 호출 예산을 달리 쓴다(`RouteCandidateCollector`).
 
-**200 응답** (`List<RouteOption>`): 유형별 7개 기본 필드에 `path`·`steps`·`score`·`markers`·`breakdown`·`provenance` 여섯이 **함께** 실린다.
+**200 응답** (`List<RouteOption>`): 유형별 7개 기본 필드에 `path`·`steps`·`score`·`markers`·`scoreDetail`·`source` 여섯이 **함께** 실린다.
 
 Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_UNAVAILABLE`** 로 알린다 — 직선거리로 지어낸 경로를 내보내지 않는다.
 
 - `score`: 0~100. 주변에 어떤 안심시설 자료도 없으면 `null`(0점이 아니라 '없음').
-- `breakdown.scoredAxes`/`unscoredAxes`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 축은 빼고 남은 축의 가중치로 다시 나눈다.
+- `scoreDetail.scoredItems`/`unscoredItems`: `cctv`/`lamp`/`bell`/`safehouse`/`police`/`safePath`. 자료가 없는 항목은 빼고 남은 항목의 가중치로 다시 나눈다. `scoredItemRatio` 는 자료가 있는 항목의 가중치 합(0~1)이다.
+- `steps[].distanceMeters`/`timeSeconds`: 길안내 단계마다 다음 단계까지의 거리(m)·시간(초).
 
 ---
 
@@ -144,7 +145,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 > **경로 prefix**: 보호자가 브라우저로 직접 여는 공개 URL 이라 앱 전용 `/api` 와 분리해 `/share` 하위에 둔다. CORS 는 `/api/**` 와 동일 정책으로 `/share/**` 에도 허용(별도 origin 보호자 웹의 교차 출처 폴링 지원).
 > **저장소**: `LocationStore` 추상화(`PlaceProvider` 패턴 차용). `BUEONGI_REDIS_URL` 주입 시 `RedisLocationStore`, 미주입(로컬/CI/MVP) 시 `InMemoryLocationStore` 폴백. 활성 저장소는 `GET /api/health.locationStore`(`"redis"`/`"memory"`)로 확인.
-> **Redis 키 모델**: `share:{token}` HASH `{ created_at, expires_at }` + `location:{token}` HASH `{ lat, lng, updated_at }`. 둘 다 동일 상한 TTL(1~3h)로 함께 자동 삭제 — 공유가 만료되면 위치도 잔존하지 않는다.
+> **Redis 키 모델**: `share:{token}` HASH `{ created_at, expires_at }` + `location:{token}` HASH `{ lat, lng, updated_at, remaining_meters, remaining_seconds }`(남은 거리·시간은 옛 이름 `remaining_m`·`remaining_s` 로 저장된 값도 읽는다). 둘 다 동일 상한 TTL(1~3h)로 함께 자동 삭제 — 공유가 만료되면 위치도 잔존하지 않는다.
 > **프라이버시**: `token` 은 128-bit URL-safe 랜덤(추측 불가). 계정·전화번호 등 PII 미저장. 1~3시간 상한 TTL 로 무기한 추적을 막는다 — 공유를 끄지 않아도 반드시 만료된다. 보호자 회원가입/페어링/푸시/서버 발송 메시지는 **범위 밖**.
 
 ### `POST /share/create` — 공유 생성 (사용자 단말)
@@ -177,12 +178,12 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 **요청 본문** (`UpdateLocationRequest`):
 
 ```json
-{ "lat": 37.4979, "lng": 127.0276, "owner_secret": "8Hf2v...", "remaining_m": 820, "remaining_s": 610 }
+{ "lat": 37.4979, "lng": 127.0276, "owner_secret": "8Hf2v...", "remaining_meters": 820, "remaining_seconds": 610 }
 ```
 
 - `lat`/`lng`: **필수**. 좌표 규약(lat ±90·lng ±180) + 비유한(`NaN`/±`Infinity`) 거부. 범위 위반 → 400 `VALIDATION_FAILED`, 비숫자 리터럴 → 400 `MALFORMED_REQUEST`.
 - `owner_secret`: **필수**. 생성 응답의 값과 다르면 404(불투명 응답).
-- `remaining_m`/`remaining_s` (optional, 0 이상): 목적지까지 남은 거리·시간. 백그라운드 위치 태스크는 둘 다 없이 보낸다.
+- `remaining_meters`/`remaining_seconds` (optional, 0 이상): 목적지까지 남은 거리(m)·시간(초). 백그라운드 위치 태스크는 둘 다 없이 보낸다. 이미 설치된 옛 앱이 보내는 `remaining_m`/`remaining_s` 도 받는다(응답은 새 키만 보낸다).
 - `token` 없음/만료 → **404 `SHARE_SESSION_NOT_FOUND`**.
 
 **200 응답** (`UpdateLocationResponse`):
@@ -214,7 +215,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 **200 응답** (`WatchResponse`):
 
 ```json
-{ "watching": true, "lat": 37.4979, "lng": 127.0276, "updated_at": "...", "expired": false, "remaining_m": 820, "remaining_s": 610 }
+{ "watching": true, "lat": 37.4979, "lng": 127.0276, "updated_at": "...", "expired": false, "remaining_meters": 820, "remaining_seconds": 610 }
 ```
 
 - `watching` 외 모든 칸은 값이 없으면 null 로 나간다(`expired` 는 기본 `false`).

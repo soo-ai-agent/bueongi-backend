@@ -27,11 +27,11 @@ data class SaveRouteRequest(
     @field:NotNull
     @field:Min(0)
     @param:JsonProperty("total_distance_m")
-    val totalDistanceM: Int? = null,
+    val totalDistanceMeters: Int? = null,
     @field:NotNull
     @field:Min(0)
     @param:JsonProperty("total_time_s")
-    val totalTimeS: Int? = null,
+    val totalTimeSeconds: Int? = null,
     @field:NotNull
     val type: String? = null,
 ) {
@@ -57,8 +57,8 @@ data class SaveRouteRequest(
                     StoredCoord(lat = requireNotNull(it.lat), lng = requireNotNull(it.lng))
                 },
             markers = markers.orEmpty().map(RouteMarkerRequest::toStoredMarker),
-            totalDistanceM = requireNotNull(totalDistanceM),
-            totalTimeS = requireNotNull(totalTimeS),
+            totalDistanceMeters = requireNotNull(totalDistanceMeters),
+            totalTimeSeconds = requireNotNull(totalTimeSeconds),
             type = routeType,
         )
     }

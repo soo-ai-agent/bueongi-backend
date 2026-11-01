@@ -6,6 +6,6 @@ data class StoredLocation(
     val lat: Double,
     val lng: Double,
     val updatedAt: Instant,
-    val remainingM: Double? = null,
-    val remainingS: Double? = null,
+    val remainingMeters: Double? = null,
+    val remainingSeconds: Double? = null,
 )

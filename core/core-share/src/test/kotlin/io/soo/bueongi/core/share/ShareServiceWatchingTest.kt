@@ -74,9 +74,9 @@ class ShareServiceWatchingTest : ShareServiceTestSupport() {
     @Test
     fun `watching 조회도 remaining 을 함께 돌려준다(관리자 미리보기 일관성)`() {
         val s = service.create(null)
-        service.updateLocation(s.token, s.ownerSecret, report(remainingM = 250.0, remainingS = 120.0))
+        service.updateLocation(s.token, s.ownerSecret, report(remainingMeters = 250.0, remainingSeconds = 120.0))
         val res = service.getWatchingStatus(s.token, s.ownerSecret)
-        assertEquals(250.0, res.remainingM)
-        assertEquals(120.0, res.remainingS)
+        assertEquals(250.0, res.remainingMeters)
+        assertEquals(120.0, res.remainingSeconds)
     }
 }

@@ -8,7 +8,7 @@ data class NavStep(
     val lng: Double,
     val description: String,
     val turnType: Int,
-    val distanceM: Int,
-    val timeS: Int,
+    val distanceMeters: Int,
+    val timeSeconds: Int,
     val pointType: String,
 )

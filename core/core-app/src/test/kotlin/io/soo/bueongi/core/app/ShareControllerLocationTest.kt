@@ -148,7 +148,26 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
     }
 
     @Test
-    fun `remaining 포함 위치 POST 후 GET location 은 remaining_m·remaining_s 를 돌려준다`() {
+    fun `remaining 포함 위치 POST 후 GET location 은 remaining_meters·remaining_seconds 만 돌려준다`() {
+        val (token, secret) = createSharePair()
+        mockMvc.post("/share/$token/location") {
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", " +
+                "\"remaining_meters\": 500.0, \"remaining_seconds\": 360.0}"
+        }.andExpect { status { isOk() } }
+
+        mockMvc.get("/share/$token/location").andExpect {
+            status { isOk() }
+            jsonPath("$.remaining_meters") { value(500.0) }
+            jsonPath("$.remaining_seconds") { value(360.0) }
+            jsonPath("$.remaining_m") { doesNotExist() }
+            jsonPath("$.remaining_s") { doesNotExist() }
+        }
+    }
+
+    @Test
+    fun `옛 앱이 보내는 remaining_m·remaining_s 위치 POST 도 받아 새 키로 돌려준다`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
@@ -157,17 +176,17 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
 
         mockMvc.get("/share/$token/location").andExpect {
             status { isOk() }
-            jsonPath("$.remaining_m") { value(500.0) }
-            jsonPath("$.remaining_s") { value(360.0) }
+            jsonPath("$.remaining_meters") { value(500.0) }
+            jsonPath("$.remaining_seconds") { value(360.0) }
         }
     }
 
     @Test
-    fun `음수 remaining_m 위치 POST 는 400 VALIDATION_FAILED`() {
+    fun `음수 remaining_meters 위치 POST 는 400 VALIDATION_FAILED`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/location") {
             contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", \"remaining_m\": -1.0}"
+            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", \"remaining_meters\": -1.0}"
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_FAILED") }

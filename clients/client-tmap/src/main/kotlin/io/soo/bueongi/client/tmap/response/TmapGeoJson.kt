@@ -18,17 +18,17 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
 
     val path: ArrayList<TmapCoord> = ArrayList()
     val steps: ArrayList<NavStep> = ArrayList()
-    var distanceM: Double = 0.0
-    var timeS: Int = 0
+    var distanceMeters: Double = 0.0
+    var timeSeconds: Int = 0
 
     for (feature in features) {
         val props: JsonNode? = feature.get("properties")
         // 총거리·총시간은 첫 피처에만 실려 온다(실측).
-        if (distanceM == 0.0) {
-            distanceM = numberOf(props, "totalDistance") ?: 0.0
+        if (distanceMeters == 0.0) {
+            distanceMeters = numberOf(props, "totalDistance") ?: 0.0
         }
-        if (timeS == 0) {
-            timeS = numberOf(props, "totalTime")?.toInt() ?: 0
+        if (timeSeconds == 0) {
+            timeSeconds = numberOf(props, "totalTime")?.toInt() ?: 0
         }
 
         val geom: JsonNode = feature.get("geometry") ?: continue
@@ -41,15 +41,15 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
     if (path.size < 2) {
         return null
     }
-    if (distanceM == 0.0) {
-        distanceM = pathLengthMeters(path)
+    if (distanceMeters == 0.0) {
+        distanceMeters = pathLengthMeters(path)
     }
     steps.sortBy { it.index }
     return TmapRoute(
         searchOption = searchOption,
         path = path,
-        distanceM = distanceM.roundToInt().toDouble(),
-        timeS = timeS,
+        distanceMeters = distanceMeters.roundToInt().toDouble(),
+        timeSeconds = timeSeconds,
         steps = steps,
     )
 }
@@ -74,7 +74,7 @@ private fun appendLineString(
         return
     }
     val lastIndex: Int = steps.size - 1
-    steps[lastIndex] = steps[lastIndex].copy(distanceM = segDistance, timeS = segTime)
+    steps[lastIndex] = steps[lastIndex].copy(distanceMeters = segDistance, timeSeconds = segTime)
 }
 
 // 구간 거리·시간은 뒤따르는 LineString 이 채운다.
@@ -88,8 +88,8 @@ private fun appendPoint(geom: JsonNode, props: JsonNode?, steps: MutableList<Nav
             lng = point.lng,
             description = props?.get("description")?.asText() ?: "",
             turnType = props?.get("turnType")?.asInt() ?: 0,
-            distanceM = 0,
-            timeS = 0,
+            distanceMeters = 0,
+            timeSeconds = 0,
             pointType = props?.get("pointType")?.asText() ?: "",
         ),
     )

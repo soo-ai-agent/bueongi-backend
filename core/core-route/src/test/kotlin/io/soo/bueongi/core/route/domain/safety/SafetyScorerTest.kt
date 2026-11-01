@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.route.domain.safety
 
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
+import io.soo.bueongi.core.route.domain.safety.model.SafetyItem
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
@@ -84,7 +84,7 @@ class SafetyScorerTest {
     }
 
     @Test
-    fun `밀도와 개수가 함께 반포화인 지점은 축의 절반을 채운다`() {
+    fun `밀도와 개수가 함께 반포화인 지점은 항목의 절반을 채운다`() {
         // 1.5km 경로에 정수 개수만 깔 수 있어 정확히 2.7/km 를 만들지 못한다(실제 2.66/km).
         assertThat(cctvFill(HALF_CCTV_PER_KM)).isBetween(0.42, 0.58)
     }
@@ -165,22 +165,22 @@ class SafetyScorerTest {
         val result = scorer(FakeSafetySpotSource(), NIGHT).score(path)
 
         assertThat(result.score).describedAs("0점이 아니라 '없음'이다").isNull()
-        assertThat(result.breakdown.scoredAxes).isEmpty()
-        assertThat(result.breakdown.unscoredAxes).hasSize(SafetyAxis.entries.size)
-        assertThat(result.breakdown.axisCoverage).isZero()
-        assertThat(result.breakdown.routeKm).isGreaterThan(0.0)
+        assertThat(result.scoreDetail.scoredItems).isEmpty()
+        assertThat(result.scoreDetail.unscoredItems).hasSize(SafetyItem.entries.size)
+        assertThat(result.scoreDetail.scoredItemRatio).isZero()
+        assertThat(result.scoreDetail.routeKm).isGreaterThan(0.0)
     }
 
     @Test
-    fun `자료가 없는 축은 빼고 남은 축으로 다시 나눈다`() {
+    fun `자료가 없는 항목은 빼고 남은 항목으로 다시 나눈다`() {
         val cctvOnly = FakeSafetySpotSource.of(SafetySpotType.CCTV, denseSpots())
         val result = scorer(cctvOnly, NIGHT).score(path)
 
         assertThat(result.score).isEqualTo(100)
-        assertThat(result.breakdown.scoredAxes).containsExactly("cctv")
-        assertThat(result.breakdown.unscoredAxes)
+        assertThat(result.scoreDetail.scoredItems).containsExactly("cctv")
+        assertThat(result.scoreDetail.unscoredItems)
             .containsExactly("lamp", "bell", "safehouse", "police", "safePath")
-        assertThat(result.breakdown.axisCoverage).isEqualTo(NIGHT_CCTV_WEIGHT)
+        assertThat(result.scoreDetail.scoredItemRatio).isEqualTo(NIGHT_CCTV_WEIGHT)
     }
 
     @Test
@@ -188,8 +188,8 @@ class SafetyScorerTest {
         val offCorridor = FakeSafetySpotSource.of(SafetySpotType.CCTV, listOf(COVERAGE_ANCHOR))
         val result = scorer(offCorridor, NIGHT).score(path)
 
-        assertThat(result.breakdown.cctvDensity).isZero()
-        assertThat(result.breakdown.scoredAxes).containsExactly("cctv")
+        assertThat(result.scoreDetail.cctvDensity).isZero()
+        assertThat(result.scoreDetail.scoredItems).containsExactly("cctv")
         assertThat(result.score).isZero()
     }
 
@@ -208,12 +208,12 @@ class SafetyScorerTest {
     @Test
     fun `넘겨받은 자료 유무를 다시 재지 않는다`() {
         val source = fullyCovered(SafetySpotType.BELL to denseSpots())
-        val cctvOnly = SafetyDataCoverage(setOf(SafetyAxis.CCTV))
+        val cctvOnly = SafetyDataCoverage(setOf(SafetyItem.CCTV))
 
         val result = scorer(source, NIGHT).score(path, cctvOnly)
 
-        assertThat(result.breakdown.bellDensity).describedAs("세기는 센다").isGreaterThan(0.0)
-        assertThat(result.breakdown.scoredAxes).containsExactly("cctv")
+        assertThat(result.scoreDetail.bellDensity).describedAs("세기는 센다").isGreaterThan(0.0)
+        assertThat(result.scoreDetail.scoredItems).containsExactly("cctv")
         assertThat(result.score).describedAs("비상벨은 점수에 안 실린다").isZero()
     }
 
@@ -223,14 +223,14 @@ class SafetyScorerTest {
         val result = scorer(fullyCovered(SafetySpotType.CCTV to cctv), NIGHT).score(path)
         assertThat(result.score).isGreaterThan(0)
         assertThat(result.score).isLessThanOrEqualTo(100)
-        assertThat(result.breakdown.cctvDensity).isGreaterThan(9.0)
+        assertThat(result.scoreDetail.cctvDensity).isGreaterThan(9.0)
     }
 
     @Test
     fun `회랑 안 지구대·파출소가 점수와 개수에 기여한다`() {
         val police = listOf(GeoPoint(37.5, 127.005))
         val result = scorer(fullyCovered(SafetySpotType.POLICE to police), NIGHT).score(path)
-        assertThat(result.breakdown.policeCount).isEqualTo(1)
+        assertThat(result.scoreDetail.policeCount).isEqualTo(1)
         assertThat(result.score).isGreaterThan(0)
     }
 
@@ -238,7 +238,7 @@ class SafetyScorerTest {
     fun `회랑 안 가로등이 점수와 밀도에 기여한다`() {
         val lamps = (1..12).map { GeoPoint(37.5, 127.0 + it * 0.0007) }
         val result = scorer(fullyCovered(SafetySpotType.STREET_LAMP to lamps), NIGHT).score(path)
-        assertThat(result.breakdown.lampDensity).isGreaterThan(0.0)
+        assertThat(result.scoreDetail.lampDensity).isGreaterThan(0.0)
         assertThat(result.score).isGreaterThan(0)
     }
 
@@ -254,7 +254,7 @@ class SafetyScorerTest {
             )
         val result = scorer(risky, NIGHT).score(path)
 
-        assertThat(result.breakdown.crimeProneAreaCount).isEqualTo(2)
+        assertThat(result.scoreDetail.crimeProneAreaCount).isEqualTo(2)
         assertThat(result.score).isEqualTo((withoutRisk ?: 0) - 20)
     }
 
@@ -263,7 +263,7 @@ class SafetyScorerTest {
         val cctv = (1..40).map { GeoPoint(37.5, 127.0 + it * 0.00025) }
         val result = scorer(fullyCovered(SafetySpotType.CCTV to cctv), NIGHT).score(path)
 
-        assertThat(result.breakdown.crimeProneAreaCount).isZero()
+        assertThat(result.scoreDetail.crimeProneAreaCount).isZero()
     }
 
     @Test
@@ -286,15 +286,15 @@ class SafetyScorerTest {
             )
         val result = scorer(risky, NIGHT).score(path)
 
-        assertThat(result.breakdown.cctvDensity).isZero()
-        assertThat(result.breakdown.crimeProneAreaCount).isEqualTo(1)
+        assertThat(result.scoreDetail.cctvDensity).isZero()
+        assertThat(result.scoreDetail.crimeProneAreaCount).isEqualTo(1)
     }
 
     @Test
     fun `안심귀갓길 겹침은 밤 safePath 가중치(28점)만큼 기여`() {
         val source = fullyCovered(safePaths = listOf(SafePath(path)))
         val result = scorer(source, NIGHT).score(path)
-        assertThat(result.breakdown.safePathOverlap).isGreaterThan(0.9)
+        assertThat(result.scoreDetail.safePathOverlap).isGreaterThan(0.9)
         assertThat(result.score).isEqualTo(28)
     }
 

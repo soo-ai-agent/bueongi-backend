@@ -136,7 +136,7 @@ class RedisLocationStoreTest {
     }
 
     @Test
-    fun `remaining 이 있으면 location HASH 에 remaining_m·remaining_s 필드를 함께 쓴다`() {
+    fun `remaining 이 있으면 location HASH 에 remaining_meters·remaining_seconds 필드를 함께 쓴다`() {
         val now = clock.now
         store.save(
             ShareSession(
@@ -144,7 +144,7 @@ class RedisLocationStoreTest {
                 ownerSecret = "sek",
                 createdAt = now,
                 expiresAt = now.plusSeconds(3600),
-                location = StoredLocation(37.5, 127.04, now, remainingM = 500.0, remainingS = 360.0),
+                location = StoredLocation(37.5, 127.04, now, remainingMeters = 500.0, remainingSeconds = 360.0),
             ),
         )
         verify(hashOps).putAll(
@@ -154,11 +154,36 @@ class RedisLocationStoreTest {
                     "lat" to "37.5",
                     "lng" to "127.04",
                     "updated_at" to now.toString(),
-                    "remaining_m" to "500.0",
-                    "remaining_s" to "360.0",
+                    "remaining_meters" to "500.0",
+                    "remaining_seconds" to "360.0",
                 ),
             ),
         )
+    }
+
+    @Test
+    fun `옛 이름(remaining_m·remaining_s)으로 저장된 location HASH 도 남은 거리·시간을 읽는다`() {
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(
+            mapOf(
+                "lat" to "37.5",
+                "lng" to "127.04",
+                "updated_at" to clock.now.toString(),
+                "remaining_m" to "500.0",
+                "remaining_s" to "360.0",
+            ),
+        )
+
+        val location: StoredLocation = store.findByToken("tok")!!.location!!
+
+        assertEquals(500.0, location.remainingMeters)
+        assertEquals(360.0, location.remainingSeconds)
     }
 
     @Test
@@ -210,6 +235,27 @@ class RedisLocationStoreTest {
         val session = store.findByToken("tok")!!
 
         assertEquals(SAMPLE_ROUTE, session.route)
+    }
+
+    @Test
+    fun `옛 이름(totalDistanceM·totalTimeS)으로 저장된 route JSON 도 읽는다`() {
+        val oldJson: String =
+            """{"destination":{"name":"집","lat":37.56,"lng":126.97},"path":[],"markers":[],""" +
+                """"totalDistanceM":1234,"totalTimeS":900,"type":"safe"}"""
+        whenever(hashOps.entries("share:tok")).thenReturn(
+            mapOf(
+                "created_at" to clock.now.toString(),
+                "expires_at" to clock.now.plusSeconds(3600).toString(),
+                "owner_secret" to "sek",
+            ),
+        )
+        whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
+        whenever(valueOps.get("route:tok")).thenReturn(oldJson)
+
+        val route: StoredRoute = store.findByToken("tok")!!.route!!
+
+        assertEquals(1234, route.totalDistanceMeters)
+        assertEquals(900, route.totalTimeSeconds)
     }
 
     @Test
@@ -334,8 +380,8 @@ class RedisLocationStoreTest {
                             name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
                         ),
                     ),
-                totalDistanceM = 1234,
-                totalTimeS = 900,
+                totalDistanceMeters = 1234,
+                totalTimeSeconds = 900,
                 type = "safe",
             )
     }

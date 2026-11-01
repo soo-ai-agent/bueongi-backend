@@ -91,8 +91,8 @@ class ShareService(
                 lat = report.lat,
                 lng = report.lng,
                 updatedAt = now,
-                remainingM = report.remainingM,
-                remainingS = report.remainingS,
+                remainingMeters = report.remainingMeters,
+                remainingSeconds = report.remainingSeconds,
             )
         store.save(session.withLocation(location))
         return UpdateLocationResponse.from(session, now)

@@ -26,8 +26,8 @@ class TmapGeoJsonTest {
             """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
-        assertThat(route!!.distanceM).isEqualTo(880.0)
-        assertThat(route.timeS).isEqualTo(700)
+        assertThat(route!!.distanceMeters).isEqualTo(880.0)
+        assertThat(route.timeSeconds).isEqualTo(700)
         assertThat(route.path).hasSize(3)
         assertThat(route.path.first()).isEqualTo(TmapCoord(37.5, 127.0))
         assertThat(route.steps).hasSize(2)
@@ -45,7 +45,7 @@ class TmapGeoJsonTest {
             """.trimIndent()
         val route: TmapRoute? = parse(json)
         assertThat(route).isNotNull
-        assertThat(route!!.distanceM).isGreaterThan(800.0)
+        assertThat(route!!.distanceMeters).isGreaterThan(800.0)
     }
 
     @Test

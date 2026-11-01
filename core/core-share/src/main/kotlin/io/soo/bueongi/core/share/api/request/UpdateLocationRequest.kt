@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.share.api.request
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.share.domain.model.LocationReport
 import jakarta.validation.constraints.DecimalMax
@@ -19,19 +20,22 @@ data class UpdateLocationRequest(
     @field:NotBlank
     @param:JsonProperty("owner_secret")
     val ownerSecret: String? = null,
+    // 이미 설치된 옛 앱은 remaining_m·remaining_s 로 보내서 옛 이름도 받는다.
     @field:DecimalMin("0.0")
-    @param:JsonProperty("remaining_m")
-    val remainingM: Double? = null,
+    @param:JsonProperty("remaining_meters")
+    @param:JsonAlias("remaining_m")
+    val remainingMeters: Double? = null,
     @field:DecimalMin("0.0")
-    @param:JsonProperty("remaining_s")
-    val remainingS: Double? = null,
+    @param:JsonProperty("remaining_seconds")
+    @param:JsonAlias("remaining_s")
+    val remainingSeconds: Double? = null,
 ) {
     fun toReport(): LocationReport {
         return LocationReport(
             lat = requireNotNull(lat) { "lat 은 @NotNull 검증을 통과했어야 한다" },
             lng = requireNotNull(lng) { "lng 도 동일" },
-            remainingM = remainingM,
-            remainingS = remainingS,
+            remainingMeters = remainingMeters,
+            remainingSeconds = remainingSeconds,
         )
     }
 }

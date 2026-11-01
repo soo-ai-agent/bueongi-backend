@@ -29,13 +29,13 @@ class RouteFinder(
 
     // 안심시설에 들르는 길은 그만큼 더 걷게 된다. 얼마나 더 걷게 할지는 사용자의 안전 선호가 정한다.
     fun findSaferRoutes(query: RouteRequest, routes: List<RouteCandidate>, waypointPlans: List<List<GeoPoint>>): List<RouteCandidate> {
-        val maxDistanceM: Double = maxDetourDistanceM(query, routes)
+        val maxDistanceMeters: Double = maxDetourDistanceMeters(query, routes)
 
         // 안심시설 뭉치에 들렀다 가는 길을 계획마다 지도에 묻고, 한도를 넘게 돌아가는 길은 버린다.
         val saferRoutes: ArrayList<RouteCandidate> = ArrayList()
         for (waypoints in waypointPlans) {
             val saferRoute: RouteCandidate = fetchRoute(query, VIA_SEARCH_OPTION, waypoints) ?: continue
-            if (saferRoute.distanceM > maxDistanceM) {
+            if (saferRoute.distanceMeters > maxDistanceMeters) {
                 continue
             }
             saferRoutes.add(saferRoute.copy(isDetour = true))
@@ -44,10 +44,10 @@ class RouteFinder(
     }
 
     // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
-    private fun maxDetourDistanceM(query: RouteRequest, routes: List<RouteCandidate>): Double {
+    private fun maxDetourDistanceMeters(query: RouteRequest, routes: List<RouteCandidate>): Double {
         val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-        val shortestDistanceM: Double = routes.minOf { it.distanceM }
-        return shortestDistanceM * (1 + detourBudgetRatio)
+        val shortestDistanceMeters: Double = routes.minOf { it.distanceMeters }
+        return shortestDistanceMeters * (1 + detourBudgetRatio)
     }
 
     private fun fetchRoute(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): RouteCandidate? {
@@ -82,8 +82,8 @@ private fun TmapRoute.toRouteCandidate(): RouteCandidate {
     return RouteCandidate(
         searchOption = searchOption,
         path = path.toGeoPoints(),
-        distanceM = distanceM,
-        timeS = timeS,
+        distanceMeters = distanceMeters,
+        timeSeconds = timeSeconds,
         steps = steps.toNavigationSteps(),
     )
 }
@@ -98,8 +98,8 @@ private fun List<NavStep>.toNavigationSteps(): List<NavigationStep> {
                 lng = step.lng,
                 description = step.description,
                 turnType = step.turnType,
-                distanceM = step.distanceM,
-                timeS = step.timeS,
+                distanceMeters = step.distanceMeters,
+                timeSeconds = step.timeSeconds,
                 pointType = step.pointType,
             ),
         )

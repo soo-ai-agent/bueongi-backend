@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety
 
-import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
+import io.soo.bueongi.core.route.domain.safety.model.SafetyItem
 import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
 import io.soo.bueongi.core.route.domain.safety.service.SafetyWeightsCatalog
 import io.soo.bueongi.support.util.SERVICE_ZONE
@@ -39,9 +39,9 @@ class SafetyWeightsCatalogTest {
     }
 
     @Test
-    fun `안심귀갓길 가중치가 밤낮 모두 모든 축 중 가장 무겁다`() {
+    fun `안심귀갓길 가중치가 밤낮 모두 모든 항목 중 가장 무겁다`() {
         for (weights in listOf(catalog.weightsAt(seoul("2026-06-15T23:00")), catalog.weightsAt(seoul("2026-06-15T12:00")))) {
-            val othersMax: Double = weights.byAxis.filterKeys { it != SafetyAxis.SAFE_PATH }.values.max()
+            val othersMax: Double = weights.byItem.filterKeys { it != SafetyItem.SAFE_PATH }.values.max()
             assertThat(weights.safePath).isGreaterThan(othersMax)
         }
     }

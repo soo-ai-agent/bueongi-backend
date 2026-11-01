@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety.model
 
-data class SafetyBreakdown(
+data class SafetyScoreDetail(
     val routeKm: Double,
     val cctvDensity: Double,
     val lampDensity: Double,
@@ -9,7 +9,7 @@ data class SafetyBreakdown(
     val policeCount: Int,
     val safePathOverlap: Double,
     val crimeProneAreaCount: Int,
-    val scoredAxes: List<String>,
-    val unscoredAxes: List<String>,
-    val axisCoverage: Double,
+    val scoredItems: List<String>,
+    val unscoredItems: List<String>,
+    val scoredItemRatio: Double,
 )

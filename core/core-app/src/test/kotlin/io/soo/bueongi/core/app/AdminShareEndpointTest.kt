@@ -60,8 +60,8 @@ class AdminShareEndpointTest(
                 jsonPath("$.lng") { value(127.0) }
                 jsonPath("$.updated_at") { exists() }
                 jsonPath("$.expired") { value(false) }
-                jsonPath("$.remaining_m") { value(null) }
-                jsonPath("$.remaining_s") { value(null) }
+                jsonPath("$.remaining_meters") { value(null) }
+                jsonPath("$.remaining_seconds") { value(null) }
                 jsonPath("$.updatedAt") { doesNotExist() }
             }
     }
@@ -101,7 +101,7 @@ class AdminShareEndpointTest(
                 jsonPath("$.route.total_distance_m") { value(1200) }
                 jsonPath("$.route.total_time_s") { value(900) }
                 jsonPath("$.route.type") { value("safe") }
-                jsonPath("$.route.totalDistanceM") { doesNotExist() }
+                jsonPath("$.route.totalDistanceMeters") { doesNotExist() }
             }
     }
 

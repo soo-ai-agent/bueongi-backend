@@ -44,7 +44,7 @@ class RouteTypeAssigner(
             if (index == safeIndex) {
                 continue
             }
-            if (fastIndex == null || scoredCandidates[index].candidate.timeS < scoredCandidates[fastIndex].candidate.timeS) {
+            if (fastIndex == null || scoredCandidates[index].candidate.timeSeconds < scoredCandidates[fastIndex].candidate.timeSeconds) {
                 fastIndex = index
             }
         }

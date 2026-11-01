@@ -14,7 +14,7 @@ abstract class ShareServiceTestSupport {
     protected fun report(
         lat: Double = 37.5,
         lng: Double = 127.0,
-        remainingM: Double? = null,
-        remainingS: Double? = null,
-    ) = LocationReport(lat = lat, lng = lng, remainingM = remainingM, remainingS = remainingS)
+        remainingMeters: Double? = null,
+        remainingSeconds: Double? = null,
+    ) = LocationReport(lat = lat, lng = lng, remainingMeters = remainingMeters, remainingSeconds = remainingSeconds)
 }

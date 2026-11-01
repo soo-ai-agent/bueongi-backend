@@ -1,9 +1,9 @@
 package io.soo.bueongi.core.route.domain.safety.service
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.core.route.domain.safety.model.SafetyAxis
-import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
 import io.soo.bueongi.core.route.domain.safety.model.SafetyDataCoverage
+import io.soo.bueongi.core.route.domain.safety.model.SafetyItem
 import io.soo.bueongi.core.route.domain.safety.model.SafetyScore
+import io.soo.bueongi.core.route.domain.safety.model.SafetyScoreDetail
 import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCounts
 import io.soo.bueongi.core.route.domain.safety.model.SafetyWeights
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
@@ -27,10 +27,10 @@ class SafetyScorer(
 ) {
     fun coverageOf(paths: List<List<GeoPoint>>): SafetyDataCoverage {
         val scorePoints: List<GeoPoint> = paths.flatMap { it.pickPointsAlong(SCORE_POINT_SPACING_METERS, MAX_SCORE_POINTS) }
-        val covered: MutableSet<SafetyAxis> = LinkedHashSet()
-        for (axis in SafetyAxis.entries) {
-            if (hasDataNear(axis, scorePoints)) {
-                covered.add(axis)
+        val covered: MutableSet<SafetyItem> = LinkedHashSet()
+        for (item in SafetyItem.entries) {
+            if (hasDataNear(item, scorePoints)) {
+                covered.add(item)
             }
         }
         return SafetyDataCoverage(covered)
@@ -42,24 +42,24 @@ class SafetyScorer(
     }
 
     fun score(path: List<GeoPoint>, coverage: SafetyDataCoverage): SafetyScore {
-        val lengthM: Double = path.pathLengthMeters()
-        val routeKm: Double = lengthM / 1000.0
+        val lengthMeters: Double = path.pathLengthMeters()
+        val routeKm: Double = lengthMeters / 1000.0
         var km: Double = MIN_DIVISOR_KM
         if (routeKm > 0) {
             km = routeKm
         }
 
         val counts: SafetySpotCounts = countNearby(path)
-        val safePathOverlap: Double = safePathOverlapRatio(path, lengthM)
+        val safePathOverlap: Double = safePathOverlapRatio(path, lengthMeters)
         val weights: SafetyWeights = weightsCatalog.weightsAt(zonedAt(clock.millis()))
-        val fills: Map<SafetyAxis, Double> = fillsOf(counts, km, safePathOverlap)
+        val fills: Map<SafetyItem, Double> = fillsOf(counts, km, safePathOverlap)
         val normalized: Double? = normalizedScore(fills, weights, coverage)
         val penalized: Double? = normalized?.let { applyRiskPenalty(it, counts.crimeProneArea, km) }
 
         return SafetyScore(
             score = penalized?.let { (it * 100).roundToInt() },
-            breakdown =
-                SafetyBreakdown(
+            scoreDetail =
+                SafetyScoreDetail(
                     routeKm = round3(routeKm),
                     cctvDensity = round2(counts.cctv / km),
                     lampDensity = round2(counts.lamp / km),
@@ -68,18 +68,18 @@ class SafetyScorer(
                     policeCount = counts.police,
                     safePathOverlap = round3(safePathOverlap),
                     crimeProneAreaCount = counts.crimeProneArea,
-                    scoredAxes = coverage.covered.map { it.wireName },
-                    unscoredAxes = coverage.missing.map { it.wireName },
-                    axisCoverage = round3(coveredWeight(weights, coverage)),
+                    scoredItems = coverage.covered.map { it.wireName },
+                    unscoredItems = coverage.missing.map { it.wireName },
+                    scoredItemRatio = round3(coveredWeight(weights, coverage)),
                 ),
         )
     }
 
-    private fun hasDataNear(axis: SafetyAxis, scorePoints: List<GeoPoint>): Boolean {
-        if (axis == SafetyAxis.SAFE_PATH) {
+    private fun hasDataNear(item: SafetyItem, scorePoints: List<GeoPoint>): Boolean {
+        if (item == SafetyItem.SAFE_PATH) {
             return hasSafePathNear(scorePoints)
         }
-        for (type in SPOT_TYPES_BY_AXIS.getValue(axis)) {
+        for (type in SPOT_TYPES_BY_ITEM.getValue(item)) {
             for (point in scorePoints) {
                 if (safetySpots.index(type).withinRadius(point, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()) {
                     return true
@@ -123,8 +123,8 @@ class SafetyScorer(
         return safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
     }
 
-    private fun safePathOverlapRatio(path: List<GeoPoint>, lengthM: Double): Double {
-        if (lengthM <= 0 || safetySpots.safePaths.isEmpty()) {
+    private fun safePathOverlapRatio(path: List<GeoPoint>, lengthMeters: Double): Double {
+        if (lengthMeters <= 0 || safetySpots.safePaths.isEmpty()) {
             return 0.0
         }
         var bestSingleRouteOverlapRatio: Double = 0.0
@@ -133,19 +133,19 @@ class SafetyScorer(
                 continue
             }
             val overlap: Double = path.overlapMetersWith(safePath.coords, DEFAULT_CORRIDOR_METERS)
-            bestSingleRouteOverlapRatio = maxOf(bestSingleRouteOverlapRatio, overlap / lengthM)
+            bestSingleRouteOverlapRatio = maxOf(bestSingleRouteOverlapRatio, overlap / lengthMeters)
         }
         return min(1.0, bestSingleRouteOverlapRatio)
     }
 
-    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyAxis, Double> {
+    private fun fillsOf(counts: SafetySpotCounts, km: Double, safePathOverlap: Double): Map<SafetyItem, Double> {
         return mapOf(
-            SafetyAxis.CCTV to densityAndCountFill(counts.cctv, km, HALF_CCTV_PER_KM),
-            SafetyAxis.LAMP to densityAndCountFill(counts.lamp, km, HALF_LAMP_PER_KM),
-            SafetyAxis.BELL to densityAndCountFill(counts.bell, km, HALF_BELL_PER_KM),
-            SafetyAxis.SAFEHOUSE to fill(counts.safehouse.toDouble(), HALF_SAFEHOUSE_COUNT),
-            SafetyAxis.POLICE to fill(counts.police.toDouble(), HALF_POLICE_COUNT),
-            SafetyAxis.SAFE_PATH to safePathOverlap,
+            SafetyItem.CCTV to densityAndCountFill(counts.cctv, km, HALF_CCTV_PER_KM),
+            SafetyItem.LAMP to densityAndCountFill(counts.lamp, km, HALF_LAMP_PER_KM),
+            SafetyItem.BELL to densityAndCountFill(counts.bell, km, HALF_BELL_PER_KM),
+            SafetyItem.SAFEHOUSE to fill(counts.safehouse.toDouble(), HALF_SAFEHOUSE_COUNT),
+            SafetyItem.POLICE to fill(counts.police.toDouble(), HALF_POLICE_COUNT),
+            SafetyItem.SAFE_PATH to safePathOverlap,
         )
     }
 
@@ -156,26 +156,26 @@ class SafetyScorer(
         return (densityFill + countFill) / 2
     }
 
-    private fun normalizedScore(fills: Map<SafetyAxis, Double>, weights: SafetyWeights, coverage: SafetyDataCoverage): Double? {
+    private fun normalizedScore(fills: Map<SafetyItem, Double>, weights: SafetyWeights, coverage: SafetyDataCoverage): Double? {
         val totalWeight: Double = coveredWeight(weights, coverage)
         if (totalWeight <= 0) {
             return null
         }
         var weighted: Double = 0.0
-        for (axis in SafetyAxis.entries) {
-            if (!coverage.has(axis)) {
+        for (item in SafetyItem.entries) {
+            if (!coverage.has(item)) {
                 continue
             }
-            weighted += weights.byAxis.getValue(axis) * fills.getValue(axis)
+            weighted += weights.byItem.getValue(item) * fills.getValue(item)
         }
         return weighted / totalWeight
     }
 
     private fun coveredWeight(weights: SafetyWeights, coverage: SafetyDataCoverage): Double {
         var total: Double = 0.0
-        for (axis in SafetyAxis.entries) {
-            if (coverage.has(axis)) {
-                total += weights.byAxis.getValue(axis)
+        for (item in SafetyItem.entries) {
+            if (coverage.has(item)) {
+                total += weights.byItem.getValue(item)
             }
         }
         return total
@@ -214,7 +214,7 @@ class SafetyScorer(
     companion object {
         const val DEFAULT_CORRIDOR_METERS: Double = 30.0
 
-        // 실측(2026-08-24, 전국 무작위 1.5km 구간 300개): 자료가 실린 축은 반경 1km 안에 최소 3건, 안 실린 축은 3km 까지 0건.
+        // 실측(2026-08-24, 전국 무작위 1.5km 구간 300개): 자료가 실린 항목은 반경 1km 안에 최소 3건, 안 실린 항목은 3km 까지 0건.
         const val DATA_PRESENCE_RADIUS_METERS: Double = 1_000.0
 
         const val SCORE_POINT_SPACING_METERS: Double = 500.0
@@ -243,14 +243,14 @@ class SafetyScorer(
 
         const val MAX_RISK_PENALTY: Double = 0.20
 
-        private val SPOT_TYPES_BY_AXIS: Map<SafetyAxis, List<SafetySpotType>> =
+        private val SPOT_TYPES_BY_ITEM: Map<SafetyItem, List<SafetySpotType>> =
             mapOf(
-                SafetyAxis.CCTV to listOf(SafetySpotType.CCTV),
-                SafetyAxis.LAMP to listOf(SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP),
-                SafetyAxis.BELL to listOf(SafetySpotType.BELL),
-                SafetyAxis.SAFEHOUSE to listOf(SafetySpotType.SAFEHOUSE),
-                SafetyAxis.POLICE to listOf(SafetySpotType.POLICE),
-                SafetyAxis.SAFE_PATH to emptyList(),
+                SafetyItem.CCTV to listOf(SafetySpotType.CCTV),
+                SafetyItem.LAMP to listOf(SafetySpotType.STREET_LAMP, SafetySpotType.SECURITY_LAMP),
+                SafetyItem.BELL to listOf(SafetySpotType.BELL),
+                SafetyItem.SAFEHOUSE to listOf(SafetySpotType.SAFEHOUSE),
+                SafetyItem.POLICE to listOf(SafetySpotType.POLICE),
+                SafetyItem.SAFE_PATH to emptyList(),
             )
     }
 }

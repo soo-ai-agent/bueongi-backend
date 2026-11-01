@@ -7,7 +7,7 @@ import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
-import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
+import io.soo.bueongi.core.route.domain.safety.model.SafetyScoreDetail
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.support.util.formatDistance
 import kotlin.math.max
@@ -26,8 +26,8 @@ data class RouteOption(
     val steps: List<NavigationStep>? = null,
     val score: Int? = null,
     val markers: List<SafetySpotPoi>? = null,
-    val breakdown: SafetyBreakdown? = null,
-    val provenance: DataProvenance? = null,
+    val scoreDetail: SafetyScoreDetail? = null,
+    val source: DataSource? = null,
 ) {
     companion object {
         internal fun from(
@@ -36,33 +36,33 @@ data class RouteOption(
             name: String,
             tags: List<RouteTag>,
             markers: List<SafetySpotPoi>,
-            provenance: DataProvenance,
+            source: DataSource,
         ): RouteOption {
             val candidate: RouteCandidate = scoredRoute.candidate
-            val breakdown: SafetyBreakdown = scoredRoute.score.breakdown
-            val minutes: Int = max(1, (candidate.timeS / 60.0).roundToInt())
+            val scoreDetail: SafetyScoreDetail = scoredRoute.score.scoreDetail
+            val minutes: Int = max(1, (candidate.timeSeconds / 60.0).roundToInt())
             return RouteOption(
                 id = "tmap-${candidate.searchOption}-$index",
                 name = name,
                 time = "${minutes}분",
-                dist = formatDistance(candidate.distanceM),
-                desc = describe(scoredRoute.score.score, breakdown),
+                dist = formatDistance(candidate.distanceMeters),
+                desc = describe(scoredRoute.score.score, scoreDetail),
                 tags = tags,
                 type = scoredRoute.type,
                 path = candidate.path,
                 steps = candidate.steps,
                 score = scoredRoute.score.score,
                 markers = markers,
-                breakdown = breakdown,
-                provenance = provenance,
+                scoreDetail = scoreDetail,
+                source = source,
             )
         }
 
-        private fun describe(score: Int?, breakdown: SafetyBreakdown): String {
+        private fun describe(score: Int?, scoreDetail: SafetyScoreDetail): String {
             if (score == null) {
                 return "이 지역 안심시설 자료가 없어 안전 점수를 낼 수 없습니다"
             }
-            return "안전 점수 ${score}점 · CCTV ${breakdown.cctvDensity}/km"
+            return "안전 점수 ${score}점 · CCTV ${scoreDetail.cctvDensity}/km"
         }
     }
 }

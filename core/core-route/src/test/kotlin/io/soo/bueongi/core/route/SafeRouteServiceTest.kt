@@ -53,16 +53,16 @@ class SafeRouteServiceTest {
         TmapRoute(
             searchOption = "0",
             path = listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)),
-            distanceM = 880.0,
-            timeS = 700,
+            distanceMeters = 880.0,
+            timeSeconds = 700,
             steps = emptyList(),
         )
     private val routeB =
         TmapRoute(
             searchOption = "10",
             path = listOf(TmapCoord(37.51, 127.0), TmapCoord(37.51, 127.01)),
-            distanceM = 900.0,
-            timeS = 600,
+            distanceMeters = 900.0,
+            timeSeconds = 600,
             steps = emptyList(),
         )
 
@@ -121,12 +121,12 @@ class SafeRouteServiceTest {
         assertThat(result[0].markers).isNotNull
         val markerTypes = result[0].markers!!.map { it.type }
         assertThat(markerTypes).contains(SafetySpotPoiType.START, SafetySpotPoiType.END, SafetySpotPoiType.CCTV)
-        val breakdown = result[0].breakdown!!
-        assertThat(breakdown.cctvDensity).isGreaterThan(0.0)
-        assertThat(breakdown.routeKm).isGreaterThan(0.0)
-        val provenance = result[0].provenance!!
-        assertThat(provenance.kind).isEqualTo("live")
-        assertThat(provenance.origin).isNotBlank()
+        val scoreDetail = result[0].scoreDetail!!
+        assertThat(scoreDetail.cctvDensity).isGreaterThan(0.0)
+        assertThat(scoreDetail.routeKm).isGreaterThan(0.0)
+        val dataSource = result[0].source!!
+        assertThat(dataSource.kind).isEqualTo("live")
+        assertThat(dataSource.origin).isNotBlank()
     }
 
     @Test
@@ -167,7 +167,7 @@ class SafeRouteServiceTest {
 
     @Test
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
-        val overBudget = saferRouteAt(lat = 37.53, distanceM = 2000.0)
+        val overBudget = saferRouteAt(lat = 37.53, distanceMeters = 2000.0)
 
         val result = service(tmapReturning(saferRoute = overBudget)).findRouteOptions(request)
 
@@ -177,7 +177,7 @@ class SafeRouteServiceTest {
 
     @Test
     fun `거리 예산 안에 드는 우회 후보는 채택된다`() {
-        val withinBudget = saferRouteAt(lat = 37.53, distanceM = 1000.0)
+        val withinBudget = saferRouteAt(lat = 37.53, distanceMeters = 1000.0)
 
         val result = service(tmapReturning(saferRoute = withinBudget)).findRouteOptions(request)
 
@@ -185,12 +185,12 @@ class SafeRouteServiceTest {
         assertThat(result.map { it.dist }).contains("1.0km")
     }
 
-    private fun saferRouteAt(lat: Double, distanceM: Double): TmapRoute =
+    private fun saferRouteAt(lat: Double, distanceMeters: Double): TmapRoute =
         TmapRoute(
             searchOption = "2",
             path = listOf(TmapCoord(lat, 127.0), TmapCoord(lat, 127.01)),
-            distanceM = distanceM,
-            timeS = 1500,
+            distanceMeters = distanceMeters,
+            timeSeconds = 1500,
             steps = emptyList(),
         )
 

@@ -8,16 +8,16 @@ data class SafetyWeights(
     val police: Double,
     val safePath: Double,
 ) {
-    val byAxis: Map<SafetyAxis, Double> =
+    val byItem: Map<SafetyItem, Double> =
         mapOf(
-            SafetyAxis.CCTV to cctv,
-            SafetyAxis.LAMP to lamp,
-            SafetyAxis.BELL to bell,
-            SafetyAxis.SAFEHOUSE to safehouse,
-            SafetyAxis.POLICE to police,
-            SafetyAxis.SAFE_PATH to safePath,
+            SafetyItem.CCTV to cctv,
+            SafetyItem.LAMP to lamp,
+            SafetyItem.BELL to bell,
+            SafetyItem.SAFEHOUSE to safehouse,
+            SafetyItem.POLICE to police,
+            SafetyItem.SAFE_PATH to safePath,
         )
 
     val sum: Double
-        get() = byAxis.values.sum()
+        get() = byItem.values.sum()
 }

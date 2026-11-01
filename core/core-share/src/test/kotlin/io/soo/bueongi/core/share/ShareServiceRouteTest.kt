@@ -24,8 +24,8 @@ class ShareServiceRouteTest : ShareServiceTestSupport() {
                         name = "CCTV", purpose = "생활방범", cameraCount = 2, address = "서울시", phone = null,
                     ),
                 ),
-            totalDistanceM = 1234,
-            totalTimeS = 900,
+            totalDistanceMeters = 1234,
+            totalTimeSeconds = 900,
             type = "safe",
         )
 
@@ -42,8 +42,8 @@ class ShareServiceRouteTest : ShareServiceTestSupport() {
         assertEquals(1, r.markers.size)
         assertEquals("cctv", r.markers[0].type)
         assertEquals(2, r.markers[0].cameraCount)
-        assertEquals(1234, r.totalDistanceM)
-        assertEquals(900, r.totalTimeS)
+        assertEquals(1234, r.totalDistanceMeters)
+        assertEquals(900, r.totalTimeSeconds)
     }
 
     @Test

@@ -2,14 +2,14 @@ package io.soo.bueongi.core.route
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.route.api.response.DataProvenance
+import io.soo.bueongi.core.route.api.response.DataSource
 import io.soo.bueongi.core.route.api.response.RouteOption
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoi
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteTag
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
-import io.soo.bueongi.core.route.domain.safety.model.SafetyBreakdown
+import io.soo.bueongi.core.route.domain.safety.model.SafetyScoreDetail
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -35,21 +35,21 @@ class RouteOptionWireContractTest {
                         lng = 127.0,
                         description = "출발",
                         turnType = 200,
-                        distanceM = 10,
-                        timeS = 8,
+                        distanceMeters = 10,
+                        timeSeconds = 8,
                         pointType = "SP",
                     ),
                 ),
             score = 80,
             markers = listOf(SafetySpotPoi(type = SafetySpotPoiType.CCTV, x = 50, y = 50, lat = 37.5, lng = 127.0)),
-            breakdown =
-                SafetyBreakdown(
+            scoreDetail =
+                SafetyScoreDetail(
                     routeKm = 0.7, cctvDensity = 4.5, lampDensity = 0.0, bellDensity = 0.0, safehouseCount = 0,
                     policeCount = 0, safePathOverlap = 0.0, crimeProneAreaCount = 0,
-                    scoredAxes = listOf("cctv", "bell"), unscoredAxes = listOf("lamp", "safehouse", "police", "safePath"),
-                    axisCoverage = 0.45,
+                    scoredItems = listOf("cctv", "bell"), unscoredItems = listOf("lamp", "safehouse", "police", "safePath"),
+                    scoredItemRatio = 0.45,
                 ),
-            provenance = DataProvenance(kind = "live", basedOn = "2026.06", origin = "공공데이터포털"),
+            source = DataSource(kind = "live", basedOn = "2026.06", origin = "공공데이터포털"),
         )
 
     @Test
@@ -58,7 +58,7 @@ class RouteOptionWireContractTest {
 
         assertThat(json.fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "id", "name", "time", "dist", "desc", "tags", "type",
-            "path", "steps", "score", "markers", "breakdown", "provenance",
+            "path", "steps", "score", "markers", "scoreDetail", "source",
         )
         assertThat(json.at("/path/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("lat", "lng")
         assertThat(json.at("/steps/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
@@ -67,19 +67,19 @@ class RouteOptionWireContractTest {
             "lng",
             "description",
             "turnType",
-            "distanceM",
-            "timeS",
+            "distanceMeters",
+            "timeSeconds",
             "pointType",
         )
         assertThat(json.at("/tags/0").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("text", "variant")
-        assertThat(json.at("/breakdown").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
+        assertThat(json.at("/scoreDetail").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder(
             "routeKm", "cctvDensity", "lampDensity", "bellDensity", "safehouseCount", "policeCount", "safePathOverlap",
             "crimeProneAreaCount",
-            "scoredAxes", "unscoredAxes", "axisCoverage",
+            "scoredItems", "unscoredItems", "scoredItemRatio",
         )
-        assertThat(json.at("/breakdown/scoredAxes").map { it.asText() }).containsExactly("cctv", "bell")
-        assertThat(json.at("/breakdown/axisCoverage").asDouble()).isEqualTo(0.45)
-        assertThat(json.at("/provenance").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("kind", "basedOn", "origin")
+        assertThat(json.at("/scoreDetail/scoredItems").map { it.asText() }).containsExactly("cctv", "bell")
+        assertThat(json.at("/scoreDetail/scoredItemRatio").asDouble()).isEqualTo(0.45)
+        assertThat(json.at("/source").fieldNames().asSequence().toSet()).containsExactlyInAnyOrder("kind", "basedOn", "origin")
     }
 
     @Test

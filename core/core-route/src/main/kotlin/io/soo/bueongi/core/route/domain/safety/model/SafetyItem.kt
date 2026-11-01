@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety.model
 
-enum class SafetyAxis(
+enum class SafetyItem(
     val wireName: String,
 ) {
     CCTV("cctv"),

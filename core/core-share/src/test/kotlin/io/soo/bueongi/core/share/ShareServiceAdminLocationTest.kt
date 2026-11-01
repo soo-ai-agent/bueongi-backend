@@ -10,14 +10,14 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
     @Test
     fun `getLocationForAdmin 은 활성 세션의 위치를 공개 조회와 동일한 뷰로 반환한다`() {
         val s = service.create(null)
-        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04, remainingM = 500.0, remainingS = 360.0))
+        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04, remainingMeters = 500.0, remainingSeconds = 360.0))
         val view = service.getLocationForAdmin(s.token)
         assertEquals(37.5, view.lat)
         assertEquals(127.04, view.lng)
         assertEquals(clock.now, view.updatedAt)
         assertFalse(view.expired)
-        assertEquals(500.0, view.remainingM)
-        assertEquals(360.0, view.remainingS)
+        assertEquals(500.0, view.remainingMeters)
+        assertEquals(360.0, view.remainingSeconds)
     }
 
     @Test

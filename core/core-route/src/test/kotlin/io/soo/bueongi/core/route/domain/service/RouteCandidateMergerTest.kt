@@ -66,8 +66,8 @@ class RouteCandidateMergerTest {
         RouteCandidate(
             searchOption = searchOption,
             path = path,
-            distanceM = (searchOption.toDouble() + 1) * 10,
-            timeS = 1,
+            distanceMeters = (searchOption.toDouble() + 1) * 10,
+            timeSeconds = 1,
             steps = emptyList(),
         )
 

@@ -47,11 +47,11 @@ class SafetySpotWaypointPlanner(
             // 왕복 구간(꼬임)을 만든다 — 평균점에 가장 가까운 실제 시설 위치를 대표 좌표로 쓴다.
             val averageCenter: GeoPoint = GeoPoint(sumLat / spots.size, sumLng / spots.size)
             var anchor: SafetySpotPoint = spots[0]
-            var anchorDistanceM: Double = Double.MAX_VALUE
+            var anchorDistanceMeters: Double = Double.MAX_VALUE
             for (spot in spots) {
-                val distanceM: Double = averageCenter.distanceMetersTo(spot.toGeoPoint())
-                if (distanceM < anchorDistanceM) {
-                    anchorDistanceM = distanceM
+                val distanceMeters: Double = averageCenter.distanceMetersTo(spot.toGeoPoint())
+                if (distanceMeters < anchorDistanceMeters) {
+                    anchorDistanceMeters = distanceMeters
                     anchor = spot
                 }
             }

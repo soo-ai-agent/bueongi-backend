@@ -8,9 +8,9 @@ data class RouteContext(
     val path: List<RoutePoint>,
     val markers: List<RouteMarker>,
     @param:JsonProperty("total_distance_m")
-    val totalDistanceM: Int,
+    val totalDistanceMeters: Int,
     @param:JsonProperty("total_time_s")
-    val totalTimeS: Int,
+    val totalTimeSeconds: Int,
     val type: String,
 ) {
     companion object {
@@ -19,8 +19,8 @@ data class RouteContext(
                 destination = RouteDestination.from(route.destination),
                 path = RoutePoint.from(route.path),
                 markers = RouteMarker.from(route.markers),
-                totalDistanceM = route.totalDistanceM,
-                totalTimeS = route.totalTimeS,
+                totalDistanceMeters = route.totalDistanceMeters,
+                totalTimeSeconds = route.totalTimeSeconds,
                 type = route.type,
             )
         }

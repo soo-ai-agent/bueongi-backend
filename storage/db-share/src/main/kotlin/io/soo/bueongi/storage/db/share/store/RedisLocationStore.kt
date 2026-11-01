@@ -17,7 +17,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeParseException
 
-// 저장 계약: `share:/location:/route:/viewer:{token}` 키와 snake_case HASH 필드는 리네임 금지.
+// 저장 계약: `share:/location:/route:/viewer:{token}` 키와 snake_case HASH 필드 이름을 바꾸면, 배포 전에 저장된 공유(최대 3시간)를 위해 옛 이름도 읽는다.
 class RedisLocationStore(
     private val redis: StringRedisTemplate,
     private val clock: Clock,
@@ -49,8 +49,8 @@ class RedisLocationStore(
                         put(FIELD_LAT, location.lat.toString())
                         put(FIELD_LNG, location.lng.toString())
                         put(FIELD_UPDATED_AT, location.updatedAt.toString())
-                        location.remainingM?.let { put(FIELD_REMAINING_M, it.toString()) }
-                        location.remainingS?.let { put(FIELD_REMAINING_S, it.toString()) }
+                        location.remainingMeters?.let { put(FIELD_REMAINING_METERS, it.toString()) }
+                        location.remainingSeconds?.let { put(FIELD_REMAINING_SECONDS, it.toString()) }
                     }
                 redis.opsForHash<String, String>().putAll(locKey, fields)
                 redis.expire(locKey, ttl)
@@ -94,12 +94,15 @@ class RedisLocationStore(
         val lat: Double = hash[FIELD_LAT]?.toDoubleOrNull() ?: return null
         val lng: Double = hash[FIELD_LNG]?.toDoubleOrNull() ?: return null
         val updatedAt: Instant = hash[FIELD_UPDATED_AT]?.let(::parseInstantOrNull) ?: return null
+        // 배포 전에 옛 이름으로 저장된 위치(공유 수명 최대 3시간)도 남은 거리·시간을 잃지 않게 remaining_m·remaining_s 도 읽는다.
+        val remainingMeters: String? = hash[FIELD_REMAINING_METERS] ?: hash["remaining_m"]
+        val remainingSeconds: String? = hash[FIELD_REMAINING_SECONDS] ?: hash["remaining_s"]
         return StoredLocation(
             lat = lat,
             lng = lng,
             updatedAt = updatedAt,
-            remainingM = hash[FIELD_REMAINING_M]?.toDoubleOrNull(),
-            remainingS = hash[FIELD_REMAINING_S]?.toDoubleOrNull(),
+            remainingMeters = remainingMeters?.toDoubleOrNull(),
+            remainingSeconds = remainingSeconds?.toDoubleOrNull(),
         )
     }
 
@@ -218,7 +221,7 @@ class RedisLocationStore(
         const val FIELD_LAT: String = "lat"
         const val FIELD_LNG: String = "lng"
         const val FIELD_UPDATED_AT: String = "updated_at"
-        const val FIELD_REMAINING_M: String = "remaining_m"
-        const val FIELD_REMAINING_S: String = "remaining_s"
+        const val FIELD_REMAINING_METERS: String = "remaining_meters"
+        const val FIELD_REMAINING_SECONDS: String = "remaining_seconds"
     }
 }

@@ -96,7 +96,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
 | `assemble(scoredRoutes, origin, destination)` | internal | 조립 | 점수순 정렬 후 RouteOption 목록을 만든다 (마커·태그·출처 포함) |
-| `describe(score, breakdown)` | 비공개 | 변환 | 점수 → 사용자 문구 ("안전 점수 N점 · CCTV n/km") |
+| `describe(score, scoreDetail)` | 비공개 | 변환 | 점수 → 사용자 문구 ("안전 점수 N점 · CCTV n/km") |
 | `buildTags(scoredRoute)` | 비공개 | 조립 | 유형 고정 태그 + 밀도 기준을 넘긴 태그를 모은다 |
 | `buildProvenance()` | 비공개 | 조립 | 시설 자료 신선도에서 데이터 출처 표기를 만든다 |
 
@@ -130,16 +130,16 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | `coverageOf(paths)` | 공개 | 계산 | 경로 표본점 주변에 축(CCTV·조명 등)별 자료가 있는지 판정해 커버리지를 만든다 |
 | `score(path)` | 공개 | 계산 | 커버리지를 스스로 구해 아래 score 를 부른다 (편의 오버로드) |
 | `score(path, coverage)` | 공개 | 계산 | 시설 개수 → 축별 충족도 → 가중 평균 → 위험 감점 순으로 점수와 세부 내역을 낸다 |
-| `hasDataNear(axis, scorePoints)` | 비공개 | 계산 | 한 축의 자료가 표본점 주변 1km 안에 있는지 |
+| `hasDataNear(item, scorePoints)` | 비공개 | 계산 | 한 축의 자료가 표본점 주변 1km 안에 있는지 |
 | `hasSafePathNear(scorePoints)` | 비공개 | 계산 | 안심귀갓길 자료가 주변에 있는지 |
 | `countNearby(path)` | 비공개 | 조회 | 종류별 corridor 내 시설 수를 센다 |
 | `countWithinCorridor(type, path)` | 비공개 | 조회 | 한 종류의 corridor 내 시설 수 |
 | `countRiskNear(path)` | 비공개 | 조회 | 범죄주의구간 수 (corridor 100m) |
-| `safePathOverlapRatio(path, lengthM)` | 비공개 | 계산 | 안심귀갓길과 겹치는 비율 (최댓값 1개) |
+| `safePathOverlapRatio(path, lengthMeters)` | 비공개 | 계산 | 안심귀갓길과 겹치는 비율 (최댓값 1개) |
 | `fillsOf(counts, km, safePathOverlap)` | 비공개 | 계산 | 개수·밀도 → 축별 충족도(0~1) |
 | `normalizedScore(fills, weights, coverage)` | 비공개 | 계산 | 자료 있는 축만 가중 평균 |
 | `coveredWeight(weights, coverage)` | 비공개 | 계산 | 자료 있는 축의 가중치 합 |
-| ~~`spotTypesOf(axis)`~~ | 비공개 | 조회 | 한 번만 쓰여 `SPOT_TYPES_BY_AXIS.getValue(axis)` 로 합쳤다 |
+| ~~`spotTypesOf(axis)`~~ | 비공개 | 조회 | 한 번만 쓰여 `SPOT_TYPES_BY_ITEM.getValue(item)` 로 합쳤다 |
 | `applyRiskPenalty(normalized, riskCount, km)` | 비공개 | 계산 | 범죄주의구간 밀도만큼 감점 (최대 0.20) |
 | `fill(value, halfPoint)` | 비공개 | 계산 | 포화 곡선 v/(v+half) |
 | `saturate(value, ceiling)` | 비공개 | 계산 | 0~1 로 자르는 비율 |

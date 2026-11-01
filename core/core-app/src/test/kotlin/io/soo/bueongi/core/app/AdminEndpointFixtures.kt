@@ -127,8 +127,8 @@ class AdminEndpointFixtures {
                     destination = StoredRouteDestination(name = "삼성역", lat = 37.5089, lng = 127.0631),
                     path = listOf(StoredCoord(37.5, 127.0), StoredCoord(37.5089, 127.0631)),
                     markers = emptyList(),
-                    totalDistanceM = 1200,
-                    totalTimeS = 900,
+                    totalDistanceMeters = 1200,
+                    totalTimeSeconds = 900,
                     type = "safe",
                 )
         }

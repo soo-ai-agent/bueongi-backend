@@ -98,12 +98,12 @@ class ShareServiceLocationTest : ShareServiceTestSupport() {
     }
 
     @Test
-    fun `remaining_m·remaining_s 는 위치 조회로 왕복된다`() {
+    fun `remaining_meters·remaining_seconds 는 위치 조회로 왕복된다`() {
         val s = service.create(null)
-        service.updateLocation(s.token, s.ownerSecret, report(remainingM = 500.0, remainingS = 360.0))
+        service.updateLocation(s.token, s.ownerSecret, report(remainingMeters = 500.0, remainingSeconds = 360.0))
         val view = service.getLocation(s.token)
-        assertEquals(500.0, view.remainingM)
-        assertEquals(360.0, view.remainingS)
+        assertEquals(500.0, view.remainingMeters)
+        assertEquals(360.0, view.remainingSeconds)
     }
 
     @Test
@@ -111,7 +111,7 @@ class ShareServiceLocationTest : ShareServiceTestSupport() {
         val s = service.create(null)
         service.updateLocation(s.token, s.ownerSecret, report())
         val view = service.getLocation(s.token)
-        assertNull(view.remainingM)
-        assertNull(view.remainingS)
+        assertNull(view.remainingMeters)
+        assertNull(view.remainingSeconds)
     }
 }

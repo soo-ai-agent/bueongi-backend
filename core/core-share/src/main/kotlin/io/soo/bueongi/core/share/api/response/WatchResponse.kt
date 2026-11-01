@@ -11,10 +11,10 @@ data class WatchResponse(
     @param:JsonProperty("updated_at")
     val updatedAt: Instant? = null,
     val expired: Boolean = false,
-    @param:JsonProperty("remaining_m")
-    val remainingM: Double? = null,
-    @param:JsonProperty("remaining_s")
-    val remainingS: Double? = null,
+    @param:JsonProperty("remaining_meters")
+    val remainingMeters: Double? = null,
+    @param:JsonProperty("remaining_seconds")
+    val remainingSeconds: Double? = null,
 ) {
     companion object {
         val EXPIRED = WatchResponse(watching = false, expired = true)
@@ -27,8 +27,8 @@ data class WatchResponse(
                 lng = location?.lng,
                 updatedAt = location?.updatedAt,
                 expired = false,
-                remainingM = location?.remainingM,
-                remainingS = location?.remainingS,
+                remainingMeters = location?.remainingMeters,
+                remainingSeconds = location?.remainingSeconds,
             )
         }
     }

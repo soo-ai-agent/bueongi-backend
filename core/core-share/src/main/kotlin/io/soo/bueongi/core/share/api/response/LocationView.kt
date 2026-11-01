@@ -10,10 +10,10 @@ data class LocationView(
     @param:JsonProperty("updated_at")
     val updatedAt: Instant?,
     val expired: Boolean,
-    @param:JsonProperty("remaining_m")
-    val remainingM: Double? = null,
-    @param:JsonProperty("remaining_s")
-    val remainingS: Double? = null,
+    @param:JsonProperty("remaining_meters")
+    val remainingMeters: Double? = null,
+    @param:JsonProperty("remaining_seconds")
+    val remainingSeconds: Double? = null,
     val overdue: Boolean = false,
 ) {
     companion object {
@@ -30,8 +30,8 @@ data class LocationView(
                 lng = location.lng,
                 updatedAt = location.updatedAt,
                 expired = false,
-                remainingM = location.remainingM,
-                remainingS = location.remainingS,
+                remainingMeters = location.remainingMeters,
+                remainingSeconds = location.remainingSeconds,
                 overdue = overdue,
             )
         }
