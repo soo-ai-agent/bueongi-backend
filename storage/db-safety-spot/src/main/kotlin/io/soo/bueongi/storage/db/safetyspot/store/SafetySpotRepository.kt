@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Component
 class SafetySpotRepository(
-    @param:Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
+    @param:Value("\${bueongi.facility.data-dir:cdn}") private val configuredDir: String,
     private val objectMapper: ObjectMapper,
     private val uploadStore: SafetySpotUploadStore,
     private val regionCache: SafetySpotRegionCache? = null,
@@ -200,7 +200,7 @@ class SafetySpotRepository(
     }
 
     private fun resolveDataDir(): File? {
-        val candidates: List<String> = listOf(configuredDir, "../cdn", "../../cdn", "cdn")
+        val candidates: List<String> = listOf(configuredDir, "cdn", "../../cdn")
         for (candidate in candidates) {
             val dir: File = File(candidate)
             if (dir.isDirectory) {

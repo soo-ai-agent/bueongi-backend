@@ -1,9 +1,9 @@
 # storage:db-safety-spot 소유 설정 — 안심시설 데이터 적재(파일).
 bueongi:
   facility:
-    # 안심시설(CDN) 데이터 디렉터리. 미설정이면 backend 실행 경로 기준 ../cdn(= bueongi-service/cdn).
+    # 안심시설(CDN) 데이터 디렉터리. 미설정이면 실행 경로 기준 cdn.
     # 디렉터리가 없으면 빈 인덱스로 동작하고, safe-compare 는 점수 0/마커 없이 진행된다.
-    data-dir: ${BUEONGI_FACILITY_DATA_DIR:../cdn}
+    data-dir: ${BUEONGI_FACILITY_DATA_DIR:cdn}
     # 전국 CCTV 원본 CSV 의 위치 — 관리자 CSV 화면의 목록·미리보기에만 쓴다.
     # 적재는 관리자 업로드(facility-uploads)로 일원화했다(2026-10-11).
     cctv-csv: ${BUEONGI_FACILITY_CCTV_CSV:CCTV정보.csv}

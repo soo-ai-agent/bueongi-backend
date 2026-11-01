@@ -20,3 +20,19 @@
 !.idea/dictionaries/
 # 지연 적재 런타임 캐시 — 서버가 요청 때 받아 쓰는 것이라 커밋 금지
 data/region-cache/
+
+# 저장소 루트(bueongi-service)에서 함께 옮겨 온 규칙 — 분리 전에는 루트 .gitignore 가 막았다
+build/
+.gradle/
+node_modules/
+*.log
+*.pem
+*.p12
+.DS_Store
+.mcp.json
+.env.*
+!.env.example
+secrets/
+# 전국 비상벨 수집 산출(대용량 — 재생성 가능, 비커밋)
+cdn/emergency_bell/nationwide.json
+cdn/uploads/

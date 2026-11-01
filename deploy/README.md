@@ -15,7 +15,7 @@
                                   [backend] ──(기본 H2 파일 DB · 선택 redis)── 위치공유 세션(1~3h 상한)
 ```
 
-- **이미지**: `ghcr.io/soo-ai-agent/bueongi`(관리자·보호자 웹), `ghcr.io/soo-ai-agent/bueongi-service`(백엔드)
+- **이미지**: `ghcr.io/soo-ai-agent/bueongi`(관리자·보호자 웹), `ghcr.io/soo-ai-agent/bueongi-backend`(백엔드)
 - 사용자 화면은 모바일 앱(`mobile/`, Expo)이 담당한다. 웹에는 관리자·보호자 두 번들만 있고, 그 외 경로는 `/admin` 으로 보낸다.
 - nginx 프록시 규칙은 dev(vite) 프록시의 운영 미러다 — `/share/{token}` 단일 세그먼트는 보호자 뷰어,
   `/share/create`·`/share/{t}/...` 는 백엔드 API.
@@ -28,9 +28,9 @@
 |---|---|---|---|
 | bueongi | `e2e.yml`(기존) | push/PR | vitest + Playwright E2E |
 | bueongi | `docker-publish.yml` | main push · `v*.*.*` 태그 | typecheck+vitest → GHCR 이미지 발행 |
-| bueongi-service | `backend-ci.yml` | backend/** push/PR | gradle test (UTF-8 로케일) |
-| bueongi-service | `docker-publish.yml` | main push · `v*.*.*` 태그 | gradle test → GHCR 이미지 발행 |
-| bueongi-service | `pipeline-monthly.yml`(기존) | 매월 1일 | cdn/ 재생성 커밋 → 이미지 자동 재발행 |
+| bueongi-backend | `backend-ci.yml` | 백엔드 소스 push/PR | gradle test (UTF-8 로케일) |
+| bueongi-backend | `docker-publish.yml` | main push · `v*.*.*` 태그 | gradle test → GHCR 이미지 발행 |
+| bueongi-backend | `pipeline-monthly.yml`(기존) | 매월 1일 | cdn/ 재생성 커밋 → 이미지 자동 재발행 |
 
 이미지 태그: `latest`(main), `v1.2.3`(태그), `sha-<커밋>`(모든 발행 — 롤백용 고정 태그).
 
@@ -46,7 +46,7 @@ VITE_* 는 번들에 인라인되는 클라이언트 공개 값이다(카카오 
 | Secret | `VITE_KAKAO_JS_KEY` | Kakao JavaScript 키 (콘솔에 운영 도메인 등록 필수) |
 | Variable | `VITE_SHARE_API_BASE_URL` | **운영 공개 origin** 예: `https://bueongi.example.com` |
 
-**bueongi-service (백엔드)** — 추가 설정 불요(GITHUB_TOKEN 으로 GHCR 발행).
+**bueongi-backend (백엔드)** — 추가 설정 불요(GITHUB_TOKEN 으로 GHCR 발행).
 GHCR 패키지가 private 이면 배포 서버에서 `docker login ghcr.io` 필요(read:packages PAT).
 
 ## 서버 배포 (docker compose)
@@ -90,12 +90,12 @@ docker compose pull && docker compose up -d
 
 ```bash
 # 백엔드 (컨텍스트 = 저장소 루트: cdn/ 포함)
-cd bueongi-service && docker build -f backend/Dockerfile -t ghcr.io/soo-ai-agent/bueongi-service:latest .
+cd bueongi-backend && docker build -t ghcr.io/soo-ai-agent/bueongi-backend:latest .
 
 # 프론트
 cd bueongi && docker build -t ghcr.io/soo-ai-agent/bueongi:latest \
   --build-arg VITE_SHARE_API_BASE_URL=http://localhost:8080 .
 
 # 로컬 이미지로 즉시 기동(태그가 latest 라 pull 없이 사용됨)
-cd bueongi-service/deploy && docker compose up -d
+cd bueongi-backend/deploy && docker compose up -d
 ```

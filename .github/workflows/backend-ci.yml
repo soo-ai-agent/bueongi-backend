@@ -1,14 +1,14 @@
-# 백엔드(Kotlin/Spring) 회귀 게이트 — backend/ 변경 시 gradle test 를 돌린다.
+# 백엔드(Kotlin/Spring) 회귀 게이트 — 소스 변경 시 gradle test 를 돌린다.
 # 한글 테스트 메서드명 컴파일을 위해 UTF-8 로케일 고정(로케일 불일치 시 InvalidPathException).
 name: backend-ci
 
 on:
   push:
     branches: [main, 'feat/**', 'claude/**']
-    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+    paths-ignore: ['docs/**', 'deploy/**', 'pipeline/**', 'cdn/**', '**.md']
   pull_request:
     branches: [main]
-    paths: ['backend/**', '.github/workflows/backend-ci.yml']
+    paths-ignore: ['docs/**', 'deploy/**', 'pipeline/**', 'cdn/**', '**.md']
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -35,7 +35,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Test (gradle)
-        working-directory: backend
         run: ./gradlew test --no-daemon
 
       - name: Upload test report (실패 시)
@@ -43,5 +42,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-report
-          path: backend/**/build/reports/tests/test
+          path: '**/build/reports/tests/test'
           retention-days: 7

@@ -3,7 +3,7 @@
 공공데이터 → **WGS84 단일 좌표계 CDN JSON** 파이프라인. 백엔드 서버로 정적 데이터를
 보내지 않고 `../cdn/` 정적 파일 + `manifest.json` 으로만 산출한다.
 
-기준 문서: `../docs/mvp-orchestrator-design.md` (작업 2)
+기준 문서: bueongi-service 저장소의 `docs/mvp-orchestrator-design.md` (작업 2)
 
 ## 흐름
 

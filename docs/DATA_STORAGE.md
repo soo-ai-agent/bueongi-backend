@@ -105,7 +105,7 @@ flowchart LR
 
 ```kotlin
 // SafetySpotRepository.kt:25 — CDN 파일 폴더
-@param:Value("\${bueongi.facility.data-dir:../cdn}") private val configuredDir: String,
+@param:Value("\${bueongi.facility.data-dir:cdn}") private val configuredDir: String,
 
 // SafetySpotRegionCache.kt:23 — 외부 API 결과를 저장하는 폴더
 @param:Value("\${bueongi.facility.region-cache-dir:./data/region-cache}")

@@ -10,7 +10,7 @@ import java.time.Duration
 
 @Configuration
 class CdnResourceConfig(
-    @param:Value("\${bueongi.facility.data-dir:../cdn}") private val dataDir: String,
+    @param:Value("\${bueongi.facility.data-dir:cdn}") private val dataDir: String,
 ) : WebMvcConfigurer {
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         val root: Path = Path.of(dataDir).toAbsolutePath().normalize()

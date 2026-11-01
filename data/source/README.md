@@ -38,7 +38,7 @@
 전량 표본 1,000건의 좌표 보유율은 100% 였으므로, "서울은 좌표가 없다"는 초기 판단은
 마포구 하나만 보고 일반화한 오판이었다. 좌표를 빠뜨린 지자체가 일부 섞여 있는 구조다.
 
-**결손 목록은 [`docs/lamp-missing-districts.md`](../../../docs/lamp-missing-districts.md)** —
+**결손 목록은 bueongi-service 저장소의 `docs/lamp-missing-districts.md`** —
 전국 195개 중 188개에 보안등이 없다(서울은 24개 자치구 전부).
 
 `제공기관코드` 가 곧 API 의 `insttCode` 다(창녕군 10,041 정확히 일치) — 지역 단위 수집은 가능하다.

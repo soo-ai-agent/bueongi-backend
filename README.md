@@ -66,7 +66,7 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon
 읽혀 bcrypt 검증에서 기동이 죽는다. 시크릿을 바꿨다면 한 줄로 재생성한다:
 
 ```bash
-cd backend && python3 -c "
+python3 -c "
 import pathlib
 out=[]
 for l in pathlib.Path('.env.local').read_text().splitlines():

@@ -3,7 +3,7 @@
 처음 보는 사람을 위한 지도다. 이 서버가 바깥과 주고받는 모든 접점을,
 **켜질 때 → 켜진 뒤 백그라운드 → 요청이 올 때** 세 시점으로 나눠 적는다.
 
-> 원천별 상세(인증·쿼터·필드)는 [`../../docs/external-api-catalog.md`](../../docs/external-api-catalog.md),
+> 원천별 상세(인증·쿼터·필드)는 bueongi-service 저장소의 `docs/external-api-catalog.md`,
 > 위치 공유 설계는 [`LOCATION_SHARING_DESIGN.md`](LOCATION_SHARING_DESIGN.md).
 
 ## 한눈 요약
@@ -62,7 +62,7 @@ main() 시작
   │                    예: 관리자 비밀번호가 bcrypt 형식이 아니면 APPLICATION FAILED TO START
   │
   ├─ ② 빈 조립
-  │     ├─ 안심시설 적재   BUEONGI_FACILITY_DATA_DIR(기본 ../cdn)의 JSON/CSV 를 읽어
+  │     ├─ 안심시설 적재   BUEONGI_FACILITY_DATA_DIR(기본 cdn)의 JSON/CSV 를 읽어
   │     │                  메모리 인덱스 구성. **로컬 파일이다 — 네트워크 아님.**
   │     │                  디렉터리가 없으면 경고 로그 후 빈 적재로 계속 뜬다.
   │     └─ Redis 연결      BUEONGI_REDIS_URL 있을 때만. 없으면 인메모리 폴백이라 연결 자체가 없다.

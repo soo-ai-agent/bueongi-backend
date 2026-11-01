@@ -12,10 +12,10 @@ name: bueongi
 
 services:
   backend:
-    image: ghcr.io/soo-ai-agent/bueongi-service:${BACKEND_TAG:-latest}
+    image: ghcr.io/soo-ai-agent/bueongi-backend:${BACKEND_TAG:-latest}
     build:
       context: ..
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       # 외부 API 키(없으면 결정론적 폴백으로 동작 — safe-compare 목업 경로, 시드 장소검색)
