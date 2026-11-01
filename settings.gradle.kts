@@ -7,7 +7,6 @@ include(
     "core:core-share",
     "core:core-place",
     "core:core-route",
-    "core:core-app-info",
     "core:core-admin-ops",
     "core:core-admin-safety-spot",
     "core:core-admin-auth",
@@ -46,5 +45,9 @@ pluginManagement {
                 "io.spring.dependency-management" -> useVersion(springDependencyManagementVersion)
             }
         }
+    }
+    plugins {
+        kotlin("plugin.jpa") version "1.9.25"
+        kotlin("plugin.allopen") version "1.9.25"
     }
 }

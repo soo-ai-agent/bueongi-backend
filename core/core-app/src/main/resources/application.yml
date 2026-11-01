@@ -48,14 +48,16 @@ bueongi:
 
   cors:
     # 프론트 dev 서버(strictPort=3619).
-    # Kakao SDK(지도)가 https 페이지를 전제라 dev 가 자체서명 https 로 떠서
-    # https origin 이 기본이고, 과거 http dev 도 함께 허용한다. 운영 도메인은 환경변수로 덮어쓴다.
+    # Kakao 지도 SDK 가 https 를 요구해 dev 가 자체서명 https 라 https origin 이 기본이고, 과거 http dev 도 허용한다. 운영 도메인은 환경변수로 덮어쓴다.
     allowed-origins: ${BUEONGI_CORS_ORIGINS:https://localhost:3619,http://localhost:3619}
+
   facility:
     # 시설 데이터는 파이프라인이 만든 CDN 파일이 원천이다(백엔드는 외부 API 를 직접 부르지 않는다).
     # 경로는 각 컴포넌트의 @Value 기본값(data-dir=../cdn, cctv-csv, upload-dir)을 쓰고 필요할 때만 덮어쓴다.
+
   share:
     # 보호자 공유 URL 의 base. 앱이 받는 share_url = {base-url}/share/{token}. 운영은 공개 도메인으로 덮어쓴다.
     base-url: ${BUEONGI_SHARE_BASE_URL:http://localhost:8119}
+
     # 미도착 감시 스캔 주기(ms). 활성 공유 중 '예정 도착 초과 + 위치 정지'를 주기적으로 찾아 운영자에게 알린다.
     watchdog-interval-ms: ${BUEONGI_WATCHDOG_INTERVAL_MS:60000}

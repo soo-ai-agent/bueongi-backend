@@ -8,8 +8,6 @@ const val TRACE_ID_MDC_KEY: String = "bueongiTraceId"
 
 const val REQUEST_ORIGIN_MDC_KEY: String = "bueongiRequestOrigin"
 
-const val BACKGROUND_ORIGIN: String = "배치"
-
 fun beginTrace(origin: String): String {
     // 로그에서 눈으로 짝을 맞추는 용도다 — 분산 추적 규격이 아니다.
     val traceId: String = UUID.randomUUID().toString().replace("-", "").take(TRACE_ID_LENGTH)

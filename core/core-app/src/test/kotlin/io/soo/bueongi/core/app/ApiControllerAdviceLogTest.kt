@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
-import io.soo.bueongi.core.common.event.ApiEventPublisher
+import io.soo.bueongi.core.share.api.controller.ShareStoreAdvice
 import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import io.soo.bueongi.support.logging.beginTrace
 import io.soo.bueongi.support.logging.currentTraceId
@@ -22,8 +22,8 @@ class ApiControllerAdviceLogTest {
         endTrace()
     }
 
-    private fun captureLogs(): ListAppender<ILoggingEvent> {
-        val logger: LogbackLogger = LoggerFactory.getLogger(ApiControllerAdvice::class.java) as LogbackLogger
+    private fun captureLogs(target: Class<*> = ApiControllerAdvice::class.java): ListAppender<ILoggingEvent> {
+        val logger: LogbackLogger = LoggerFactory.getLogger(target) as LogbackLogger
         val appender: ListAppender<ILoggingEvent> = ListAppender<ILoggingEvent>()
         appender.start()
         logger.addAppender(appender)
@@ -59,9 +59,9 @@ class ApiControllerAdviceLogTest {
 
     @Test
     fun `저장소 장애도 같은 형식으로 남긴다`() {
-        val appender = captureLogs()
+        val appender = captureLogs(ShareStoreAdvice::class.java)
 
-        advice().handleShareStoreUnavailable(
+        ShareStoreAdvice(ApplicationEventPublisher { }).handleShareStoreUnavailable(
             LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
         )
 
@@ -83,5 +83,5 @@ class ApiControllerAdviceLogTest {
         assertThat(line).contains("🔗 ${currentTraceId()}")
     }
 
-    private fun advice(): ApiControllerAdvice = ApiControllerAdvice(ApiEventPublisher(ApplicationEventPublisher { }))
+    private fun advice(): ApiControllerAdvice = ApiControllerAdvice(ApplicationEventPublisher { })
 }

@@ -9,7 +9,4 @@ data class SafetyDataCoverage(
     fun has(item: SafetyItem): Boolean {
         return item in covered
     }
-
-    val isEmpty: Boolean
-        get() = covered.isEmpty()
 }

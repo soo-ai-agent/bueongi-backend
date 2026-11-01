@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.share
 
+import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
 import io.soo.bueongi.core.share.domain.model.OVERDUE_SECONDS
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -36,18 +36,18 @@ class ShareServiceCreateTest : ShareServiceTestSupport() {
     }
 
     @Test
-    fun `getLocation 은 예정 도착 시각을 여유 넘겨 초과하면 overdue=true`() {
+    fun `getLocation 은 예정 도착 시각을 여유 넘겨 초과하고 위치가 멈췄으면 status 가 missed_arrival_suspect 다`() {
         val res = service.create(3, etaSeconds = 60)
         service.updateLocation(res.token, res.ownerSecret, report())
         clock.advanceSeconds(60 + MISSED_ARRIVAL_GRACE_SECONDS + OVERDUE_SECONDS + 1)
-        assertTrue(service.getLocation(res.token).overdue)
+        assertEquals(ShareProgressStatus.MISSED_ARRIVAL_SUSPECT, service.getLocation(res.token).status)
     }
 
     @Test
-    fun `getLocation 은 예정 도착 전이면 overdue=false`() {
+    fun `getLocation 은 예정 도착 전이면 status 가 in_progress 다`() {
         val res = service.create(3, etaSeconds = 600)
         service.updateLocation(res.token, res.ownerSecret, report())
-        assertFalse(service.getLocation(res.token).overdue)
+        assertEquals(ShareProgressStatus.IN_PROGRESS, service.getLocation(res.token).status)
     }
 
     @Test

@@ -5,8 +5,8 @@ import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
 class InvalidKeywordException(
-    val maxLength: Int,
-    val actualLength: Int,
+    maxLength: Int,
+    actualLength: Int,
 ) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "INVALID_KEYWORD",

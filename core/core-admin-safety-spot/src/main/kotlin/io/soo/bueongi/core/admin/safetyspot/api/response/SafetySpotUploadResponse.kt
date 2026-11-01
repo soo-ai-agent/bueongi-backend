@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.api.response
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvParseResult
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 
 data class SafetySpotUploadResponse(

@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.pedestriansignal
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 
 // 보행신호등 — WGS84.

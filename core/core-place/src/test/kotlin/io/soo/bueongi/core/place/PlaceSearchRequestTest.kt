@@ -23,8 +23,7 @@ class PlaceSearchRequestTest {
         val tooLong = "가".repeat(PlaceSearchRequest.MAX_KEYWORD_LENGTH + 1)
         assertThatThrownBy { PlaceSearchRequest(tooLong) }
             .isInstanceOf(InvalidKeywordException::class.java)
-            .extracting("actualLength")
-            .isEqualTo(PlaceSearchRequest.MAX_KEYWORD_LENGTH + 1)
+            .hasMessageContaining("${PlaceSearchRequest.MAX_KEYWORD_LENGTH + 1}자")
     }
 
     @Test

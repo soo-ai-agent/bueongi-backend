@@ -2,9 +2,9 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
 import io.soo.bueongi.core.common.event.ApiErrorResponded
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.common.event.OperationEvent
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
+import io.soo.bueongi.core.share.api.controller.ShareStoreAdvice
 import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -24,7 +24,7 @@ class ApiControllerAdviceAlertTest {
     @Test
     fun `미처리 예외(500)면 예외 클래스별 key 로 알림을 보낸다 — 응답 본문 비노출 계약은 유지`() {
         val notifier = RecordingPublisher()
-        val advice = ApiControllerAdvice(ApiEventPublisher(notifier))
+        val advice = ApiControllerAdvice(notifier)
 
         val body = advice.handleUncaught(IllegalStateException("내부 상태 오류"))
 
@@ -44,7 +44,7 @@ class ApiControllerAdviceAlertTest {
     @Test
     fun `저장소 장애(503)면 share-store-unavailable key 로 알림 + Retry-After 를 주고 원인은 비노출한다`() {
         val notifier = RecordingPublisher()
-        val advice = ApiControllerAdvice(ApiEventPublisher(notifier))
+        val advice = ShareStoreAdvice(notifier)
 
         val response =
             advice.handleShareStoreUnavailable(
@@ -62,7 +62,7 @@ class ApiControllerAdviceAlertTest {
     @Test
     fun `ApiException 오류 응답이 나가면 code 와 원인 예외 이름을 실은 이벤트를 발행한다`() {
         val notifier = RecordingPublisher()
-        val advice = ApiControllerAdvice(ApiEventPublisher(notifier))
+        val advice = ApiControllerAdvice(notifier)
 
         val body = advice.handleApi(PlaceSearchUnavailableException(RuntimeException("tmap down")))
 

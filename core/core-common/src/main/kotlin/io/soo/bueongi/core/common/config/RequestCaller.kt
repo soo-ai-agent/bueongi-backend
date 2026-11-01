@@ -1,4 +1,4 @@
-package io.soo.bueongi.core.enums
+package io.soo.bueongi.core.common.config
 
 import com.fasterxml.jackson.annotation.JsonValue
 

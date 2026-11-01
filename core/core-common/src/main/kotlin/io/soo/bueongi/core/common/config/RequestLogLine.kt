@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.common.config
 
-import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.support.logging.DIRECTION_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.DURATION_COLUMN_WIDTH
 import io.soo.bueongi.support.logging.INBOUND_DIRECTION

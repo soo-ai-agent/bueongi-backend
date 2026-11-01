@@ -26,7 +26,6 @@ COPY backend/core/core-safety-spot/build.gradle.kts ./core/core-safety-spot/
 COPY backend/core/core-share/build.gradle.kts ./core/core-share/
 COPY backend/core/core-place/build.gradle.kts ./core/core-place/
 COPY backend/core/core-route/build.gradle.kts ./core/core-route/
-COPY backend/core/core-app-info/build.gradle.kts ./core/core-app-info/
 COPY backend/core/core-admin-ops/build.gradle.kts ./core/core-admin-ops/
 COPY backend/core/core-admin-safety-spot/build.gradle.kts ./core/core-admin-safety-spot/
 COPY backend/core/core-admin-auth/build.gradle.kts ./core/core-admin-auth/

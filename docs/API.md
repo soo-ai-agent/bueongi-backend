@@ -72,7 +72,7 @@
 
 - `status`: 항상 `"UP"`(요청 처리 가능하면 도달).
 - `service`: `"bueongi-backend"`.
-- `locationStore`: `"redis"`=Redis 위치공유 저장소 / `"memory"`=인메모리 폴백(`BUEONGI_REDIS_URL` 미주입 시 MVP 기본). **저장소 종류 라벨일 뿐 Redis URL·자격증명은 절대 노출하지 않는다.** (위치 공유 섹션 참조)
+- `locationStore`: `"db"`=DB(`BUEONGI_DB_URL`) / `"redis"`=Redis / `"memory"`=인메모리 폴백(둘 다 미주입 시). **저장소 종류 라벨일 뿐 URL·자격증명은 절대 노출하지 않는다.** (위치 공유 섹션 참조)
 
 ---
 
@@ -151,7 +151,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 귀가 중인 사용자가 공유 토큰을 발급받아 **외부 메신저로 URL 을 직접 공유**하면, 보호자는 토큰 URL 만으로(로그인 없이) 위치를 5초 폴링으로 본다. **다른 엔드포인트와 달리 stateful** — Redis TTL 로 1~3시간 후 자동 만료된다. 출처: `share/ShareController.kt`, `share/ShareDtos.kt`, `share/ShareService.kt`, `share/LocationStore.kt`, `share/RedisLocationStore.kt`, `share/InMemoryLocationStore.kt`.
 
 > **경로 prefix**: 보호자가 브라우저로 직접 여는 공개 URL 이라 앱 전용 `/api` 와 분리해 `/share` 하위에 둔다. CORS 는 `/api/**` 와 동일 정책으로 `/share/**` 에도 허용(별도 origin 보호자 웹의 교차 출처 폴링 지원).
-> **저장소**: `LocationStore` 추상화(`PlaceProvider` 패턴 차용). `BUEONGI_REDIS_URL` 주입 시 `RedisLocationStore`, 미주입(로컬/CI/MVP) 시 `InMemoryLocationStore` 폴백. 활성 저장소는 `GET /api/health.locationStore`(`"redis"`/`"memory"`)로 확인.
+> **저장소**: `LocationStore` 추상화. `BUEONGI_DB_URL` 주입 시 `JpaLocationStore`(JPA 엔티티 `ShareSessionEntity`, H2 파일 기본), 없고 `BUEONGI_REDIS_URL` 주입 시 `RedisLocationStore`, 둘 다 미주입(로컬/CI) 시 `InMemoryLocationStore` 폴백. 활성 저장소는 `GET /api/health.locationStore`(`"db"`/`"redis"`/`"memory"`)로 확인. DB 는 TTL 이 없어 만료 행을 10분 주기 스윕으로 지우고, 조회는 `expires_at` 로 거른다.
 > **Redis 키 모델**: `share:{token}` HASH `{ created_at, expires_at }` + `location:{token}` HASH `{ lat, lng, updated_at, remaining_meters, remaining_seconds }`(남은 거리·시간은 옛 이름 `remaining_m`·`remaining_s` 로 저장된 값도 읽는다). 둘 다 동일 상한 TTL(1~3h)로 함께 자동 삭제 — 공유가 만료되면 위치도 잔존하지 않는다.
 > **프라이버시**: `token` 은 128-bit URL-safe 랜덤(추측 불가). 계정·전화번호 등 PII 미저장. 1~3시간 상한 TTL 로 무기한 추적을 막는다 — 공유를 끄지 않아도 반드시 만료된다. 보호자 회원가입/페어링/푸시/서버 발송 메시지는 **범위 밖**.
 
@@ -205,9 +205,11 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 
 | 본문 | 의미 | 보호자 웹 처리 |
 |------|------|----------------|
-| `{ "lat":37.4, "lng":127.0, "updated_at":"...", "expired":false }` | 위치 1건 이상 갱신됨 | 지도에 위치 표시 |
-| `{ "lat":null, "lng":null, "updated_at":null, "expired":false }` | 공유는 살아있으나 **첫 위치 갱신 전** | "위치 수신 대기 중" 표시, 폴링 지속 |
-| `{ "lat":null, "lng":null, "updated_at":null, "expired":true }` | 토큰 없음 또는 TTL 만료 | "공유가 종료/만료되었습니다" 안내, 폴링 중단 |
+| `{ "lat":37.4, "lng":127.0, "updated_at":"...", "expired":false, "status":"in_progress" }` | 위치 1건 이상 갱신됨 | 지도에 위치 표시 |
+| `{ "lat":null, "lng":null, "updated_at":null, "expired":false, "status":"in_progress" }` | 공유는 살아있으나 **첫 위치 갱신 전** | "위치 수신 대기 중" 표시, 폴링 지속 |
+| `{ "lat":null, "lng":null, "updated_at":null, "expired":true, "status":"in_progress" }` | 토큰 없음 또는 TTL 만료 | "공유가 종료/만료되었습니다" 안내, 폴링 중단 |
+
+`status` 는 서버가 판정한 진행 상태다 — `in_progress`(정상 진행) · `arrival_likely`(예정 초과 + 위치 정지인데 마지막 위치가 목적지 반경 30m 이내 — 도착 후 공유만 안 끝낸 것으로 추정) · `missed_arrival_suspect`(예정 초과 + 위치 정지 + 목적지에서 멂 — 미도착 의심). 보호자 웹은 `arrival_likely` 면 경고 대신 도착 추정 안내를 그린다. 만료 응답의 상태는 `expired` 칸이 계약이라 `status` 는 기본값(`in_progress`)으로 나간다.
 
 ### `POST /share/{token}/end` — 공유 종료 (사용자 단말)
 

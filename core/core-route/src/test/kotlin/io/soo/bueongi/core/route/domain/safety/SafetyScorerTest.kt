@@ -77,7 +77,7 @@ class SafetyScorerTest {
         for (type in WEIGHTED_TYPES) {
             byType[type] = denseSpots().map { SafetySpotPoint.of(type, it.lat, it.lng) }
         }
-        val source = FakeSafetySpotSource(byType, listOf(SafePath(coords = path, name = "안심귀갓길")))
+        val source = FakeSafetySpotSource(byType, listOf(SafePath(coords = path)))
 
         assertThat(scorer(source, NIGHT).score(path).score).isEqualTo(100)
         assertThat(scorer(source, DAY).score(path).score).isEqualTo(100)

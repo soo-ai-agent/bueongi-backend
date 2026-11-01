@@ -64,9 +64,11 @@ class TmapRouteCacheTest {
         val cache = TmapRouteCache(maxEntries = 2, clock = { 0L })
         cache.put(origin, destination, "0", emptyList(), route)
         cache.put(origin, destination, "4", emptyList(), route)
-        assertThat(cache.size()).isEqualTo(2)
+        assertThat(cache.get(origin, destination, "0", emptyList())).isEqualTo(route)
+        assertThat(cache.get(origin, destination, "4", emptyList())).isEqualTo(route)
         cache.put(origin, destination, "10", emptyList(), route)
-        assertThat(cache.size()).isEqualTo(1)
+        assertThat(cache.get(origin, destination, "0", emptyList())).isNull()
+        assertThat(cache.get(origin, destination, "4", emptyList())).isNull()
         assertThat(cache.get(origin, destination, "10", emptyList())).isEqualTo(route)
     }
 }

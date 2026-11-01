@@ -15,11 +15,11 @@ App Factory 독립 프로젝트(`projectId=bueongi`)로, 별도 경로/포트/ka
 | Java | 21 |
 | 빌드 | Gradle (wrapper 포함) |
 
-의존성: `spring-boot-starter-web`, `spring-boot-starter-validation`, `spring-boot-starter-data-redis`(위치 공유 저장), `kotlin-reflect`, `jackson-module-kotlin`, (test) `spring-boot-starter-test`, `mockito-kotlin`.
+의존성: `spring-boot-starter-web`, `spring-boot-starter-validation`, `spring-boot-starter-data-jpa`·`spring-boot-starter-data-redis`(위치 공유 저장), `kotlin-reflect`, `jackson-module-kotlin`, (test) `spring-boot-starter-test`, `mockito-kotlin`.
 
 - group: `io.soo.bueongi` / version: `0.0.1-SNAPSHOT`
 - 장소/경로 API는 **stateless**이며 외부 키 없이 **결정론적**으로 동작한다(MVP). 실연동 시 내부 구현만 교체되고 응답 계약은 동일.
-- **위치 공유(`/share`)만 stateful** — Redis(`BUEONGI_REDIS_URL`) 기반 1~3시간 TTL 자동 만료. **Redis 미설정 시 인메모리 폴백**으로 동일 계약·무중단 동작(`docs/LOCATION_SHARING_DESIGN.md`).
+- **위치 공유(`/share`)만 stateful** — DB(`BUEONGI_DB_URL`, H2 파일 기본) 또는 Redis(`BUEONGI_REDIS_URL`) 에 1~3시간 상한으로 저장. **둘 다 미설정 시 인메모리 폴백**으로 동일 계약·무중단 동작(`docs/LOCATION_SHARING_DESIGN.md`).
 
 ## 사전 요구사항
 
@@ -87,7 +87,7 @@ curl http://localhost:8119/api/health
 # → {"status":"UP","service":"bueongi-backend","placeSource":"seed","locationStore":"memory"}
 ```
 
-`placeSource`는 Kakao 키 주입 여부에서 파생한 라벨이다(`seed`=내장 시드 폴백, `live`=외부 실연동). `locationStore`는 위치 공유 저장소 라벨(`memory`=인메모리 폴백, `redis`=Redis). **키 값·Redis 자격증명은 응답에 절대 노출하지 않는다.**
+`placeSource`는 Kakao 키 주입 여부에서 파생한 라벨이다(`seed`=내장 시드 폴백, `live`=외부 실연동). `locationStore`는 위치 공유 저장소 라벨(`db`=DB, `redis`=Redis, `memory`=인메모리 폴백). **키 값·DB·Redis 자격증명은 응답에 절대 노출하지 않는다.**
 
 ## 환경변수 (설정)
 
@@ -105,7 +105,8 @@ curl http://localhost:8119/api/health
 | `SLACK_WEBHOOK_URL` | (빈 값) | Slack Incoming Webhook URL. **미설정이면 운영 알림 전체 비활성**(무해). 주입 시 ①처리되지 않은 500 ②시설 적재 0건 ③Tmap 경로 전면 실패(폴백 전환) ④Kakao 장소검색 실패(시드 폴백) ⑤도착 미확인을 발송. 같은 알림 key 는 스로틀 창 안에서 1회만. |
 | `SLACK_ALERT_THROTTLE_MINUTES` | `10` | 같은 알림 key 의 재발송 억제 창(분) — 장애 중 알림 폭주 방지. |
 | `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**`에 허용할 CORS origin(콤마 구분). 운영 도메인은 여기에 덧붙인다. 허용 메서드는 GET/POST/OPTIONS 고정. |
-| `BUEONGI_REDIS_URL` | (빈 값) | 위치 공유 저장 Redis(예 `redis://localhost:6379`). **미설정이면 인메모리 폴백**(단일 인스턴스, 재시작 시 휘발). 운영 다중 인스턴스·내구성이 필요하면 주입. |
+| `BUEONGI_DB_URL` | (빈 값) | 위치 공유 저장 DB 의 JDBC URL(예 `jdbc:h2:file:./data/share-db`). 주입 시 DB 저장소 — Redis 보다 우선. 표준 SQL 만 쓰므로 PostgreSQL 전환은 URL 교체 + 드라이버 의존성 한 줄. |
+| `BUEONGI_REDIS_URL` | (빈 값) | 위치 공유 저장 Redis(예 `redis://localhost:6379`). **db-url·redis-url 둘 다 미설정이면 인메모리 폴백**(단일 인스턴스, 재시작 시 휘발). |
 | `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | 공유 URL(`share_url`)의 base. 운영은 보호자가 접근 가능한 공개 도메인으로 덮어쓴다. |
 
 ### 관리자 로그인 키와 비밀번호 준비
@@ -145,7 +146,7 @@ JWT_PRIVATE_KEY=<base64-DER 또는 PKCS#8 PEM 개인키>
 BUEONGI_ADMIN_LOGIN_ID=admin
 BUEONGI_ADMIN_PASSWORD_HASH='<bcrypt 해시>'
 BUEONGI_CORS_ORIGINS=http://localhost:3619,https://bueongi.example.com
-BUEONGI_REDIS_URL=redis://localhost:6379
+BUEONGI_DB_URL=jdbc:h2:file:./data/share-db
 BUEONGI_SHARE_BASE_URL=https://bueongi.example.com
 ```
 
@@ -165,14 +166,13 @@ set +a
 ```
 backend/
 ├── core/
-│   ├── core-app/                # 유일한 실행 모듈(bootJar/bootRun) — BueongiApplication·application.yml·웹 테스트만
+│   ├── core-app/                # 유일한 실행 모듈(bootJar/bootRun) — BueongiApplication·application.yml·웹 테스트 + /api/health·/api/app-info(버전)
 │   ├── core-route/              # 경로 비교 본체 — 후보 수집·병합·유형 배정·응답 조립 (+ domain/safety·marker)
 │   │   ├── api/                 #   controller/ · request/
 │   │   └── domain/              #   service/ (일하는 것) · model/ (값)
 │   ├── core-share/              # 위치공유 + 보호자 페이지(guardian.html 리소스) · 관리자 공유 조회
 │   ├── core-place/              # 장소 검색(공급자는 PlaceSearchClient 계약 뒤 — core 는 Tmap 을 모른다)
 │   ├── core-safety-spot/        # 안심시설 적재 — 공공 API 원천별 채우기(Fill)·실패 쿨다운
-│   ├── core-app-info/           # /api/health · /api/app-info(버전)
 │   ├── core-admin-auth/         # 관리자 로그인·토큰·JWT·SecurityConfig·/me
 │   ├── core-admin-ops/          # 운영 관측 — 알림·Slack 설정·외부 수집 집계
 │   ├── core-admin-safety-spot/  # 관리자 시설 현황·CSV 업로드

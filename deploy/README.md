@@ -12,7 +12,7 @@
                                                ├─ /cdn/*       ─▶ backend       안심시설 정적 JSON
                                                └─ /share/create, /share/{t}/(location|end|watching|route)
                                                                ─▶ backend       위치 공유 API
-                                  [backend] ──(선택)── [redis] 위치공유 세션(TTL)
+                                  [backend] ──(기본 H2 파일 DB · 선택 redis)── 위치공유 세션(1~3h 상한)
 ```
 
 - **이미지**: `ghcr.io/soo-ai-agent/bueongi`(관리자·보호자 웹), `ghcr.io/soo-ai-agent/bueongi-service`(백엔드)

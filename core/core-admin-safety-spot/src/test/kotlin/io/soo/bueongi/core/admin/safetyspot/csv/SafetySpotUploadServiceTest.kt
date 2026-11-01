@@ -1,10 +1,10 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore

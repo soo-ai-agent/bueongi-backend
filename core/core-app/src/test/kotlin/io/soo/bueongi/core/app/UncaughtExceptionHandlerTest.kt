@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @WebMvcTest(BoomController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, ApiControllerAdvice::class)
+@Import(ApiControllerAdvice::class)
 @Tag("context")
 class UncaughtExceptionHandlerTest(
     @param:Autowired private val mockMvc: MockMvc,

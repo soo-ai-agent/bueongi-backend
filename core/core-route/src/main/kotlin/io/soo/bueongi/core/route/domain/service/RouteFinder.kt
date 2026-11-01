@@ -4,10 +4,10 @@ import io.soo.bueongi.client.tmap.NavStep
 import io.soo.bueongi.client.tmap.TmapCoord
 import io.soo.bueongi.client.tmap.TmapRoute
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
 import io.soo.bueongi.core.route.domain.model.NavigationStep
 import io.soo.bueongi.core.route.domain.model.RouteCandidate
+import io.soo.bueongi.core.route.domain.model.SafetyPreference
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Component
 

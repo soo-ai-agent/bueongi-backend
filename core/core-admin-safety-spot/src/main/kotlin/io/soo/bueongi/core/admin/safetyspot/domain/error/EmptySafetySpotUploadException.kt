@@ -5,7 +5,7 @@ import io.soo.bueongi.core.common.error.ApiFieldError
 import org.springframework.http.HttpStatus
 
 class EmptySafetySpotUploadException(
-    val received: Int,
+    received: Int,
 ) : ApiException(
         status = HttpStatus.BAD_REQUEST,
         code = "VALIDATION_FAILED",

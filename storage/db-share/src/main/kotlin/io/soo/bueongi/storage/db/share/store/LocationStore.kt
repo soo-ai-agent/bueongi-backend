@@ -3,7 +3,7 @@ package io.soo.bueongi.storage.db.share.store
 import io.soo.bueongi.storage.db.share.model.ShareSession
 
 interface LocationStore {
-    // health 응답에 그대로 나간다: "redis" | "memory" — 자격증명·주소는 노출 금지.
+    // health 응답에 그대로 나간다: "db" | "redis" | "memory" — 자격증명·주소는 노출 금지.
     val backend: String
 
     fun save(session: ShareSession)

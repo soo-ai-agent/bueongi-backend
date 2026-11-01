@@ -3,11 +3,10 @@ package io.soo.bueongi.core.route
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.marker.model.SafetySpotPoiType
 import io.soo.bueongi.core.route.domain.model.RouteTagVariant
+import io.soo.bueongi.core.route.domain.model.SafetyPreference
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -41,7 +40,6 @@ class WireEnumRoundTripTest {
         roundTrip(SafetySpotPoiType.END, "end")
         roundTrip(SafetySpotPoiType.CCTV, "cctv")
         roundTrip(SafetySpotPoiType.BELL, "bell")
-        roundTrip(SafetySpotPoiType.STORE, "store")
         roundTrip(SafetySpotPoiType.POLICE, "police")
         roundTrip(SafetySpotPoiType.SAFEHOUSE, "safehouse")
         roundTrip(SafetySpotPoiType.STREET_LAMP, "lamp")
@@ -55,13 +53,6 @@ class WireEnumRoundTripTest {
     }
 
     @Test
-    fun `SafetySpotCoordSystem wgs84 epsg5179 epsg5174`() {
-        roundTrip(SafetySpotCoordSystem.WGS84, "wgs84")
-        roundTrip(SafetySpotCoordSystem.EPSG5179, "epsg5179")
-        roundTrip(SafetySpotCoordSystem.EPSG5174, "epsg5174")
-    }
-
-    @Test
     fun `SafetySpotType cdnType`() {
         roundTrip(SafetySpotType.CCTV, "cctv")
         roundTrip(SafetySpotType.STREET_LAMP, "lamp")
@@ -69,5 +60,4 @@ class WireEnumRoundTripTest {
         roundTrip(SafetySpotType.SAFEHOUSE, "safehouse")
         roundTrip(SafetySpotType.POLICE, "police")
     }
-
 }

@@ -3,11 +3,9 @@ package io.soo.bueongi.storage.db.safetyspot.store
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.model.StoredSafetySpotCollection
-import io.soo.bueongi.storage.db.safetyspot.model.StoredSafetySpotItem
-import io.soo.bueongi.storage.db.safetyspot.model.StoredSafetySpotProperties
+import io.soo.bueongi.storage.db.safetyspot.model.toStoredItem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -74,26 +72,4 @@ class SafetySpotUploadStore(
     private companion object {
         const val ORIGINALS_DIR: String = "originals"
     }
-}
-
-private fun SafetySpotPoint.cctvPropertiesOrNull(): StoredSafetySpotProperties? {
-    if (this !is CctvSpot) {
-        return null
-    }
-    if (purpose == null && cameraCount == null) {
-        return null
-    }
-    return StoredSafetySpotProperties(purpose = purpose, cameraCount = cameraCount)
-}
-
-internal fun SafetySpotPoint.toStoredItem(): StoredSafetySpotItem {
-    return StoredSafetySpotItem(
-        name = name,
-        lat = lat,
-        lng = lng,
-        sigunguCode = regionCodeOrNull(),
-        address = address,
-        phone = phoneOrNull(),
-        properties = cctvPropertiesOrNull(),
-    )
 }

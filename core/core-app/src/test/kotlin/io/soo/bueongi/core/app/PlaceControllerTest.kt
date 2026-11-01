@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.place.api.controller.PlaceController
 import io.soo.bueongi.core.place.api.request.PlaceSearchRequest
 import io.soo.bueongi.core.place.api.response.PlaceResponse
@@ -26,9 +25,6 @@ class PlaceControllerTest(
 ) {
     @MockitoBean
     private lateinit var placeSearchService: PlaceSearchService
-
-    @MockitoBean
-    private lateinit var apiEvents: ApiEventPublisher
 
     @Test
     fun `검색 결과를 장소 배열로 응답한다`() {

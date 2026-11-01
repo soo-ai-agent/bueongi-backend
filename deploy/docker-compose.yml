@@ -29,8 +29,12 @@ services:
       # 보호자 공유 URL base = 사용자에게 보이는 공개 origin (share_url = {base}/share/{token})
       BUEONGI_SHARE_BASE_URL: ${PUBLIC_ORIGIN:-http://localhost:8080}
       BUEONGI_CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:8080}
-      # redis 프로필 사용 시 자동 배선. 비우면 인메모리 폴백(단일 인스턴스 개발/소규모용).
+      # 위치공유 저장소 — 기본은 H2 파일 DB(share-db 볼륨, 재시작에도 세션 유지). 비우면 redis-url, 둘 다 없으면 인메모리.
+      BUEONGI_DB_URL: ${BUEONGI_DB_URL:-jdbc:h2:file:/data/share-db}
+      # redis 프로필 사용 시 자동 배선. db-url 이 있으면 DB 가 우선한다.
       BUEONGI_REDIS_URL: ${BUEONGI_REDIS_URL:-}
+    volumes:
+      - share-db:/data
     healthcheck:
       test: ['CMD', 'curl', '-fs', 'http://localhost:8119/api/health']
       interval: 30s
@@ -77,6 +81,7 @@ services:
       - caddy-config:/config
 
 volumes:
+  share-db:
   redis-data:
   caddy-data:
   caddy-config:

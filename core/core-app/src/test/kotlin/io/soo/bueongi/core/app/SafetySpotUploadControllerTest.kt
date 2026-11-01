@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.safetyspot.api.controller.SafetySpotUploadController
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
@@ -25,7 +24,7 @@ import java.nio.file.Files
 
 @WebMvcTest(SafetySpotUploadController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, SafetySpotUploadControllerTest.TestConfig::class)
+@Import(SafetySpotUploadControllerTest.TestConfig::class)
 @Tag("context")
 class SafetySpotUploadControllerTest(
     @param:Autowired private val mockMvc: MockMvc,

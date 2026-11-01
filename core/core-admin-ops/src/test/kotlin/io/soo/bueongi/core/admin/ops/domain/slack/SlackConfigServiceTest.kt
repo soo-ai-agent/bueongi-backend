@@ -55,6 +55,7 @@ class SlackConfigServiceTest {
             "place-search-failed",
             "tmap-route-failed",
             "missed-arrival",
+            "arrival-likely",
             "share-store-unavailable",
             "safety-spot-fetch-failed",
             "safety-spot-no-coordinates",

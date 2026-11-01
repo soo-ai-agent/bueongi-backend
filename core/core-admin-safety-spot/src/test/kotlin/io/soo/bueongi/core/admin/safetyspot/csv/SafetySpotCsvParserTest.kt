@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 import io.soo.bueongi.storage.db.safetyspot.securitylamp.SecurityLampSpot

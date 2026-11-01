@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.app
 
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.share.MutableTestClock
 import io.soo.bueongi.core.share.api.controller.GuardianPage
 import io.soo.bueongi.core.share.api.controller.ShareController
@@ -21,7 +20,7 @@ import org.springframework.test.web.servlet.post
 
 @WebMvcTest(ShareController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, ShareControllerTestSupport.ShareTestConfig::class, GuardianPage::class)
+@Import(ShareControllerTestSupport.ShareTestConfig::class, GuardianPage::class)
 @ActiveProfiles("test")
 @Tag("context")
 abstract class ShareControllerTestSupport {

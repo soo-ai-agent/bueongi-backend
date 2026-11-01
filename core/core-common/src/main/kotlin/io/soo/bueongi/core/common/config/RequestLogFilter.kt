@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.common.config
 
-import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.support.logging.beginTrace
 import io.soo.bueongi.support.logging.endTrace
 import jakarta.servlet.FilterChain

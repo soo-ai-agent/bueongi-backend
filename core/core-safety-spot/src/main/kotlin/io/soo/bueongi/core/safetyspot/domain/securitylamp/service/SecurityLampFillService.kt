@@ -28,10 +28,6 @@ class SecurityLampFillService(
 
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
-    fun isFilled(regionCode: String): Boolean {
-        return skipReason(regionCode) != null
-    }
-
     private fun skipReason(regionCode: String): String? {
         if (safetySpots.index(SafetySpotType.SECURITY_LAMP).regions.contains(regionCode)) {
             return "이미 적재됨(인덱스)"

@@ -18,7 +18,7 @@ data class AlertResponse(
             val category: AlertCategory? = AlertCategory.ofAlertKey(record.key)
             if (category == null) {
                 // 종류를 모르는 key 는 key 의 ':' 앞부분을 그대로 이름으로 보여 준다.
-                val unknownKey: String = record.key.substringBefore(":")
+                val unknownKey: String = AlertCategory.categoryKeyOf(record.key)
                 return AlertResponse(
                     atEpochMs = record.atEpochMs,
                     key = record.key,

@@ -1,6 +1,10 @@
 package io.soo.bueongi.core.share
 
+import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
+import io.soo.bueongi.storage.db.share.model.StoredCoord
+import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -113,5 +117,55 @@ class ShareServiceLocationTest : ShareServiceTestSupport() {
         val view = service.getLocation(s.token)
         assertNull(view.remainingMeters)
         assertNull(view.remainingSeconds)
+    }
+
+    @Test
+    fun `정상 진행 중이면 status 는 in_progress 다`() {
+        val s = service.create(1, etaSeconds = 600)
+        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04))
+        val view = service.getLocation(s.token)
+        assertEquals(ShareProgressStatus.IN_PROGRESS, view.status)
+    }
+
+    @Test
+    fun `예정 초과 + 정지 + 목적지 근처면 status 는 arrival_likely 다`() {
+        val s = service.create(1, etaSeconds = 10)
+        service.saveRoute(s.token, s.ownerSecret, routeTo(lat = 37.5, lng = 127.04))
+        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04))
+        // eta(10) + 여유(60) + 초과 임계(300) 를 넘기고, 위치 보고도 같은 시간만큼 멈춘 상태.
+        clock.advanceSeconds(10 + 60 + 300 + 1)
+        val view = service.getLocation(s.token)
+        assertEquals(ShareProgressStatus.ARRIVAL_LIKELY, view.status)
+    }
+
+    @Test
+    fun `예정 초과 + 정지 + 목적지에서 멀면 status 는 missed_arrival_suspect 다`() {
+        val s = service.create(1, etaSeconds = 10)
+        service.saveRoute(s.token, s.ownerSecret, routeTo(lat = 37.6, lng = 127.04))
+        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04))
+        clock.advanceSeconds(10 + 60 + 300 + 1)
+        val view = service.getLocation(s.token)
+        assertEquals(ShareProgressStatus.MISSED_ARRIVAL_SUSPECT, view.status)
+    }
+
+    @Test
+    fun `목적지 근처라도 경로상 남은 거리가 멀면 status 는 missed_arrival_suspect 다`() {
+        val s = service.create(1, etaSeconds = 10)
+        service.saveRoute(s.token, s.ownerSecret, routeTo(lat = 37.5, lng = 127.04))
+        service.updateLocation(s.token, s.ownerSecret, report(37.5, 127.04, remainingMeters = 500.0))
+        clock.advanceSeconds(10 + 60 + 300 + 1)
+        val view = service.getLocation(s.token)
+        assertEquals(ShareProgressStatus.MISSED_ARRIVAL_SUSPECT, view.status)
+    }
+
+    private fun routeTo(lat: Double, lng: Double): StoredRoute {
+        return StoredRoute(
+            destination = StoredRouteDestination(name = "집", lat = lat, lng = lng),
+            path = listOf(StoredCoord(lat, lng)),
+            markers = emptyList(),
+            totalDistanceMeters = 0,
+            totalTimeSeconds = 0,
+            type = "safe",
+        )
     }
 }

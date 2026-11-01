@@ -1,13 +1,15 @@
 package io.soo.bueongi.core.common.error
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import io.soo.bueongi.core.common.event.ApiEventPublisher
-import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
+import io.soo.bueongi.core.common.event.ApiErrorResponded
+import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.traceColumn
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanInstantiationException
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -25,13 +27,13 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class ApiControllerAdvice(
-    private val apiEvents: ApiEventPublisher,
+    private val events: ApplicationEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     @ExceptionHandler(ApiException::class)
     fun handleApi(ex: ApiException): ProblemDetail {
-        apiEvents.apiErrorResponded(code = ex.code, causeName = ex.cause?.javaClass?.simpleName)
+        events.publishEvent(ApiErrorResponded(code = ex.code, causeName = ex.cause?.javaClass?.simpleName))
         return ex.toProblemDetail()
     }
 
@@ -210,30 +212,6 @@ class ApiControllerAdvice(
             setProperty("code", "NOT_FOUND")
         }
 
-    @ExceptionHandler(LocationStoreUnavailableException::class)
-    fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
-        logUnhandled(
-            counterpart = "공유 저장소",
-            status = HttpStatus.SERVICE_UNAVAILABLE.value(),
-            action = "503 SHARE_STORE_UNAVAILABLE 응답(Retry-After ${RETRY_AFTER_SECONDS}s)",
-            ex = ex,
-        )
-        apiEvents.shareStoreUnavailable(
-            "${ex.cause?.javaClass?.simpleName ?: "unknown"} — 위치 공유 읽기/쓰기가 일시 중단됩니다.",
-        )
-        val body: ProblemDetail =
-            ProblemDetail.forStatusAndDetail(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "일시적으로 위치 공유 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
-            ).apply {
-                title = "Service Unavailable"
-                setProperty("code", "SHARE_STORE_UNAVAILABLE")
-            }
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-            .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS.toString())
-            .body(body)
-    }
-
     @ExceptionHandler(Exception::class)
     fun handleUncaught(ex: Exception): ProblemDetail {
         logUnhandled(
@@ -242,9 +220,12 @@ class ApiControllerAdvice(
             action = "500 INTERNAL_ERROR 응답",
             ex = ex,
         )
-        apiEvents.unhandledServerError(
-            exceptionName = ex.javaClass.simpleName,
-            detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
+        events.publishEvent(
+            OperationEvent(
+                key = AlertCategory.SERVER_ERROR.keyOf(ex.javaClass.simpleName),
+                title = "처리되지 않은 서버 오류(500)",
+                detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
+            ),
         )
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -270,8 +251,6 @@ class ApiControllerAdvice(
     }
 
     private companion object {
-        const val RETRY_AFTER_SECONDS: Int = 5
-
         const val UNKNOWN_ORIGIN: String = "요청 미상"
     }
 }

@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.safetyspot.api.controller.SafetySpotStatusController
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -14,7 +13,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(SafetySpotStatusController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @Tag("context")
 class AdminSafetySpotStatusEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

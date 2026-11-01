@@ -1,11 +1,9 @@
 package io.soo.bueongi.support.logging
 
-// 수신·송신·예외 세 줄이 같은 자리에 같은 뜻의 값을 둬야 세로로 읽힌다 — 폭을 바꾸면 정렬 테스트가 깨진다.
+// 수신 줄마다 같은 자리에 같은 뜻의 값을 둬야 세로로 읽힌다 — 폭을 바꾸면 정렬 테스트가 깨진다.
 const val LOG_COLUMN_SEPARATOR: String = "  |  "
 
 const val DIRECTION_COLUMN_WIDTH: Int = 13
-
-const val COUNTERPART_COLUMN_WIDTH: Int = 16
 
 const val STATUS_COLUMN_WIDTH: Int = 10
 
@@ -18,8 +16,6 @@ const val DURATION_COLUMN_WIDTH: Int = 7
 const val NO_RESPONSE_STATUS: String = "---"
 
 const val INBOUND_DIRECTION: String = "[수신]"
-const val OUTBOUND_DIRECTION: String = "[송신]"
-const val EXCEPTION_DIRECTION: String = "[예외]"
 
 // 터미널에서 한글은 두 칸을 차지한다 — 글자 수로 채우면 한글이 섞인 줄만 밀린다.
 fun padColumn(text: String, width: Int): String {

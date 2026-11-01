@@ -14,6 +14,8 @@ enum class AlertCategory(
 
     MISSED_ARRIVAL("missed-arrival", "미도착 의심", AlertSeverity.CRITICAL),
 
+    ARRIVAL_LIKELY("arrival-likely", "도착 추정(공유 미종료)", AlertSeverity.DEGRADED),
+
     SHARE_STORE_UNAVAILABLE("share-store-unavailable", "위치 공유 저장소 장애", AlertSeverity.CRITICAL),
 
     SAFETY_SPOT_FETCH_FAILED("safety-spot-fetch-failed", "시설 수집 실패", AlertSeverity.DEGRADED),
@@ -30,8 +32,13 @@ enum class AlertCategory(
     companion object {
         private const val DELIMITER: String = ":"
 
+        // alertKey("종류:대상")에서 종류 부분만 떼낸다. ':' 규칙은 여기에만 둔다.
+        fun categoryKeyOf(alertKey: String): String {
+            return alertKey.substringBefore(DELIMITER)
+        }
+
         fun ofAlertKey(alertKey: String): AlertCategory? {
-            val categoryKey: String = alertKey.substringBefore(DELIMITER)
+            val categoryKey: String = categoryKeyOf(alertKey)
             for (category in entries) {
                 if (category.key == categoryKey) {
                     return category

@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

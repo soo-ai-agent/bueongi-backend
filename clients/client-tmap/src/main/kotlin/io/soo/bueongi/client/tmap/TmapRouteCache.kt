@@ -43,8 +43,6 @@ class TmapRouteCache(
         entries[key(origin, destination, searchOption, passList)] = Entry(route, clock() + ttlMillis)
     }
 
-    fun size(): Int = entries.size
-
     private fun key(
         origin: TmapCoord,
         destination: TmapCoord,

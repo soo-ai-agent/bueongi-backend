@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.app
 
+import io.soo.bueongi.core.common.config.RequestCaller
 import io.soo.bueongi.core.common.config.RequestLogLine
-import io.soo.bueongi.core.enums.RequestCaller
 import io.soo.bueongi.support.logging.LOG_COLUMN_SEPARATOR
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -1,5 +1,6 @@
 package io.soo.bueongi.core.share.domain.service
 
+import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.core.share.api.response.ActiveShareView
 import io.soo.bueongi.core.share.api.response.CreateShareResponse
 import io.soo.bueongi.core.share.api.response.LocationView
@@ -12,7 +13,7 @@ import io.soo.bueongi.core.share.domain.error.ShareSessionNotFoundException
 import io.soo.bueongi.core.share.domain.model.DEFAULT_EXPIRES_HOURS
 import io.soo.bueongi.core.share.domain.model.LocationReport
 import io.soo.bueongi.core.share.domain.model.MISSED_ARRIVAL_GRACE_SECONDS
-import io.soo.bueongi.core.share.domain.model.isOverdue
+import io.soo.bueongi.core.share.domain.model.progressStatus
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
@@ -129,11 +130,11 @@ class ShareService(
     }
 
     private fun locationViewOf(session: ShareSession): LocationView {
-        val overdue: Boolean = session.isOverdue(clock.instant())
+        val status: ShareProgressStatus = session.progressStatus(clock.instant())
         val location: StoredLocation =
             session.location
-                ?: return LocationView.waiting(overdue)
-        return LocationView.from(location, overdue)
+                ?: return LocationView.waiting(status)
+        return LocationView.from(location, status)
     }
 
     fun storeBackendLabel(): String {

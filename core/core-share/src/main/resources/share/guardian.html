@@ -20,6 +20,7 @@
     }
     #status.live { background: #16a34a; }
     #status.waiting { background: #d97706; }
+    #status.arrived { background: #047857; }
     #status.overdue { background: #b91c1c; }
     #status.expired { background: #dc2626; }
     #status.error { background: #475569; }
@@ -126,7 +127,10 @@
       var fresh = isFinite(updatedMs) && (Date.now() - updatedMs) <= STALE_MS;
       if (fresh) {
         setStatus('live', '실시간 위치 공유 중');
-      } else if (data.overdue) {
+      } else if (data.status === 'arrival_likely') {
+        // 목적지 근처에서 공유만 멈춤 — 경고 대신 도착 추정 안내.
+        setStatus('arrived', '목적지 근처에서 공유가 멈췄어요. 도착한 것으로 보여요');
+      } else if (data.status === 'missed_arrival_suspect') {
         // 예정 도착 시간을 넘겼는데 위치까지 멈춤 — 그냥 '끊김'보다 강한 경고로 격상(연락 유도).
         setStatus('overdue', '예정 시간을 넘겼는데 위치가 멈췄어요. 연락해 보세요');
       } else {

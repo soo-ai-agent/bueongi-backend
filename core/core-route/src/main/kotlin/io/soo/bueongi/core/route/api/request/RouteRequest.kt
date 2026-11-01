@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.domain.error.CoordinateOutOfRangeException
 import io.soo.bueongi.core.route.domain.error.SameOriginDestinationException
 import io.soo.bueongi.core.route.domain.error.TripTooFarException
+import io.soo.bueongi.core.route.domain.model.SafetyPreference
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import kotlin.math.roundToInt
 

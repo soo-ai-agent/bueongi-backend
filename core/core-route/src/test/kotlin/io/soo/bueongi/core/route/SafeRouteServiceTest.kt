@@ -139,7 +139,7 @@ class SafeRouteServiceTest {
         val safe = service(tmap).findRouteOptions(request).first { it.type == RouteType.SAFE }
         val markerTypes = safe.markers!!.map { it.type }
         assertThat(markerTypes).contains(SafetySpotPoiType.START, SafetySpotPoiType.END, SafetySpotPoiType.CCTV)
-        assertThat(markerTypes).doesNotContain(SafetySpotPoiType.STORE, SafetySpotPoiType.POLICE, SafetySpotPoiType.SAFEHOUSE)
+        assertThat(markerTypes).doesNotContain(SafetySpotPoiType.POLICE, SafetySpotPoiType.SAFEHOUSE)
     }
 
     @Test

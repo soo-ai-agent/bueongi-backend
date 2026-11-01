@@ -1,6 +1,7 @@
 package io.soo.bueongi.core.share.api.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import java.time.Instant
 
@@ -14,17 +15,17 @@ data class LocationView(
     val remainingMeters: Double? = null,
     @param:JsonProperty("remaining_seconds")
     val remainingSeconds: Double? = null,
-    val overdue: Boolean = false,
+    val status: ShareProgressStatus = ShareProgressStatus.IN_PROGRESS,
 ) {
     companion object {
-        // 좌표 필드는 와이어 계약상 null 로 나간다.
+        // 좌표 필드는 와이어 계약상 null 로 나간다. 만료 판정은 expired 칸이 계약이라 status 는 기본값으로 둔다.
         val EXPIRED = LocationView(lat = null, lng = null, updatedAt = null, expired = true)
 
-        fun waiting(overdue: Boolean): LocationView {
-            return LocationView(lat = null, lng = null, updatedAt = null, expired = false, overdue = overdue)
+        fun waiting(status: ShareProgressStatus): LocationView {
+            return LocationView(lat = null, lng = null, updatedAt = null, expired = false, status = status)
         }
 
-        fun from(location: StoredLocation, overdue: Boolean): LocationView {
+        fun from(location: StoredLocation, status: ShareProgressStatus): LocationView {
             return LocationView(
                 lat = location.lat,
                 lng = location.lng,
@@ -32,7 +33,7 @@ data class LocationView(
                 expired = false,
                 remainingMeters = location.remainingMeters,
                 remainingSeconds = location.remainingSeconds,
-                overdue = overdue,
+                status = status,
             )
         }
     }

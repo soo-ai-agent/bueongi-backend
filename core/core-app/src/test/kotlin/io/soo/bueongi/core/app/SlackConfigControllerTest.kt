@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.admin.ops.api.controller.SlackConfigController
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,14 +16,14 @@ import org.springframework.test.web.servlet.put
 
 @WebMvcTest(SlackConfigController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Tag("context")
 class SlackConfigControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
     @Test
-    fun `GET 은 미설정 상태와 알림 종류 7개를 반환한다`() {
+    fun `GET 은 미설정 상태와 알림 종류 8개를 반환한다`() {
         mockMvc.get("/api/admin/slack-config")
             .andExpect {
                 status { isOk() }
@@ -32,7 +31,7 @@ class SlackConfigControllerTest(
                 jsonPath("$.webhookMasked") { value("") }
                 jsonPath("$.enabled") { value(false) }
                 jsonPath("$.throttleMinutes") { value(10) }
-                jsonPath("$.categories.length()") { value(7) }
+                jsonPath("$.categories.length()") { value(8) }
                 jsonPath("$.categories[0].key") { value("api-500") }
                 jsonPath("$.categories[0].label") { value("서버 오류(미처리 500)") }
                 jsonPath("$.categories[0].muted") { value(false) }
@@ -69,8 +68,8 @@ class SlackConfigControllerTest(
                 status { isOk() }
                 jsonPath("$.enabled") { value(true) }
                 jsonPath("$.throttleMinutes") { value(45) }
-                jsonPath("$.categories[5].key") { value("safety-spot-fetch-failed") }
-                jsonPath("$.categories[5].muted") { value(true) }
+                jsonPath("$.categories[6].key") { value("safety-spot-fetch-failed") }
+                jsonPath("$.categories[6].muted") { value(true) }
             }
     }
 

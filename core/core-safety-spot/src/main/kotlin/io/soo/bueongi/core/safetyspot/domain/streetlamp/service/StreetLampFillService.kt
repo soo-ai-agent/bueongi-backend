@@ -27,10 +27,6 @@ class StreetLampFillService(
 
     private val inFlight: AtomicBoolean = AtomicBoolean(false)
 
-    fun isFilled(): Boolean {
-        return cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)
-    }
-
     fun fill(): Int {
         if (!client.isEnabled) {
             return 0
@@ -38,7 +34,7 @@ class StreetLampFillService(
         if (retryGate.isCoolingDown(NATIONWIDE)) {
             return 0
         }
-        if (isFilled()) {
+        if (cache.isCached(SafetySpotType.STREET_LAMP, NATIONWIDE)) {
             return 0
         }
         if (!inFlight.compareAndSet(false, true)) {

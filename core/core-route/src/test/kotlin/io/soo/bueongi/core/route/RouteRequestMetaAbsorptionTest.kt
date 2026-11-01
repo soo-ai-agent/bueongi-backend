@@ -5,8 +5,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.enums.RouteType
-import io.soo.bueongi.core.enums.SafetyPreference
 import io.soo.bueongi.core.route.api.request.RouteRequest
+import io.soo.bueongi.core.route.domain.model.SafetyPreference
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

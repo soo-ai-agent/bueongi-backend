@@ -7,7 +7,6 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.lamp.LampCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.pedestriansignal.PedestrianSignalCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.police.PoliceCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.safehouse.SafeHouseCsvContract
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint

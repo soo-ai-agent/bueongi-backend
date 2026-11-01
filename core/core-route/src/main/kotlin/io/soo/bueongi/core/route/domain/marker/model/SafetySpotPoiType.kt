@@ -10,7 +10,6 @@ enum class SafetySpotPoiType(
     END("end"),
     CCTV("cctv"),
     BELL("bell"),
-    STORE("store"),
     POLICE("police"),
     SAFEHOUSE("safehouse"),
     STREET_LAMP("lamp"),

@@ -1,6 +1,5 @@
 package io.soo.bueongi.core.app
 
-import io.soo.bueongi.core.common.event.ApiEventPublisher
 import io.soo.bueongi.core.share.api.controller.ShareAdminController
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -13,7 +12,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(ShareAdminController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(ApiEventPublisher::class, AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures.FakeStoreConfig::class)
 @Tag("context")
 class AdminShareEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

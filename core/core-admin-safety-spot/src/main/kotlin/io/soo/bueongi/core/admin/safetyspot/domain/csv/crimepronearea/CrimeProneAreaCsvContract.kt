@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.crimepronearea
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
 import io.soo.bueongi.core.enums.SafetySpotType
 
 // 범죄주의구간 — WGS84.

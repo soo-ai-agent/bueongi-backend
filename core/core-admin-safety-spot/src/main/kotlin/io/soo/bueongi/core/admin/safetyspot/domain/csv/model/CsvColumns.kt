@@ -1,7 +1,5 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
-import io.soo.bueongi.core.enums.SafetySpotCoordSystem
-
 class CsvColumns(
     val useWgs84: Boolean,
     val coordSystem: SafetySpotCoordSystem,

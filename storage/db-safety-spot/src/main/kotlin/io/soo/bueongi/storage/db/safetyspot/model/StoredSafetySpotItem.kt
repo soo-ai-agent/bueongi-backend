@@ -1,6 +1,7 @@
 package io.soo.bueongi.storage.db.safetyspot.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class StoredSafetySpotItem(
@@ -33,9 +34,31 @@ data class StoredSafetySpotItem(
     fun toSafePath(): SafePath? {
         val coordList: List<GeoPoint> = coords.orEmpty().mapNotNull { it.toGeoPoint() }
         if (coordList.isNotEmpty()) {
-            return SafePath(coords = coordList, name = name)
+            return SafePath(coords = coordList)
         }
         val point: GeoPoint = GeoPoint.orNull(lat, lng) ?: return null
-        return SafePath(coords = listOf(point), name = name)
+        return SafePath(coords = listOf(point))
     }
+}
+
+private fun SafetySpotPoint.cctvPropertiesOrNull(): StoredSafetySpotProperties? {
+    if (this !is CctvSpot) {
+        return null
+    }
+    if (purpose == null && cameraCount == null) {
+        return null
+    }
+    return StoredSafetySpotProperties(purpose = purpose, cameraCount = cameraCount)
+}
+
+internal fun SafetySpotPoint.toStoredItem(): StoredSafetySpotItem {
+    return StoredSafetySpotItem(
+        name = name,
+        lat = lat,
+        lng = lng,
+        sigunguCode = regionCodeOrNull(),
+        address = address,
+        phone = phoneOrNull(),
+        properties = cctvPropertiesOrNull(),
+    )
 }

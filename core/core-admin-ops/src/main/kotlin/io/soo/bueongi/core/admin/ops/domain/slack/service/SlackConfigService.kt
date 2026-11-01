@@ -5,7 +5,6 @@ import io.soo.bueongi.core.admin.ops.api.response.SlackConfigResponse
 import io.soo.bueongi.core.admin.ops.api.response.SlackTestResponse
 import io.soo.bueongi.core.admin.ops.domain.error.InvalidSlackCategoryException
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackCategoryConfig
-import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigSummary
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigUpdate
 import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.support.monitoring.AlertNotifier
@@ -22,15 +21,13 @@ class SlackConfigService(
         for (category in AlertCategory.entries) {
             categories.add(SlackCategoryConfig(key = category.key, label = category.label, muted = muted.contains(category.key)))
         }
-        val summary: SlackConfigSummary =
-            SlackConfigSummary(
-                webhookConfigured = slackAlertConfig.webhookConfigured(),
-                webhookMasked = slackAlertConfig.maskedWebhook(),
-                enabled = slackAlertConfig.enabled(),
-                throttleMinutes = slackAlertConfig.throttleMinutes(),
-                categories = categories,
-            )
-        return SlackConfigResponse.from(summary)
+        return SlackConfigResponse(
+            webhookConfigured = slackAlertConfig.webhookConfigured(),
+            webhookMasked = slackAlertConfig.maskedWebhook(),
+            enabled = slackAlertConfig.enabled(),
+            throttleMinutes = slackAlertConfig.throttleMinutes(),
+            categories = categories,
+        )
     }
 
     fun update(update: SlackConfigUpdate): SlackConfigResponse {

@@ -1,15 +1,18 @@
 package io.soo.bueongi.core.share
 
 import io.soo.bueongi.core.common.event.OperationEvent
+import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.core.share.domain.model.LOCATION_STOPPED_SECONDS
 import io.soo.bueongi.core.share.domain.model.OVERDUE_SECONDS
 import io.soo.bueongi.core.share.domain.model.isLocationStopped
 import io.soo.bueongi.core.share.domain.model.isMissedArrivalSuspect
 import io.soo.bueongi.core.share.domain.model.isOverdue
+import io.soo.bueongi.core.share.domain.model.progressStatus
 import io.soo.bueongi.core.share.domain.service.MissedArrivalWatchdog
-import io.soo.bueongi.core.share.domain.service.ShareEventPublisher
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
+import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import io.soo.bueongi.storage.db.share.store.LocationStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,13 +24,28 @@ import java.time.ZoneOffset
 class MissedArrivalWatchdogTest {
     private val now = Instant.parse("2026-07-28T12:00:00Z")
 
-    private fun session(expectedArrivalAt: Instant?, lastLocationAt: Instant? = null): ShareSession =
+    private fun session(
+        expectedArrivalAt: Instant?,
+        lastLocationAt: Instant? = null,
+        destination: StoredRouteDestination? = null,
+    ): ShareSession =
         ShareSession(
             token = "tok-abcdef-123456",
             ownerSecret = "sek",
             createdAt = now.minusSeconds(3600),
             expiresAt = now.plusSeconds(3600),
             location = lastLocationAt?.let { StoredLocation(lat = 37.5, lng = 127.0, updatedAt = it) },
+            route =
+                destination?.let {
+                    StoredRoute(
+                        destination = it,
+                        path = emptyList(),
+                        markers = emptyList(),
+                        totalDistanceMeters = 0,
+                        totalTimeSeconds = 0,
+                        type = "safe",
+                    )
+                },
             expectedArrivalAt = expectedArrivalAt,
         )
 
@@ -67,6 +85,103 @@ class MissedArrivalWatchdogTest {
     }
 
     @Test
+    fun `예정 초과 + 정지라도 마지막 위치가 목적지 근처면 도착 추정이다`() {
+        val arrivedButNotEnded =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 60),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 30),
+                destination = StoredRouteDestination(name = "집", lat = 37.5, lng = 127.0),
+            )
+
+        assertThat(arrivedButNotEnded.progressStatus(now)).isEqualTo(ShareProgressStatus.ARRIVAL_LIKELY)
+    }
+
+    @Test
+    fun `목적지에서 먼 곳에 정지했으면 미도착 의심이다`() {
+        // 위도 0.01도 차이 ≈ 1.1km — 도착 반경(30m) 밖.
+        val stoppedFarAway =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 60),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 30),
+                destination = StoredRouteDestination(name = "집", lat = 37.51, lng = 127.0),
+            )
+
+        assertThat(stoppedFarAway.progressStatus(now)).isEqualTo(ShareProgressStatus.MISSED_ARRIVAL_SUSPECT)
+    }
+
+    @Test
+    fun `경로 미등록이면 목적지를 몰라 미도착 의심으로 본다`() {
+        val withoutRoute =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 60),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 30),
+            )
+
+        assertThat(withoutRoute.progressStatus(now)).isEqualTo(ShareProgressStatus.MISSED_ARRIVAL_SUSPECT)
+    }
+
+    @Test
+    fun `같은 정지 상태가 이어지면 scan 을 반복해도 한 번만 알린다`() {
+        val suspect =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 120),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 60),
+            )
+        val notifier = RecordingPublisher()
+        val watchdog =
+            MissedArrivalWatchdog(fixedStore(listOf(suspect)), Clock.fixed(now, ZoneOffset.UTC), notifier)
+
+        watchdog.scan()
+        watchdog.scan()
+
+        assertThat(notifier.events).hasSize(1)
+    }
+
+    @Test
+    fun `위치가 다시 들어왔다가 또 멈추면 다시 알린다`() {
+        val suspect =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 120),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 60),
+            )
+        val movingAgain = session(expectedArrivalAt = suspect.expectedArrivalAt, lastLocationAt = now.minusSeconds(5))
+        val sessions: ArrayList<ShareSession> = ArrayList()
+        sessions.add(suspect)
+        val notifier = RecordingPublisher()
+        val watchdog =
+            MissedArrivalWatchdog(fixedStore(sessions), Clock.fixed(now, ZoneOffset.UTC), notifier)
+
+        watchdog.scan()
+        sessions[0] = movingAgain
+        watchdog.scan()
+        sessions[0] = suspect
+        watchdog.scan()
+
+        assertThat(notifier.events).hasSize(2)
+    }
+
+    @Test
+    fun `scan 은 목적지 근처 정지를 도착 추정으로 알린다 — key 가 arrival-likely`() {
+        val arrivedButNotEnded =
+            session(
+                expectedArrivalAt = now.minusSeconds(OVERDUE_SECONDS + 120),
+                lastLocationAt = now.minusSeconds(LOCATION_STOPPED_SECONDS + 60),
+                destination = StoredRouteDestination(name = "집", lat = 37.5, lng = 127.0),
+            )
+        val notifier = RecordingPublisher()
+        val watchdog =
+            MissedArrivalWatchdog(fixedStore(listOf(arrivedButNotEnded)), Clock.fixed(now, ZoneOffset.UTC), notifier)
+
+        watchdog.scan()
+
+        assertThat(notifier.events).hasSize(1)
+        val event: OperationEvent = notifier.events[0] as OperationEvent
+        assertThat(event.key).isEqualTo("arrival-likely:tok-ab…")
+        assertThat(event.title).contains("도착 추정")
+        assertThat(event.detail).doesNotContain(arrivedButNotEnded.token)
+    }
+
+    @Test
     fun `scan 은 의심 세션만 운영자에게 알린다 — 토큰 마스킹·좌표 비노출`() {
         val suspect =
             session(
@@ -76,7 +191,7 @@ class MissedArrivalWatchdogTest {
         val healthy = session(expectedArrivalAt = now.plusSeconds(600), lastLocationAt = now.minusSeconds(5))
         val notifier = RecordingPublisher()
         val watchdog =
-            MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), ShareEventPublisher(notifier))
+            MissedArrivalWatchdog(fixedStore(listOf(suspect, healthy)), Clock.fixed(now, ZoneOffset.UTC), notifier)
 
         watchdog.scan()
 
