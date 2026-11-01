@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import java.util.Properties
@@ -22,6 +23,12 @@ import java.util.Properties
 @AutoConfigureMockMvc(addFilters = false)
 @Import(ApiEventPublisher::class, AppInfoControllerTest.Config::class, AppInfoService::class)
 @ActiveProfiles("test")
+@TestPropertySource(
+    properties = [
+        "bueongi.app.min-supported-version=1.1.0",
+        "bueongi.app.latest-version=1.4.2",
+    ],
+)
 class AppInfoControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {
@@ -32,6 +39,16 @@ class AppInfoControllerTest(
                 status { isOk() }
                 content { contentTypeCompatibleWith("application/json") }
                 jsonPath("$.serverVersion") { value("1.2.3") }
+            }
+    }
+
+    @Test
+    fun `앱 업데이트 기준 버전을 설정값 그대로 내려준다`() {
+        mockMvc.get("/api/app-info")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.minSupportedAppVersion") { value("1.1.0") }
+                jsonPath("$.latestAppVersion") { value("1.4.2") }
             }
     }
 

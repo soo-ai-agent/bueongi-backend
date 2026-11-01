@@ -86,13 +86,20 @@
 
 ```json
 {
-  "serverVersion": "0.0.1-SNAPSHOT"
+  "serverVersion": "0.0.1-SNAPSHOT",
+  "minSupportedAppVersion": "1.1.0",
+  "latestAppVersion": "1.4.2"
 }
 ```
 
 - `serverVersion`: 빌드 정보(`build-info.properties`, Gradle `springBoot { buildInfo() }` 가 만든다)에서 온다.
   빌드 정보가 없으면 서버가 뜨지 않는다 — 빈 버전이 몰래 나가지 않게 하려는 것이다.
   IntelliJ 로 실행할 때는 Gradle 로 빌드하도록(기본값) 둔다.
+- `minSupportedAppVersion`: 이 버전 미만의 앱은 강제 업데이트 화면을 띄운다. 설정 `bueongi.app.min-supported-version`
+  (환경변수 `BUEONGI_APP_MIN_SUPPORTED_VERSION`)에서 오고, 빈 값이면 정책 없음 — 앱이 판정을 건너뛴다.
+- `latestAppVersion`: 이 버전 미만의 앱에 "새 버전이 있어요" 권장 알림을 1회 띄운다. 설정 `bueongi.app.latest-version`
+  (환경변수 `BUEONGI_APP_LATEST_VERSION`), 빈 값이면 정책 없음. 판정 규칙은 서버가 아니라 값으로 표현한다 —
+  긴급 패치를 강제로 올리고 싶으면 min 을 그 버전으로 올리면 된다.
 
 ---
 
