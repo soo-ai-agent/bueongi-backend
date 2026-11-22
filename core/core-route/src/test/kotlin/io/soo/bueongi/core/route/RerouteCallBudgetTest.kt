@@ -57,8 +57,8 @@ class RerouteCallBudgetTest {
     private fun tmapReturning(): TmapRouteClient {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(tmapRoutes.first())
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(tmapRoutes.first())
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(tmapRoutes.first())
+        whenever(tmap.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(tmapRoutes.first())
         return tmap
     }
 
@@ -78,7 +78,7 @@ class RerouteCallBudgetTest {
 
         serviceOf(tmap).find(queryOf(reroute = true))
 
-        verify(tmap, never()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
+        verify(tmap, never()).fetch(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
 
     @Test
@@ -87,7 +87,7 @@ class RerouteCallBudgetTest {
 
         serviceOf(tmap).find(queryOf(reroute = false))
 
-        verify(tmap, org.mockito.kotlin.atLeastOnce()).fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })
+        verify(tmap, org.mockito.kotlin.atLeastOnce()).fetch(any(), any(), any(), any(), argThat { isNotEmpty() })
     }
 
     @Test

@@ -21,7 +21,7 @@ class RouteOptionService(
     private val routePlannedHandler: RoutePlannedHandler,
 ) {
     fun find(route: RouteRequest): List<RouteOption> {
-        val baseRouteList: List<RouteCandidate> = routeFinder.findRouteList(route)
+        val baseRouteList: List<RouteCandidate> = routeFinder.find(route)
         if (baseRouteList.isEmpty()) {
             throw RouteSearchUnavailableException()
         }
@@ -30,9 +30,9 @@ class RouteOptionService(
         // 길을 잃어 다시 부른 것이면 빨리 답해야 해서 우회를 찾지 않는다.
         val routeList: ArrayList<RouteCandidate> = ArrayList(baseRouteList)
         if (!route.reroute) {
-            val clusters: List<SafetySpotCluster> = waypointPlanner.clusterSafetySpots(firstRoutePath)
-            val waypointPlans: List<List<GeoPoint>> = waypointPlanner.pickWaypoints(route.origin, route.destination, clusters)
-            routeList.addAll(routeFinder.findSaferRouteList(route, baseRouteList, waypointPlans))
+            val clusters: List<SafetySpotCluster> = waypointPlanner.cluster(firstRoutePath)
+            val waypointPlans: List<List<GeoPoint>> = waypointPlanner.pick(route.origin, route.destination, clusters)
+            routeList.addAll(routeFinder.findSafer(route, baseRouteList, waypointPlans))
         }
 
         routePlannedHandler.onRoutePlanned(firstRoutePath)

@@ -16,10 +16,10 @@ import org.springframework.stereotype.Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
 ) {
-    fun findRouteList(query: RouteRequest): List<RouteCandidate> {
+    fun find(query: RouteRequest): List<RouteCandidate> {
         val routeList: ArrayList<RouteCandidate> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
-            val route: RouteCandidate? = fetchRoute(query, searchOption)
+            val route: RouteCandidate? = fetch(query, searchOption)
             if (route != null) {
                 routeList.add(route)
             }
@@ -28,7 +28,7 @@ class RouteFinder(
     }
 
     // 안심시설에 들르는 길은 그만큼 더 걷게 된다. 얼마나 더 걷게 할지는 사용자의 안전 선호가 정한다.
-    fun findSaferRouteList(
+    fun findSafer(
         query: RouteRequest,
         routeList: List<RouteCandidate>,
         waypointPlans: List<List<GeoPoint>>,
@@ -38,7 +38,7 @@ class RouteFinder(
         // 안심시설 뭉치에 들렀다 가는 길을 계획마다 지도에 묻고, 한도를 넘게 돌아가는 길은 버린다.
         val saferRoutes: ArrayList<RouteCandidate> = ArrayList()
         for (waypoints in waypointPlans) {
-            val saferRoute: RouteCandidate = fetchRoute(query, VIA_SEARCH_OPTION, waypoints) ?: continue
+            val saferRoute: RouteCandidate = fetch(query, VIA_SEARCH_OPTION, waypoints) ?: continue
             if (saferRoute.distanceMeters > maxDistanceMeters) {
                 continue
             }
@@ -54,9 +54,9 @@ class RouteFinder(
         return shortestDistanceMeters * (1 + detourBudgetRatio)
     }
 
-    private fun fetchRoute(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): RouteCandidate? {
+    private fun fetch(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): RouteCandidate? {
         val route: TmapRoute? =
-            tmapClient.fetchRoute(
+            tmapClient.fetch(
                 origin = query.origin.toTmapCoord(),
                 destination = query.destination.toTmapCoord(),
                 destinationName = query.destinationName.trim().ifEmpty { "목적지" },

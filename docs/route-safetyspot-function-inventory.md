@@ -13,10 +13,10 @@ CRUD 처럼 함수 하나가 한 유형만 갖는 것을 목표로 한다. 이 �
 | 유형 | 뜻 | 예 |
 |---|---|---|
 | 조회 | 갖고 있는 것을 조건에 맞게 꺼낸다 | `index(type)`, `findByType` |
-| 선별 | 여러 후보 중 조건에 맞는 것만 남기거나 고른다 | `pickWaypoints`, `withinCorridor` |
+| 선별 | 여러 후보 중 조건에 맞는 것만 남기거나 고른다 | `pick`, `withinCorridor` |
 | 계산 | 입력으로부터 수치·판정 결과를 만든다 | `score`, `isNight` |
 | 변환 | 한 형태의 데이터를 다른 형태로 바꾼다 (내용은 그대로) | `toGeoPoints`, `toStoredItem` |
-| 조립 | 여러 재료를 모아 응답·모델 하나로 만든다 | `assemble`, `buildMarkers` |
+| 조립 | 여러 재료를 모아 응답·모델 하나로 만든다 | `assemble`, `build` |
 | 저장 | 상태를 바꾼다 (파일 쓰기, 인덱스 교체) | `save`, `replace`, `append` |
 | 흐름 | 다른 컴포넌트를 순서대로 불러 유스케이스를 완성한다 (자기 판단 없음) | `RouteOptionService.find` |
 
@@ -46,16 +46,18 @@ Tmap 에서 경로를 받아 오는 조회 창구.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `findRouteList(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 후보 모델(RouteCandidate)로 모은다 |
-| `findSaferRouteList(query, routeList, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
+| `find(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 후보 모델(RouteCandidate)로 모은다 |
+| `findSafer(query, routeList, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
 | `maxDetourDistanceM(query, routeList)` | 비공개 | 계산 | 우회 허용 한도 — 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전) |
-| `fetchRoute(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표·후보 모델 변환 포함) |
-| ~~`RouteRequest.endName()`~~ | 파일 내 | 변환 | 한 번만 쓰여 호출부(`fetchRoute`)로 합쳤다 |
+| `fetch(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표·후보 모델 변환 포함) |
+| ~~`RouteRequest.endName()`~~ | 파일 내 | 변환 | 한 번만 쓰여 호출부(`fetch`)로 합쳤다 |
 | `TmapRoute.toRouteCandidate()` | 파일 내 | 변환 | Tmap 경로 → 후보 모델 |
 | `List<TmapCoord>.toGeoPoints()` | 파일 내 | 변환 | Tmap 좌표 목록 → GeoPoint 목록 |
 | `GeoPoint.toTmapCoord()` | 파일 내 | 변환 | GeoPoint → Tmap 좌표 |
 
-`findSaferRouteList` 는 조회(우회 경로 받기)와 선별(거리 한도 거르기)이 한 함수에 있다. 이름은 조회(find)만 말한다.
+`findSafer` 는 조회(우회 경로 받기)와 선별(거리 한도 거르기)이 한 함수에 있다. 이름은 조회(find)만 말한다.
+
+클래스 이름(RouteFinder)이 이미 경로를 말해, 메서드 이름의 `RouteList` 를 지워 `findRouteList` → `find`, `findSaferRouteList` → `findSafer`, 비공개 `fetchRoute` → `fetch` 로 줄였다 (2026-11-23).
 
 ### RouteCandidateMerger (`domain/service/RouteCandidateMerger.kt`)
 
@@ -114,14 +116,15 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `clusterSafetySpots(routePath)` | 공개 | 조회 + 계산 | 경로 주변 시설을 모아(`findSpotsNearRoute`) 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다(`groupIntoClusters`) |
-| `pickWaypoints(origin, destination, clusters)` | 공개 | 선별 + 조립 | 경로 중간(진행률 20~80%)이고 옆이탈이 작은 뭉치만 남긴 뒤, 단일 3 + 쌍 1 경유지 조합을 만든다 |
+| `cluster(routePath)` | 공개 | 조회 + 계산 | 경로 주변 시설을 모아(`findNearRoute`) 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다(`groupIntoClusters`) |
+| `pick(origin, destination, clusters)` | 공개 | 선별 + 조립 | 경로 중간(진행률 20~80%)이고 옆이탈이 작은 뭉치만 남긴 뒤, 단일 3 + 쌍 1 경유지 조합을 만든다 |
 
-`clusterSafetySpots` 는 원래 이름이 `findSafetySpotClusters`(조회)였는데 실제는 corridor 조회 → 격자 묶기 → 평균 중심 계산 → 정렬·절단까지 하는 계산이라, 유형에 맞게 리네임했다 (2026-09-26).
+`cluster` 는 원래 이름이 `findSafetySpotClusters`(조회)였는데 실제는 corridor 조회 → 격자 묶기 → 평균 중심 계산 → 정렬·절단까지 하는 계산이라, 유형에 맞게 `clusterSafetySpots` 로 리네임했다 (2026-09-26).
 이 중 뭉치 하나의 대표 좌표 고르기(평균점에 가장 가까운 실제 시설)는 결과 타입이 갖도록 `SafetySpotCluster.from(spots)` 으로 옮겼다 (2026-11-21).
-남은 본문도 조회(시설 저장소를 읽음)와 계산(받은 목록만 씀)이 한 함수에 있어, `pickWaypoints` 와 같은 방식으로 비공개 `findSpotsNearRoute` → `groupIntoClusters` 둘로 나눴다 (2026-11-21).
+남은 본문도 조회(시설 저장소를 읽음)와 계산(받은 목록만 씀)이 한 함수에 있어, `pick` 과 같은 방식으로 비공개 `findNearRoute` → `groupIntoClusters` 둘로 나눴다 (2026-11-21).
+이어서 클래스 이름(SafetySpotWaypointPlanner)이 이미 말하는 SafetySpot·Waypoint 를 메서드 이름에서 지워 `clusterSafetySpots` → `cluster`, `pickWaypoints` → `pick`, 비공개 `findSpotsNearRoute` → `findNearRoute` 로 줄였다 (2026-11-23).
 
-`pickWaypoints` 는 거르기(선별)와 계획 만들기(조립) 두 단계가 있어, 본문을 `filterMiddleClusters` → `buildPlans` 비공개 둘로 나눴다 (2026-09-26). 호출부가 한 곳뿐이라 공개 함수는 하나로 유지했다.
+`pick` 은 거르기(선별)와 계획 만들기(조립) 두 단계가 있어, 본문을 `filterMiddleClusters` → `buildPlans` 비공개 둘로 나눴다 (2026-09-26). 호출부가 한 곳뿐이라 공개 함수는 하나로 유지했다.
 경유지 묶음의 낱말은 `combo`(줄임말)에서 `plan`(계획)으로 통일했다 — 계획 하나가 우회 경로 요청 한 번이 된다.
 
 ### SafetyScorer (`domain/safety/service/SafetyScorer.kt`)
@@ -172,10 +175,12 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `buildMarkers(origin, destination, path)` | 공개 | 조립 | 출발·도착 마커 + 종류별 corridor 내 시설 마커를 모아 미니맵 좌표(%)로 바꿔 낸다 |
+| `build(origin, destination, path)` | 공개 | 조립 | 출발·도착 마커 + 종류별 corridor 내 시설 마커를 모아 미니맵 좌표(%)로 바꿔 낸다 |
 | `spreadAlongPath(alongPath, limit)` | 비공개 | 선별 | 시설이 한도(12개)를 넘으면 경로를 따라 고르게 뽑는다 |
 
 조립 하나에 선별 보조 하나. 유형 구분이 명확하다.
+
+`build` 는 원래 `buildMarkers` 였는데 클래스 이름(RouteMarkerBuilder)이 이미 마커를 말해 줄였다 (2026-11-23).
 
 ---
 
@@ -286,11 +291,11 @@ save/find 짝으로 유형이 명확하다.
 
 | 함수 | 무엇이 겹치나 |
 |---|---|
-| `RouteFinder.findSaferRouteList` | ~~조회 + 선별(거리 한도)~~ → 한도 계산을 `maxDetourDistanceM` 비공개로 분리. 한도 거르기 자체는 "쓸만한 우회 경로 조회"라는 주제의 일부라 함수는 유지 |
+| `RouteFinder.findSafer` | ~~조회 + 선별(거리 한도)~~ → 한도 계산을 `maxDetourDistanceM` 비공개로 분리. 한도 거르기 자체는 "쓸만한 우회 경로 조회"라는 주제의 일부라 함수는 유지 |
 | `RouteCandidateMerger.toCandidates` | ~~변환 + 선별. 이름은 to(변환)만 말한다~~ → `merge` 로 리네임 — 클래스 이름(Merger)이 말하는 주제와 일치 |
 | `RouteTypeAssigner.assignOneRoutePerType` | ~~점수 계산 위임 + 유형별 선별이 한 본문에~~ → 유형별 고르기를 `pickIndexPerType` 비공개로 분리 |
-| `SafetySpotWaypointPlanner.clusterSafetySpots` | ~~이름은 find(조회)인데 실제는 묶기·평균·정렬 계산~~ → `clusterSafetySpots` 로 리네임 완료. 클래스도 Finder → SafetySpotWaypointPlanner 로 리네임 |
-| `SafetySpotWaypointPlanner.pickWaypoints` | ~~선별 + 조합 조립 두 단계~~ → 비공개 `filterMiddleClusters`·`buildPlans` 로 분리 완료. combo 낱말은 plan 으로 통일 |
+| `SafetySpotWaypointPlanner.cluster` | ~~이름은 find(조회)인데 실제는 묶기·평균·정렬 계산~~ → `clusterSafetySpots` 로 리네임 완료(이후 `cluster` 로 줄임). 클래스도 Finder → SafetySpotWaypointPlanner 로 리네임 |
+| `SafetySpotWaypointPlanner.pick` | ~~선별 + 조합 조립 두 단계~~ → 비공개 `filterMiddleClusters`·`buildPlans` 로 분리 완료. combo 낱말은 plan 으로 통일 |
 | `SafetyScorer` (클래스) | 비공개 17 > 공개 3 — 점수 공식·자료 존재 판정·시설 세기 세 묶음이 한 클래스. **판정: 보류** — 공개 함수 유형은 계산 하나로 통일돼 있고, 나눠도 쓰는 곳이 이 클래스뿐이라 지금은 얻는 게 없다. 세기(count 계열)를 다른 곳이 또 쓰게 되면 그때 분리 |
 | `SafetySpotRepository` (클래스) | CSV 파싱이 core 계약으로 빠져(2026-10-11) JSON 적재·서빙만 남았다. **판정: 해소** |
 | `SafetyWeightsCatalog.isNight` | 프로덕션 사용처는 `weightsAt` 뿐. **판정: 공개 유지** — 일출·일몰 경계 판정 자체가 테스트로 검증할 규칙이라, 비공개로 내리고 weightsAt 결과로 우회 검증하면 테스트가 더 흐려진다 |

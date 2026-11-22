@@ -30,7 +30,7 @@ class SafetySpotWaypointPlannerTest {
                     SafetySpotType.BELL to bell.map { SafetySpotPoint.of(SafetySpotType.BELL, it.lat, it.lng) },
                 ),
             )
-        val clusters = SafetySpotWaypointPlanner(source).clusterSafetySpots(routePath)
+        val clusters = SafetySpotWaypointPlanner(source).cluster(routePath)
 
         assertThat(clusters).isNotEmpty
         assertThat(clusters.first().weight).isEqualTo(3)
@@ -42,7 +42,7 @@ class SafetySpotWaypointPlannerTest {
     fun `clusterSafetySpots - 회랑 밖 시설은 앵커가 되지 않는다`() {
         val far = listOf(GeoPoint(37.51, 127.005))
         val source = FakeSafetySpotSource.of(SafetySpotType.CCTV, far)
-        assertThat(SafetySpotWaypointPlanner(source).clusterSafetySpots(routePath)).isEmpty()
+        assertThat(SafetySpotWaypointPlanner(source).cluster(routePath)).isEmpty()
     }
 
     @Test
@@ -50,7 +50,7 @@ class SafetySpotWaypointPlannerTest {
         val planner = SafetySpotWaypointPlanner(FakeSafetySpotSource())
         val a = SafetySpotCluster(GeoPoint(37.5004, 127.004), weight = 5)
         val d = SafetySpotCluster(GeoPoint(37.5004, 127.006), weight = 3)
-        val plans = planner.pickWaypoints(origin, destination, listOf(a, d))
+        val plans = planner.pick(origin, destination, listOf(a, d))
 
         assertThat(plans).hasSize(3)
         assertThat(plans).contains(listOf(a.center), listOf(d.center))
@@ -62,13 +62,13 @@ class SafetySpotWaypointPlannerTest {
         val planner = SafetySpotWaypointPlanner(FakeSafetySpotSource())
         val nearOrigin = SafetySpotCluster(GeoPoint(37.5, 127.0005), weight = 9)
         val farLateral = SafetySpotCluster(GeoPoint(37.503, 127.005), weight = 9)
-        val plans = planner.pickWaypoints(origin, destination, listOf(nearOrigin, farLateral))
+        val plans = planner.pick(origin, destination, listOf(nearOrigin, farLateral))
         assertThat(plans).isEmpty()
     }
 
     @Test
     fun `pickWaypoints - 앵커 없으면 빈 결과`() {
         val planner = SafetySpotWaypointPlanner(FakeSafetySpotSource())
-        assertThat(planner.pickWaypoints(origin, destination, emptyList())).isEmpty()
+        assertThat(planner.pick(origin, destination, emptyList())).isEmpty()
     }
 }

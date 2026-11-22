@@ -13,16 +13,16 @@ import kotlin.math.floor
 class SafetySpotWaypointPlanner(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun clusterSafetySpots(routePath: List<GeoPoint>): List<SafetySpotCluster> {
+    fun cluster(routePath: List<GeoPoint>): List<SafetySpotCluster> {
         if (routePath.size < 2) {
             return emptyList()
         }
-        val spotsNearRoute: List<SafetySpotPoint> = findSpotsNearRoute(routePath)
+        val spotsNearRoute: List<SafetySpotPoint> = findNearRoute(routePath)
         return groupIntoClusters(spotsNearRoute)
     }
 
     // 시설 뭉치 중 경로 중간쯤(진행률 20~80%)에 있고 옆으로 크게 벗어나지 않은 것만 남긴 뒤, 시설 많은 순 상위 3곳 각각(단일)과 상위 2곳 묶음(쌍)으로 우회 경로용 경유지 계획을 만든다.
-    fun pickWaypoints(origin: GeoPoint, destination: GeoPoint, clusters: List<SafetySpotCluster>): List<List<GeoPoint>> {
+    fun pick(origin: GeoPoint, destination: GeoPoint, clusters: List<SafetySpotCluster>): List<List<GeoPoint>> {
         if (clusters.isEmpty()) {
             return emptyList()
         }
@@ -34,7 +34,7 @@ class SafetySpotWaypointPlanner(
     }
 
     // 경로 양옆 CLUSTER_RADIUS_METERS 안의 시설을 종류별로 가져와 모은다.
-    private fun findSpotsNearRoute(routePath: List<GeoPoint>): List<SafetySpotPoint> {
+    private fun findNearRoute(routePath: List<GeoPoint>): List<SafetySpotPoint> {
         val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
         for (spotType in CLUSTER_SPOT_TYPES) {
             val spots: List<SafetySpotPoint> = safetySpots.index(spotType).withinCorridor(routePath, CLUSTER_RADIUS_METERS)

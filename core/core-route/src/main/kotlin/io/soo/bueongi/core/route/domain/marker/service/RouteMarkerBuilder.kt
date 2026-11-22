@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
 class RouteMarkerBuilder(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun buildMarkers(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>): List<SafetySpotPoi> {
+    fun build(origin: GeoPoint, destination: GeoPoint, path: List<GeoPoint>): List<SafetySpotPoi> {
         val corridor: Double = SafetyScorer.DEFAULT_CORRIDOR_METERS
         val raw: ArrayList<SafetySpotPoi> = ArrayList()
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.START, x = 0, y = 0, lat = origin.lat, lng = origin.lng))

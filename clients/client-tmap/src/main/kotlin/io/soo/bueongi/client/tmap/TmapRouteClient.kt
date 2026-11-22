@@ -26,7 +26,7 @@ class TmapRouteClient(
     private val cache = TmapRouteCache()
     private val objectMapper = ObjectMapper()
 
-    fun fetchRoute(
+    fun fetch(
         origin: TmapCoord,
         destination: TmapCoord,
         destinationName: String,
@@ -43,21 +43,7 @@ class TmapRouteClient(
 
         val route: TmapRoute? =
             try {
-                val body: LinkedHashMap<String, String> =
-                    linkedMapOf(
-                        "startX" to origin.lng.toString(),
-                        "startY" to origin.lat.toString(),
-                        "endX" to destination.lng.toString(),
-                        "endY" to destination.lat.toString(),
-                        "startName" to "출발",
-                        "endName" to destinationName,
-                        "reqCoordType" to "WGS84GEO",
-                        "resCoordType" to "WGS84GEO",
-                        "searchOption" to searchOption,
-                    )
-                if (passList.isNotEmpty()) {
-                    body["passList"] = passList.joinToString("_") { "${it.lng},${it.lat}" }
-                }
+                val body: LinkedHashMap<String, String> = buildBody(origin, destination, destinationName, searchOption, passList)
                 // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
                 val raw: String? =
                     restClient.post()
@@ -82,6 +68,31 @@ class TmapRouteClient(
             cache.put(origin, destination, searchOption, passList, route)
         }
         return route
+    }
+
+    private fun buildBody(
+        origin: TmapCoord,
+        destination: TmapCoord,
+        destinationName: String,
+        searchOption: String,
+        passList: List<TmapCoord>,
+    ): LinkedHashMap<String, String> {
+        val body: LinkedHashMap<String, String> =
+            linkedMapOf(
+                "startX" to origin.lng.toString(),
+                "startY" to origin.lat.toString(),
+                "endX" to destination.lng.toString(),
+                "endY" to destination.lat.toString(),
+                "startName" to "출발",
+                "endName" to destinationName,
+                "reqCoordType" to "WGS84GEO",
+                "resCoordType" to "WGS84GEO",
+                "searchOption" to searchOption,
+            )
+        if (passList.isNotEmpty()) {
+            body["passList"] = passList.joinToString("_") { "${it.lng},${it.lat}" }
+        }
+        return body
     }
 
     companion object {

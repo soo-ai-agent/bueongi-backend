@@ -95,7 +95,7 @@ class RouteOptionServiceTest {
     fun `Tmap 후보가 전멸하면 사용 불가를 알린다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(null)
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(null)
 
         assertThatThrownBy { service(tmap).find(request) }
             .isInstanceOf(RouteSearchUnavailableException::class.java)
@@ -105,8 +105,8 @@ class RouteOptionServiceTest {
     fun `Tmap 후보를 채점해 안전점수 내림차순과 유형을 배정하고 마커를 포함`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
+        whenever(tmap.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
 
         val result = service(tmap).find(request)
 
@@ -133,8 +133,8 @@ class RouteOptionServiceTest {
     fun `회랑 실측이 없는 유형은 마커를 지어내지 않는다(정직한 0)`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
+        whenever(tmap.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
 
         val safe = service(tmap).find(request).first { it.type == RouteType.SAFE }
         val markerTypes = safe.markers!!.map { it.type }
@@ -151,8 +151,8 @@ class RouteOptionServiceTest {
                 tmap =
                     mock<TmapRouteClient>().also {
                         whenever(it.isEnabled).thenReturn(true)
-                        whenever(it.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
-                        whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
+                        whenever(it.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
+                        whenever(it.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
                     },
                 scorer = nightScorer(richSource),
                 waypointPlanner = SafetySpotWaypointPlanner(richSource),
@@ -197,8 +197,8 @@ class RouteOptionServiceTest {
     private fun tmapReturning(saferRoute: TmapRoute): TmapRouteClient =
         mock<TmapRouteClient>().also {
             whenever(it.isEnabled).thenReturn(true)
-            whenever(it.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA)
-            whenever(it.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(saferRoute)
+            whenever(it.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA)
+            whenever(it.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(saferRoute)
         }
 
     @Test
@@ -209,8 +209,8 @@ class RouteOptionServiceTest {
         val rADup = TmapRoute("4", listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.01)), 884.0, 690, emptyList())
         val rB = TmapRoute("10", listOf(TmapCoord(37.51, 127.0), TmapCoord(37.51, 127.01)), 900.0, 600, emptyList())
         val rC = TmapRoute("0", listOf(TmapCoord(37.52, 127.0), TmapCoord(37.52, 127.01)), 950.0, 800, emptyList())
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(rA, rADup, rB)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(rC)
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(rA, rADup, rB)
+        whenever(tmap.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(rC)
 
         val result = service(tmap).find(request)
 
@@ -229,8 +229,8 @@ class RouteOptionServiceTest {
         val r1 = TmapRoute("4", line(37.51), 900.0, 600, emptyList())
         val r2 = TmapRoute("10", line(37.52), 920.0, 750, emptyList())
         val r3 = TmapRoute("0", line(37.53), 940.0, 800, emptyList())
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(r0, r1, r2)
-        whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(r3)
+        whenever(tmap.fetch(any(), any(), any(), any(), eq(emptyList()))).thenReturn(r0, r1, r2)
+        whenever(tmap.fetch(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(r3)
 
         val result = service(tmap).find(request)
 

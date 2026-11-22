@@ -26,7 +26,7 @@ class RouteOptionAssembler(
         for ((index, scoredRoute) in ordered.withIndex()) {
             val name: String = routeTypeCatalog.displayOf(scoredRoute.type).scoredName
             val tags: List<RouteTag> = buildTags(scoredRoute)
-            val markers: List<SafetySpotPoi> = markerBuilder.buildMarkers(origin, destination, scoredRoute.candidate.path)
+            val markers: List<SafetySpotPoi> = markerBuilder.build(origin, destination, scoredRoute.candidate.path)
             val option: RouteOption = RouteOption.from(index, scoredRoute, name, tags, markers, source)
             options.add(option)
         }

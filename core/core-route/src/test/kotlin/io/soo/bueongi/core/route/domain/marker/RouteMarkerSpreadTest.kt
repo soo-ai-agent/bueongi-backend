@@ -26,7 +26,7 @@ class RouteMarkerSpreadTest {
         val source = FakeSafetySpotSource(mapOf(SafetySpotType.STREET_LAMP to lampsAlongPath(spotCount)))
         val path: List<GeoPoint> = listOf(origin, destination)
         return RouteMarkerBuilder(source)
-            .buildMarkers(origin, destination, path)
+            .build(origin, destination, path)
             .filter { it.type == SafetySpotPoiType.STREET_LAMP }
             .map { it.lng }
     }
