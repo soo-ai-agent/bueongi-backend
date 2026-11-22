@@ -16,24 +16,24 @@ class ShareAdminController(
     private val shareService: ShareService,
 ) {
     @GetMapping("/share-status")
-    fun shareStatus(): ShareStatusResponse {
-        return shareService.getShareStatus()
+    fun status(): ShareStatusResponse {
+        return shareService.getStatus()
     }
 
     @GetMapping("/share-sessions")
-    fun shareSessions(): ShareSessionsResponse {
-        return shareService.listActiveSessions()
+    fun sessions(): ShareSessionsResponse {
+        return shareService.listActive()
     }
 
     @GetMapping("/share-sessions/{token}/location")
-    fun shareSessionLocation(
+    fun sessionLocation(
         @PathVariable token: String,
     ): LocationView {
         return shareService.getLocationForAdmin(token)
     }
 
     @GetMapping("/share-sessions/{token}/route")
-    fun shareSessionRoute(
+    fun sessionRoute(
         @PathVariable token: String,
     ): RouteView {
         return shareService.getRoute(token)

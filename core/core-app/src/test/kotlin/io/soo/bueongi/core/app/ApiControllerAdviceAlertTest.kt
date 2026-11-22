@@ -47,7 +47,7 @@ class ApiControllerAdviceAlertTest {
         val advice = ShareStoreAdvice(notifier)
 
         val response =
-            advice.handleShareStoreUnavailable(
+            advice.handleUnavailable(
                 LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
             )
 

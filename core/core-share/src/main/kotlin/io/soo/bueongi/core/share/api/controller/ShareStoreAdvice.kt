@@ -26,7 +26,7 @@ class ShareStoreAdvice(
     private val log: Logger = LoggerFactory.getLogger(ShareStoreAdvice::class.java)
 
     @ExceptionHandler(LocationStoreUnavailableException::class)
-    fun handleShareStoreUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
+    fun handleUnavailable(ex: LocationStoreUnavailableException): ResponseEntity<ProblemDetail> {
         val origin: String = currentRequestOrigin().ifEmpty { UNKNOWN_ORIGIN }
         // 스택에는 외부 호출 URL(인증키 포함)이 섞여 온다 — 예외 종류까지만 남긴다.
         log.error(

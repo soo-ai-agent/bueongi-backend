@@ -61,7 +61,7 @@ class ApiControllerAdviceLogTest {
     fun `저장소 장애도 같은 형식으로 남긴다`() {
         val appender = captureLogs(ShareStoreAdvice::class.java)
 
-        ShareStoreAdvice(ApplicationEventPublisher { }).handleShareStoreUnavailable(
+        ShareStoreAdvice(ApplicationEventPublisher { }).handleUnavailable(
             LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
         )
 

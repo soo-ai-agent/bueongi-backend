@@ -53,11 +53,11 @@ class ShareService(
                 expectedArrivalAt = expectedArrivalAt,
             )
         store.save(session)
-        val shareUrl: String = shareUrlFor(token)
+        val shareUrl: String = urlFor(token)
         return CreateShareResponse.from(session, shareUrl)
     }
 
-    fun listActiveSessions(): ShareSessionsResponse {
+    fun listActive(): ShareSessionsResponse {
         val now: Instant = clock.instant()
         val views: ArrayList<ActiveShareView> = ArrayList()
         for (session in store.findActiveSessions()) {
@@ -67,19 +67,19 @@ class ShareService(
         return ShareSessionsResponse.from(views)
     }
 
-    fun getShareStatus(): ShareStatusResponse {
+    fun getStatus(): ShareStatusResponse {
         val activeSessions: Int = store.countActiveSessions()
         return ShareStatusResponse.from(activeSessions)
     }
 
     private fun toActiveShareView(session: ShareSession, now: Instant): ActiveShareView {
         val ttlSeconds: Long = Duration.between(now, session.expiresAt).seconds.coerceAtLeast(0)
-        val shareUrl: String = shareUrlFor(session.token)
+        val shareUrl: String = urlFor(session.token)
         val viewerActive: Boolean = store.isWatched(session.token)
         return ActiveShareView.from(session, shareUrl, ttlSeconds, viewerActive)
     }
 
-    private fun shareUrlFor(token: String): String {
+    private fun urlFor(token: String): String {
         return "${baseUrl.trimEnd('/')}/share/$token"
     }
 
