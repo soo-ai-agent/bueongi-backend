@@ -13,60 +13,12 @@ import kotlin.math.floor
 class SafetySpotWaypointPlanner(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    // 경로 양옆을 훑어 안심시설이 뭉친 자리를 찾고, 뭉치마다 대표 좌표와 시설 수를 낸다. 많이 뭉친 순으로 최대 6개.
     fun clusterSafetySpots(routePath: List<GeoPoint>): List<SafetySpotCluster> {
         if (routePath.size < 2) {
             return emptyList()
         }
-        val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
-        for (spotType in CLUSTER_SPOT_TYPES) {
-            val spots: List<SafetySpotPoint> = safetySpots.index(spotType).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
-            spotsNearRoute.addAll(spots)
-        }
-        if (spotsNearRoute.isEmpty()) {
-            return emptyList()
-        }
-
-        val spotsByCell: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
-        for (safetySpot in spotsNearRoute) {
-            val latCell: Int = floor(safetySpot.lat / CLUSTER_CELL_DEG).toInt()
-            val lngCell: Int = floor(safetySpot.lng / CLUSTER_CELL_DEG).toInt()
-            val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
-            spotsByCell.getOrPut(key) { ArrayList() }.add(safetySpot)
-        }
-
-        val clusters: ArrayList<SafetySpotCluster> = ArrayList()
-        for (spots in spotsByCell.values) {
-            var sumLat = 0.0
-            var sumLng = 0.0
-            for (spot in spots) {
-                sumLat += spot.lat
-                sumLng += spot.lng
-            }
-            // 평균점은 건물 안·블록 한가운데처럼 도로 밖일 수 있어, 경유지로 주면 Tmap 이 들렀다 나오는
-            // 왕복 구간(꼬임)을 만든다 — 평균점에 가장 가까운 실제 시설 위치를 대표 좌표로 쓴다.
-            val averageCenter: GeoPoint = GeoPoint(sumLat / spots.size, sumLng / spots.size)
-            var anchor: SafetySpotPoint = spots[0]
-            var anchorDistanceMeters: Double = Double.MAX_VALUE
-            for (spot in spots) {
-                val distanceMeters: Double = averageCenter.distanceMetersTo(spot.toGeoPoint())
-                if (distanceMeters < anchorDistanceMeters) {
-                    anchorDistanceMeters = distanceMeters
-                    anchor = spot
-                }
-            }
-            val cluster: SafetySpotCluster = SafetySpotCluster(anchor.toGeoPoint(), weight = spots.size)
-            clusters.add(cluster)
-        }
-        val byDensityThenPosition: Comparator<SafetySpotCluster> =
-            compareByDescending<SafetySpotCluster> { it.weight }
-                .thenBy { it.center.lat }
-                .thenBy { it.center.lng }
-        clusters.sortWith(byDensityThenPosition)
-        if (clusters.size <= MAX_CLUSTERS) {
-            return clusters
-        }
-        return clusters.subList(0, MAX_CLUSTERS)
+        val spotsNearRoute: List<SafetySpotPoint> = findSpotsNearRoute(routePath)
+        return groupIntoClusters(spotsNearRoute)
     }
 
     // 시설 뭉치 중 경로 중간쯤(진행률 20~80%)에 있고 옆으로 크게 벗어나지 않은 것만 남긴 뒤, 시설 많은 순 상위 3곳 각각(단일)과 상위 2곳 묶음(쌍)으로 우회 경로용 경유지 계획을 만든다.
@@ -79,6 +31,42 @@ class SafetySpotWaypointPlanner(
             return emptyList()
         }
         return buildPlans(placed)
+    }
+
+    // 경로 양옆 CLUSTER_RADIUS_METERS 안의 시설을 종류별로 가져와 모은다.
+    private fun findSpotsNearRoute(routePath: List<GeoPoint>): List<SafetySpotPoint> {
+        val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
+        for (spotType in CLUSTER_SPOT_TYPES) {
+            val spots: List<SafetySpotPoint> = safetySpots.index(spotType).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
+            spotsNearRoute.addAll(spots)
+        }
+        return spotsNearRoute
+    }
+
+    // 시설을 격자 칸으로 묶어 칸마다 뭉치 하나를 만들고, 많이 뭉친 순으로 최대 MAX_CLUSTERS 개를 낸다.
+    private fun groupIntoClusters(spots: List<SafetySpotPoint>): List<SafetySpotCluster> {
+        val spotsByCell: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
+        for (spot in spots) {
+            val latCell: Int = floor(spot.lat / CLUSTER_CELL_DEG).toInt()
+            val lngCell: Int = floor(spot.lng / CLUSTER_CELL_DEG).toInt()
+            val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
+            spotsByCell.getOrPut(key) { ArrayList() }.add(spot)
+        }
+
+        val clusters: ArrayList<SafetySpotCluster> = ArrayList()
+        for (cellSpots in spotsByCell.values) {
+            val cluster: SafetySpotCluster = SafetySpotCluster.from(cellSpots)
+            clusters.add(cluster)
+        }
+        val byWeightThenPosition: Comparator<SafetySpotCluster> =
+            compareByDescending<SafetySpotCluster> { it.weight }
+                .thenBy { it.center.lat }
+                .thenBy { it.center.lng }
+        clusters.sortWith(comparator = byWeightThenPosition)
+        if (clusters.size <= MAX_CLUSTERS) {
+            return clusters
+        }
+        return clusters.subList(0, MAX_CLUSTERS)
     }
 
     // 경로 직선에 투영해 끝점 근처(진행률 20% 미만·80% 초과)이거나 옆이탈이 직선거리의 25%를 넘는 뭉치를 버린다.
@@ -110,15 +98,15 @@ class SafetySpotWaypointPlanner(
         val byWeightThenProgress: Comparator<PlacedCluster> =
             compareByDescending<PlacedCluster> { it.cluster.weight }
                 .thenBy { it.progress }
-        val byWeight: List<PlacedCluster> = placed.sortedWith(byWeightThenProgress)
+        val sortedClusters: List<PlacedCluster> = placed.sortedWith(byWeightThenProgress)
 
         val plans: LinkedHashSet<List<GeoPoint>> = LinkedHashSet()
-        val singles: List<PlacedCluster> = byWeight.take(SINGLE_CLUSTER_PLANS)
+        val singles: List<PlacedCluster> = sortedClusters.take(SINGLE_CLUSTER_PLANS)
         for (single in singles) {
             plans.add(listOf(single.cluster.center))
         }
-        if (byWeight.size >= 2) {
-            val topTwo: List<PlacedCluster> = byWeight.take(2)
+        if (sortedClusters.size >= 2) {
+            val topTwo: List<PlacedCluster> = sortedClusters.take(2)
             val inTravelOrder: List<PlacedCluster> = topTwo.sortedBy { it.progress }
             val pair: ArrayList<GeoPoint> = ArrayList()
             for (placedCluster in inTravelOrder) {

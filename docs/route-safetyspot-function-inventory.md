@@ -114,10 +114,12 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `clusterSafetySpots(routePath)` | 공개 | 계산 | 경로 주변 시설을 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다 |
+| `clusterSafetySpots(routePath)` | 공개 | 조회 + 계산 | 경로 주변 시설을 모아(`findSpotsNearRoute`) 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다(`groupIntoClusters`) |
 | `pickWaypoints(origin, destination, clusters)` | 공개 | 선별 + 조립 | 경로 중간(진행률 20~80%)이고 옆이탈이 작은 뭉치만 남긴 뒤, 단일 3 + 쌍 1 경유지 조합을 만든다 |
 
 `clusterSafetySpots` 는 원래 이름이 `findSafetySpotClusters`(조회)였는데 실제는 corridor 조회 → 격자 묶기 → 평균 중심 계산 → 정렬·절단까지 하는 계산이라, 유형에 맞게 리네임했다 (2026-09-26).
+이 중 뭉치 하나의 대표 좌표 고르기(평균점에 가장 가까운 실제 시설)는 결과 타입이 갖도록 `SafetySpotCluster.from(spots)` 으로 옮겼다 (2026-11-21).
+남은 본문도 조회(시설 저장소를 읽음)와 계산(받은 목록만 씀)이 한 함수에 있어, `pickWaypoints` 와 같은 방식으로 비공개 `findSpotsNearRoute` → `groupIntoClusters` 둘로 나눴다 (2026-11-21).
 
 `pickWaypoints` 는 거르기(선별)와 계획 만들기(조립) 두 단계가 있어, 본문을 `filterMiddleClusters` → `buildPlans` 비공개 둘로 나눴다 (2026-09-26). 호출부가 한 곳뿐이라 공개 함수는 하나로 유지했다.
 경유지 묶음의 낱말은 `combo`(줄임말)에서 `plan`(계획)으로 통일했다 — 계획 하나가 우회 경로 요청 한 번이 된다.
