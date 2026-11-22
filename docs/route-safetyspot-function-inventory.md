@@ -18,7 +18,7 @@ CRUD 처럼 함수 하나가 한 유형만 갖는 것을 목표로 한다. 이 �
 | 변환 | 한 형태의 데이터를 다른 형태로 바꾼다 (내용은 그대로) | `toGeoPoints`, `toStoredItem` |
 | 조립 | 여러 재료를 모아 응답·모델 하나로 만든다 | `assemble`, `buildMarkers` |
 | 저장 | 상태를 바꾼다 (파일 쓰기, 인덱스 교체) | `save`, `replace`, `append` |
-| 흐름 | 다른 컴포넌트를 순서대로 불러 유스케이스를 완성한다 (자기 판단 없음) | `findRouteOptions` |
+| 흐름 | 다른 컴포넌트를 순서대로 불러 유스케이스를 완성한다 (자기 판단 없음) | `RouteOptionService.find` |
 
 한 함수에 두 유형이 겹쳐 있으면 쪼갤 후보다. 한 클래스의 공개 함수들이 서로 다른 유형이면 클래스를 나눌 후보다.
 
@@ -26,15 +26,16 @@ CRUD 처럼 함수 하나가 한 유형만 갖는 것을 목표로 한다. 이 �
 
 ## 1. route 모듈 — domain/service
 
-### SafeRouteService (`domain/service/SafeRouteService.kt`)
+### RouteOptionService (`domain/service/RouteOptionService.kt`)
 
 경로 비교 유스케이스의 흐름 조립. 도메인 서비스 계층.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `findRouteOptions(query)` | 공개 | 흐름 | 기본 경로 검색 → 우회 후보 추가 → 지역 적재 알림 → 중복 제거 → 유형 배정 → 응답 조립을 순서대로 부른다 |
+| `find(query)` | 공개 | 흐름 | 기본 경로 검색 → 우회 후보 추가 → 지역 적재 알림 → 중복 제거 → 유형 배정 → 응답 조립을 순서대로 부른다 |
 
 원래 이름 `safeCompare` 는 비교(내부 단계)를 말하고 반환(경로 옵션 목록)을 말하지 못해 `findRouteOptions` 로 리네임했다 (2026-09-26).
+이어서 클래스 이름 `SafeRouteService` 가 safe 하나만 돌려주는 것처럼 읽혀, 클래스를 `RouteOptionService` 로 바꾸고 메서드는 `find` 로 줄였다 (2026-11-21).
 엔드포인트도 `POST /api/routes/safe-compare` 에서 `POST /api/routes` 로 바꿨다 — 모바일이 같은 저장소라 동시 배포되므로 옛 경로는 남기지 않았다.
 
 자기 판단은 "reroute 면 우회 생략" 분기 하나뿐이고 나머지는 협력자 호출이다. 유형이 하나로 통일되어 있다.
@@ -45,16 +46,16 @@ Tmap 에서 경로를 받아 오는 조회 창구.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `findRoutes(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 후보 모델(RouteCandidate)로 모은다 |
-| `findSaferRoutes(query, routes, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
-| `maxDetourDistanceM(query, routes)` | 비공개 | 계산 | 우회 허용 한도 — 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전) |
+| `findRouteList(query)` | 공개 | 조회 | 검색 옵션 3종(추천·대로·최단)으로 Tmap 경로를 받아 후보 모델(RouteCandidate)로 모은다 |
+| `findSaferRouteList(query, routeList, waypointPlans)` | 공개 | 조회 + 선별 | 경유지 계획마다 우회 경로를 받고, 거리 한도(선호별 +20~60%)를 넘는 것은 버린다 |
+| `maxDetourDistanceM(query, routeList)` | 비공개 | 계산 | 우회 허용 한도 — 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전) |
 | `fetchRoute(query, searchOption, waypoints)` | 비공개 | 조회 | Tmap 클라이언트 호출 한 번을 감싼다 (좌표·후보 모델 변환 포함) |
 | ~~`RouteRequest.endName()`~~ | 파일 내 | 변환 | 한 번만 쓰여 호출부(`fetchRoute`)로 합쳤다 |
 | `TmapRoute.toRouteCandidate()` | 파일 내 | 변환 | Tmap 경로 → 후보 모델 |
 | `List<TmapCoord>.toGeoPoints()` | 파일 내 | 변환 | Tmap 좌표 목록 → GeoPoint 목록 |
 | `GeoPoint.toTmapCoord()` | 파일 내 | 변환 | GeoPoint → Tmap 좌표 |
 
-`findSaferRoutes` 는 조회(우회 경로 받기)와 선별(거리 한도 거르기)이 한 함수에 있다. 이름은 조회(find)만 말한다.
+`findSaferRouteList` 는 조회(우회 경로 받기)와 선별(거리 한도 거르기)이 한 함수에 있다. 이름은 조회(find)만 말한다.
 
 ### RouteCandidateMerger (`domain/service/RouteCandidateMerger.kt`)
 
@@ -62,7 +63,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `merge(routes)` | 공개 | 선별 | 같은 경로(identityKey)·거의 같은 경로(90% 겹침)를 버린다 — 후보 모델 변환은 RouteFinder 로 옮겼다 (원래 이름 `toCandidates` 에서 리네임) |
+| `merge(routeList)` | 공개 | 선별 | 같은 경로(identityKey)·거의 같은 경로(90% 겹침)를 버린다 — 후보 모델 변환은 RouteFinder 로 옮겼다 (원래 이름 `toCandidates` 에서 리네임) |
 | `mergeNearDuplicates(candidates)` | 공개 | 선별 | 경로가 90% 이상 겹치는 후보를 버린다 |
 | `isNearDuplicate(first, second)` | 비공개 | 계산 | 두 경로의 겹침 비율이 기준 이상인지 판정한다 |
 
@@ -283,7 +284,7 @@ save/find 짝으로 유형이 명확하다.
 
 | 함수 | 무엇이 겹치나 |
 |---|---|
-| `RouteFinder.findSaferRoutes` | ~~조회 + 선별(거리 한도)~~ → 한도 계산을 `maxDetourDistanceM` 비공개로 분리. 한도 거르기 자체는 "쓸만한 우회 경로 조회"라는 주제의 일부라 함수는 유지 |
+| `RouteFinder.findSaferRouteList` | ~~조회 + 선별(거리 한도)~~ → 한도 계산을 `maxDetourDistanceM` 비공개로 분리. 한도 거르기 자체는 "쓸만한 우회 경로 조회"라는 주제의 일부라 함수는 유지 |
 | `RouteCandidateMerger.toCandidates` | ~~변환 + 선별. 이름은 to(변환)만 말한다~~ → `merge` 로 리네임 — 클래스 이름(Merger)이 말하는 주제와 일치 |
 | `RouteTypeAssigner.assignOneRoutePerType` | ~~점수 계산 위임 + 유형별 선별이 한 본문에~~ → 유형별 고르기를 `pickIndexPerType` 비공개로 분리 |
 | `SafetySpotWaypointPlanner.clusterSafetySpots` | ~~이름은 find(조회)인데 실제는 묶기·평균·정렬 계산~~ → `clusterSafetySpots` 로 리네임 완료. 클래스도 Finder → SafetySpotWaypointPlanner 로 리네임 |
@@ -292,5 +293,5 @@ save/find 짝으로 유형이 명확하다.
 | `SafetySpotRepository` (클래스) | CSV 파싱이 core 계약으로 빠져(2026-10-11) JSON 적재·서빙만 남았다. **판정: 해소** |
 | `SafetyWeightsCatalog.isNight` | 프로덕션 사용처는 `weightsAt` 뿐. **판정: 공개 유지** — 일출·일몰 경계 판정 자체가 테스트로 검증할 규칙이라, 비공개로 내리고 weightsAt 결과로 우회 검증하면 테스트가 더 흐려진다 |
 
-반대로 유형이 하나로 깔끔한 것: SafeRouteService(흐름), RouteTypeCatalog(조회), RouteOptionAssembler(조립),
+반대로 유형이 하나로 깔끔한 것: RouteOptionService(흐름), RouteTypeCatalog(조회), RouteOptionAssembler(조립),
 RouteMarkerBuilder(조립), GridSpatialIndex(선별), UploadStore·RegionCache·RefreshStatusStore(저장/조회 짝).

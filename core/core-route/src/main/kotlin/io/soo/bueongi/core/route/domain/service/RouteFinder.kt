@@ -16,20 +16,24 @@ import org.springframework.stereotype.Component
 class RouteFinder(
     private val tmapClient: TmapRouteClient,
 ) {
-    fun findRoutes(query: RouteRequest): List<RouteCandidate> {
-        val routes: ArrayList<RouteCandidate> = ArrayList()
+    fun findRouteList(query: RouteRequest): List<RouteCandidate> {
+        val routeList: ArrayList<RouteCandidate> = ArrayList()
         for (searchOption in SEARCH_OPTIONS) {
             val route: RouteCandidate? = fetchRoute(query, searchOption)
             if (route != null) {
-                routes.add(route)
+                routeList.add(route)
             }
         }
-        return routes
+        return routeList
     }
 
     // 안심시설에 들르는 길은 그만큼 더 걷게 된다. 얼마나 더 걷게 할지는 사용자의 안전 선호가 정한다.
-    fun findSaferRoutes(query: RouteRequest, routes: List<RouteCandidate>, waypointPlans: List<List<GeoPoint>>): List<RouteCandidate> {
-        val maxDistanceMeters: Double = maxDetourDistanceMeters(query, routes)
+    fun findSaferRouteList(
+        query: RouteRequest,
+        routeList: List<RouteCandidate>,
+        waypointPlans: List<List<GeoPoint>>,
+    ): List<RouteCandidate> {
+        val maxDistanceMeters: Double = maxDetourDistanceMeters(query, routeList)
 
         // 안심시설 뭉치에 들렀다 가는 길을 계획마다 지도에 묻고, 한도를 넘게 돌아가는 길은 버린다.
         val saferRoutes: ArrayList<RouteCandidate> = ArrayList()
@@ -44,9 +48,9 @@ class RouteFinder(
     }
 
     // 허용 한도는 기본 경로 중 최단거리의 +20%(균형)·+35%(안전)·+60%(최대안전).
-    private fun maxDetourDistanceMeters(query: RouteRequest, routes: List<RouteCandidate>): Double {
+    private fun maxDetourDistanceMeters(query: RouteRequest, routeList: List<RouteCandidate>): Double {
         val detourBudgetRatio: Double = DETOUR_DISTANCE_BUDGETS.getValue(query.safetyPreference)
-        val shortestDistanceMeters: Double = routes.minOf { it.distanceMeters }
+        val shortestDistanceMeters: Double = routeList.minOf { it.distanceMeters }
         return shortestDistanceMeters * (1 + detourBudgetRatio)
     }
 

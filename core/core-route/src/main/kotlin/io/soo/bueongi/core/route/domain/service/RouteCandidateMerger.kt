@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component
 @Component
 class RouteCandidateMerger {
     // 같은 경로(identityKey)와 거의 같은 경로(90% 이상 겹침)를 버린다.
-    fun merge(routes: List<RouteCandidate>): List<RouteCandidate> {
+    fun merge(routeList: List<RouteCandidate>): List<RouteCandidate> {
         val addedKeys: HashSet<Long> = HashSet()
         val kept: ArrayList<RouteCandidate> = ArrayList()
-        for (candidate in routes) {
+        for (candidate in routeList) {
             if (!addedKeys.add(candidate.identityKey)) {
                 continue
             }

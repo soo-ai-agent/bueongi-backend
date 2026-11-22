@@ -75,7 +75,7 @@ liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
 서버는 경로를 찾을 때 API 수집을 **뒤에서(기다리지 않고)** 시작한다. 그래서 처음 가는 지역의 첫 경로 응답에는 그 지역 API 데이터가 아직 없을 수 있다.
 
 ```kotlin
-// SafeRouteService.kt:38 — 수집을 맡기고 바로 점수 계산으로 넘어간다
+// RouteOptionService.kt:38 — 수집을 맡기고 바로 점수 계산으로 넘어간다
 routePlannedHandler.onRoutePlanned(firstRoutePath)
 
 // SafetySpotFillTrigger.kt:38 — 실제 수집은 별도 스레드에서 돈다

@@ -10,9 +10,9 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteOptionService
 import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.post
 @RecordApplicationEvents
 @Import(
     RouteTypeCatalog::class,
-    SafeRouteService::class,
+    RouteOptionService::class,
     RouteTypeAssigner::class,
     RouteFinder::class,
     RouteOptionAssembler::class,

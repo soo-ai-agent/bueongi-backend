@@ -18,9 +18,9 @@ import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
 import io.soo.bueongi.core.route.domain.service.RouteCandidateMerger
 import io.soo.bueongi.core.route.domain.service.RouteFinder
 import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
+import io.soo.bueongi.core.route.domain.service.RouteOptionService
 import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.core.route.domain.service.SafeRouteService
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import org.assertj.core.api.Assertions.assertThat
@@ -32,7 +32,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-class SafeRouteServiceTest {
+class RouteOptionServiceTest {
     private val request =
         RouteRequest(
             rawOrigin = LatLng(37.5, 127.0),
@@ -66,14 +66,14 @@ class SafeRouteServiceTest {
             steps = emptyList(),
         )
 
-    private fun service(tmap: TmapRouteClient) = safeRouteService(tmap, scorer, waypointPlanner, source)
+    private fun service(tmap: TmapRouteClient) = routeOptionService(tmap, scorer, waypointPlanner, source)
 
-    private fun safeRouteService(
+    private fun routeOptionService(
         tmap: TmapRouteClient,
         scorer: SafetyScorer,
         waypointPlanner: SafetySpotWaypointPlanner,
         source: FakeSafetySpotSource,
-    ) = SafeRouteService(
+    ) = RouteOptionService(
         routeFinder = RouteFinder(tmap),
         waypointPlanner = waypointPlanner,
         candidateMerger = RouteCandidateMerger(),
@@ -87,7 +87,7 @@ class SafeRouteServiceTest {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(false)
 
-        assertThatThrownBy { service(tmap).findRouteOptions(request) }
+        assertThatThrownBy { service(tmap).find(request) }
             .isInstanceOf(RouteSearchUnavailableException::class.java)
     }
 
@@ -97,7 +97,7 @@ class SafeRouteServiceTest {
         whenever(tmap.isEnabled).thenReturn(true)
         whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(null)
 
-        assertThatThrownBy { service(tmap).findRouteOptions(request) }
+        assertThatThrownBy { service(tmap).find(request) }
             .isInstanceOf(RouteSearchUnavailableException::class.java)
     }
 
@@ -108,7 +108,7 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
         whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
 
-        val result = service(tmap).findRouteOptions(request)
+        val result = service(tmap).find(request)
 
         assertThat(result).hasSize(2)
         assertThat(result[0].score!!).isGreaterThanOrEqualTo(result[1].score!!)
@@ -136,7 +136,7 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(routeA, routeB)
         whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(null)
 
-        val safe = service(tmap).findRouteOptions(request).first { it.type == RouteType.SAFE }
+        val safe = service(tmap).find(request).first { it.type == RouteType.SAFE }
         val markerTypes = safe.markers!!.map { it.type }
         assertThat(markerTypes).contains(SafetySpotPoiType.START, SafetySpotPoiType.END, SafetySpotPoiType.CCTV)
         assertThat(markerTypes).doesNotContain(SafetySpotPoiType.POLICE, SafetySpotPoiType.SAFEHOUSE)
@@ -147,7 +147,7 @@ class SafeRouteServiceTest {
         val police = listOf(SafetySpotPoint.of(SafetySpotType.POLICE, 37.5, 127.005, name = "역삼지구대"))
         val richSource = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv, SafetySpotType.POLICE to police))
         val svc =
-            safeRouteService(
+            routeOptionService(
                 tmap =
                     mock<TmapRouteClient>().also {
                         whenever(it.isEnabled).thenReturn(true)
@@ -159,7 +159,7 @@ class SafeRouteServiceTest {
                 source = richSource,
             )
 
-        val safe = svc.findRouteOptions(request).first { it.type == RouteType.SAFE }
+        val safe = svc.find(request).first { it.type == RouteType.SAFE }
         val policeMarkers = safe.markers!!.filter { it.type == SafetySpotPoiType.POLICE }
         assertThat(policeMarkers).hasSize(1)
         assertThat(policeMarkers.first().name).isEqualTo("역삼지구대")
@@ -169,7 +169,7 @@ class SafeRouteServiceTest {
     fun `안심 우회 후보는 거리 예산을 넘으면 제외된다`() {
         val overBudget = saferRouteAt(lat = 37.53, distanceMeters = 2000.0)
 
-        val result = service(tmapReturning(saferRoute = overBudget)).findRouteOptions(request)
+        val result = service(tmapReturning(saferRoute = overBudget)).find(request)
 
         assertThat(result).hasSize(1)
         assertThat(result.map { it.dist }).doesNotContain("2.0km")
@@ -179,7 +179,7 @@ class SafeRouteServiceTest {
     fun `거리 예산 안에 드는 우회 후보는 채택된다`() {
         val withinBudget = saferRouteAt(lat = 37.53, distanceMeters = 1000.0)
 
-        val result = service(tmapReturning(saferRoute = withinBudget)).findRouteOptions(request)
+        val result = service(tmapReturning(saferRoute = withinBudget)).find(request)
 
         assertThat(result).hasSize(2)
         assertThat(result.map { it.dist }).contains("1.0km")
@@ -212,7 +212,7 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(rA, rADup, rB)
         whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(rC)
 
-        val result = service(tmap).findRouteOptions(request)
+        val result = service(tmap).find(request)
 
         assertThat(result).hasSize(3)
         assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
@@ -232,7 +232,7 @@ class SafeRouteServiceTest {
         whenever(tmap.fetchRoute(any(), any(), any(), any(), eq(emptyList()))).thenReturn(r0, r1, r2)
         whenever(tmap.fetchRoute(any(), any(), any(), any(), argThat { isNotEmpty() })).thenReturn(r3)
 
-        val result = service(tmap).findRouteOptions(request)
+        val result = service(tmap).find(request)
 
         assertThat(result).hasSize(3)
         assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)

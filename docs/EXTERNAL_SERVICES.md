@@ -202,7 +202,7 @@ RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
                      ("A: msg <- B: msg" — 겉 메시지만 남기면 진짜 원인이 사라진 사건의 교훈)
 ```
 
-세 옵션이 **전부** null 이면 `SafeRouteService` 가 `RouteSearchUnavailableException` 을 던져
+세 옵션이 **전부** null 이면 `RouteOptionService` 가 `RouteSearchUnavailableException` 을 던져
 503 `ROUTE_SEARCH_UNAVAILABLE`("지금은 경로를 찾을 수 없습니다")로 응답한다. 폴백 경로는 만들지 않는다.
 그 오류 응답이 사건이 되어 `ApiErrorEventListener` 가 `tmap-route-failed`(`AlertCategory.ROUTE_SEARCH_FAILED`) 알림을 보낸다 → Slack.
 

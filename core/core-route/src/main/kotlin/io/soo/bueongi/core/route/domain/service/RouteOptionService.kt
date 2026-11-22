@@ -12,7 +12,7 @@ import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import org.springframework.stereotype.Service
 
 @Service
-class SafeRouteService(
+class RouteOptionService(
     private val routeFinder: RouteFinder,
     private val waypointPlanner: SafetySpotWaypointPlanner,
     private val candidateMerger: RouteCandidateMerger,
@@ -20,24 +20,24 @@ class SafeRouteService(
     private val assembler: RouteOptionAssembler,
     private val routePlannedHandler: RoutePlannedHandler,
 ) {
-    fun findRouteOptions(query: RouteRequest): List<RouteOption> {
-        val baseRoutes: List<RouteCandidate> = routeFinder.findRoutes(query)
-        if (baseRoutes.isEmpty()) {
+    fun find(route: RouteRequest): List<RouteOption> {
+        val baseRouteList: List<RouteCandidate> = routeFinder.findRouteList(route)
+        if (baseRouteList.isEmpty()) {
             throw RouteSearchUnavailableException()
         }
-        val firstRoutePath: List<GeoPoint> = baseRoutes.first().path
+        val firstRoutePath: List<GeoPoint> = baseRouteList.first().path
 
         // 길을 잃어 다시 부른 것이면 빨리 답해야 해서 우회를 찾지 않는다.
-        val routes: ArrayList<RouteCandidate> = ArrayList(baseRoutes)
-        if (!query.reroute) {
+        val routeList: ArrayList<RouteCandidate> = ArrayList(baseRouteList)
+        if (!route.reroute) {
             val clusters: List<SafetySpotCluster> = waypointPlanner.clusterSafetySpots(firstRoutePath)
-            val waypointPlans: List<List<GeoPoint>> = waypointPlanner.pickWaypoints(query.origin, query.destination, clusters)
-            routes.addAll(routeFinder.findSaferRoutes(query, baseRoutes, waypointPlans))
+            val waypointPlans: List<List<GeoPoint>> = waypointPlanner.pickWaypoints(route.origin, route.destination, clusters)
+            routeList.addAll(routeFinder.findSaferRouteList(route, baseRouteList, waypointPlans))
         }
 
         routePlannedHandler.onRoutePlanned(firstRoutePath)
-        val candidates: List<RouteCandidate> = candidateMerger.merge(routes)
+        val candidates: List<RouteCandidate> = candidateMerger.merge(routeList)
         val scoredRoutes: List<ScoredRoute> = typeAssigner.assignOneRoutePerType(candidates)
-        return assembler.assemble(scoredRoutes, query.origin, query.destination)
+        return assembler.assemble(scoredRoutes, route.origin, route.destination)
     }
 }

@@ -246,7 +246,7 @@ backend/
     (예: `ShareSession.withLocation()`·`withRoute()`·`isExpired()` — 외부에서 필드 조작 금지).
 12. **애그리게이트 경계를 넘는 상태 변경은 루트 엔티티를 통해** 수행한다.
 13. **Domain Service 는 유스케이스 오케스트레이션/트랜잭션 경계에 집중**한다
-    (예: `ShareService`·`SafeRouteService`·`SafetySpotRefreshService`).
+    (예: `ShareService`·`RouteOptionService`·`SafetySpotRefreshService`).
 
 ### 기초 문법·가독성
 14. 코드를 모르는 사람이 봐도 흐름을 따라갈 수 있게 **기초 문법에 충실**하게 쓴다 —
