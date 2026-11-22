@@ -51,7 +51,7 @@ class ChildSafeHouseFillService(
         val fetched: List<ChildSafeHousePoint>? = client.fetchWithin(tile.toBounds())
         events.fetchPerformed(SafetySpotType.SAFEHOUSE, tile.code, fetched?.size)
         if (fetched == null) {
-            retryGate.recordFailure(tile.code)
+            retryGate.record(tile.code)
             events.fetchFailed(SafetySpotType.SAFEHOUSE, tile.code)
             return 0
         }

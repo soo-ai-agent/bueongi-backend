@@ -16,7 +16,7 @@ class FillFailureCooldown(
         return Duration.between(at, clock.instant()) < cooldown
     }
 
-    fun recordFailure(key: String) {
+    fun record(key: String) {
         failedAt[key] = clock.instant()
     }
 

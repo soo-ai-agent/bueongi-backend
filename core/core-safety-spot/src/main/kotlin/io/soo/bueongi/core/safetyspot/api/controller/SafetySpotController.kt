@@ -13,7 +13,7 @@ class SafetySpotController(
     private val nearbySafetySpotService: NearbySafetySpotService,
 ) {
     @GetMapping("/nearby")
-    fun nearby(request: NearbySafetySpotsRequest): NearbySafetySpotsResponse {
-        return nearbySafetySpotService.countNearby(request.center)
+    fun findNearby(request: NearbySafetySpotsRequest): NearbySafetySpotsResponse {
+        return nearbySafetySpotService.count(request.center)
     }
 }

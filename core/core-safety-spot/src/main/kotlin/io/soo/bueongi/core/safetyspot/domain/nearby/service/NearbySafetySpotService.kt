@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 class NearbySafetySpotService(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun countNearby(center: GeoPoint): NearbySafetySpotsResponse {
+    fun count(center: GeoPoint): NearbySafetySpotsResponse {
         val countsByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
         val spotsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
         for (type in SafetySpotType.entries) {

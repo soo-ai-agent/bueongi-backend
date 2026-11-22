@@ -36,23 +36,13 @@ class RegionSafetySpotStatusService(
         return RegionSafetySpotResponse.from(rows)
     }
 
-    fun findSpotsByCode(code: String, limit: Int): RegionSafetySpotsResponse {
+    fun findByCode(code: String, limit: Int): RegionSafetySpotsResponse {
         if (limit <= 0) {
             throw InvalidSpotLimitException(limit)
         }
         val budget: Int = limit.coerceAtMost(MAX_SPOTS)
-        val pointsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
-        for (type in SafetySpotType.entries) {
-            val inRegion: List<SafetySpotPoint> = safetySpots.index(type).all.filter { regionCodeOf(it) == code }
-            if (inRegion.isNotEmpty()) {
-                pointsByType[type] = inRegion
-            }
-        }
-        val quotas: Map<SafetySpotType, Int> = roundRobinQuotasOf(pointsByType, budget)
-        val shown: ArrayList<SafetySpotPoint> = ArrayList(budget)
-        for ((type, points) in pointsByType) {
-            shown.addAll(spreadEvenly(points, quotas.getValue(type)))
-        }
+        val pointsByType: Map<SafetySpotType, List<SafetySpotPoint>> = pointsByTypeOf(code)
+        val shown: List<SafetySpotPoint> = shownSpotsOf(pointsByType, budget)
         val region: RegionName = regionNameOf(code)
         val found: RegionSafetySpots =
             RegionSafetySpots(
@@ -63,6 +53,26 @@ class RegionSafetySpotStatusService(
                 spots = shown,
             )
         return RegionSafetySpotsResponse.from(found)
+    }
+
+    private fun pointsByTypeOf(code: String): Map<SafetySpotType, List<SafetySpotPoint>> {
+        val pointsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
+        for (type in SafetySpotType.entries) {
+            val inRegion: List<SafetySpotPoint> = safetySpots.index(type).all.filter { regionCodeOf(it) == code }
+            if (inRegion.isNotEmpty()) {
+                pointsByType[type] = inRegion
+            }
+        }
+        return pointsByType
+    }
+
+    private fun shownSpotsOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): List<SafetySpotPoint> {
+        val quotas: Map<SafetySpotType, Int> = roundRobinQuotasOf(pointsByType, budget)
+        val shown: ArrayList<SafetySpotPoint> = ArrayList(budget)
+        for ((type, points) in pointsByType) {
+            shown.addAll(spreadEvenly(points, quotas.getValue(type)))
+        }
+        return shown
     }
 
     private fun roundRobinQuotasOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): Map<SafetySpotType, Int> {

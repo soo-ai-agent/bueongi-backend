@@ -32,7 +32,7 @@ class NearbySafetySpotServiceTest {
             )
         val service = NearbySafetySpotService(source)
 
-        val counts: List<NearbySafetySpotCountResponse> = service.countNearby(center).counts
+        val counts: List<NearbySafetySpotCountResponse> = service.count(center).counts
 
         assertThat(counts).containsExactly(
             NearbySafetySpotCountResponse(type = "cctv", count = 2),
@@ -53,7 +53,7 @@ class NearbySafetySpotServiceTest {
             )
         val service = NearbySafetySpotService(source)
 
-        val counts: List<NearbySafetySpotCountResponse> = service.countNearby(center).counts
+        val counts: List<NearbySafetySpotCountResponse> = service.count(center).counts
 
         assertThat(counts).containsExactly(NearbySafetySpotCountResponse(type = "police", count = 1))
     }
@@ -71,6 +71,6 @@ class NearbySafetySpotServiceTest {
             )
         val service = NearbySafetySpotService(source)
 
-        assertThat(service.countNearby(center).counts).isEmpty()
+        assertThat(service.count(center).counts).isEmpty()
     }
 }

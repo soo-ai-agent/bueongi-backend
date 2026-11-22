@@ -51,7 +51,7 @@ class PoliceFillService(
         val fetched: List<SafemapPolicePoint>? = client.fetchPoliceFacilities()
         events.fetchPerformed(SafetySpotType.POLICE, NATIONWIDE, fetched?.size)
         if (fetched == null) {
-            retryGate.recordFailure(NATIONWIDE)
+            retryGate.record(NATIONWIDE)
             events.fetchFailed(SafetySpotType.POLICE, NATIONWIDE)
             return 0
         }

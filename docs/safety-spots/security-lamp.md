@@ -39,7 +39,7 @@ flowchart LR
 
 ```kotlin
 // SafetySpotFillTrigger.kt:69-83 (발췌)
-val code: String? = locator.regionCodeAt(point)   // 좌표 → 지자체 코드
+val code: String? = locator.locate(point)         // 좌표 → 지자체 코드
 …
 securityLampFill.fill(region)                     // 지자체마다 받기
 ```

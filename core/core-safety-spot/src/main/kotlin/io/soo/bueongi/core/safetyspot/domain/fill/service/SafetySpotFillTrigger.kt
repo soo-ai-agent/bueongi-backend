@@ -68,7 +68,7 @@ class SafetySpotFillTrigger(
     private fun fillSecurityLampsOf(points: List<GeoPoint>) {
         val regions: MutableSet<String> = LinkedHashSet()
         for (point in points) {
-            val code: String? = locator.regionCodeAt(point)
+            val code: String? = locator.locate(point)
             if (code != null) {
                 regions.add(code)
             }

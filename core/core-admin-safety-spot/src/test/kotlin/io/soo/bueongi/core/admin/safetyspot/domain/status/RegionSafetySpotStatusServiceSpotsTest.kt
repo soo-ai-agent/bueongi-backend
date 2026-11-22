@@ -35,7 +35,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 35.54, 128.49, regionCode = CHANGNYEONG),
                         ),
                 ),
-            ).findSpotsByCode(MAPO, limit = 100)
+            ).findByCode(MAPO, limit = 100)
 
         assertThat(found.name).isEqualTo("마포구")
         assertThat(found.sido).isEqualTo("서울특별시")
@@ -48,7 +48,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
         val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 50)),
-            ).findSpotsByCode(MAPO, limit = 10)
+            ).findByCode(MAPO, limit = 10)
 
         assertThat(found.total).isEqualTo(50)
         assertThat(found.spots).hasSize(10)
@@ -63,7 +63,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
                     SafetySpotType.BELL to points(SafetySpotType.BELL, 3),
                     SafetySpotType.POLICE to points(SafetySpotType.POLICE, 1),
                 ),
-            ).findSpotsByCode(MAPO, limit = 10)
+            ).findByCode(MAPO, limit = 10)
 
         val byType: Map<SafetySpotType, Int> = found.spots.groupingBy { it.type }.eachCount()
         assertThat(found.spots).hasSize(10)
@@ -77,7 +77,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
         val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 10)),
-            ).findSpotsByCode(MAPO, limit = 2)
+            ).findByCode(MAPO, limit = 2)
 
         assertThat(found.spots.map { it.name }).containsExactly("p0", "p5")
     }
@@ -87,7 +87,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
         val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 6_000)),
-            ).findSpotsByCode(MAPO, limit = 9_999)
+            ).findByCode(MAPO, limit = 9_999)
 
         assertThat(found.total).isEqualTo(6_000)
         assertThat(found.spots).hasSize(5_000)
@@ -100,7 +100,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
             )
 
-        assertThatThrownBy { service.findSpotsByCode(MAPO, limit = 0) }
+        assertThatThrownBy { service.findByCode(MAPO, limit = 0) }
             .isInstanceOf(InvalidSpotLimitException::class.java)
     }
 
@@ -109,7 +109,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
         val found: RegionSafetySpotsResponse =
             service(
                 mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 3)),
-            ).findSpotsByCode("9999999", limit = 100)
+            ).findByCode("9999999", limit = 100)
 
         assertThat(found.code).isEqualTo("9999999")
         assertThat(found.total).isEqualTo(0)
@@ -127,7 +127,7 @@ class RegionSafetySpotStatusServiceSpotsTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.51, 127.01, regionCode = MAPO),
                         ),
                 ),
-            ).findSpotsByCode("unknown", limit = 100)
+            ).findByCode("unknown", limit = 100)
 
         assertThat(found.total).isEqualTo(1)
         assertThat(found.spots.single().lat).isEqualTo(37.50)

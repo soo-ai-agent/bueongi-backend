@@ -51,7 +51,7 @@ class StreetLampFillService(
         val fetched: List<StreetLampPoint>? = client.fetchStreetLamps()
         events.fetchPerformed(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched?.size)
         if (fetched == null) {
-            retryGate.recordFailure(NATIONWIDE)
+            retryGate.record(NATIONWIDE)
             events.fetchFailed(SafetySpotType.STREET_LAMP, NATIONWIDE)
             return 0
         }

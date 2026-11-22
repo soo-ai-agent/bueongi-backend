@@ -11,26 +11,31 @@ import org.springframework.stereotype.Component
 class RegionLocator(
     private val safetySpots: SafetySpotSpatialSource,
 ) {
-    fun regionCodeAt(point: GeoPoint): String? {
+    fun locate(point: GeoPoint): String? {
         for (radius in SEARCH_RADII_M) {
             val nearby: List<SafetySpotPoint> = safetySpots.index(SafetySpotType.CCTV).withinRadius(point, radius)
-            var nearest: CctvSpot? = null
-            var nearestDistance: Double = Double.MAX_VALUE
-            for (spot in nearby) {
-                if (spot !is CctvSpot || spot.openLocalGovCode.isNullOrBlank()) {
-                    continue
-                }
-                val distance: Double = point.distanceMetersTo(spot.toGeoPoint())
-                if (distance < nearestDistance) {
-                    nearest = spot
-                    nearestDistance = distance
-                }
-            }
-            if (nearest != null) {
-                return nearest.openLocalGovCode
+            val code: String? = nearestCodeOf(point, nearby)
+            if (code != null) {
+                return code
             }
         }
         return null
+    }
+
+    private fun nearestCodeOf(point: GeoPoint, nearby: List<SafetySpotPoint>): String? {
+        var nearest: CctvSpot? = null
+        var nearestDistance: Double = Double.MAX_VALUE
+        for (spot in nearby) {
+            if (spot !is CctvSpot || spot.openLocalGovCode.isNullOrBlank()) {
+                continue
+            }
+            val distance: Double = point.distanceMetersTo(spot.toGeoPoint())
+            if (distance < nearestDistance) {
+                nearest = spot
+                nearestDistance = distance
+            }
+        }
+        return nearest?.openLocalGovCode
     }
 
     private companion object {
