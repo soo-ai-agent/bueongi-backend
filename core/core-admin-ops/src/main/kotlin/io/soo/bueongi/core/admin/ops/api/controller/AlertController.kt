@@ -13,7 +13,7 @@ class AlertController(
     private val alertHistoryService: AlertHistoryService,
 ) {
     @GetMapping
-    fun alerts(
+    fun findRecent(
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): AlertsResponse {
         return alertHistoryService.findRecent(limit)

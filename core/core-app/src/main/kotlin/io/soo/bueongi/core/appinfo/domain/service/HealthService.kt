@@ -11,7 +11,7 @@ class HealthService(
     @Value("\${spring.application.name}")
     private val serviceName: String,
 ) {
-    fun getHealth(): HealthStatus {
+    fun get(): HealthStatus {
         val locationStore: String = shareService.storeBackendLabel()
         return HealthStatus.from(serviceName, locationStore)
     }

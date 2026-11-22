@@ -33,10 +33,10 @@ class AdminTokenService(
 
     fun issue(): AdminTokenBundle =
         AdminTokenBundle(
-            accessToken = createToken(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
+            accessToken = create(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
             tokenType = "Bearer",
             expiresIn = authProperties.accessTokenSeconds,
-            refreshToken = createToken(AdminTokenKind.REFRESH, authProperties.refreshTokenSeconds),
+            refreshToken = create(AdminTokenKind.REFRESH, authProperties.refreshTokenSeconds),
             refreshExpiresIn = authProperties.refreshTokenSeconds,
         )
 
@@ -57,7 +57,7 @@ class AdminTokenService(
         return issue()
     }
 
-    private fun createToken(kind: AdminTokenKind, lifetimeSeconds: Long): String {
+    private fun create(kind: AdminTokenKind, lifetimeSeconds: Long): String {
         val issuedAt: Instant = clock.instant()
         return Jwts.builder()
             .issuer(issuer)

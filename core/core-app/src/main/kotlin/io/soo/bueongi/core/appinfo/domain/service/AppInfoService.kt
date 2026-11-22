@@ -16,7 +16,7 @@ class AppInfoService(
 ) {
     private val serverVersion: String = buildProperties.version
 
-    fun getAppInfo(): AppInfoResponse {
+    fun get(): AppInfoResponse {
         return AppInfoResponse.from(serverVersion, minSupportedAppVersion, latestAppVersion)
     }
 }

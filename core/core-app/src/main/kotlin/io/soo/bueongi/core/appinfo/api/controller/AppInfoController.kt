@@ -12,7 +12,7 @@ class AppInfoController(
     private val appInfoService: AppInfoService,
 ) {
     @GetMapping
-    fun appInfo(): AppInfoResponse {
-        return appInfoService.getAppInfo()
+    fun get(): AppInfoResponse {
+        return appInfoService.get()
     }
 }

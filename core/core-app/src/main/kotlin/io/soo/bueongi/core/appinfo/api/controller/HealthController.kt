@@ -12,7 +12,7 @@ class HealthController(
     private val healthService: HealthService,
 ) {
     @GetMapping
-    fun health(): HealthStatus {
-        return healthService.getHealth()
+    fun get(): HealthStatus {
+        return healthService.get()
     }
 }

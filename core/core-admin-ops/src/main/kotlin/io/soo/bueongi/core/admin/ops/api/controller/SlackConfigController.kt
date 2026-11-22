@@ -19,12 +19,12 @@ class SlackConfigController(
     private val slackConfigService: SlackConfigService,
 ) {
     @GetMapping
-    fun slackConfig(): SlackConfigResponse {
+    fun view(): SlackConfigResponse {
         return slackConfigService.view()
     }
 
     @PutMapping
-    fun updateSlackConfig(
+    fun update(
         @Valid @RequestBody request: SlackConfigUpdateRequest,
     ): SlackConfigResponse {
         val update: SlackConfigUpdate = request.toUpdate()
@@ -32,7 +32,7 @@ class SlackConfigController(
     }
 
     @PostMapping("/test")
-    fun testSlackConfig(): SlackTestResponse {
+    fun test(): SlackTestResponse {
         return slackConfigService.test()
     }
 }

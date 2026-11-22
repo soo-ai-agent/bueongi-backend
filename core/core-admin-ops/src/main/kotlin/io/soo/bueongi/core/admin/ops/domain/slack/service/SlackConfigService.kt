@@ -31,17 +31,7 @@ class SlackConfigService(
     }
 
     fun update(update: SlackConfigUpdate): SlackConfigResponse {
-        val knownKeys: ArrayList<String> = ArrayList()
-        for (category in AlertCategory.entries) {
-            knownKeys.add(category.key)
-        }
-        val unknown: Set<String> = update.mutedCategories - knownKeys.toSet()
-        if (unknown.isNotEmpty()) {
-            throw InvalidSlackCategoryException(
-                rejectedValue = unknown.sorted(),
-                knownKeys = knownKeys,
-            )
-        }
+        validate(update.mutedCategories)
         slackAlertConfig.update(
             enabled = update.enabled,
             throttleMinutes = update.throttleMinutes,
@@ -54,5 +44,19 @@ class SlackConfigService(
         val sent: Boolean = alertNotifier.sendTest()
         val enabled: Boolean = slackAlertConfig.sendEnabled()
         return SlackTestResponse.from(sent, enabled)
+    }
+
+    private fun validate(mutedCategories: Set<String>) {
+        val knownKeys: ArrayList<String> = ArrayList()
+        for (category in AlertCategory.entries) {
+            knownKeys.add(category.key)
+        }
+        val unknown: Set<String> = mutedCategories - knownKeys.toSet()
+        if (unknown.isNotEmpty()) {
+            throw InvalidSlackCategoryException(
+                rejectedValue = unknown.sorted(),
+                knownKeys = knownKeys,
+            )
+        }
     }
 }
