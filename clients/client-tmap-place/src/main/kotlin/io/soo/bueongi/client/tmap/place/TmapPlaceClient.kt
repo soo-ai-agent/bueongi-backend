@@ -1,9 +1,10 @@
 package io.soo.bueongi.client.tmap.place
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.client.place.Place
 import io.soo.bueongi.client.place.PlaceSearchClient
-import io.soo.bueongi.client.tmap.place.response.TmapPoi
-import io.soo.bueongi.client.tmap.place.response.TmapPoiSearch
+import io.soo.bueongi.client.tmap.place.query.buildPoiSearchUri
+import io.soo.bueongi.client.tmap.place.response.parseTmapPoiSearch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -19,42 +20,16 @@ class TmapPlaceClient(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     override fun search(keyword: String): List<Place> {
-        check(appKey.isNotEmpty()) {
-            "Tmap app key 미설정"
-        }
-        val response: TmapPoiSearch? =
+        val response: JsonNode =
             restClient.get()
-                .uri(POI_SEARCH_ENDPOINT) { builder ->
-                    builder.queryParam("version", 1)
-                        .queryParam("searchKeyword", keyword)
-                        .queryParam("count", SEARCH_COUNT)
-                        .queryParam("reqCoordType", "WGS84GEO")
-                        .queryParam("resCoordType", "WGS84GEO")
-                        .build()
-                }
+                .uri(POI_SEARCH_ENDPOINT) { builder -> buildPoiSearchUri(builder, keyword) }
                 .header("appKey", appKey)
                 .retrieve()
-                .body<TmapPoiSearch>()
-
-        if (response == null) {
-            return emptyList()
-        }
-        val poiList: List<TmapPoi> = response.searchPoiInfo.pois.poi
-        val places: ArrayList<Place> = ArrayList(poiList.size)
-        for (poi in poiList) {
-            val place: Place? = poi.toPlace()
-            if (place == null) {
-                continue
-            }
-            places.add(place)
-        }
-        return places
+                .body<JsonNode>() ?: return emptyList()
+        return parseTmapPoiSearch(response)
     }
 
     private companion object {
         const val POI_SEARCH_ENDPOINT: String = "https://apis.openapi.sk.com/tmap/pois"
-
-        // 화면이 쓰는 만큼만 받는다 — 사용자가 보는 것은 상위 몇 건이다.
-        const val SEARCH_COUNT: Int = 15
     }
 }
