@@ -28,7 +28,7 @@ class SecurityLampClientTest {
                 ),
             )
 
-        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetchSecurityLamps()
+        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetch()
 
         assertThat(points).hasSize(1)
         assertThat(points!![0].name).isEqualTo("역삼동 골목 보안등")
@@ -50,7 +50,7 @@ class SecurityLampClientTest {
                 ),
             )
 
-        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetchSecurityLamps()
+        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetch()
 
         assertThat(points).hasSize(1)
         assertThat(points!![0].name).isEqualTo("대청동 보안등")
@@ -71,7 +71,7 @@ class SecurityLampClientTest {
                 ),
             )
 
-        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetchSecurityLamps()
+        val points: List<DataGoKrPoint>? = SecurityLampClient(fetcher).fetch()
 
         assertThat(points).hasSize(1)
         assertThat(points!![0].name).isNull()

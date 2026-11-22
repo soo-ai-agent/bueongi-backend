@@ -28,7 +28,7 @@ class StreetLampClient(
         get() = serviceKey.isNotEmpty()
 
     // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
-    fun fetchStreetLamps(): List<StreetLampPoint>? {
+    fun fetch(): List<StreetLampPoint>? {
         check(isEnabled) { "재난안전데이터 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<StreetLampPoint> = ArrayList()
         var received: Long = 0L

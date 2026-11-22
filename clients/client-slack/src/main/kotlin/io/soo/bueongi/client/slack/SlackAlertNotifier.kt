@@ -49,7 +49,7 @@ class SlackAlertNotifier internal constructor(
         get() = config.sendEnabled()
 
     override fun notify(key: String, title: String, detail: String) {
-        recordAlert(key, title, detail)
+        record(key, title, detail)
         if (!config.sendEnabled()) {
             log.debug("Slack 알림 비활성(webhook 미설정 또는 토글 off) — 무시: {}", key)
             return
@@ -75,7 +75,7 @@ class SlackAlertNotifier internal constructor(
         executor.execute { send(title, detail) }
     }
 
-    override fun findRecentAlerts(limit: Int): List<AlertRecord> {
+    override fun findRecent(limit: Int): List<AlertRecord> {
         val snapshot: List<AlertRecord> = synchronized(recentAlerts) { recentAlerts.toList() }
         return snapshot.asReversed().take(limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT))
     }
@@ -99,7 +99,7 @@ class SlackAlertNotifier internal constructor(
         }
     }
 
-    private fun recordAlert(key: String, title: String, detail: String) {
+    private fun record(key: String, title: String, detail: String) {
         val record = AlertRecord(atEpochMs = nowMs(), key = key, title = title, detail = detail)
         synchronized(recentAlerts) {
             recentAlerts.addLast(record)

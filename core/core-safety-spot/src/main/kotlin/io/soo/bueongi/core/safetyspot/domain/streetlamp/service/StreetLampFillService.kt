@@ -48,7 +48,7 @@ class StreetLampFillService(
     }
 
     private fun fetchAndStore(): Int {
-        val fetched: List<StreetLampPoint>? = client.fetchStreetLamps()
+        val fetched: List<StreetLampPoint>? = client.fetch()
         events.fetchPerformed(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched?.size)
         if (fetched == null) {
             retryGate.record(NATIONWIDE)

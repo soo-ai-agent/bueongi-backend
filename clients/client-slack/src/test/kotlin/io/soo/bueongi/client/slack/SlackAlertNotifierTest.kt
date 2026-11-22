@@ -98,7 +98,7 @@ class SlackAlertNotifierTest {
         now = 200L
         notifier.notify("k2", "t2", "d2")
 
-        val recent: List<AlertRecord> = notifier.findRecentAlerts(10)
+        val recent: List<AlertRecord> = notifier.findRecent(10)
         assertThat(recent.map { it.key }).containsExactly("k2", "k1")
         assertThat(recent[0].atEpochMs).isEqualTo(200L)
     }
@@ -112,7 +112,7 @@ class SlackAlertNotifierTest {
         notifier.notify("k", "t", "d")
 
         server.verify()
-        assertThat(notifier.findRecentAlerts(10)).hasSize(2)
+        assertThat(notifier.findRecent(10)).hasSize(2)
     }
 
     @Test
@@ -120,7 +120,7 @@ class SlackAlertNotifierTest {
         val (notifier, _) = bind(url = " ")
         repeat(250) { notifier.notify("k$it", "t", "d") }
 
-        val recent: List<AlertRecord> = notifier.findRecentAlerts(1000)
+        val recent: List<AlertRecord> = notifier.findRecent(1000)
         assertThat(recent).hasSize(200)
         assertThat(recent.first().key).isEqualTo("k249")
         assertThat(recent.last().key).isEqualTo("k50")
@@ -134,7 +134,7 @@ class SlackAlertNotifierTest {
         notifier.notify("api-500:NullPointerException", "t", "d")
 
         server.verify()
-        assertThat(notifier.findRecentAlerts(10)).hasSize(1)
+        assertThat(notifier.findRecent(10)).hasSize(1)
     }
 
     @Test
@@ -186,7 +186,7 @@ class SlackAlertNotifierTest {
             notifier.notify(key = "k$index", title = "t$index", detail = "d")
         }
 
-        assertThat(notifier.findRecentAlerts(ALERT_HISTORY_MAX_LIMIT + 10_000)).hasSize(3)
-        assertThat(notifier.findRecentAlerts(0)).hasSize(1)
+        assertThat(notifier.findRecent(ALERT_HISTORY_MAX_LIMIT + 10_000)).hasSize(3)
+        assertThat(notifier.findRecent(0)).hasSize(1)
     }
 }

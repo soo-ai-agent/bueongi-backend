@@ -54,7 +54,7 @@ class PoliceFillServiceTest {
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(client, never()).fetchPoliceFacilities()
+        verify(client, never()).fetch()
     }
 
     @Test
@@ -63,7 +63,7 @@ class PoliceFillServiceTest {
     ) {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchPoliceFacilities()).thenReturn(
+        whenever(client.fetch()).thenReturn(
             listOf(
                 SafemapPolicePoint(
                     lat = 37.4981,
@@ -84,7 +84,7 @@ class PoliceFillServiceTest {
         assertThat(stored.phone).isEqualTo("02-000-0000")
 
         assertThat(service.fill()).isZero()
-        verify(client).fetchPoliceFacilities()
+        verify(client).fetch()
     }
 
     @Test
@@ -93,7 +93,7 @@ class PoliceFillServiceTest {
     ) {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchPoliceFacilities()).thenReturn(null)
+        whenever(client.fetch()).thenReturn(null)
         val liveStore = FakeLiveStore()
         val events: SafetySpotFillEventPublisher = mock()
 
@@ -111,7 +111,7 @@ class PoliceFillServiceTest {
     ) {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchPoliceFacilities()).thenReturn(null)
+        whenever(client.fetch()).thenReturn(null)
         val now: Instant = Instant.parse("2026-08-19T00:00:00Z")
         val ticking = TickingClock(now)
         val service: PoliceFillService =
@@ -125,11 +125,11 @@ class PoliceFillServiceTest {
 
         service.fill()
         service.fill()
-        verify(client, times(1)).fetchPoliceFacilities()
+        verify(client, times(1)).fetch()
 
         ticking.now = now.plus(Duration.ofMinutes(11))
         service.fill()
-        verify(client, times(2)).fetchPoliceFacilities()
+        verify(client, times(2)).fetch()
     }
 
     private class TickingClock(

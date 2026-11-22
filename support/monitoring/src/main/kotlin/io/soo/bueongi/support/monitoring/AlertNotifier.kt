@@ -6,7 +6,7 @@ interface AlertNotifier {
     // 구현은 예외를 던지지 않고 호출 스레드를 막지 않는다 — key 는 스로틀 단위(창 내 1회 발송).
     fun notify(key: String, title: String, detail: String)
 
-    fun findRecentAlerts(limit: Int): List<AlertRecord> {
+    fun findRecent(limit: Int): List<AlertRecord> {
         return emptyList()
     }
 

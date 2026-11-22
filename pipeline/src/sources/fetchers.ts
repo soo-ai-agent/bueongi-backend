@@ -198,7 +198,7 @@ const LIVE_SPEC: Partial<Record<SourceId, LiveSpec>> = {
     keyColumns: { lat: "위도", lng: "경도", name: "관리번호", address: "설치위치" },
   },
   // C-2: 전국 보안등 (WGS84) — 표준데이터 조회서비스(catalogId 15017320).
-  //  백엔드 라이브 갱신(client-datagokr fetchSecurityLamps)과 동일 원천.
+  //  백엔드 라이브 갱신(client-datagokr SecurityLampClient.fetch)과 동일 원천.
   //  B-2 와 같은 tn_pubr 계열이라 uddi 조회 없이 엔드포인트를 직접 부른다.
   "C-2": {
     kind: "datagokr",

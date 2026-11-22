@@ -52,7 +52,7 @@ class StreetLampFillServiceTest {
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(client, never()).fetchStreetLamps()
+        verify(client, never()).fetch()
     }
 
     @Test
@@ -61,7 +61,7 @@ class StreetLampFillServiceTest {
     ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchStreetLamps()).thenReturn(
+        whenever(client.fetch()).thenReturn(
             listOf(
                 StreetLampPoint(lat = 37.4979, lng = 127.0276, address = "역삼동", sigungu = "11680"),
                 StreetLampPoint(lat = 37.4988, lng = 127.0301),
@@ -77,7 +77,7 @@ class StreetLampFillServiceTest {
 
         assertThat(service.fill()).isZero()
         assertThat(liveStore.appended).hasSize(2)
-        verify(client).fetchStreetLamps()
+        verify(client).fetch()
     }
 
     @Test
@@ -86,7 +86,7 @@ class StreetLampFillServiceTest {
     ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchStreetLamps()).thenReturn(null)
+        whenever(client.fetch()).thenReturn(null)
         val now: Instant = Instant.parse("2026-08-19T00:00:00Z")
         val ticking = TickingClock(now)
         val service: StreetLampFillService =
@@ -100,11 +100,11 @@ class StreetLampFillServiceTest {
 
         service.fill()
         service.fill()
-        verify(client, times(1)).fetchStreetLamps()
+        verify(client, times(1)).fetch()
 
         ticking.now = now.plus(Duration.ofMinutes(11))
         service.fill()
-        verify(client, times(2)).fetchStreetLamps()
+        verify(client, times(2)).fetch()
     }
 
     private class TickingClock(
@@ -123,7 +123,7 @@ class StreetLampFillServiceTest {
     ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchStreetLamps()).thenReturn(null)
+        whenever(client.fetch()).thenReturn(null)
         val liveStore = FakeLiveStore()
         val events: SafetySpotFillEventPublisher = mock()
 

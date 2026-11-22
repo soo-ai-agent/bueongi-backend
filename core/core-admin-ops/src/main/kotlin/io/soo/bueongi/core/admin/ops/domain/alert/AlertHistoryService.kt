@@ -10,7 +10,7 @@ class AlertHistoryService(
     private val alertNotifier: AlertNotifier,
 ) {
     fun findRecent(limit: Int): AlertsResponse {
-        val alerts: List<AlertRecord> = alertNotifier.findRecentAlerts(limit)
+        val alerts: List<AlertRecord> = alertNotifier.findRecent(limit)
         return AlertsResponse.from(alerts)
     }
 }

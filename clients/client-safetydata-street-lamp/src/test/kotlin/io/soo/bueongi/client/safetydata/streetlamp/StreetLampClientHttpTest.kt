@@ -39,7 +39,7 @@ class StreetLampClientHttpTest {
         server.expect(requestTo(containsString("$baseUrl/V2/api/DSSP-IF-00084?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetLamps: List<StreetLampPoint> = client.fetchStreetLamps().orEmpty()
+        val streetLamps: List<StreetLampPoint> = client.fetch().orEmpty()
 
         assertThat(streetLamps).hasSize(1)
         val lamp: StreetLampPoint = streetLamps.first()
@@ -62,7 +62,7 @@ class StreetLampClientHttpTest {
         server.expect(requestTo(containsString("/V2/api/DSSP-IF-00084")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val streetLamps: List<StreetLampPoint> = client.fetchStreetLamps().orEmpty()
+        val streetLamps: List<StreetLampPoint> = client.fetch().orEmpty()
 
         assertThat(streetLamps).hasSize(1)
         assertThat(streetLamps.first().lat).isCloseTo(37.50, within(1e-9))
@@ -75,7 +75,7 @@ class StreetLampClientHttpTest {
         server.expect(requestTo(containsString("/V2/api/DSSP-IF-00084")))
             .andRespond(withServerError())
 
-        assertThat(client.fetchStreetLamps()).isNull()
+        assertThat(client.fetch()).isNull()
     }
 
     @Test
@@ -85,7 +85,7 @@ class StreetLampClientHttpTest {
         server.expect(requestTo(containsString("/V2/api/DSSP-IF-00084")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        assertThat(client.fetchStreetLamps()).isNull()
+        assertThat(client.fetch()).isNull()
     }
 
     @Test
@@ -93,6 +93,6 @@ class StreetLampClientHttpTest {
         val (client, _) = bind(key = "")
 
         assertThat(client.isEnabled).isFalse()
-        assertThatThrownBy { client.fetchStreetLamps() }.isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy { client.fetch() }.isInstanceOf(IllegalStateException::class.java)
     }
 }

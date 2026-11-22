@@ -28,7 +28,7 @@ class SafemapPoliceClient(
         get() = serviceKey.isNotEmpty()
 
     // null = 수집 실패, 빈 목록과 다르다 — 호출자는 기존 데이터를 유지한다.
-    fun fetchPoliceFacilities(): List<SafemapPolicePoint>? {
+    fun fetch(): List<SafemapPolicePoint>? {
         check(isEnabled) { "생활안전지도 인증키 미설정 — isEnabled 확인 후 호출해야 한다." }
         val points: ArrayList<SafemapPolicePoint> = ArrayList()
         var received: Long = 0L

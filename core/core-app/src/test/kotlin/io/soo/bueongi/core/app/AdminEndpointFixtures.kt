@@ -104,7 +104,7 @@ class AdminEndpointFixtures {
 
                 override fun notify(key: String, title: String, detail: String) = Unit
 
-                override fun findRecentAlerts(limit: Int): List<AlertRecord> =
+                override fun findRecent(limit: Int): List<AlertRecord> =
                     listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
             }
 

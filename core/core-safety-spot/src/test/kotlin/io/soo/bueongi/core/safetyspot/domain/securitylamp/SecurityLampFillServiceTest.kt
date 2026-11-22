@@ -45,7 +45,7 @@ class SecurityLampFillServiceTest {
         val added: Int = service(dir, client, FakeLiveStore(), alreadyLoaded = CHANGNYEONG).fill(CHANGNYEONG)
 
         assertThat(added).isZero()
-        verify(client, never()).fetchSecurityLamps(any())
+        verify(client, never()).fetch(any())
     }
 
     @Test
@@ -54,7 +54,7 @@ class SecurityLampFillServiceTest {
     ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchSecurityLamps(any())).thenReturn(
+        whenever(client.fetch(any())).thenReturn(
             listOf(DataGoKrPoint(lat = 37.52, lng = 126.81, name = "원종동 292-4", sigungu = BUCHEON)),
         )
         val liveStore = FakeLiveStore()
@@ -63,7 +63,7 @@ class SecurityLampFillServiceTest {
 
         assertThat(added).isEqualTo(1)
         assertThat(liveStore.appended.single().type).isEqualTo(SafetySpotType.SECURITY_LAMP)
-        verify(client).fetchSecurityLamps(any<String>())
+        verify(client).fetch(any<String>())
     }
 
     @Test
@@ -72,7 +72,7 @@ class SecurityLampFillServiceTest {
     ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchSecurityLamps(any())).thenReturn(
+        whenever(client.fetch(any())).thenReturn(
             listOf(DataGoKrPoint(lat = 37.52, lng = 126.81, name = "원종동 292-4", sigungu = BUCHEON)),
         )
         val events: SafetySpotFillEventPublisher = mock()
@@ -88,7 +88,7 @@ class SecurityLampFillServiceTest {
     ) {
         val client: SecurityLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
-        whenever(client.fetchSecurityLamps(any())).thenReturn(null)
+        whenever(client.fetch(any())).thenReturn(null)
         val events: SafetySpotFillEventPublisher = mock()
 
         service(dir, client, FakeLiveStore(), alreadyLoaded = CHANGNYEONG, events = events).fill(BUCHEON)

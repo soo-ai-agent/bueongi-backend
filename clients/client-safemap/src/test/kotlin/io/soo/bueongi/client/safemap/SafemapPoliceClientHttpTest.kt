@@ -40,7 +40,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("$baseUrl/openapi2/IF_0036?serviceKey=$serviceKey")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities: List<SafemapPolicePoint> = client.fetchPoliceFacilities().orEmpty()
+        val facilities: List<SafemapPolicePoint> = client.fetch().orEmpty()
 
         assertThat(facilities).hasSize(1)
         val police: SafemapPolicePoint = facilities.first()
@@ -67,7 +67,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val facilities: List<SafemapPolicePoint> = client.fetchPoliceFacilities().orEmpty()
+        val facilities: List<SafemapPolicePoint> = client.fetch().orEmpty()
 
         assertThat(facilities).hasSize(1)
         assertThat(facilities.first().name).isEqualTo("역삼지구대")
@@ -87,7 +87,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        val police: SafemapPolicePoint = client.fetchPoliceFacilities().orEmpty().single()
+        val police: SafemapPolicePoint = client.fetch().orEmpty().single()
 
         assertThat(police.phone).isNull()
         assertThat(police.sigungu).isNull()
@@ -100,7 +100,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withServerError())
 
-        assertThat(client.fetchPoliceFacilities()).isNull()
+        assertThat(client.fetch()).isNull()
     }
 
     @Test
@@ -110,7 +110,7 @@ class SafemapPoliceClientHttpTest {
         server.expect(requestTo(containsString("/openapi2/IF_0036")))
             .andRespond(withSuccess(body, MediaType.APPLICATION_JSON))
 
-        assertThat(client.fetchPoliceFacilities()).isNull()
+        assertThat(client.fetch()).isNull()
     }
 
     @Test
@@ -118,6 +118,6 @@ class SafemapPoliceClientHttpTest {
         val (client, _) = bind(key = "")
 
         assertThat(client.isEnabled).isFalse()
-        assertThatThrownBy { client.fetchPoliceFacilities() }.isInstanceOf(IllegalStateException::class.java)
+        assertThatThrownBy { client.fetch() }.isInstanceOf(IllegalStateException::class.java)
     }
 }
