@@ -17,7 +17,7 @@ class SafetySpotCsvFileStore(
 ) {
     fun list(): List<SafetySpotCsvFile> {
         val files: ArrayList<SafetySpotCsvFile> = ArrayList()
-        val cctv: File? = resolveCctvCsvFile(cctvCsvPath)
+        val cctv: File? = resolveCctv(cctvCsvPath)
         if (cctv != null) {
             files.add(sourceFile(cctv, SafetySpotType.CCTV))
         }
@@ -71,7 +71,7 @@ class SafetySpotCsvFileStore(
         )
     }
 
-    private fun resolveCctvCsvFile(configured: String): File? {
+    private fun resolveCctv(configured: String): File? {
         if (configured.isBlank()) {
             return null
         }

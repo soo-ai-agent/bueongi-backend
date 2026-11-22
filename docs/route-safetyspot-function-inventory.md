@@ -213,7 +213,7 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | `replace(type, points)` | 공개(override) | 저장 | 새 점만으로 인덱스 재생성 후 교체 |
 | `load()` | 공개(@PostConstruct) | 적재 | 부팅 시 CDN → CSV → 지역 캐시 → 업로드분 순으로 읽어 인덱스를 세운다 |
 | `addRegionCache(byType)` | 비공개 | 적재 | 지역 캐시 파일을 종류별로 더한다 |
-| `readSafetySpotFiles(dir, byType)` | 비공개 | 적재 | CDN 시설 JSON 을 읽는다 |
+| `readFiles(dir, byType)` | 비공개 | 적재 | CDN 시설 JSON 을 읽는다 |
 | `readSafePathFiles(dir, paths)` | 비공개 | 적재 | 안심귀갓길 JSON 을 읽는다 |
 | `readFreshness(dir)` | 비공개 | 적재 | manifest.json 에서 신선도를 읽는다 |
 | `overwriteWithUploads(byType)` | 비공개 | 적재 | 업로드분이 있으면 그 종류를 통째로 덮는다 |

@@ -154,7 +154,7 @@ flowchart LR
 
 ```kotlin
 // SafetySpotRepository.kt:75-87 (발췌, … 는 생략한 줄)
-fileCount += readSafetySpotFiles(dir, filesByType)            // 1. CDN 파일
+fileCount += readFiles(dir, filesByType)                      // 1. CDN 파일
 …
 val uploadedTypes: Int = overwriteWithUploads(filesByType)    // 2. 업로드가 있으면 파일 조각을 대신
 

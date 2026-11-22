@@ -76,7 +76,7 @@ class SafetySpotRepository(
                 configuredDir,
             )
         } else {
-            fileCount += readSafetySpotFiles(dir, filesByType)
+            fileCount += readFiles(dir, filesByType)
             fileCount += readSafePathFiles(dir, paths)
             _freshness = readFreshness(dir)
         }
@@ -106,7 +106,7 @@ class SafetySpotRepository(
         return regions
     }
 
-    private fun readSafetySpotFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
+    private fun readFiles(dir: File, byType: MutableMap<SafetySpotType, MutableList<SafetySpotPoint>>): Int {
         var fileCount: Int = 0
         for (type in SafetySpotType.entries) {
             val typeDir: File = File(dir, type.cdnType)
