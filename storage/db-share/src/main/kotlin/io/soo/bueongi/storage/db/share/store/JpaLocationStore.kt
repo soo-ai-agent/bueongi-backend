@@ -24,7 +24,11 @@ class JpaLocationStore(
 
     override fun save(session: ShareSession) {
         onDb("save") {
-            val routeJson: String? = serializeRoute(session.route)
+            val route: StoredRoute? = session.route
+            var routeJson: String? = null
+            if (route != null) {
+                routeJson = objectMapper.writeValueAsString(route)
+            }
             // save 는 행 전체를 덮어쓰므로, 보호자 열람 기록(viewed_at)은 기존 행에서 꺼내 보존한다.
             val existing: ShareSessionEntity? = repository.findById(session.token).orElse(null)
             repository.save(ShareSessionEntity.from(session, routeJson, existing?.viewedAt))
@@ -85,13 +89,6 @@ class JpaLocationStore(
         onDb("deleteExpired") {
             repository.deleteExpired(clock.instant())
         }
-    }
-
-    private fun serializeRoute(route: StoredRoute?): String? {
-        if (route == null) {
-            return null
-        }
-        return objectMapper.writeValueAsString(route)
     }
 
     // 경로 JSON 이 깨져도 공유 자체는 살린다 — 보호자에게 위치는 계속 보여야 한다.
