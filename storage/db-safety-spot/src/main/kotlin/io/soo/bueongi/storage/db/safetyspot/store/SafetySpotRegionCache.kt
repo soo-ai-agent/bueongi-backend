@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.time.Clock
 import java.time.Duration
@@ -93,13 +94,13 @@ class SafetySpotRegionCache(
                 val point: SafetySpotPoint = item.toSafetySpotPoint(type) ?: continue
                 points.add(point)
             }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             log.warn("지역 캐시 파일을 읽지 못했습니다(건너뜀): {} | 원인={}", file.path, e.javaClass.simpleName)
         }
         return points
     }
 
-    fun cachedRegions(type: SafetySpotType): Set<String> {
+    fun list(type: SafetySpotType): Set<String> {
         val dir: File = File(regionDir, type.cdnType)
         val regions: LinkedHashSet<String> = LinkedHashSet()
         for (file in dir.listJsonFiles()) {

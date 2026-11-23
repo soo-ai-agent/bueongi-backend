@@ -52,8 +52,8 @@ class SafetySpotCsvFileStore(
             name = file.name,
             sizeBytes = file.length(),
             modifiedAtMs = file.lastModified(),
-            readByServer = false,
-            replacedByUpload = uploadStore.hasUpload(type),
+            isReadByServer = false,
+            isReplacedByUpload = uploadStore.hasUpload(type),
             file = file,
         )
     }
@@ -65,8 +65,8 @@ class SafetySpotCsvFileStore(
             name = file.name,
             sizeBytes = file.length(),
             modifiedAtMs = file.lastModified(),
-            readByServer = true,
-            replacedByUpload = false,
+            isReadByServer = true,
+            isReplacedByUpload = false,
             file = file,
         )
     }

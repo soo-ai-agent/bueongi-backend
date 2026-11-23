@@ -76,12 +76,12 @@ data class GeoPoint(
     companion object {
         private const val EARTH_RADIUS_M: Double = 6_371_000.0
 
-        fun isValidLat(lat: Double?): Boolean {
-            return lat != null && lat.isFinite() && lat in -90.0..90.0
+        fun isValidLat(lat: Double): Boolean {
+            return lat.isFinite() && lat in -90.0..90.0
         }
 
-        fun isValidLng(lng: Double?): Boolean {
-            return lng != null && lng.isFinite() && lng in -180.0..180.0
+        fun isValidLng(lng: Double): Boolean {
+            return lng.isFinite() && lng in -180.0..180.0
         }
 
         fun orNull(lat: Double?, lng: Double?): GeoPoint? {

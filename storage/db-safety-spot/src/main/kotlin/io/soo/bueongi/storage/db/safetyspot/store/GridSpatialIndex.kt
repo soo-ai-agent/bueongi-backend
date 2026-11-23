@@ -92,10 +92,8 @@ class GridSpatialIndex(
                     if (!seenCells.add(key)) {
                         continue
                     }
-                    val bucket: List<SafetySpotPoint>? = buckets[key]
-                    if (bucket != null) {
-                        result.addAll(bucket)
-                    }
+                    val bucket: List<SafetySpotPoint> = buckets[key] ?: continue
+                    result.addAll(bucket)
                 }
             }
         }
@@ -108,6 +106,12 @@ class GridSpatialIndex(
         // 한국 최북단 기준 경도 1°의 최소 폭 — 이보다 키우면 후보 셀이 누락된다.
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
+        private const val COORD_SCALE: Double = 100_000.0
+
+        private fun roundCoord(value: Double): Long {
+            return Math.round(value * COORD_SCALE)
+        }
+
         private fun cellIndex(value: Double): Int {
             return floor(value / CELL_DEG).toInt()
         }
@@ -117,9 +121,3 @@ class GridSpatialIndex(
         }
     }
 }
-
-private fun roundCoord(value: Double): Long {
-    return Math.round(value * COORD_SCALE)
-}
-
-private const val COORD_SCALE: Double = 100_000.0

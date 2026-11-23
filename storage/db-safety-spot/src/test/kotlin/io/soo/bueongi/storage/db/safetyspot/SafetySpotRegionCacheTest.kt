@@ -47,7 +47,7 @@ class SafetySpotRegionCacheTest {
 
         assertThat(cache.load(SafetySpotType.STREET_LAMP, "3210000")[0].name).isEqualTo("서초1")
         assertThat(cache.load(SafetySpotType.STREET_LAMP, "3200000")[0].name).isEqualTo("관악1")
-        assertThat(cache.cachedRegions(SafetySpotType.STREET_LAMP)).containsExactlyInAnyOrder("3210000", "3200000")
+        assertThat(cache.list(SafetySpotType.STREET_LAMP)).containsExactlyInAnyOrder("3210000", "3200000")
     }
 
     @Test

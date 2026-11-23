@@ -39,7 +39,9 @@ class SafetySpotSources(
     }
 
     /** 색인에 담긴 이 점이 외부 API 지역 수집에서 왔는가 — 아니면 파일(CDN·업로드) 출처다. */
-    fun isCollectedFromApi(point: SafetySpotPoint): Boolean = apiPoints.contains(point)
+    fun isCollectedFromApi(point: SafetySpotPoint): Boolean {
+        return apiPoints.contains(point)
+    }
 
     fun withFiles(points: List<SafetySpotPoint>): SafetySpotSources {
         return SafetySpotSources(points, regions)

@@ -21,8 +21,8 @@ data class SafetySpotCsvFileResponse(
                 name = file.name,
                 sizeBytes = file.sizeBytes,
                 modifiedAtMs = file.modifiedAtMs,
-                readByServer = file.readByServer,
-                replacedByUpload = file.replacedByUpload,
+                readByServer = file.isReadByServer,
+                replacedByUpload = file.isReplacedByUpload,
             )
         }
 

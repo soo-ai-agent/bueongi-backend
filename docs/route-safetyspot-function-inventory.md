@@ -267,7 +267,7 @@ save/find 짝으로 유형이 명확하다.
 | `savedAtOf(type, regionCode)` | 공개 | 조회 | 저장 시각 (메모리 → 파일 순) |
 | `save(type, regionCode, points)` | 공개 | 저장 | 지역별 JSON 원자적 저장 |
 | `loadAll(type)` | 공개 | 조회 | 한 종류의 모든 지역 캐시를 점 목록으로 |
-| `cachedRegions(type)` | 공개 | 조회 | 캐시된 지역 코드 집합 |
+| `list(type)` | 공개 | 조회 | 캐시된 지역 코드 집합 |
 
 조회 3 + 판정 1 + 저장 1. 캐시라는 역할 안에서 자연스러운 구성이다.
 

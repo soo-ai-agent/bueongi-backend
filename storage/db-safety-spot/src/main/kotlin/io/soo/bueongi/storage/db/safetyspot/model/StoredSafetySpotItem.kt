@@ -1,15 +1,21 @@
 package io.soo.bueongi.storage.db.safetyspot.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 
+// 파일 형식은 pipeline/src/types.ts 가 정하고 원천이 비운 칸은 빠진 채 온다 — 좌표가 비면 행을 버리고, 나머지는 시설의 빈 칸이 된다.
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class StoredSafetySpotItem(
     val name: String? = null,
     val lat: Double? = null,
     val lng: Double? = null,
     val sigunguCode: String? = null,
-    val coords: List<StoredSafetySpotCoord>? = null,
+    @field:JsonSetter(nulls = Nulls.AS_EMPTY)
+    @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
+    val coords: List<StoredSafetySpotCoord> = emptyList(),
     val address: String? = null,
     val phone: String? = null,
     val properties: StoredSafetySpotProperties? = null,
@@ -32,7 +38,11 @@ data class StoredSafetySpotItem(
     }
 
     fun toSafePath(): SafePath? {
-        val coordList: List<GeoPoint> = coords.orEmpty().mapNotNull { it.toGeoPoint() }
+        val coordList: ArrayList<GeoPoint> = ArrayList()
+        for (coord in coords) {
+            val coordPoint: GeoPoint = coord.toGeoPoint() ?: continue
+            coordList.add(coordPoint)
+        }
         if (coordList.isNotEmpty()) {
             return SafePath(coords = coordList)
         }

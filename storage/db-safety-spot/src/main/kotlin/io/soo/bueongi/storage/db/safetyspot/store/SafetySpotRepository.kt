@@ -97,7 +97,7 @@ class SafetySpotRepository(
         var regions: Int = 0
         val cache: SafetySpotRegionCache = regionCache ?: return 0
         for (type in SafetySpotType.entries) {
-            for (regionCode in cache.cachedRegions(type)) {
+            for (regionCode in cache.list(type)) {
                 val cached: SafetySpotSources = sources[type] ?: SafetySpotSources.EMPTY
                 sources[type] = cached.withRegion(regionCode, cache.load(type, regionCode))
                 regions++
