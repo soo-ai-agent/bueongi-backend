@@ -10,6 +10,7 @@ import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.support.util.pickEvenly
 import org.springframework.stereotype.Component
 
 @Component
@@ -25,24 +26,13 @@ class RouteMarkerBuilder(
         for ((markerType, safetySpotType) in MARKER_TYPES) {
             val typeIndex: GridSpatialIndex = safetySpots.index(safetySpotType)
             val alongPath: List<SafetySpotPoint> = typeIndex.withinCorridor(path, corridor)
-            val shown: List<SafetySpotPoint> = spreadAlongPath(alongPath, MAX_MARKERS_PER_TYPE)
+            val shown: List<SafetySpotPoint> = alongPath.pickEvenly(MAX_MARKERS_PER_TYPE)
             for (safetySpot in shown) {
                 raw.add(safetySpot.toPoi(markerType))
             }
         }
 
         return raw.toMiniMapPercent()
-    }
-
-    private fun spreadAlongPath(alongPath: List<SafetySpotPoint>, limit: Int): List<SafetySpotPoint> {
-        if (alongPath.size <= limit) {
-            return alongPath
-        }
-        val picked: ArrayList<SafetySpotPoint> = ArrayList(limit)
-        for (slot in 0 until limit) {
-            picked.add(alongPath[slot * alongPath.size / limit])
-        }
-        return picked
     }
 
     private companion object {

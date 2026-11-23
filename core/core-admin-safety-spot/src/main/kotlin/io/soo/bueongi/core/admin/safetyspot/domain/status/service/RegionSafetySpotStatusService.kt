@@ -42,16 +42,8 @@ class RegionSafetySpotStatusService(
         }
         val budget: Int = limit.coerceAtMost(MAX_SPOTS)
         val pointsByType: Map<SafetySpotType, List<SafetySpotPoint>> = pointsByTypeOf(code)
-        val shown: List<SafetySpotPoint> = shownSpotsOf(pointsByType, budget)
         val region: RegionName = regionNames.findByCode(code)
-        val found: RegionSafetySpots =
-            RegionSafetySpots(
-                code = code,
-                sido = region.sido,
-                name = region.name,
-                total = pointsByType.values.sumOf { it.size },
-                spots = shown,
-            )
+        val found: RegionSafetySpots = RegionSafetySpots.from(code, region, pointsByType, budget)
         return RegionSafetySpotsResponse.from(found)
     }
 
@@ -64,53 +56,6 @@ class RegionSafetySpotStatusService(
             }
         }
         return pointsByType
-    }
-
-    private fun shownSpotsOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): List<SafetySpotPoint> {
-        val quotas: Map<SafetySpotType, Int> = roundRobinQuotasOf(pointsByType, budget)
-        val shown: ArrayList<SafetySpotPoint> = ArrayList(budget)
-        for ((type, points) in pointsByType) {
-            shown.addAll(spreadEvenly(points, quotas.getValue(type)))
-        }
-        return shown
-    }
-
-    private fun roundRobinQuotasOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): Map<SafetySpotType, Int> {
-        val quotas: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
-        for (type in pointsByType.keys) {
-            quotas[type] = 0
-        }
-        var remaining: Int = budget
-        while (remaining > 0) {
-            var handedOut: Int = 0
-            for ((type, points) in pointsByType) {
-                if (remaining == 0) {
-                    break
-                }
-                val given: Int = quotas.getValue(type)
-                if (given >= points.size) {
-                    continue
-                }
-                quotas[type] = given + 1
-                remaining--
-                handedOut++
-            }
-            if (handedOut == 0) {
-                break
-            }
-        }
-        return quotas
-    }
-
-    private fun spreadEvenly(points: List<SafetySpotPoint>, quota: Int): List<SafetySpotPoint> {
-        if (quota >= points.size) {
-            return points
-        }
-        val picked: ArrayList<SafetySpotPoint> = ArrayList(quota)
-        for (slot in 0 until quota) {
-            picked.add(points[slot * points.size / quota])
-        }
-        return picked
     }
 
     private fun regionCodeOf(point: SafetySpotPoint): String {
