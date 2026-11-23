@@ -18,8 +18,8 @@ import io.soo.bueongi.storage.db.share.model.StoredCoord
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
-import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.InMemoryShareSessionStore
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.springframework.boot.test.context.TestConfiguration
@@ -68,8 +68,8 @@ class AdminEndpointFixtures {
             RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper()))
 
         @Bean
-        fun locationStore(): LocationStore =
-            InMemoryLocationStore(FIXED_CLOCK).apply {
+        fun locationStore(): ShareSessionStore =
+            InMemoryShareSessionStore(FIXED_CLOCK).apply {
                 repeat(3) { i ->
                     save(
                         ShareSession(
@@ -95,7 +95,7 @@ class AdminEndpointFixtures {
             }
 
         @Bean
-        fun shareService(store: LocationStore): ShareService = ShareService(store, FIXED_CLOCK, SHARE_BASE_URL)
+        fun shareService(store: ShareSessionStore): ShareService = ShareService(store, FIXED_CLOCK, SHARE_BASE_URL)
 
         @Bean
         fun alertNotifier(): AlertNotifier =

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.VIEWER_WINDOW_SECONDS
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
@@ -18,12 +19,12 @@ import java.time.Instant
 import java.time.format.DateTimeParseException
 
 // 저장 계약: `share:/location:/route:/viewer:{token}` 키와 snake_case HASH 필드 이름을 바꾸면, 배포 전에 저장된 공유(최대 3시간)를 위해 옛 이름도 읽는다.
-class RedisLocationStore(
+class RedisShareSessionStore(
     private val redis: StringRedisTemplate,
     private val clock: Clock,
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
-) : LocationStore {
-    private val log: Logger = LoggerFactory.getLogger(RedisLocationStore::class.java)
+) : ShareSessionStore {
+    private val log: Logger = LoggerFactory.getLogger(RedisShareSessionStore::class.java)
 
     override val backend: String = "redis"
 
@@ -65,10 +66,10 @@ class RedisLocationStore(
     }
 
     override fun findByToken(token: String): ShareSession? {
-        return onRedis("findByToken") { readSession(token) }
+        return onRedis("findByToken") { read(token) }
     }
 
-    private fun readSession(token: String): ShareSession? {
+    private fun read(token: String): ShareSession? {
         val shareHash: Map<String, String> = redis.opsForHash<String, String>().entries(shareKey(token))
         if (shareHash.isEmpty()) {
             return null
@@ -142,13 +143,13 @@ class RedisLocationStore(
         return onRedis("isWatched") { redis.hasKey(viewerKey(token)) == true }
     }
 
-    override fun countActiveSessions(): Int {
+    override fun countActive(): Int {
         var count: Int = 0
         forEachSessionKey { count++ }
         return count
     }
 
-    override fun findActiveSessions(): List<ShareSession> {
+    override fun findActive(): List<ShareSession> {
         val sessions: ArrayList<ShareSession> = ArrayList()
         forEachSessionKey { sessionKey ->
             val token: String = sessionKey.removePrefix(SESSION_KEY_PREFIX)

@@ -3,7 +3,7 @@ package io.soo.bueongi.core.share.api.response
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 
 data class RouteDestination(
-    val name: String?,
+    val name: String,
     val lat: Double,
     val lng: Double,
 ) {

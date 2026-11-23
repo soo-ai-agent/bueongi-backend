@@ -13,7 +13,7 @@ import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
@@ -206,8 +206,8 @@ class MissedArrivalWatchdogTest {
         assertThat(detail).doesNotContain("37.5")
     }
 
-    private fun fixedStore(active: List<ShareSession>): LocationStore =
-        object : LocationStore {
+    private fun fixedStore(active: List<ShareSession>): ShareSessionStore =
+        object : ShareSessionStore {
             override val backend: String = "memory"
 
             override fun save(session: ShareSession) = Unit
@@ -220,9 +220,9 @@ class MissedArrivalWatchdogTest {
 
             override fun isWatched(token: String): Boolean = false
 
-            override fun countActiveSessions(): Int = active.size
+            override fun countActive(): Int = active.size
 
-            override fun findActiveSessions(): List<ShareSession> = active
+            override fun findActive(): List<ShareSession> = active
         }
 
     private class RecordingPublisher : ApplicationEventPublisher {

@@ -238,7 +238,7 @@ backend/
 8. **메서드명은 그 클래스 맥락에서 수행 동작**을 나타낸다. 클래스가 대상을 충분히 설명하면
    `list`·`create`·`update` 같은 행위 중심, 모호하면 `getById`·`listActive` 처럼 조건/목적/대상을 보강한다.
 9. **저장소 계층은 `findBy...`·`existsBy...`·`save`·`deleteBy...`** 등 의도가 드러나는 이름을 쓴다
-   (예: `LocationStore.findByToken`/`deleteByToken`).
+   (예: `ShareSessionStore.findByToken`/`deleteByToken`).
 10. **도메인 용어(route·place·share·safetySpot)를 클래스/메서드명에 일관** 반영한다.
 
 ### 도메인 모델

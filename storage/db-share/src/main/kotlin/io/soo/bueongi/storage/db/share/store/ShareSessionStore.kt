@@ -2,7 +2,7 @@ package io.soo.bueongi.storage.db.share.store
 
 import io.soo.bueongi.storage.db.share.model.ShareSession
 
-interface LocationStore {
+interface ShareSessionStore {
     // health 응답에 그대로 나간다: "db" | "redis" | "memory" — 자격증명·주소는 노출 금지.
     val backend: String
 
@@ -17,10 +17,12 @@ interface LocationStore {
 
     fun isWatched(token: String): Boolean
 
-    fun countActiveSessions(): Int
+    fun countActive(): Int
 
-    fun findActiveSessions(): List<ShareSession>
+    fun findActive(): List<ShareSession>
+
+    companion object {
+        // 보호자 폴링 주기(5초)의 2~3배 여유를 유지해야 한다.
+        const val VIEWER_WINDOW_SECONDS: Long = 12L
+    }
 }
-
-// 보호자 폴링 주기(5초)의 2~3배 여유를 유지해야 한다.
-const val VIEWER_WINDOW_SECONDS: Long = 12L

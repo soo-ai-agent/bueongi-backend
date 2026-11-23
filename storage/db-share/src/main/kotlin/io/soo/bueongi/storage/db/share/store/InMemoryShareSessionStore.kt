@@ -1,13 +1,14 @@
 package io.soo.bueongi.storage.db.share.store
 
 import io.soo.bueongi.storage.db.share.model.ShareSession
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.VIEWER_WINDOW_SECONDS
 import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-class InMemoryLocationStore(
+class InMemoryShareSessionStore(
     private val clock: Clock,
-) : LocationStore {
+) : ShareSessionStore {
     private val sessions: ConcurrentHashMap<String, ShareSession> = ConcurrentHashMap<String, ShareSession>()
     private val viewers: ConcurrentHashMap<String, Instant> = ConcurrentHashMap<String, Instant>()
 
@@ -45,11 +46,11 @@ class InMemoryLocationStore(
         return false
     }
 
-    override fun countActiveSessions(): Int {
-        return findActiveSessions().size
+    override fun countActive(): Int {
+        return findActive().size
     }
 
-    override fun findActiveSessions(): List<ShareSession> {
+    override fun findActive(): List<ShareSession> {
         val now: Instant = clock.instant()
         val active: ArrayList<ShareSession> = ArrayList()
         for (session in sessions.values) {

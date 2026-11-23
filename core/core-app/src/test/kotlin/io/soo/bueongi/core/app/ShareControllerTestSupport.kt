@@ -4,8 +4,8 @@ import io.soo.bueongi.core.share.MutableTestClock
 import io.soo.bueongi.core.share.api.controller.GuardianPage
 import io.soo.bueongi.core.share.api.controller.ShareController
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.InMemoryShareSessionStore
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.junit.jupiter.api.Tag
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -56,9 +56,10 @@ abstract class ShareControllerTestSupport {
         fun clock(): MutableTestClock = MutableTestClock()
 
         @Bean
-        fun locationStore(clock: MutableTestClock): LocationStore = InMemoryLocationStore(clock)
+        fun locationStore(clock: MutableTestClock): ShareSessionStore = InMemoryShareSessionStore(clock)
 
         @Bean
-        fun shareService(store: LocationStore, clock: MutableTestClock): ShareService = ShareService(store, clock, "http://localhost:8119")
+        fun shareService(store: ShareSessionStore, clock: MutableTestClock): ShareService =
+            ShareService(store, clock, "http://localhost:8119")
     }
 }

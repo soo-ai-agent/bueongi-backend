@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredRoute
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.VIEWER_WINDOW_SECONDS
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
@@ -13,12 +14,12 @@ import org.springframework.scheduling.annotation.Scheduled
 import java.time.Clock
 import java.time.Instant
 
-class JpaLocationStore(
+class JpaShareSessionStore(
     private val repository: ShareSessionRepository,
     private val clock: Clock,
     private val objectMapper: ObjectMapper = jacksonObjectMapper(),
-) : LocationStore {
-    private val log: Logger = LoggerFactory.getLogger(JpaLocationStore::class.java)
+) : ShareSessionStore {
+    private val log: Logger = LoggerFactory.getLogger(JpaShareSessionStore::class.java)
 
     override val backend: String = "db"
 
@@ -41,7 +42,7 @@ class JpaLocationStore(
             if (entity.isExpired(clock.instant())) {
                 return@onDb null
             }
-            entity.toShareSession(entity.locationOrNull(), routeOrNull(entity.routeJson))
+            entity.toShareSession(routeOrNull(entity.routeJson))
         }
     }
 
@@ -67,17 +68,17 @@ class JpaLocationStore(
         }
     }
 
-    override fun countActiveSessions(): Int {
+    override fun countActive(): Int {
         return onDb("countActiveSessions") {
             repository.countByExpiresAtAfter(clock.instant()).toInt()
         }
     }
 
-    override fun findActiveSessions(): List<ShareSession> {
+    override fun findActive(): List<ShareSession> {
         return onDb("findActiveSessions") {
             val sessions: ArrayList<ShareSession> = ArrayList()
             for (entity in repository.findByExpiresAtAfter(clock.instant())) {
-                sessions.add(entity.toShareSession(entity.locationOrNull(), routeOrNull(entity.routeJson)))
+                sessions.add(entity.toShareSession(routeOrNull(entity.routeJson)))
             }
             sessions
         }

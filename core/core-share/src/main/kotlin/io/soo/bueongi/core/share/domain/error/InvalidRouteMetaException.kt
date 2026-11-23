@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus
 class InvalidRouteMetaException(
     field: String,
     override val message: String,
-    rejectedValue: Any?,
+    rejectedValue: String,
 ) : ApiException(
         status = HttpStatus.UNPROCESSABLE_ENTITY,
         code = "INVALID_ROUTE_META",

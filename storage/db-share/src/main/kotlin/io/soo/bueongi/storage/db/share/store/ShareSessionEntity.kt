@@ -37,9 +37,12 @@ class ShareSessionEntity(
     // 경로는 쓰임새가 통짜 저장·통짜 조회뿐이라 칸으로 펴지 않고 JSON 그대로 둔다.
     @Column(name = "route_json", length = ROUTE_JSON_MAX_LENGTH)
     val routeJson: String? = null,
-    @Column(name = "viewed_at")
-    var viewedAt: Instant? = null,
+    viewedAt: Instant? = null,
 ) {
+    @Column(name = "viewed_at")
+    var viewedAt: Instant? = viewedAt
+        protected set
+
     fun markViewed(now: Instant) {
         viewedAt = now
     }
@@ -48,19 +51,19 @@ class ShareSessionEntity(
         return !now.isBefore(expiresAt)
     }
 
-    fun toShareSession(location: StoredLocation?, route: StoredRoute?): ShareSession {
+    fun toShareSession(route: StoredRoute?): ShareSession {
         return ShareSession(
             token = token,
             ownerSecret = ownerSecret,
             createdAt = createdAt,
             expiresAt = expiresAt,
-            location = location,
+            location = locationOrNull(),
             route = route,
             expectedArrivalAt = expectedArrivalAt,
         )
     }
 
-    fun locationOrNull(): StoredLocation? {
+    private fun locationOrNull(): StoredLocation? {
         val reportedLat: Double = lat ?: return null
         val reportedLng: Double = lng ?: return null
         val reportedAt: Instant = locationUpdatedAt ?: return null

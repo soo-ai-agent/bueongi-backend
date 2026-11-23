@@ -17,7 +17,7 @@ import io.soo.bueongi.core.share.domain.model.progressStatus
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
@@ -29,7 +29,7 @@ import java.util.Base64
 
 @Service
 class ShareService(
-    private val store: LocationStore,
+    private val store: ShareSessionStore,
     private val clock: Clock,
     @param:Value("\${bueongi.share.base-url}") private val baseUrl: String,
 ) {
@@ -60,7 +60,7 @@ class ShareService(
     fun listActive(): ShareSessionsResponse {
         val now: Instant = clock.instant()
         val views: ArrayList<ActiveShareView> = ArrayList()
-        for (session in store.findActiveSessions()) {
+        for (session in store.findActive()) {
             views.add(toActiveShareView(session, now))
         }
         views.sortWith(ACTIVE_SHARE_ORDER)
@@ -68,7 +68,7 @@ class ShareService(
     }
 
     fun getStatus(): ShareStatusResponse {
-        val activeSessions: Int = store.countActiveSessions()
+        val activeSessions: Int = store.countActive()
         return ShareStatusResponse.from(activeSessions)
     }
 
@@ -135,10 +135,6 @@ class ShareService(
             session.location
                 ?: return LocationView.waiting(status)
         return LocationView.from(location, status)
-    }
-
-    fun storeBackendLabel(): String {
-        return store.backend
     }
 
     fun end(token: String, ownerSecret: String?) {

@@ -1,16 +1,11 @@
 package io.soo.bueongi.core.app
 
-import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.share.model.ShareSession
-import io.soo.bueongi.storage.db.share.store.LocationStore
-import java.time.Clock
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 
-internal fun stubShareService(backend: String = "memory"): ShareService =
-    ShareService(StubLocationStore(backend), Clock.systemUTC(), "http://localhost:3619")
-
-internal class StubLocationStore(
+internal class StubShareSessionStore(
     override val backend: String,
-) : LocationStore {
+) : ShareSessionStore {
     override fun save(session: ShareSession) = throw AssertionError("이 테스트는 save 를 호출하지 않는다")
 
     override fun findByToken(token: String): ShareSession? = throw AssertionError("이 테스트는 findByToken 을 호출하지 않는다")
@@ -21,7 +16,7 @@ internal class StubLocationStore(
 
     override fun isWatched(token: String): Boolean = throw AssertionError("이 테스트는 isWatched 를 호출하지 않는다")
 
-    override fun countActiveSessions(): Int = throw AssertionError("이 테스트는 countActiveSessions 를 호출하지 않는다")
+    override fun countActive(): Int = throw AssertionError("이 테스트는 countActive 를 호출하지 않는다")
 
-    override fun findActiveSessions(): List<ShareSession> = throw AssertionError("이 테스트는 findActiveSessions 를 호출하지 않는다")
+    override fun findActive(): List<ShareSession> = throw AssertionError("이 테스트는 findActive 를 호출하지 않는다")
 }

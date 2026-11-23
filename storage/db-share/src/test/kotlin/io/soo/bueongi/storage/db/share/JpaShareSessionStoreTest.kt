@@ -5,7 +5,7 @@ import io.soo.bueongi.storage.db.share.model.StoredCoord
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
-import io.soo.bueongi.storage.db.share.store.JpaLocationStore
+import io.soo.bueongi.storage.db.share.store.JpaShareSessionStore
 import io.soo.bueongi.storage.db.share.store.ShareSessionEntity
 import io.soo.bueongi.storage.db.share.store.ShareSessionRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -15,14 +15,14 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import java.time.Instant
 
 @DataJpaTest
-class JpaLocationStoreTest
+class JpaShareSessionStoreTest
     @Autowired
     constructor(
         private val repository: ShareSessionRepository,
     ) {
         private val clock = MutableTestClock()
 
-        private val store = JpaLocationStore(repository, clock)
+        private val store = JpaShareSessionStore(repository, clock)
 
         private fun session(token: String, expiresAt: Instant): ShareSession {
             return ShareSession(
@@ -130,8 +130,8 @@ class JpaLocationStoreTest
             store.save(session("tok-dead", clock.now.plusSeconds(60)))
             clock.advanceSeconds(61)
 
-            assertThat(store.countActiveSessions()).isEqualTo(1)
-            assertThat(store.findActiveSessions().map { it.token }).containsExactly("tok-live")
+            assertThat(store.countActive()).isEqualTo(1)
+            assertThat(store.findActive().map { it.token }).containsExactly("tok-live")
         }
 
         @Test

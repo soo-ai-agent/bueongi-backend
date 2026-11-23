@@ -7,7 +7,7 @@ import io.soo.bueongi.storage.db.share.model.StoredMarker
 import io.soo.bueongi.storage.db.share.model.StoredRoute
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
-import io.soo.bueongi.storage.db.share.store.RedisLocationStore
+import io.soo.bueongi.storage.db.share.store.RedisShareSessionStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -29,7 +29,7 @@ import org.springframework.data.redis.core.ValueOperations
 import java.time.Duration
 import java.time.Instant
 
-class RedisLocationStoreTest {
+class RedisShareSessionStoreTest {
     private val clock = MutableTestClock()
     private val hashOps = mock<HashOperations<String, String, String>>()
     private val valueOps = mock<ValueOperations<String, String>>()
@@ -38,7 +38,7 @@ class RedisLocationStoreTest {
             on { opsForHash<String, String>() } doReturn hashOps
             on { opsForValue() } doReturn valueOps
         }
-    private val store = RedisLocationStore(redis, clock)
+    private val store = RedisShareSessionStore(redis, clock)
 
     @Test
     fun `backend 라벨은 redis`() {
@@ -298,7 +298,7 @@ class RedisLocationStoreTest {
         whenever(cursor.next()).thenReturn("share:a", "share:b")
         whenever(redis.scan(any<ScanOptions>())).thenReturn(cursor)
 
-        assertEquals(2, store.countActiveSessions())
+        assertEquals(2, store.countActive())
         verify(cursor).close()
     }
 
@@ -318,7 +318,7 @@ class RedisLocationStoreTest {
         whenever(hashOps.entries("location:tok")).thenReturn(emptyMap())
         whenever(valueOps.get("route:tok")).thenReturn(null)
 
-        val active = store.findActiveSessions()
+        val active = store.findActive()
         assertEquals(1, active.size)
         assertEquals("tok", active[0].token)
         verify(cursor).close()

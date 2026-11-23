@@ -2,7 +2,7 @@ package io.soo.bueongi.storage.db.share
 
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
-import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
+import io.soo.bueongi.storage.db.share.store.InMemoryShareSessionStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
-class InMemoryLocationStoreTest {
+class InMemoryShareSessionStoreTest {
     private val clock = MutableTestClock()
-    private val store = InMemoryLocationStore(clock)
+    private val store = InMemoryShareSessionStore(clock)
 
     private fun session(token: String, expiresAt: Instant) =
         ShareSession(token = token, ownerSecret = "secret-$token", createdAt = clock.now, expiresAt = expiresAt)
@@ -92,10 +92,10 @@ class InMemoryLocationStoreTest {
 
     @Test
     fun `countActiveSessions 는 저장된 미만료 세션 수를 센다`() {
-        assertEquals(0, store.countActiveSessions())
+        assertEquals(0, store.countActive())
         store.save(session("a", clock.now.plusSeconds(3600)))
         store.save(session("b", clock.now.plusSeconds(3600)))
-        assertEquals(2, store.countActiveSessions())
+        assertEquals(2, store.countActive())
     }
 
     @Test
@@ -103,17 +103,17 @@ class InMemoryLocationStoreTest {
         store.save(session("live", clock.now.plusSeconds(3600)))
         store.save(session("dead", clock.now.plusSeconds(10)))
         clock.advanceSeconds(20)
-        assertEquals(1, store.countActiveSessions())
+        assertEquals(1, store.countActive())
     }
 
     @Test
     fun `findActiveSessions 는 저장된 미만료 세션을 반환한다`() {
-        assertTrue(store.findActiveSessions().isEmpty())
+        assertTrue(store.findActive().isEmpty())
         val a = session("a", clock.now.plusSeconds(3600))
         val b = session("b", clock.now.plusSeconds(3600))
         store.save(a)
         store.save(b)
-        assertEquals(setOf(a, b), store.findActiveSessions().toSet())
+        assertEquals(setOf(a, b), store.findActive().toSet())
     }
 
     @Test
@@ -121,6 +121,6 @@ class InMemoryLocationStoreTest {
         store.save(session("live", clock.now.plusSeconds(3600)))
         store.save(session("dead", clock.now.plusSeconds(10)))
         clock.advanceSeconds(20)
-        assertEquals(listOf("live"), store.findActiveSessions().map { it.token })
+        assertEquals(listOf("live"), store.findActive().map { it.token })
     }
 }

@@ -1,6 +1,8 @@
 package io.soo.bueongi.core.share.api.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import io.soo.bueongi.core.common.request.LatLng
 import io.soo.bueongi.core.common.request.NamedLatLng
 import io.soo.bueongi.core.enums.RouteType
@@ -20,10 +22,12 @@ data class SaveRouteRequest(
     val destination: NamedLatLng?,
     @field:Valid
     @field:Size(max = MAX_ROUTE_PATH_POINTS)
-    val path: List<@Valid LatLng>? = null,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    val path: List<@Valid LatLng> = emptyList(),
     @field:Valid
     @field:Size(max = MAX_ROUTE_MARKERS)
-    val markers: List<@Valid RouteMarkerRequest>? = null,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    val markers: List<@Valid RouteMarkerRequest> = emptyList(),
     @field:NotNull
     @field:Min(0)
     @param:JsonProperty("total_distance_m")
@@ -49,14 +53,14 @@ data class SaveRouteRequest(
             destination =
                 StoredRouteDestination(
                     name = dest.name,
-                    lat = requireNotNull(dest.lat) { "destination.lat 은 검증을 통과했어야 한다" },
-                    lng = requireNotNull(dest.lng) { "destination.lng 도 동일" },
+                    lat = dest.lat,
+                    lng = dest.lng,
                 ),
             path =
-                path.orEmpty().map {
-                    StoredCoord(lat = requireNotNull(it.lat), lng = requireNotNull(it.lng))
+                path.map {
+                    StoredCoord(lat = it.lat, lng = it.lng)
                 },
-            markers = markers.orEmpty().map(RouteMarkerRequest::toStoredMarker),
+            markers = markers.map(RouteMarkerRequest::toStoredMarker),
             totalDistanceMeters = requireNotNull(totalDistanceMeters),
             totalTimeSeconds = requireNotNull(totalTimeSeconds),
             type = routeType,

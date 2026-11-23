@@ -17,7 +17,7 @@
 > | 위치 stale(90s) | 있음 | (제거 — `expired` 만, MVP 단순화) |
 > | 정확도/방향 | `accuracyMeters`/`headingDegrees` | (제거 — `{lat,lng}` 만) |
 > | 응답 키 표기 | camelCase | **snake_case**(`share_url`,`expires_at`,`updated_at`) |
-> | Redis 구현 | 미착수(인메모리만) | **`RedisLocationStore` 구현**(`share:{token}`/`location:{token}` HASH+TTL) |
+> | Redis 구현 | 미착수(인메모리만) | **`RedisShareSessionStore` 구현**(`share:{token}`/`location:{token}` HASH+TTL) |
 >
 > 프론트는 아직 백엔드 share API 를 소비하지 않으므로(클라이언트 `navigator.share`/SMS 만) 위 재정렬에 호환성 부담은 없다.
 >
@@ -65,9 +65,9 @@ location:{token}  HASH { lat, lng, updated_at }      EXPIRE = 동일 상한 TTL
 ## 5. 코드 배치 (구현됨, `io/soo/bueongi/share/`)
 
 ```
-LocationStore.kt          # 인터페이스(save/find) + ShareSession/StoredLocation 모델
-RedisLocationStore.kt     # Redis 구현(share:{token}/location:{token} HASH+TTL)
-InMemoryLocationStore.kt  # 폴백(ConcurrentHashMap + lazy 만료)
+ShareSessionStore.kt          # 인터페이스(save/find) + ShareSession/StoredLocation 모델
+RedisShareSessionStore.kt     # Redis 구현(share:{token}/location:{token} HASH+TTL)
+InMemoryShareSessionStore.kt  # 폴백(ConcurrentHashMap + lazy 만료)
 ShareStoreConfig.kt       # redis-url 유무로 Redis↔인메모리 택1(상호배타 Condition)
 ShareDtos.kt              # 요청/응답 + @Valid 좌표 검증 + snake_case(@JsonProperty)
 ShareService.kt           # 생성/위치 갱신/조회 + 1~3h TTL + 토큰 발급
@@ -97,8 +97,8 @@ resources/share/guardian.html  # 보호자 지도 페이지(Leaflet+OSM, 5초 �
 
 ## 8. Redis 미구성 시 동작 정책
 
-- `BUEONGI_REDIS_URL` 이 비어있으면 Redis 템플릿 빈이 만들어지지 않아 `ShareStoreConfig.locationStore` 가 `InMemoryLocationStore`(단일 인스턴스, 재시작 시 휘발) 를 고른다. 같은 `LocationStore` 계약으로 동작한다. 외부 인프라·키 없이 전 기능·전 테스트가 그린.
-- 운영에서 Redis 를 켜려면 `BUEONGI_REDIS_URL` 주입만으로 `RedisLocationStore`(native TTL) 로 무코드변경 전환된다. 다중 인스턴스·재시작 내구성이 필요하면 Redis 를 권장.
+- `BUEONGI_REDIS_URL` 이 비어있으면 Redis 템플릿 빈이 만들어지지 않아 `ShareStoreConfig.locationStore` 가 `InMemoryShareSessionStore`(단일 인스턴스, 재시작 시 휘발) 를 고른다. 같은 `ShareSessionStore` 계약으로 동작한다. 외부 인프라·키 없이 전 기능·전 테스트가 그린.
+- 운영에서 Redis 를 켜려면 `BUEONGI_REDIS_URL` 주입만으로 `RedisShareSessionStore`(native TTL) 로 무코드변경 전환된다. 다중 인스턴스·재시작 내구성이 필요하면 Redis 를 권장.
 
 ## 9. 범위 밖(v2)
 

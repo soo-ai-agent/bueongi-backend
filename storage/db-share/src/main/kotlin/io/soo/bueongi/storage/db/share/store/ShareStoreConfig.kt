@@ -29,13 +29,13 @@ class ShareStoreConfig {
         shareSessionRepository: ObjectProvider<ShareSessionRepository>,
         redisTemplate: ObjectProvider<StringRedisTemplate>,
         clock: Clock,
-    ): LocationStore {
+    ): ShareSessionStore {
         val repository: ShareSessionRepository? = shareSessionRepository.ifAvailable
         if (repository != null) {
-            return JpaLocationStore(repository, clock)
+            return JpaShareSessionStore(repository, clock)
         }
-        val template: StringRedisTemplate = redisTemplate.ifAvailable ?: return InMemoryLocationStore(clock)
-        return RedisLocationStore(template, clock)
+        val template: StringRedisTemplate = redisTemplate.ifAvailable ?: return InMemoryShareSessionStore(clock)
+        return RedisShareSessionStore(template, clock)
     }
 
     @Configuration
@@ -69,7 +69,7 @@ class ShareStoreConfig {
 
         @Bean
         fun shareTransactionManager(shareEntityManagerFactory: LocalContainerEntityManagerFactoryBean): PlatformTransactionManager {
-            return JpaTransactionManager(shareEntityManagerFactory.`object`!!)
+            return JpaTransactionManager(checkNotNull(shareEntityManagerFactory.`object`))
         }
 
         private companion object {

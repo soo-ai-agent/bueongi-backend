@@ -6,7 +6,7 @@ import io.soo.bueongi.core.enums.ShareProgressStatus
 import io.soo.bueongi.core.share.domain.model.ARRIVAL_RADIUS_METERS
 import io.soo.bueongi.core.share.domain.model.progressStatus
 import io.soo.bueongi.storage.db.share.model.ShareSession
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -18,7 +18,7 @@ import java.time.Instant
 
 @Component
 class MissedArrivalWatchdog(
-    private val store: LocationStore,
+    private val store: ShareSessionStore,
     private val clock: Clock,
     private val events: ApplicationEventPublisher,
 ) {
@@ -32,7 +32,7 @@ class MissedArrivalWatchdog(
     fun scan() {
         val now: Instant = clock.instant()
         val activeTokens: MutableSet<String> = HashSet()
-        for (session in store.findActiveSessions()) {
+        for (session in store.findActive()) {
             activeTokens.add(session.token)
             when (session.progressStatus(now)) {
                 ShareProgressStatus.IN_PROGRESS -> alertedTokens.remove(session.token)

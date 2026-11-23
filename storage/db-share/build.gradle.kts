@@ -9,7 +9,7 @@ dependencies {
     runtimeOnly("com.h2database:h2")
 
     testImplementation("org.assertj:assertj-core")
-    // JpaLocationStore 테스트(@DataJpaTest)가 인메모리 H2 로 실SQL 을 돌린다.
+    // JpaShareSessionStore 테스트(@DataJpaTest)가 인메모리 H2 로 실SQL 을 돌린다.
     testRuntimeOnly("com.h2database:h2")
     testImplementation(kotlin("test"))
 }

@@ -341,7 +341,7 @@ private const val CELL_DEG: Double = 0.001
 | `viewer:{토큰}` | 보호자가 보고 있는지 |
 
 ```kotlin
-// RedisLocationStore.kt:192-207 — 키 이름
+// RedisShareSessionStore.kt:196-212 — 키 이름
 const val SESSION_KEY_PREFIX: String = "share:"
 
 fun shareKey(token: String): String {
@@ -360,7 +360,7 @@ fun viewerKey(token: String): String {
     return "viewer:$token"
 }
 
-// RedisLocationStore.kt:42 — 만료 시각에 Redis 가 키를 지운다
+// RedisShareSessionStore.kt:43 — 만료 시각에 Redis 가 키를 지운다
 redis.expire(shareKey, ttl)
 ```
 

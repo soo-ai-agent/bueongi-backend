@@ -2,7 +2,7 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.HealthController
 import io.soo.bueongi.core.appinfo.domain.service.HealthService
-import io.soo.bueongi.core.share.domain.service.ShareService
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +38,6 @@ class HealthControllerTest(
     @TestConfiguration
     class Config {
         @Bean
-        fun shareService(): ShareService = stubShareService()
+        fun shareSessionStore(): ShareSessionStore = StubShareSessionStore("memory")
     }
 }

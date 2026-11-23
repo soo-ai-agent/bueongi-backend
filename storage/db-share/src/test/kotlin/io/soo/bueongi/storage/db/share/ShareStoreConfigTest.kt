@@ -1,12 +1,12 @@
 package io.soo.bueongi.storage.db.share
 
 import io.soo.bueongi.storage.db.share.store.DbConfigured
-import io.soo.bueongi.storage.db.share.store.InMemoryLocationStore
-import io.soo.bueongi.storage.db.share.store.JpaLocationStore
-import io.soo.bueongi.storage.db.share.store.LocationStore
+import io.soo.bueongi.storage.db.share.store.InMemoryShareSessionStore
+import io.soo.bueongi.storage.db.share.store.JpaShareSessionStore
 import io.soo.bueongi.storage.db.share.store.RedisConfigured
-import io.soo.bueongi.storage.db.share.store.RedisLocationStore
+import io.soo.bueongi.storage.db.share.store.RedisShareSessionStore
 import io.soo.bueongi.storage.db.share.store.ShareSessionRepository
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import io.soo.bueongi.storage.db.share.store.ShareStoreConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -39,7 +39,7 @@ class ShareStoreConfigTest {
         return contextWith("bueongi.share.redis-url", redisUrl)
     }
 
-    private fun locationStoreOf(beans: StaticListableBeanFactory): LocationStore {
+    private fun locationStoreOf(beans: StaticListableBeanFactory): ShareSessionStore {
         val repositories: ObjectProvider<ShareSessionRepository> = beans.getBeanProvider(ShareSessionRepository::class.java)
         val redisTemplates: ObjectProvider<StringRedisTemplate> = beans.getBeanProvider(StringRedisTemplate::class.java)
         return ShareStoreConfig().locationStore(repositories, redisTemplates, Clock.systemUTC())
@@ -67,9 +67,9 @@ class ShareStoreConfigTest {
 
     @Test
     fun `Redis 템플릿 빈이 없으면 인메모리 저장소를 쓴다`() {
-        val store: LocationStore = locationStoreOf(StaticListableBeanFactory())
+        val store: ShareSessionStore = locationStoreOf(StaticListableBeanFactory())
 
-        assertThat(store).isInstanceOf(InMemoryLocationStore::class.java)
+        assertThat(store).isInstanceOf(InMemoryShareSessionStore::class.java)
     }
 
     @Test
@@ -77,9 +77,9 @@ class ShareStoreConfigTest {
         val beans = StaticListableBeanFactory()
         beans.addBean("shareRedisTemplate", mock<StringRedisTemplate>())
 
-        val store: LocationStore = locationStoreOf(beans)
+        val store: ShareSessionStore = locationStoreOf(beans)
 
-        assertThat(store).isInstanceOf(RedisLocationStore::class.java)
+        assertThat(store).isInstanceOf(RedisShareSessionStore::class.java)
     }
 
     @Test
@@ -98,9 +98,9 @@ class ShareStoreConfigTest {
         val beans = StaticListableBeanFactory()
         beans.addBean("shareSessionRepository", mock<ShareSessionRepository>())
 
-        val store: LocationStore = locationStoreOf(beans)
+        val store: ShareSessionStore = locationStoreOf(beans)
 
-        assertThat(store).isInstanceOf(JpaLocationStore::class.java)
+        assertThat(store).isInstanceOf(JpaShareSessionStore::class.java)
     }
 
     @Test
@@ -109,8 +109,8 @@ class ShareStoreConfigTest {
         beans.addBean("shareSessionRepository", mock<ShareSessionRepository>())
         beans.addBean("shareRedisTemplate", mock<StringRedisTemplate>())
 
-        val store: LocationStore = locationStoreOf(beans)
+        val store: ShareSessionStore = locationStoreOf(beans)
 
-        assertThat(store).isInstanceOf(JpaLocationStore::class.java)
+        assertThat(store).isInstanceOf(JpaShareSessionStore::class.java)
     }
 }
