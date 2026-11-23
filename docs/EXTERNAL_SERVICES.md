@@ -158,50 +158,68 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 
 ### Tmap 경로 — 요청 한 번의 여정
 
-사용자가 경로 비교를 누르면:
+앱이 `POST /api/routes` 로 경로를 요청하면:
 
 ```mermaid
 sequenceDiagram
-    participant S as RouteService
+    participant S as RouteOptionService
+    participant F as RouteFinder
     participant C as TmapRouteClient
     participant Cache as 캐시(10분)
     participant T as Tmap API
 
-    S->>C: fetchRoutes(출발, 도착)
-    loop 옵션 3종 (추천·큰길·최단)
-        C->>Cache: 같은 요청 있었나?
-        alt 캐시 적중
+    S->>F: find(요청)
+    loop 옵션 3종 (추천 0·대로우선 4·최단 10)
+        F->>C: fetch(출발, 도착, 도착 이름, 옵션, 경유지 없음)
+        alt 키 없음
+            C-->>F: null (호출 안 함)
+        else 캐시 적중
             Cache-->>C: TmapRoute (네트워크 생략)
+            C-->>F: TmapRoute
         else 미적중
-            C->>T: POST /routes/pedestrian (appKey)
+            C->>T: POST /tmap/routes/pedestrian (appKey)
             T-->>C: JSON (NUL 섞일 수 있음)
-            C->>C: 문자열로 받아 NUL 제거 후 파싱·번역
-            C->>Cache: 저장
+            C->>C: 문자열로 받아 NUL 정리 후 파싱
+            alt 쓸 수 있는 경로
+                C->>Cache: 저장
+                C-->>F: TmapRoute
+            else 호출 실패·쓸 수 없는 응답
+                C-->>F: null (그 후보만 버림)
+            end
         end
     end
-    alt 하나라도 성공
-        C-->>S: List<TmapRoute>
-    else 전부 실패
-        C-->>S: 빈 목록 (예외 안 던짐)
-        S->>S: 직선 폴백 경로 생성 + 사건 발행 → Slack
+    F-->>S: List<RouteCandidate> (null 은 빠진다)
+    alt 하나도 없음
+        S->>S: RouteSearchUnavailableException → 503
+    else reroute 가 아님
+        S->>F: findSafer(요청, 기본 후보, 경유지 계획 최대 4개)
+        F->>C: 계획마다 fetch(…, 옵션 0, 경유지)
+        F-->>S: 거리 한도 안의 우회 후보
     end
 ```
 
-
 ```
-RouteService ─→ TmapRouteClient.fetchRoutes(출발, 도착)
-                  │  옵션 3종("추천 0"·"큰길 4"·"최단 10")을 하나씩 → 최대 3회 POST
-                  ▼
-    ① 캐시 확인      같은 출발·도착·옵션이 10분 안에 있으면 네트워크 생략
-    ② POST 요청      https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1
-                     헤더 appKey — 로그·예외에는 절대 안 실림
-    ③ 문자열로 수신   ★ 바로 객체로 안 받는다. Tmap 이 본문에 NUL(0x00)을 섞어 보내는
+RouteOptionService.find(요청)
+  └─ RouteFinder.find ─→ 옵션 3종("추천 0"·"대로우선 4"·"최단 10")을 하나씩 → TmapRouteClient.fetch 최대 3회
+  └─ RouteFinder.findSafer ─→ 경유지 계획(단일 3 + 쌍 1)마다 옵션 0 + passList 로 fetch 최대 4회
+                              (reroute=true 면 건너뛴다 — 요청 한 건에 최대 7회, 순차 호출)
+
+TmapRouteClient.fetch(출발, 도착, 도착 이름, 옵션, 경유지) — 한 번에 POST 하나
+    ① 키 확인        appKey 가 비어 있으면(isEnabled=false) 호출하지 않고 null
+    ② 캐시 확인      출발·도착·경유지 좌표를 소수 4자리(약 11m)로 맞춘 키 + 옵션이 10분 안에 있으면 네트워크 생략
+                     (항목이 256개를 넘으면 통째로 비운다)
+    ③ POST 요청      https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1
+                     헤더 appKey — 로그·예외에는 절대 안 실림. 경유지는 passList 칸("lng,lat_lng,lat")
+    ④ 문자열로 수신   ★ 바로 객체로 안 받는다. Tmap 이 본문에 NUL(0x00)을 섞어 보내는
                      실측 사례가 있어, sanitizeTmapJson 으로 다듬은 뒤 파싱한다
-    ④ 번역           GeoJSON → TmapRoute (거리·시간·좌표열·안내점)
-    ⑤ 실패하면       예외를 위로 안 던진다 — null 반환 + 원인 사슬 로그
-                     ("A: msg <- B: msg" — 겉 메시지만 남기면 진짜 원인이 사라진 사건의 교훈)
+    ⑤ 번역           GeoJSON → TmapRoute (거리·시간·좌표열·안내점). features 가 없거나 좌표가 2개 미만이면 null
+    ⑥ 실패하면       예외를 위로 안 던진다 — warn 로그 한 줄 + null
+                     (`tmap 호출 실패 | /tmap/routes/pedestrian | searchOption=… | 원인=<예외 클래스 이름> | 조치=이 후보 하나만 버림(나머지 옵션으로 계속)`)
+                     예외 메시지는 남기지 않는다
+    ⑦ 성공한 경로만  캐시에 저장한다 — null 은 저장하지 않아 다음 요청이 다시 부른다
 ```
 
+`RouteFinder` 가 받은 `TmapRoute` 를 `RouteCandidate` 로 바꾸고, null 인 옵션은 후보에서 뺀다.
 세 옵션이 **전부** null 이면 `RouteOptionService` 가 `RouteSearchUnavailableException` 을 던져
 503 `ROUTE_SEARCH_UNAVAILABLE`("지금은 경로를 찾을 수 없습니다")로 응답한다. 폴백 경로는 만들지 않는다.
 그 오류 응답이 사건이 되어 `ApiErrorEventListener` 가 `tmap-route-failed`(`AlertCategory.ROUTE_SEARCH_FAILED`) 알림을 보낸다 → Slack.
