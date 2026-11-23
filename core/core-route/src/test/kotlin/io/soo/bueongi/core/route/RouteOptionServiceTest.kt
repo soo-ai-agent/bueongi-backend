@@ -202,7 +202,7 @@ class RouteOptionServiceTest {
         }
 
     @Test
-    fun `거의 겹치는 후보는 병합되어 유형당 하나씩 정확히 3개로 정규화된다`() {
+    fun `거의 겹치는 후보는 병합되고 우회 후보는 기본 경로로 뽑지 않아 안심과 빠름 2개만 남는다`() {
         val tmap = mock<TmapRouteClient>()
         whenever(tmap.isEnabled).thenReturn(true)
         val rA = TmapRoute("0", listOf(TmapCoord(37.5, 127.0), TmapCoord(37.5, 127.005), TmapCoord(37.5, 127.01)), 880.0, 700, emptyList())
@@ -214,9 +214,10 @@ class RouteOptionServiceTest {
 
         val result = service(tmap).find(request)
 
-        assertThat(result).hasSize(3)
-        assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.MAIN, RouteType.FAST)
-        assertThat(result.map { it.type }).doesNotHaveDuplicates()
+        // rADup 이 병합되지 않으면 기본 자리를 채워 3개가 된다. 남은 rC 는 우회 후보라 기본 자리에 못 간다.
+        assertThat(result).hasSize(2)
+        assertThat(result.map { it.type }).containsExactlyInAnyOrder(RouteType.SAFE, RouteType.FAST)
+        assertThat(result.map { it.dist }).containsExactlyInAnyOrder("880m", "900m")
     }
 
     @Test
