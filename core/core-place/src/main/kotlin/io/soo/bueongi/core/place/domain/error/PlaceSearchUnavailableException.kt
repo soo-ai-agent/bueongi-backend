@@ -4,7 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import org.springframework.http.HttpStatus
 
 class PlaceSearchUnavailableException(
-    cause: Throwable? = null,
+    cause: Throwable,
 ) : ApiException(
         status = HttpStatus.SERVICE_UNAVAILABLE,
         code = "PLACE_SEARCH_UNAVAILABLE",
@@ -13,8 +13,6 @@ class PlaceSearchUnavailableException(
         message = "장소 검색 외부 연동을 사용할 수 없다.",
     ) {
     init {
-        if (cause != null) {
-            initCause(cause)
-        }
+        initCause(cause)
     }
 }

@@ -4,11 +4,11 @@ import io.soo.bueongi.core.admin.ops.api.response.SafetySpotFetchStatusResponse
 import org.springframework.stereotype.Service
 
 @Service
-class SafetySpotFetchService(
+class SafetySpotFetchStatusService(
     private val ledger: SafetySpotFetchLedger,
 ) {
-    fun findStatuses(): List<SafetySpotFetchStatusResponse> {
-        val statuses: List<SafetySpotFetchStatus> = ledger.statuses()
+    fun findAll(): List<SafetySpotFetchStatusResponse> {
+        val statuses: List<SafetySpotFetchStatus> = ledger.findAll()
         return SafetySpotFetchStatusResponse.from(statuses)
     }
 }

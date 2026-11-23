@@ -40,7 +40,7 @@ data class RequestLogLine(
         return path.take(MAX_PATH_LENGTH) + "…"
     }
 
-    fun needsAttention(): Boolean = status >= CLIENT_ERROR_STATUS
+    fun isError(): Boolean = status >= CLIENT_ERROR_STATUS
 
     private companion object {
         const val CLIENT_ERROR_STATUS: Int = 400

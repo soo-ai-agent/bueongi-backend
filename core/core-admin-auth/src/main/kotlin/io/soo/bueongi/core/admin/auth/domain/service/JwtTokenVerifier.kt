@@ -6,13 +6,11 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
 import io.soo.bueongi.core.admin.auth.domain.config.JwtProperties
+import io.soo.bueongi.core.admin.auth.domain.config.parseJwtPublicKey
 import io.soo.bueongi.core.admin.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.admin.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.admin.auth.domain.model.AdminTokenKind
-import java.security.KeyFactory
 import java.security.interfaces.RSAPublicKey
-import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
 
 class JwtTokenVerifier(
     key: RSAPublicKey,
@@ -25,7 +23,7 @@ class JwtTokenVerifier(
             .build()
 
     constructor(properties: JwtProperties) : this(
-        parsePemPublicKey(properties.publicKey),
+        parseJwtPublicKey(properties.publicKey),
         properties.issuer,
     )
 
@@ -66,18 +64,5 @@ class JwtTokenVerifier(
             userId = userId,
             roles = roles,
         )
-    }
-
-    companion object {
-        fun parsePemPublicKey(pem: String): RSAPublicKey {
-            val stripped: String =
-                pem
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replace("\\s".toRegex(), "")
-            val decoded: ByteArray = Base64.getDecoder().decode(stripped)
-            val keySpec = X509EncodedKeySpec(decoded)
-            return KeyFactory.getInstance("RSA").generatePublic(keySpec) as RSAPublicKey
-        }
     }
 }

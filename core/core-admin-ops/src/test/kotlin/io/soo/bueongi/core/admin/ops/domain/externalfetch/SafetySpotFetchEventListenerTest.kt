@@ -13,7 +13,7 @@ class SafetySpotFetchEventListenerTest {
         SafetySpotFetchEventListener(ledger)
             .onFetchPerformed(SafetySpotFetchPerformed(SafetySpotType.STREET_LAMP, "nationwide", receivedCount = 33_245))
 
-        val status: SafetySpotFetchStatus = ledger.statuses().single()
+        val status: SafetySpotFetchStatus = ledger.findAll().single()
         assertThat(status.type).isEqualTo(SafetySpotType.STREET_LAMP)
         assertThat(status.successCount).isEqualTo(1)
         assertThat(status.lastReceivedCount).isEqualTo(33_245)

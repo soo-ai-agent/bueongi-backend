@@ -56,7 +56,7 @@ class RequestLogFilter : OncePerRequestFilter() {
     }
 
     private fun logRequest(line: RequestLogLine) {
-        if (line.needsAttention()) {
+        if (line.isError()) {
             log.warn(line.format())
             return
         }

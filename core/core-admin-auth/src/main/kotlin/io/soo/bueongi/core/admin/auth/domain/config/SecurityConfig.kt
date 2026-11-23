@@ -35,7 +35,7 @@ class SecurityConfig(
     fun jwtKeyMaterial(props: JwtProperties, environment: Environment): JwtKeyMaterial {
         if (props.publicKey.isNotBlank() && props.privateKey.isNotBlank()) {
             return JwtKeyMaterial(
-                publicKey = JwtTokenVerifier.parsePemPublicKey(props.publicKey),
+                publicKey = parseJwtPublicKey(props.publicKey),
                 privateKey = parseJwtPrivateKey(props.privateKey),
                 issuer = props.issuer,
             )

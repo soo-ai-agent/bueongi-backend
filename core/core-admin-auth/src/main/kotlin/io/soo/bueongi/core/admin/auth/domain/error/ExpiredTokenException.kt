@@ -4,7 +4,7 @@ import io.soo.bueongi.core.common.error.ApiException
 import org.springframework.http.HttpStatus
 
 class ExpiredTokenException(
-    cause: Throwable? = null,
+    cause: Throwable,
 ) : ApiException(
         status = HttpStatus.UNAUTHORIZED,
         code = "UNAUTHORIZED",
@@ -13,8 +13,6 @@ class ExpiredTokenException(
         message = "access token expired",
     ) {
     init {
-        if (cause != null) {
-            initCause(cause)
-        }
+        initCause(cause)
     }
 }

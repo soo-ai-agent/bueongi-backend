@@ -34,5 +34,5 @@ class SafetySpotFetchLedger(
     }
 
     @Synchronized
-    fun statuses(): List<SafetySpotFetchStatus> = ArrayList(byType.values)
+    fun findAll(): List<SafetySpotFetchStatus> = ArrayList(byType.values)
 }

@@ -1,5 +1,7 @@
 package io.soo.bueongi.core.admin.ops.api.request
 
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import io.soo.bueongi.core.admin.ops.domain.slack.model.SlackConfigUpdate
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
@@ -12,12 +14,12 @@ data class SlackConfigUpdateRequest(
     @field:Min(1)
     @field:Max(1440)
     val throttleMinutes: Int?,
-    val mutedCategories: List<String>? = null,
+    @JsonSetter(nulls = Nulls.AS_EMPTY) val mutedCategories: List<String> = emptyList(),
 ) {
     fun toUpdate(): SlackConfigUpdate =
         SlackConfigUpdate(
             enabled = requireNotNull(enabled) { "enabled 는 @NotNull 검증을 통과했어야 한다" },
             throttleMinutes = requireNotNull(throttleMinutes) { "throttleMinutes 는 @NotNull 검증을 통과했어야 한다" },
-            mutedCategories = mutedCategories.orEmpty().toSet(),
+            mutedCategories = mutedCategories.toSet(),
         )
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin")
 class AdminIdentityController {
     @GetMapping("/me")
-    fun me(authentication: Authentication): AdminIdentityResponse {
+    fun get(authentication: Authentication): AdminIdentityResponse {
         return AdminIdentityResponse.from(authentication)
     }
 }

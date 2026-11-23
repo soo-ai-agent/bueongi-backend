@@ -1,8 +1,8 @@
 package io.soo.bueongi.core.app
 
-import io.soo.bueongi.core.admin.ops.api.controller.SafetySpotFetchController
+import io.soo.bueongi.core.admin.ops.api.controller.SafetySpotFetchStatusController
 import io.soo.bueongi.core.admin.ops.domain.externalfetch.SafetySpotFetchLedger
-import io.soo.bueongi.core.admin.ops.domain.externalfetch.SafetySpotFetchService
+import io.soo.bueongi.core.admin.ops.domain.externalfetch.SafetySpotFetchStatusService
 import io.soo.bueongi.core.common.event.SafetySpotFetchPerformed
 import io.soo.bueongi.core.enums.SafetySpotType
 import org.junit.jupiter.api.Tag
@@ -16,9 +16,9 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
 @Tag("context")
-@WebMvcTest(SafetySpotFetchController::class)
+@WebMvcTest(SafetySpotFetchStatusController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(SafetySpotFetchLedger::class, SafetySpotFetchService::class)
+@Import(SafetySpotFetchLedger::class, SafetySpotFetchStatusService::class)
 @ActiveProfiles("test")
 class AdminSafetySpotFetchEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

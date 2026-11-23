@@ -11,12 +11,13 @@ class WebCorsConfig(
     private val allowedOrigins: String,
 ) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
-        val origins: List<String> =
-            allowedOrigins.split(",").map {
-                it.trim()
-            }.filter {
-                it.isNotEmpty()
+        val origins: ArrayList<String> = ArrayList()
+        for (origin in allowedOrigins.split(",")) {
+            val trimmed: String = origin.trim()
+            if (trimmed.isNotEmpty()) {
+                origins.add(trimmed)
             }
+        }
         registry.addMapping("/api/**")
             .allowedOrigins(*origins.toTypedArray())
             .allowedMethods("GET", "POST", "OPTIONS")
