@@ -2,7 +2,7 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.HealthController
 import io.soo.bueongi.core.appinfo.domain.service.HealthService
-import io.soo.bueongi.storage.db.share.store.ShareSessionStore
+import io.soo.bueongi.core.share.domain.service.ShareService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import java.time.Clock
 
 @Tag("context")
 @WebMvcTest(HealthController::class)
@@ -38,6 +39,6 @@ class HealthControllerTest(
     @TestConfiguration
     class Config {
         @Bean
-        fun shareSessionStore(): ShareSessionStore = StubShareSessionStore("memory")
+        fun shareService(): ShareService = ShareService(StubShareSessionStore("memory"), Clock.systemUTC(), "http://localhost:3619")
     }
 }

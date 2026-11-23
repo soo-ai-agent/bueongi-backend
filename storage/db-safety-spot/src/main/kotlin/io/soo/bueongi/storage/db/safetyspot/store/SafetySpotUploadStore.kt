@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.time.Clock
 
@@ -69,7 +68,7 @@ class SafetySpotUploadStore(
                 points.add(point)
             }
             points
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             log.warn("시설 업로드 파일 읽기 실패(무시하고 CDN/CSV 폴백): {} | 원인={}", file.path, e.javaClass.simpleName)
             null
         }

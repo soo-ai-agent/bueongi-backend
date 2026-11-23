@@ -137,6 +137,10 @@ class ShareService(
         return LocationView.from(location, status)
     }
 
+    fun storeBackendLabel(): String {
+        return store.backend
+    }
+
     fun end(token: String, ownerSecret: String?) {
         val session: ShareSession = store.findByToken(token) ?: return
         requireOwner(session, ownerSecret)
