@@ -39,17 +39,3 @@ data class NearbySafetySpotsResponse(
         }
     }
 }
-
-data class NearbySafetySpotCountResponse(
-    val type: String,
-    val count: Int,
-)
-
-data class NearbySafetySpotResponse(
-    val type: String,
-    val lat: Double,
-    val lng: Double,
-    val name: String,
-    val address: String,
-    val phone: String,
-)

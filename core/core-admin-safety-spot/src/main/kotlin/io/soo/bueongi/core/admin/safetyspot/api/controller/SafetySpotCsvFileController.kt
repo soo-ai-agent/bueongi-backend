@@ -20,7 +20,7 @@ class SafetySpotCsvFileController(
     }
 
     @GetMapping("/rows")
-    fun rows(
+    fun readPage(
         @RequestParam origin: SafetySpotCsvOrigin,
         @RequestParam name: String,
         @RequestParam(defaultValue = "0") page: Int,

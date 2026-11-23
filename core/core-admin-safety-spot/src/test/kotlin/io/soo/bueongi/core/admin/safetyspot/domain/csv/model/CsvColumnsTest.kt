@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 class CsvColumnsTest {
     private val columns =
         CsvColumns(
-            useWgs84 = true,
+            hasLatLng = true,
             coordSystem = SafetySpotCoordSystem.WGS84,
             latIndex = 0,
             lngIndex = 1,

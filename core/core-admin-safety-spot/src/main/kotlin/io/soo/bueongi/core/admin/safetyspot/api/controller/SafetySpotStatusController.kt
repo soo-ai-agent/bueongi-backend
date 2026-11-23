@@ -21,12 +21,12 @@ class SafetySpotStatusController(
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions")
-    fun regions(): List<RegionSafetySpotResponse> {
+    fun findRegions(): List<RegionSafetySpotResponse> {
         return regionStatusService.summarize()
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions/{code}/spots")
-    fun regionSpots(
+    fun findRegionSpots(
         @PathVariable code: String,
         @RequestParam(required = false, defaultValue = "2000") limit: Int,
     ): RegionSafetySpotsResponse {

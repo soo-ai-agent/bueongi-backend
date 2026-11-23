@@ -10,9 +10,9 @@ import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
 import io.soo.bueongi.support.util.CP949
 import org.springframework.stereotype.Component
+import java.nio.charset.CharacterCodingException
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
-import java.util.zip.GZIPInputStream
 
 @Component
 class SafetySpotCsvParser {
@@ -86,7 +86,7 @@ class SafetySpotCsvParser {
 
     private fun buildHeaderIndex(header: List<String>): Map<String, Int> {
         val map: LinkedHashMap<String, Int> = LinkedHashMap()
-        header.forEachIndexed { index, raw ->
+        for ((index, raw) in header.withIndex()) {
             val key: String = raw.trim()
             if (key.isNotEmpty() && !map.containsKey(key)) {
                 map[key] = index
@@ -100,19 +100,19 @@ class SafetySpotCsvParser {
         if (plain.size >= 3 && plain[0] == 0xEF.toByte() && plain[1] == 0xBB.toByte() && plain[2] == 0xBF.toByte()) {
             return String(plain, 3, plain.size - 3, Charsets.UTF_8)
         }
-        return decodeStrict(plain, Charsets.UTF_8) ?: String(plain, CP949)
+        return try {
+            decodeStrict(plain, Charsets.UTF_8)
+        } catch (_: CharacterCodingException) {
+            String(plain, CP949)
+        }
     }
 
-    private fun decodeStrict(bytes: ByteArray, charset: Charset): String? =
-        try {
-            charset.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(java.nio.ByteBuffer.wrap(bytes))
-                .toString()
-        } catch (_: Exception) {
-            null
-        }
+    private fun decodeStrict(bytes: ByteArray, charset: Charset): String =
+        charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(java.nio.ByteBuffer.wrap(bytes))
+            .toString()
 
     private fun tokenizeCsv(text: String): List<List<String>> {
         val records: ArrayList<List<String>> = ArrayList()
@@ -169,13 +169,4 @@ class SafetySpotCsvParser {
         }
         return records
     }
-}
-
-// 공공데이터 원본은 커서 .gz 로도 받는다 — gzip 매직(1f 8b)이면 풀어서 넘긴다.
-internal fun gunzipIfNeeded(bytes: ByteArray): ByteArray {
-    val isGzip: Boolean = bytes.size >= 2 && bytes[0] == 0x1F.toByte() && bytes[1] == 0x8B.toByte()
-    if (!isGzip) {
-        return bytes
-    }
-    return GZIPInputStream(bytes.inputStream()).use { it.readBytes() }
 }

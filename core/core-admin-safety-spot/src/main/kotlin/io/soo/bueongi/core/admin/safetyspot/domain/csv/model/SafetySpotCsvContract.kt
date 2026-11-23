@@ -37,10 +37,10 @@ abstract class SafetySpotCsvContract(
     fun locateColumns(headerIndex: Map<String, Int>): CsvColumns {
         val latIdx: Int? = headerIndex.firstIndexOf(latHeaders)
         val lngIdx: Int? = headerIndex.firstIndexOf(lngHeaders)
-        val useWgs84: Boolean = latIdx != null && lngIdx != null
+        val hasLatLng: Boolean = latIdx != null && lngIdx != null
         return CsvColumns(
-            useWgs84 = useWgs84,
-            coordSystem = if (useWgs84) SafetySpotCoordSystem.WGS84 else coordSystem,
+            hasLatLng = hasLatLng,
+            coordSystem = if (hasLatLng) SafetySpotCoordSystem.WGS84 else coordSystem,
             latIndex = latIdx,
             lngIndex = lngIdx,
             xIndex = headerIndex.firstIndexOf(xHeaders),
@@ -81,7 +81,7 @@ abstract class SafetySpotCsvContract(
     }
 
     private fun readGeoPoint(row: List<String>, columns: CsvColumns): GeoPoint? {
-        if (columns.useWgs84) {
+        if (columns.hasLatLng) {
             return GeoPoint.orNull(
                 columns.latitude(row),
                 columns.longitude(row),
@@ -101,15 +101,12 @@ abstract class SafetySpotCsvContract(
         return GeoPoint.orNull(wgs?.lat, wgs?.lng)
     }
 
-    private fun toWgs84(x: Double, y: Double): Wgs84Point? {
-        if (coordSystem == SafetySpotCoordSystem.EPSG5179) {
-            return Epsg5179.toWgs84(x, y)
+    private fun toWgs84(x: Double, y: Double): Wgs84Point? =
+        when (coordSystem) {
+            SafetySpotCoordSystem.EPSG5179 -> Epsg5179.toWgs84(x, y)
+            SafetySpotCoordSystem.EPSG5174 -> Epsg5174.toWgs84(x, y)
+            SafetySpotCoordSystem.WGS84 -> null
         }
-        if (coordSystem == SafetySpotCoordSystem.EPSG5174) {
-            return Epsg5174.toWgs84(x, y)
-        }
-        return null
-    }
 
     private fun Map<String, Int>.firstIndexOf(candidates: List<String>): Int? {
         for (candidate in candidates) {

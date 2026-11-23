@@ -1,7 +1,8 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
+// 인덱스가 null 이면 이 CSV 에 그 헤더가 없다 — 읽기 함수는 헤더가 없거나 칸 값을 읽을 수 없으면 null 을 돌려준다.
 class CsvColumns(
-    val useWgs84: Boolean,
+    val hasLatLng: Boolean,
     val coordSystem: SafetySpotCoordSystem,
     private val latIndex: Int?,
     private val lngIndex: Int?,

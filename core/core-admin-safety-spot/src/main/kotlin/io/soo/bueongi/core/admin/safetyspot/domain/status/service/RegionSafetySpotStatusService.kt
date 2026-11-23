@@ -43,7 +43,7 @@ class RegionSafetySpotStatusService(
         val budget: Int = limit.coerceAtMost(MAX_SPOTS)
         val pointsByType: Map<SafetySpotType, List<SafetySpotPoint>> = pointsByTypeOf(code)
         val shown: List<SafetySpotPoint> = shownSpotsOf(pointsByType, budget)
-        val region: RegionName = regionNameOf(code)
+        val region: RegionName = regionNames.findByCode(code)
         val found: RegionSafetySpots =
             RegionSafetySpots(
                 code = code,
@@ -114,20 +114,12 @@ class RegionSafetySpotStatusService(
     }
 
     private fun regionCodeOf(point: SafetySpotPoint): String {
-        val code: String? = point.regionCodeOrNull()?.trim()?.takeIf { it.isNotEmpty() }
-        return code ?: UNKNOWN_REGION
-    }
-
-    private fun regionNameOf(code: String): RegionName {
-        val known: RegionName? = regionNames.findByCode(code)
-        if (known == null) {
-            return RegionName(sido = "", name = code)
-        }
-        return known
+        val code: String = point.regionCodeOrNull().orEmpty().trim()
+        return code.ifEmpty { UNKNOWN_REGION }
     }
 
     private fun rowOf(code: String, tally: RegionTally): RegionSafetySpotCount {
-        val region: RegionName = regionNameOf(code)
+        val region: RegionName = regionNames.findByCode(code)
         return RegionSafetySpotCount(
             code = code,
             sido = region.sido,
