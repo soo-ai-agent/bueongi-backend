@@ -69,9 +69,9 @@ class StreetLampClient(
         return response
     }
 
-    private fun isSuccess(header: StreetLampResponseHeader?): Boolean {
-        val code: String? = header?.resultCode
-        if (code.isNullOrBlank() || code in SUCCESS_CODES) {
+    private fun isSuccess(header: StreetLampResponseHeader): Boolean {
+        val code: String = header.resultCode
+        if (code.isBlank() || code in SUCCESS_CODES) {
             return true
         }
         log.warn(

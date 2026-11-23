@@ -3,7 +3,6 @@ package io.soo.bueongi.client.datagokr
 import com.fasterxml.jackson.databind.JsonNode
 import io.soo.bueongi.client.datagokr.query.DataGoKrFieldNames
 import io.soo.bueongi.client.datagokr.response.DataGoKrEnvelope
-import io.soo.bueongi.client.datagokr.response.DataGoKrHeader
 import io.soo.bueongi.client.datagokr.response.DataGoKrResponse
 import io.soo.bueongi.support.logging.NO_RESPONSE_STATUS
 import org.slf4j.Logger
@@ -39,9 +38,8 @@ class DataGoKrPagedFetcher(
         while (pageNo <= DataGoKrApiSpec.MAX_PAGES && received < totalCount) {
             val envelope: DataGoKrEnvelope = fetchPage(endpoint, pageNo, municipalityCode) ?: return null
             val response: DataGoKrResponse = envelope.payload()
-            val header: DataGoKrHeader? = response.header
-            val code: String? = header?.resultCode
-            if (!code.isNullOrBlank() && code !in DataGoKrApiSpec.SUCCESS_CODES) {
+            val code: String = response.header.resultCode
+            if (code.isNotBlank() && code !in DataGoKrApiSpec.SUCCESS_CODES) {
                 log.warn(
                     failureLine(
                         endpoint = endpoint,
@@ -52,8 +50,8 @@ class DataGoKrPagedFetcher(
                 return null
             }
 
-            val rows: List<JsonNode> = extractItems(response.body?.items)
-            response.body?.totalCount?.let { totalCount = it }
+            val rows: List<JsonNode> = extractItems(response.body.items)
+            response.body.totalCount?.let { totalCount = it }
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 
@@ -137,9 +135,8 @@ class DataGoKrPagedFetcher(
             regionFilter
     }
 
-    private fun extractItems(items: JsonNode?): List<JsonNode> =
+    private fun extractItems(items: JsonNode): List<JsonNode> =
         when {
-            items == null -> emptyList()
             items.isArray -> items.toList()
             items.isObject && items.has("item") -> {
                 val inner: JsonNode = items.get("item")
@@ -171,8 +168,11 @@ class DataGoKrPagedFetcher(
 }
 
 private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {
-    val lat: Double = text(fields.lat)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
-    val lng: Double = text(fields.lng)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+    val lat: Double = text(fields.lat)?.toDoubleOrNull() ?: return null
+    val lng: Double = text(fields.lng)?.toDoubleOrNull() ?: return null
+    if (!lat.isFinite() || !lng.isFinite()) {
+        return null
+    }
     return DataGoKrPoint(
         lat = lat,
         lng = lng,
@@ -183,7 +183,12 @@ private fun JsonNode.toPoint(fields: DataGoKrFieldNames): DataGoKrPoint? {
     )
 }
 
-private fun JsonNode.text(candidates: List<String>): String? =
-    candidates.firstNotNullOfOrNull { field ->
-        get(field)?.asText()?.trim()?.takeIf { it.isNotEmpty() && it != "null" }
+private fun JsonNode.text(candidates: List<String>): String? {
+    for (field in candidates) {
+        val value: String = get(field)?.asText()?.trim() ?: continue
+        if (value.isNotEmpty() && value != "null") {
+            return value
+        }
     }
+    return null
+}

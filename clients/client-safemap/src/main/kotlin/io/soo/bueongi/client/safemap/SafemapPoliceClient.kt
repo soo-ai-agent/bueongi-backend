@@ -39,8 +39,8 @@ class SafemapPoliceClient(
             if (!isSuccess(response.header)) {
                 return null
             }
-            val rows: List<SafemapPoliceRow> = response.body?.items?.item ?: emptyList()
-            if (response.body?.totalCount != null) {
+            val rows: List<SafemapPoliceRow> = response.body.items.item
+            if (response.body.totalCount != null) {
                 totalCount = response.body.totalCount
             }
             received += rows.size
@@ -69,9 +69,9 @@ class SafemapPoliceClient(
         return response
     }
 
-    private fun isSuccess(header: SafemapResponseHeader?): Boolean {
-        val code: String? = header?.resultCode
-        if (code.isNullOrBlank() || code in SUCCESS_CODES) {
+    private fun isSuccess(header: SafemapResponseHeader): Boolean {
+        val code: String = header.resultCode
+        if (code.isBlank() || code in SUCCESS_CODES) {
             return true
         }
         log.warn(
