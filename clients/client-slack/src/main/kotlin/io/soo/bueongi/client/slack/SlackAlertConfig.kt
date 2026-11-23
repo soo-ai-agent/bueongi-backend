@@ -19,15 +19,15 @@ class SlackAlertConfig(
     @Volatile
     private var mutedCategorySet: Set<String> = emptySet()
 
-    fun webhookConfigured(): Boolean = webhook.isNotEmpty()
+    fun hasWebhook(): Boolean = webhook.isNotEmpty()
 
-    fun enabled(): Boolean = masterEnabled
+    fun isEnabled(): Boolean = masterEnabled
 
     fun throttleMinutes(): Int = throttleMinutesValue
 
     fun mutedCategories(): Set<String> = mutedCategorySet
 
-    fun sendEnabled(): Boolean = webhookConfigured() && masterEnabled
+    fun canSend(): Boolean = hasWebhook() && masterEnabled
 
     fun throttleMillis(): Long = throttleMinutesValue.toLong() * MILLIS_PER_MINUTE
 
@@ -68,14 +68,7 @@ class SlackAlertConfig(
         if (segments.isEmpty()) {
             return conservativeMask(url)
         }
-        val maskedSegments: List<String> =
-            segments.mapIndexed { index, segment ->
-                if (index == segments.lastIndex) {
-                    MASK
-                } else {
-                    segment.take(1) + MASK
-                }
-            }
+        val maskedSegments: List<String> = segments.dropLast(1).map { it.take(1) + MASK } + MASK
         return prefix + maskedSegments.joinToString("/")
     }
 

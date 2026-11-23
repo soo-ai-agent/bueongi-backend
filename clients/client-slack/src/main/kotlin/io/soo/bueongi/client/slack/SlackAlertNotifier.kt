@@ -1,7 +1,6 @@
 package io.soo.bueongi.client.slack
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
 import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.slf4j.Logger
@@ -46,11 +45,11 @@ class SlackAlertNotifier internal constructor(
     private val recentAlerts: ArrayDeque<AlertRecord> = ArrayDeque<AlertRecord>()
 
     override val isEnabled: Boolean
-        get() = config.sendEnabled()
+        get() = config.canSend()
 
     override fun notify(key: String, title: String, detail: String) {
         record(key, title, detail)
-        if (!config.sendEnabled()) {
+        if (!config.canSend()) {
             log.debug("Slack 알림 비활성(webhook 미설정 또는 토글 off) — 무시: {}", key)
             return
         }
@@ -77,11 +76,11 @@ class SlackAlertNotifier internal constructor(
 
     override fun findRecent(limit: Int): List<AlertRecord> {
         val snapshot: List<AlertRecord> = synchronized(recentAlerts) { recentAlerts.toList() }
-        return snapshot.asReversed().take(limit.coerceIn(1, ALERT_HISTORY_MAX_LIMIT))
+        return snapshot.asReversed().take(limit.coerceIn(1, AlertNotifier.HISTORY_MAX_LIMIT))
     }
 
     override fun sendTest(): Boolean {
-        if (!config.sendEnabled()) {
+        if (!config.canSend()) {
             return false
         }
         return try {

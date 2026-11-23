@@ -94,7 +94,7 @@ class SlackConfigServiceTest {
         assertThat(updated.categories.first { it.key == "safety-spot-fetch-failed" }.muted).isTrue()
         assertThat(updated.categories.first { it.key == "tmap-route-failed" }.muted).isFalse()
         assertThat(config.isMuted("api-500:NullPointerException")).isTrue()
-        assertThat(config.sendEnabled()).isFalse()
+        assertThat(config.canSend()).isFalse()
     }
 
     @Test

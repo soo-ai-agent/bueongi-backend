@@ -1,7 +1,7 @@
 package io.soo.bueongi.client.slack
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.soo.bueongi.support.monitoring.ALERT_HISTORY_MAX_LIMIT
+import io.soo.bueongi.support.monitoring.AlertNotifier
 import io.soo.bueongi.support.monitoring.AlertRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
@@ -186,7 +186,7 @@ class SlackAlertNotifierTest {
             notifier.notify(key = "k$index", title = "t$index", detail = "d")
         }
 
-        assertThat(notifier.findRecent(ALERT_HISTORY_MAX_LIMIT + 10_000)).hasSize(3)
+        assertThat(notifier.findRecent(AlertNotifier.HISTORY_MAX_LIMIT + 10_000)).hasSize(3)
         assertThat(notifier.findRecent(0)).hasSize(1)
     }
 }

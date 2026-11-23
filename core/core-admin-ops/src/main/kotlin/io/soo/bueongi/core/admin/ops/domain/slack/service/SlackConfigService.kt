@@ -22,9 +22,9 @@ class SlackConfigService(
             categories.add(SlackCategoryConfig(key = category.key, label = category.label, muted = muted.contains(category.key)))
         }
         return SlackConfigResponse(
-            webhookConfigured = slackAlertConfig.webhookConfigured(),
+            webhookConfigured = slackAlertConfig.hasWebhook(),
             webhookMasked = slackAlertConfig.maskedWebhook(),
-            enabled = slackAlertConfig.enabled(),
+            enabled = slackAlertConfig.isEnabled(),
             throttleMinutes = slackAlertConfig.throttleMinutes(),
             categories = categories,
         )
@@ -42,7 +42,7 @@ class SlackConfigService(
 
     fun test(): SlackTestResponse {
         val sent: Boolean = alertNotifier.sendTest()
-        val enabled: Boolean = slackAlertConfig.sendEnabled()
+        val enabled: Boolean = slackAlertConfig.canSend()
         return SlackTestResponse.from(sent, enabled)
     }
 

@@ -14,6 +14,8 @@ interface AlertNotifier {
     fun sendTest(): Boolean {
         return false
     }
-}
 
-const val ALERT_HISTORY_MAX_LIMIT: Int = 500
+    companion object {
+        const val HISTORY_MAX_LIMIT: Int = 500
+    }
+}
