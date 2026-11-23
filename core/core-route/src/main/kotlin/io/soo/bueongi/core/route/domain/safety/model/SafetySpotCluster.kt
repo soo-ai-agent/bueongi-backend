@@ -1,6 +1,8 @@
 package io.soo.bueongi.core.route.domain.safety.model
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
+import kotlin.math.floor
 
 data class SafetySpotCluster(
     val center: GeoPoint,
@@ -27,5 +29,30 @@ data class SafetySpotCluster(
             }
             return SafetySpotCluster(center = anchor.toGeoPoint(), weight = spots.size)
         }
+
+        // 시설을 격자 칸으로 묶어 칸마다 뭉치 하나를 만들고, 많이 뭉친 순으로 낸다.
+        fun groupByCell(spots: List<SafetySpotPoint>): List<SafetySpotCluster> {
+            val spotsByCell: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
+            for (spot in spots) {
+                val latCell: Int = floor(spot.lat / CELL_DEG).toInt()
+                val lngCell: Int = floor(spot.lng / CELL_DEG).toInt()
+                val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
+                spotsByCell.getOrPut(key) { ArrayList() }.add(spot)
+            }
+
+            val clusters: ArrayList<SafetySpotCluster> = ArrayList()
+            for (cellSpots in spotsByCell.values) {
+                val cluster: SafetySpotCluster = from(cellSpots)
+                clusters.add(cluster)
+            }
+            val byWeightThenPosition: Comparator<SafetySpotCluster> =
+                compareByDescending<SafetySpotCluster> { it.weight }
+                    .thenBy { it.center.lat }
+                    .thenBy { it.center.lng }
+            clusters.sortWith(comparator = byWeightThenPosition)
+            return clusters
+        }
+
+        private const val CELL_DEG: Double = 0.0008
     }
 }

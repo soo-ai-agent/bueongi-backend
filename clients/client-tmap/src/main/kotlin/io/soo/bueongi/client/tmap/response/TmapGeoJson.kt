@@ -11,7 +11,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
-    val features: JsonNode = root.get("features") ?: return null
+    val features: JsonNode = root.path("features")
     if (!features.isArray) {
         return null
     }
@@ -22,17 +22,17 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
     var timeSeconds: Int = 0
 
     for (feature in features) {
-        val props: JsonNode? = feature.get("properties")
+        val props: JsonNode = feature.path("properties")
         // 총거리·총시간은 첫 피처에만 실려 온다(실측).
         if (distanceMeters == 0.0) {
-            distanceMeters = numberOf(props, "totalDistance") ?: 0.0
+            distanceMeters = numberOf(props, "totalDistance")
         }
         if (timeSeconds == 0) {
-            timeSeconds = numberOf(props, "totalTime")?.toInt() ?: 0
+            timeSeconds = numberOf(props, "totalTime").toInt()
         }
 
         val geom: JsonNode = feature.get("geometry") ?: continue
-        when (geom.get("type")?.asText()) {
+        when (geom.path("type").asText()) {
             "LineString" -> appendLineString(geom, props, path, steps)
             "Point" -> appendPoint(geom, props, steps)
         }
@@ -56,7 +56,7 @@ fun parseTmapGeoJson(root: JsonNode, searchOption: String): TmapRoute? {
 
 private fun appendLineString(
     geom: JsonNode,
-    props: JsonNode?,
+    props: JsonNode,
     path: MutableList<TmapCoord>,
     steps: MutableList<NavStep>,
 ) {
@@ -65,11 +65,11 @@ private fun appendLineString(
         val coord: TmapCoord = parseLngLat(coordNode) ?: continue
         path.add(coord)
     }
-    if (steps.isEmpty() || props == null) {
+    if (steps.isEmpty()) {
         return
     }
-    val segDistance: Int = numberOf(props, "distance")?.toInt() ?: 0
-    val segTime: Int = numberOf(props, "time")?.toInt() ?: 0
+    val segDistance: Int = numberOf(props, "distance").toInt()
+    val segTime: Int = numberOf(props, "time").toInt()
     if (segDistance <= 0 && segTime <= 0) {
         return
     }
@@ -78,27 +78,27 @@ private fun appendLineString(
 }
 
 // 구간 거리·시간은 뒤따르는 LineString 이 채운다.
-private fun appendPoint(geom: JsonNode, props: JsonNode?, steps: MutableList<NavStep>) {
+private fun appendPoint(geom: JsonNode, props: JsonNode, steps: MutableList<NavStep>) {
     val pointCoords: JsonNode = geom.get("coordinates") ?: return
     val point: TmapCoord = parseLngLat(pointCoords) ?: return
     steps.add(
         NavStep(
-            index = props?.get("index")?.asInt() ?: 0,
+            index = props.path("index").asInt(),
             lat = point.lat,
             lng = point.lng,
-            description = props?.get("description")?.asText() ?: "",
-            turnType = props?.get("turnType")?.asInt() ?: 0,
+            description = props.path("description").asText(),
+            turnType = props.path("turnType").asInt(),
             distanceMeters = 0,
             timeSeconds = 0,
-            pointType = props?.get("pointType")?.asText() ?: "",
+            pointType = props.path("pointType").asText(),
         ),
     )
 }
 
-private fun numberOf(props: JsonNode?, field: String): Double? {
-    val node: JsonNode = props?.get(field) ?: return null
+private fun numberOf(props: JsonNode, field: String): Double {
+    val node: JsonNode = props.path(field)
     if (!node.isNumber) {
-        return null
+        return 0.0
     }
     return node.asDouble()
 }

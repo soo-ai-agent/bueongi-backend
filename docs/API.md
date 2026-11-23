@@ -131,7 +131,7 @@
 
 ## `POST /api/routes` — 경로 옵션 목록 (앱이 실제로 쓰는 경로 탐색)
 
-Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 요청 본문은 `compare` 와 같은 `RouteRequest` 이고, 앱은 이 경로만 호출한다. 출처: `core-route/api/controller/RouteController.kt`, `domain/service/RouteOptionService.kt`.
+Tmap 실경로 + 안심시설 실데이터로 safe/main/fast 3개를 만든다. 요청 본문은 `compare` 와 같은 `RouteRequest` 이고, 앱은 이 경로만 호출한다. 출처: `core-route/api/controller/RouteOptionController.kt`, `domain/service/RouteOptionService.kt`.
 
 - `safetyPreference` (optional): `balanced`/`safe`/`safest`. 생략하면 백엔드 기본 성향.
 - `reroute` (optional, 기본 `false`): 경로 이탈 재탐색이면 `true`. 외부 호출 예산을 달리 쓴다(`RouteCandidateCollector`).

@@ -9,9 +9,9 @@ data class DataSource(
     companion object {
         private const val YEAR_MONTH_LENGTH: Int = 7
 
-        fun from(generatedAt: String?): DataSource {
+        fun from(generatedAt: String): DataSource {
             var basedOn: String = ""
-            if (generatedAt != null && generatedAt.length >= YEAR_MONTH_LENGTH) {
+            if (generatedAt.length >= YEAR_MONTH_LENGTH) {
                 basedOn = generatedAt.substring(0, YEAR_MONTH_LENGTH).replace('-', '.')
             }
             return DataSource(kind = "live", basedOn = basedOn, origin = "공공데이터포털·서울 열린데이터광장")

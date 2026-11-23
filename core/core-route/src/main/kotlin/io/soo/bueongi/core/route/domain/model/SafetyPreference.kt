@@ -12,10 +12,7 @@ enum class SafetyPreference(
     ;
 
     companion object {
-        fun of(value: String?): SafetyPreference {
-            if (value == null) {
-                return SAFE
-            }
+        fun of(value: String): SafetyPreference {
             val normalized: String = value.trim().lowercase()
             for (preference in entries) {
                 if (preference.requestValue == normalized) {

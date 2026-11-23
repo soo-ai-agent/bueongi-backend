@@ -3,7 +3,7 @@ package io.soo.bueongi.core.app
 import io.soo.bueongi.client.tmap.TmapRouteClient
 import io.soo.bueongi.core.common.error.ApiControllerAdvice
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
-import io.soo.bueongi.core.route.api.controller.RouteController
+import io.soo.bueongi.core.route.api.controller.RouteOptionController
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.core.route.domain.safety.service.SafetySpotWaypointPlanner
@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
 @Tag("context")
-@WebMvcTest(RouteController::class)
+@WebMvcTest(RouteOptionController::class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(
     RouteTypeCatalog::class,

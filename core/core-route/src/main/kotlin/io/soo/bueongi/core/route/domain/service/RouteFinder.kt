@@ -54,6 +54,7 @@ class RouteFinder(
         return shortestDistanceMeters * (1 + detourBudgetRatio)
     }
 
+    // Tmap 이 이 옵션으로 길을 주지 못하면(키 없음·호출 실패·쓸 수 없는 응답) null 이고, 부르는 쪽은 그 후보만 버린다.
     private fun fetch(query: RouteRequest, searchOption: String, waypoints: List<GeoPoint> = emptyList()): RouteCandidate? {
         val route: TmapRoute? =
             tmapClient.fetch(

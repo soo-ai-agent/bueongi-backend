@@ -19,7 +19,7 @@ class RouteOptionAssembler(
     private val routeTypeCatalog: RouteTypeCatalog,
 ) {
     internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {
-        val generatedAt: String? = safetySpotSource.freshness?.generatedAt
+        val generatedAt: String = safetySpotSource.freshness?.generatedAt.orEmpty()
         val source: DataSource = DataSource.from(generatedAt)
         val ordered: List<ScoredRoute> = scoredRoutes.sortedByDescending { it.score.rank }
         val options: ArrayList<RouteOption> = ArrayList(ordered.size)

@@ -37,6 +37,7 @@ CRUD 처럼 함수 하나가 한 유형만 갖는 것을 목표로 한다. 이 �
 원래 이름 `safeCompare` 는 비교(내부 단계)를 말하고 반환(경로 옵션 목록)을 말하지 못해 `findRouteOptions` 로 리네임했다 (2026-09-26).
 이어서 클래스 이름 `SafeRouteService` 가 safe 하나만 돌려주는 것처럼 읽혀, 클래스를 `RouteOptionService` 로 바꾸고 메서드는 `find` 로 줄였다 (2026-11-21).
 엔드포인트도 `POST /api/routes/safe-compare` 에서 `POST /api/routes` 로 바꿨다 — 모바일이 같은 저장소라 동시 배포되므로 옛 경로는 남기지 않았다.
+컨트롤러도 실제로 다루는 대상(경로 선택지)을 클래스 이름이 말하도록 `RouteController.findRouteOptions` 를 `RouteOptionController.find` 로 바꿨다 (2026-11-23). 경로 `POST /api/routes` 는 그대로다.
 
 자기 판단은 "reroute 면 우회 생략" 분기 하나뿐이고 나머지는 협력자 호출이다. 유형이 하나로 통일되어 있다.
 
@@ -116,12 +117,13 @@ Tmap 이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 | 함수 | 공개 | 유형 | 역할 |
 |---|---|---|---|
-| `cluster(routePath)` | 공개 | 조회 + 계산 | 경로 주변 시설을 모아(`findNearRoute`) 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다(`groupIntoClusters`) |
+| `cluster(routePath)` | 공개 | 조회 + 계산 | 경로 주변 시설을 모아(`findNearRoute`) 격자로 묶어 뭉치(중심점+시설 수)를 만들고, 많이 뭉친 순 최대 6개를 낸다(격자 묶기·정렬은 `SafetySpotCluster.groupByCell`) |
 | `pick(origin, destination, clusters)` | 공개 | 선별 + 조립 | 경로 중간(진행률 20~80%)이고 옆이탈이 작은 뭉치만 남긴 뒤, 단일 3 + 쌍 1 경유지 조합을 만든다 |
 
 `cluster` 는 원래 이름이 `findSafetySpotClusters`(조회)였는데 실제는 corridor 조회 → 격자 묶기 → 평균 중심 계산 → 정렬·절단까지 하는 계산이라, 유형에 맞게 `clusterSafetySpots` 로 리네임했다 (2026-09-26).
 이 중 뭉치 하나의 대표 좌표 고르기(평균점에 가장 가까운 실제 시설)는 결과 타입이 갖도록 `SafetySpotCluster.from(spots)` 으로 옮겼다 (2026-11-21).
 남은 본문도 조회(시설 저장소를 읽음)와 계산(받은 목록만 씀)이 한 함수에 있어, `pick` 과 같은 방식으로 비공개 `findNearRoute` → `groupIntoClusters` 둘로 나눴다 (2026-11-21).
+이어서 `groupIntoClusters` 의 격자 묶기·정렬은 뭉치 타입이 갖도록 `SafetySpotCluster.groupByCell(spots)` 으로 옮기고(격자 크기 상수도 `CELL_DEG` 로 함께), 최대 6개로 자르기(`MAX_CLUSTERS`)만 `cluster` 에 남겼다 (2026-11-23).
 이어서 클래스 이름(SafetySpotWaypointPlanner)이 이미 말하는 SafetySpot·Waypoint 를 메서드 이름에서 지워 `clusterSafetySpots` → `cluster`, `pickWaypoints` → `pick`, 비공개 `findSpotsNearRoute` → `findNearRoute` 로 줄였다 (2026-11-23).
 
 `pick` 은 거르기(선별)와 계획 만들기(조립) 두 단계가 있어, 본문을 `filterMiddleClusters` → `buildPlans` 비공개 둘로 나눴다 (2026-09-26). 호출부가 한 곳뿐이라 공개 함수는 하나로 유지했다.

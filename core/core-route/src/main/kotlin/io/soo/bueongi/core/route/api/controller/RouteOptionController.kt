@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/routes")
-class RouteController(
+class RouteOptionController(
     private val routeOptionService: RouteOptionService,
 ) {
     @PostMapping
-    fun findRouteOptions(@RequestBody request: RouteRequest): List<RouteOption> {
+    fun find(@RequestBody request: RouteRequest): List<RouteOption> {
         return routeOptionService.find(request)
     }
 }

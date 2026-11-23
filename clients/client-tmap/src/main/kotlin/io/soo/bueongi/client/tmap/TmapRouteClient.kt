@@ -45,7 +45,7 @@ class TmapRouteClient(
             try {
                 val body: LinkedHashMap<String, String> = buildBody(origin, destination, destinationName, searchOption, passList)
                 // Tmap 응답에는 NUL 이 섞여 와 문자열로 받아 다듬은 뒤 파싱한다.
-                val raw: String? =
+                val raw: String =
                     restClient.post()
                         .uri(PEDESTRIAN_ENDPOINT)
                         .header("appKey", appKey)
@@ -54,7 +54,8 @@ class TmapRouteClient(
                         .body(body)
                         .retrieve()
                         .body<String>()
-                val json: JsonNode = objectMapper.readTree(sanitizeTmapJson(raw.orEmpty()))
+                        .orEmpty()
+                val json: JsonNode = objectMapper.readTree(sanitizeTmapJson(raw))
                 parseTmapGeoJson(json, searchOption)
             } catch (e: Exception) {
                 log.warn(
