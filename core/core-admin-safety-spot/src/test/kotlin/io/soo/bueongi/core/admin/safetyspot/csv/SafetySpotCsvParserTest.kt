@@ -124,6 +124,20 @@ class SafetySpotCsvParserTest {
     }
 
     @Test
+    fun `공공데이터포털 비상벨 원본 헤더(WGS84위도·설치위치)를 읽어 적재한다`() {
+        val csv =
+            """
+            개방자치단체코드,설치위치,소재지지번주소,WGS84위도,WGS84경도
+            3000000,서울시 종로구 보건소 화장실,서울특별시 종로구 옥인동 45-30,37.5732,127.0016
+            """.trimIndent()
+
+        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.BELL))
+
+        assertThat(result.points).hasSize(1)
+        assertThat(result.points.first().name).isEqualTo("서울시 종로구 보건소 화장실")
+    }
+
+    @Test
     fun `police 주소만 있고 좌표가 없으면 전부 skip(에러 아님)`() {
         val csv =
             """
