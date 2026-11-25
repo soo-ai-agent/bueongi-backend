@@ -2,24 +2,20 @@ package io.soo.bueongi.core.app
 
 import io.soo.bueongi.core.appinfo.api.controller.HealthController
 import io.soo.bueongi.core.appinfo.domain.service.HealthService
-import io.soo.bueongi.core.share.domain.service.ShareService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import java.time.Clock
 
 @Tag("context")
 @WebMvcTest(HealthController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(HealthControllerTest.Config::class, HealthService::class)
+@Import(HealthControllerTestConfig::class, HealthService::class)
 @ActiveProfiles("test")
 class HealthControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
@@ -34,11 +30,5 @@ class HealthControllerTest(
                 jsonPath("$.service") { value("bueongi-backend") }
                 jsonPath("$.locationStore") { value("memory") }
             }
-    }
-
-    @TestConfiguration
-    class Config {
-        @Bean
-        fun shareService(): ShareService = ShareService(StubShareSessionStore("memory"), Clock.systemUTC(), "http://localhost:3619")
     }
 }

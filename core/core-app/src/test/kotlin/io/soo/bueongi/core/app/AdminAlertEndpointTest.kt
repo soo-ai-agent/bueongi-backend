@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(AlertController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AdminEndpointFixtures.FakeStoreConfig::class, AlertHistoryService::class)
+@Import(AdminEndpointFixtures::class, AlertHistoryService::class)
 @Tag("context")
 class AdminAlertEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

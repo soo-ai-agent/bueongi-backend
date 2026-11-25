@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(SafetySpotStatusController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures::class)
 @Tag("context")
 class AdminSafetySpotStatusEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

@@ -5,15 +5,17 @@ import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPageBuilder
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowLoaded
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowSkipped
 import io.soo.bueongi.storage.db.safetyspot.store.CsvSkipReason
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class CsvPageBuilderTest {
-    private val skipped: CsvRowResult = CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
+    private val skipped: CsvRowResult = CsvRowSkipped(CsvSkipReason.NO_COORDINATE)
 
-    private val loaded: CsvRowResult = CsvRowResult.Loaded(SafetySpotPoint.of(type = SafetySpotType.CCTV, lat = 37.5, lng = 127.0))
+    private val loaded: CsvRowResult = CsvRowLoaded(SafetySpotPoint.of(type = SafetySpotType.CCTV, lat = 37.5, lng = 127.0))
 
     @Test
     fun `요청한 쪽의 행만 담고 집계는 파일 전체로 센다`() {

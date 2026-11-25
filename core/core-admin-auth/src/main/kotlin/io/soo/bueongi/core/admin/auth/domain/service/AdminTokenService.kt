@@ -12,6 +12,7 @@ import io.soo.bueongi.core.admin.auth.domain.model.JwtKeyMaterial
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
@@ -54,7 +55,15 @@ class AdminTokenService(
         if (!issuedToAdmin || !isRefreshToken) {
             throw AdminAuthenticationException()
         }
-        return issue()
+        // 재발급 토큰은 다시 만들지 않는다 — 다시 만들면 만료가 계속 밀려, 새어 나간 토큰 하나로 끝없이 재발급할 수 있다.
+        val refreshExpiresAt: Instant = claims.expiration.toInstant()
+        return AdminTokenBundle(
+            accessToken = create(AdminTokenKind.ACCESS, authProperties.accessTokenSeconds),
+            tokenType = "Bearer",
+            expiresIn = authProperties.accessTokenSeconds,
+            refreshToken = refreshToken,
+            refreshExpiresIn = Duration.between(clock.instant(), refreshExpiresAt).seconds,
+        )
     }
 
     private fun create(kind: AdminTokenKind, lifetimeSeconds: Long): String {

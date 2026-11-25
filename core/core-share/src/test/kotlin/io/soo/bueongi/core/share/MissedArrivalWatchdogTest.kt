@@ -16,7 +16,6 @@ import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import io.soo.bueongi.storage.db.share.store.ShareSessionStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -224,14 +223,6 @@ class MissedArrivalWatchdogTest {
 
             override fun findActive(): List<ShareSession> = active
         }
-
-    private class RecordingPublisher : ApplicationEventPublisher {
-        val events: MutableList<Any> = ArrayList()
-
-        override fun publishEvent(event: Any) {
-            events.add(event)
-        }
-    }
 
     @Test
     fun `초과 임계값은 5분이다 - 경계 전후를 절대값으로 고정`() {

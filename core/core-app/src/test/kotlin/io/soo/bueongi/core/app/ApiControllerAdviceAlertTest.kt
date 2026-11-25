@@ -8,19 +8,10 @@ import io.soo.bueongi.core.share.api.controller.ShareStoreAdvice
 import io.soo.bueongi.storage.db.share.store.LocationStoreUnavailableException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 
 class ApiControllerAdviceAlertTest {
-    private class RecordingPublisher : ApplicationEventPublisher {
-        val events: MutableList<Any> = ArrayList()
-
-        override fun publishEvent(event: Any) {
-            events.add(event)
-        }
-    }
-
     @Test
     fun `미처리 예외(500)면 예외 클래스별 key 로 알림을 보낸다 — 응답 본문 비노출 계약은 유지`() {
         val notifier = RecordingPublisher()

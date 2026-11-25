@@ -22,19 +22,6 @@ import org.mockito.kotlin.whenever
 import java.nio.file.Path
 
 class SecurityLampFillServiceTest {
-    private class FakeLiveStore : SafetySpotLiveStore {
-        val appended: ArrayList<SafetySpotPoint> = ArrayList()
-
-        override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {
-            appended.clear()
-            appended.addAll(points)
-        }
-
-        override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
-            appended.addAll(points)
-        }
-    }
-
     @Test
     fun `CSV 로 이미 적재된 자치단체는 API 를 부르지 않는다`(
         @TempDir dir: Path,

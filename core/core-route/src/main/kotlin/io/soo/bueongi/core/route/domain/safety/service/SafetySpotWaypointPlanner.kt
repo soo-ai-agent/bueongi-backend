@@ -90,12 +90,6 @@ class SafetySpotWaypointPlanner(
         return plans.toList()
     }
 
-    // 경로 직선 위에 투영해 본 덩어리 — 어디쯤(progress) 있는지를 같이 든다.
-    private data class PlacedCluster(
-        val cluster: SafetySpotCluster,
-        val progress: Double,
-    )
-
     companion object {
         const val CLUSTER_RADIUS_METERS: Double = 150.0
 

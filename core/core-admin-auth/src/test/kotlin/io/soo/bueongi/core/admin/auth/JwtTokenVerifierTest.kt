@@ -5,6 +5,7 @@ import io.soo.bueongi.core.admin.auth.domain.config.JwtProperties
 import io.soo.bueongi.core.admin.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.admin.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.admin.auth.domain.model.AdminTokenKind
+import io.soo.bueongi.core.admin.auth.domain.model.VerifiedToken
 import io.soo.bueongi.core.admin.auth.domain.service.JwtTokenVerifier
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -45,7 +46,7 @@ class JwtTokenVerifierTest {
 
     @Test
     fun `유효한 ROLE_ADMIN 토큰을 검증해 userId 와 roles 를 추출한다`() {
-        val verified: JwtTokenVerifier.VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token())
+        val verified: VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token())
 
         assertThat(verified.userId).isEqualTo(42L)
         assertThat(verified.roles).containsExactly("ROLE_ADMIN")
@@ -53,7 +54,7 @@ class JwtTokenVerifierTest {
 
     @Test
     fun `roles 클레임이 없으면 빈 목록으로 추출한다`() {
-        val verified: JwtTokenVerifier.VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token(roles = null))
+        val verified: VerifiedToken = verifierFor(keyPair.public as RSAPublicKey).verify(token(roles = null))
 
         assertThat(verified.roles).isEmpty()
     }

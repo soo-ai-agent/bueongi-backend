@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.put
 
 @WebMvcTest(SlackConfigController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Tag("context")
 class SlackConfigControllerTest(

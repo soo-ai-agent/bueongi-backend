@@ -8,7 +8,6 @@ import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
-import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.assertj.core.api.Assertions.assertThat
@@ -21,25 +20,10 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.nio.file.Path
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 
 class StreetLampFillServiceTest {
-    private class FakeLiveStore : SafetySpotLiveStore {
-        val appended: ArrayList<SafetySpotPoint> = ArrayList()
-
-        override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {
-            appended.clear()
-            appended.addAll(points)
-        }
-
-        override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
-            appended.addAll(points)
-        }
-    }
-
     @Test
     fun `키가 없으면 외부 호출을 하지 않는다`(
         @TempDir dir: Path,
@@ -105,16 +89,6 @@ class StreetLampFillServiceTest {
         ticking.now = now.plus(Duration.ofMinutes(11))
         service.fill()
         verify(client, times(2)).fetch()
-    }
-
-    private class TickingClock(
-        var now: Instant,
-    ) : Clock() {
-        override fun instant(): Instant = now
-
-        override fun getZone(): ZoneOffset = ZoneOffset.UTC
-
-        override fun withZone(zone: java.time.ZoneId): Clock = this
     }
 
     @Test

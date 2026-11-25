@@ -28,9 +28,9 @@ data class GeoPoint(
 
     // 국소 평면(equirectangular) 근사라 도심 규모(수 km)에서만 유효하다.
     fun projectOnto(a: GeoPoint, b: GeoPoint): SegmentProjection {
-        val self: Planar = toPlanar(lat)
-        val pa: Planar = a.toPlanar(lat)
-        val pb: Planar = b.toPlanar(lat)
+        val self: PlanarPoint = toPlanar(lat)
+        val pa: PlanarPoint = a.toPlanar(lat)
+        val pb: PlanarPoint = b.toPlanar(lat)
         val dx: Double = pb.x - pa.x
         val dy: Double = pb.y - pa.y
         val segLenSq: Double = dx * dx + dy * dy
@@ -62,16 +62,11 @@ data class GeoPoint(
         return nearest
     }
 
-    private fun toPlanar(originLat: Double): Planar {
+    private fun toPlanar(originLat: Double): PlanarPoint {
         val latScale: Double = Math.toRadians(1.0) * EARTH_RADIUS_M
         val lngScale: Double = latScale * cos(Math.toRadians(originLat))
-        return Planar(x = lng * lngScale, y = lat * latScale)
+        return PlanarPoint(x = lng * lngScale, y = lat * latScale)
     }
-
-    private data class Planar(
-        val x: Double,
-        val y: Double,
-    )
 
     companion object {
         private const val EARTH_RADIUS_M: Double = 6_371_000.0

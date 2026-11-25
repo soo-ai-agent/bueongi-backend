@@ -6,7 +6,6 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvPars
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
@@ -19,18 +18,6 @@ import java.nio.file.Path
 
 class SafetySpotUploadServiceTest {
     private val mapper = ObjectMapper()
-
-    private class FakeLiveStore : SafetySpotLiveStore {
-        var lastType: SafetySpotType? = null
-        var lastPoints: List<SafetySpotPoint>? = null
-
-        override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {}
-
-        override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {
-            lastType = type
-            lastPoints = points
-        }
-    }
 
     private fun service(tmp: Path, liveStore: SafetySpotLiveStore, statusStore: SafetySpotRefreshStatusStore) =
         SafetySpotUploadService(

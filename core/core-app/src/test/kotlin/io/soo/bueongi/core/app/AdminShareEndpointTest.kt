@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.get
 
 @WebMvcTest(ShareAdminController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AdminEndpointFixtures.FakeStoreConfig::class)
+@Import(AdminEndpointFixtures::class)
 @Tag("context")
 class AdminShareEndpointTest(
     @param:Autowired private val mockMvc: MockMvc,

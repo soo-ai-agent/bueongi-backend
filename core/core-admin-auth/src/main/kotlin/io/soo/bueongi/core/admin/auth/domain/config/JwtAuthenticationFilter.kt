@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.admin.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.admin.auth.domain.error.MissingTokenException
+import io.soo.bueongi.core.admin.auth.domain.model.VerifiedToken
 import io.soo.bueongi.core.admin.auth.domain.service.JwtTokenVerifier
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -24,7 +25,7 @@ class JwtAuthenticationFilter(
             return
         }
 
-        val verified: JwtTokenVerifier.VerifiedToken =
+        val verified: VerifiedToken =
             try {
                 verifier.verify(header.removePrefix("Bearer ").trim())
             } catch (e: ExpiredTokenException) {

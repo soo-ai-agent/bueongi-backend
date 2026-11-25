@@ -20,10 +20,10 @@ class CsvPageBuilder(
     fun count(result: CsvRowResult, cells: List<String>): Boolean {
         totalRows++
         when (result) {
-            is CsvRowResult.Loaded -> loadedRows++
-            is CsvRowResult.Skipped -> skippedRows++
+            is CsvRowLoaded -> loadedRows++
+            is CsvRowSkipped -> skippedRows++
         }
-        if (skippedOnly && result !is CsvRowResult.Skipped) {
+        if (skippedOnly && result !is CsvRowSkipped) {
             return false
         }
         // 결합 문자열은 검색할 때만 만든다 — CCTV 37만 행을 검색어 없이 넘길 때의 낭비가 크다.

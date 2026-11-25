@@ -8,9 +8,7 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
 
 @Component
-class RegionNameCatalog(
-    objectMapper: ObjectMapper,
-) {
+class RegionNameCatalog(objectMapper: ObjectMapper) {
     private val log: Logger = LoggerFactory.getLogger(RegionNameCatalog::class.java)
 
     private val names: Map<String, RegionName> = load(objectMapper)

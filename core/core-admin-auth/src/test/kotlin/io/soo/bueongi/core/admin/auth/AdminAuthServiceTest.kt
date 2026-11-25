@@ -89,6 +89,22 @@ class AdminAuthServiceTest {
     }
 
     @Test
+    fun `재발급은 받은 재발급 토큰을 그대로 돌려줘 만료를 늘리지 않는다`() {
+        val bundle = tokens.issue()
+
+        val reissued = tokens.refresh(bundle.refreshToken)
+
+        assertThat(reissued.refreshToken).isEqualTo(bundle.refreshToken)
+        assertThat(reissued.refreshExpiresIn).isLessThanOrEqualTo(bundle.refreshExpiresIn)
+    }
+
+    @Test
+    fun `cost 10 미만의 bcrypt 해시는 설정으로 받지 않는다`() {
+        assertThatThrownBy { AdminAuthProperties(loginId = "admin", passwordHash = BCryptPasswordEncoder(4).encode("password")) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
     fun `리프레시 토큰은 관리자 API access token으로 사용할 수 없다`() {
         val bundle = tokens.issue()
 

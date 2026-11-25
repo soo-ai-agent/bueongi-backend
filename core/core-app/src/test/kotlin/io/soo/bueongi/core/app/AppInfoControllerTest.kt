@@ -5,22 +5,18 @@ import io.soo.bueongi.core.appinfo.domain.service.AppInfoService
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import java.util.Properties
 
 @Tag("context")
 @WebMvcTest(AppInfoController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AppInfoControllerTest.Config::class, AppInfoService::class)
+@Import(AppInfoControllerTestConfig::class, AppInfoService::class)
 @ActiveProfiles("test")
 @TestPropertySource(
     properties = [
@@ -49,15 +45,5 @@ class AppInfoControllerTest(
                 jsonPath("$.minSupportedAppVersion") { value("1.1.0") }
                 jsonPath("$.latestAppVersion") { value("1.4.2") }
             }
-    }
-
-    @TestConfiguration
-    class Config {
-        @Bean
-        fun buildProperties(): BuildProperties {
-            val entries = Properties()
-            entries["version"] = "1.2.3"
-            return BuildProperties(entries)
-        }
     }
 }

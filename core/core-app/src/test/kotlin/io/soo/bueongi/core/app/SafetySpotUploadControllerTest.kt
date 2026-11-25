@@ -1,30 +1,19 @@
 package io.soo.bueongi.core.app
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.safetyspot.api.controller.SafetySpotUploadController
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
-import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.multipart
-import java.nio.file.Files
 
 @WebMvcTest(SafetySpotUploadController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(SafetySpotUploadControllerTest.TestConfig::class)
+@Import(SafetySpotUploadControllerTestConfig::class)
 @Tag("context")
 class SafetySpotUploadControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
@@ -87,25 +76,5 @@ class SafetySpotUploadControllerTest(
                 jsonPath("$.code") { value("VALIDATION_FAILED") }
                 jsonPath("$.errors[0].field") { value("file") }
             }
-    }
-
-    @TestConfiguration
-    class TestConfig {
-        private class FakeLiveStore : SafetySpotLiveStore {
-            override fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>) {}
-
-            override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {}
-        }
-
-        @Bean
-        fun safetySpotUploadService(): SafetySpotUploadService {
-            val dir: String = Files.createTempDirectory("fac-upload-controller-test").toFile().absolutePath
-            return SafetySpotUploadService(
-                parser = SafetySpotCsvParser(),
-                uploadStore = SafetySpotUploadStore(ObjectMapper(), dir),
-                liveStore = FakeLiveStore(),
-                refreshStatusStore = SafetySpotRefreshStatusStore(),
-            )
-        }
     }
 }

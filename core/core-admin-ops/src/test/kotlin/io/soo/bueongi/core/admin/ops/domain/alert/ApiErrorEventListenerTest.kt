@@ -1,20 +1,10 @@
 package io.soo.bueongi.core.admin.ops.domain.alert
 
 import io.soo.bueongi.core.common.event.ApiErrorResponded
-import io.soo.bueongi.support.monitoring.AlertNotifier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ApiErrorEventListenerTest {
-    private class RecordingNotifier : AlertNotifier {
-        override val isEnabled: Boolean = true
-        val sent: MutableList<Triple<String, String, String>> = ArrayList()
-
-        override fun notify(key: String, title: String, detail: String) {
-            sent.add(Triple(key, title, detail))
-        }
-    }
-
     @Test
     fun `경로 탐색 불가 응답이면 Tmap 경로 실패 알림을 보낸다`() {
         val notifier = RecordingNotifier()

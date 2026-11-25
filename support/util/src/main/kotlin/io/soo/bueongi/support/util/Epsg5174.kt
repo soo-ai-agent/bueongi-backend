@@ -182,17 +182,6 @@ object Epsg5174 {
                 (35 * E2_BESSEL * E2_BESSEL * E2_BESSEL / 3072) * sin(6 * phi)
         )
     }
-
-    private data class Geodetic(
-        val latRad: Double,
-        val lngRad: Double,
-    )
-
-    private data class Ecef(
-        val x: Double,
-        val y: Double,
-        val z: Double,
-    )
 }
 
 private fun arcsecToRad(arcsec: Double): Double {

@@ -6,13 +6,13 @@ import org.junit.jupiter.api.Test
 
 class Epsg5174Test {
     // 파이프라인 proj4(같은 +towgs84 정의, h=0)로 뽑은 기준값이다.
-    private val anchors: List<Anchor> =
+    private val anchors: List<Epsg5174Anchor> =
         listOf(
-            Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),
-            Anchor("강남역", 37.4981, 127.0276, 202370.8770, 443988.3369),
-            Anchor("부산시청", 35.1796, 129.0756, 389004.1526, 188683.8461),
-            Anchor("제주시청", 33.4996, 126.5312, 156361.0803, 451.0668),
-            Anchor("속초", 38.2070, 128.5918, 339354.7647, 523867.7674),
+            Epsg5174Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),
+            Epsg5174Anchor("강남역", 37.4981, 127.0276, 202370.8770, 443988.3369),
+            Epsg5174Anchor("부산시청", 35.1796, 129.0756, 389004.1526, 188683.8461),
+            Epsg5174Anchor("제주시청", 33.4996, 126.5312, 156361.0803, 451.0668),
+            Epsg5174Anchor("속초", 38.2070, 128.5918, 339354.7647, 523867.7674),
         )
 
     @Test
@@ -50,12 +50,4 @@ class Epsg5174Test {
         assertThat(Epsg5174.toWgs84(0.0, -2_000_000.0)).isNull()
         assertThat(Epsg5174.toWgs84(Double.NaN, 500000.0)).isNull()
     }
-
-    private data class Anchor(
-        val name: String,
-        val lat: Double,
-        val lng: Double,
-        val x: Double,
-        val y: Double,
-    )
 }

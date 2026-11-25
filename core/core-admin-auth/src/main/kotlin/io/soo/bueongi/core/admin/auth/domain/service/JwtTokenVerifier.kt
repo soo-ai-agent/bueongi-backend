@@ -10,6 +10,7 @@ import io.soo.bueongi.core.admin.auth.domain.config.parseJwtPublicKey
 import io.soo.bueongi.core.admin.auth.domain.error.ExpiredTokenException
 import io.soo.bueongi.core.admin.auth.domain.error.InvalidTokenException
 import io.soo.bueongi.core.admin.auth.domain.model.AdminTokenKind
+import io.soo.bueongi.core.admin.auth.domain.model.VerifiedToken
 import java.security.interfaces.RSAPublicKey
 
 class JwtTokenVerifier(
@@ -25,11 +26,6 @@ class JwtTokenVerifier(
     constructor(properties: JwtProperties) : this(
         parseJwtPublicKey(properties.publicKey),
         properties.issuer,
-    )
-
-    data class VerifiedToken(
-        val userId: Long,
-        val roles: List<String>,
     )
 
     fun verify(token: String): VerifiedToken {

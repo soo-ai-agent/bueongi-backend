@@ -3,7 +3,6 @@ package io.soo.bueongi.core.place
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.soo.bueongi.client.place.Place
-import io.soo.bueongi.client.place.PlaceSearchClient
 import io.soo.bueongi.core.place.api.response.PlaceResponse
 import io.soo.bueongi.core.place.domain.error.PlaceSearchUnavailableException
 import io.soo.bueongi.core.place.domain.service.PlaceSearchService
@@ -48,21 +47,5 @@ class PlaceSearchServiceTest {
         val line: String = appender.list.single().formattedMessage
         assertThat(line).doesNotContain("우리집").doesNotContain("5xx")
         assertThat(line).contains("원인=RuntimeException")
-    }
-
-    private class FoundPlaces(
-        private val places: List<Place>,
-    ) : PlaceSearchClient {
-        override fun search(keyword: String): List<Place> {
-            return places
-        }
-    }
-
-    private class FailedSearch(
-        private val cause: Exception,
-    ) : PlaceSearchClient {
-        override fun search(keyword: String): List<Place> {
-            throw cause
-        }
     }
 }

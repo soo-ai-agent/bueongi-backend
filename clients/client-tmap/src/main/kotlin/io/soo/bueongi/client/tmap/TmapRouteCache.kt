@@ -8,12 +8,7 @@ class TmapRouteCache(
     private val maxEntries: Int = DEFAULT_MAX_ENTRIES,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    private data class Entry(
-        val route: TmapRoute,
-        val expiresAt: Long,
-    )
-
-    private val entries: ConcurrentHashMap<String, Entry> = ConcurrentHashMap<String, Entry>()
+    private val entries: ConcurrentHashMap<String, TmapRouteCacheEntry> = ConcurrentHashMap<String, TmapRouteCacheEntry>()
 
     fun get(
         origin: TmapCoord,
@@ -22,7 +17,7 @@ class TmapRouteCache(
         passList: List<TmapCoord>,
     ): TmapRoute? {
         val key: String = key(origin, destination, searchOption, passList)
-        val entry: Entry = entries[key] ?: return null
+        val entry: TmapRouteCacheEntry = entries[key] ?: return null
         if (clock() >= entry.expiresAt) {
             entries.remove(key)
             return null
@@ -40,7 +35,7 @@ class TmapRouteCache(
         if (entries.size >= maxEntries) {
             entries.clear()
         }
-        entries[key(origin, destination, searchOption, passList)] = Entry(route, clock() + ttlMillis)
+        entries[key(origin, destination, searchOption, passList)] = TmapRouteCacheEntry(route, clock() + ttlMillis)
     }
 
     private fun key(

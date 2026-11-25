@@ -10,7 +10,9 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.safehouse.SafeHouseCsvCon
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowLoaded
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
+import io.soo.bueongi.storage.db.safetyspot.store.CsvRowSkipped
 import io.soo.bueongi.storage.db.safetyspot.store.CsvSkipReason
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.support.util.Epsg5179
@@ -55,10 +57,10 @@ abstract class SafetySpotCsvContract(
     }
 
     fun judge(row: List<String>, columns: CsvColumns): CsvRowResult {
-        val geo: GeoPoint = readGeoPoint(row, columns) ?: return CsvRowResult.Skipped(CsvSkipReason.NO_COORDINATE)
+        val geo: GeoPoint = readGeoPoint(row, columns) ?: return CsvRowSkipped(CsvSkipReason.NO_COORDINATE)
         val skip: CsvSkipReason? = skipReasonOf(row, columns)
         if (skip != null) {
-            return CsvRowResult.Skipped(skip)
+            return CsvRowSkipped(skip)
         }
         val point: SafetySpotPoint =
             SafetySpotPoint.of(
@@ -72,7 +74,7 @@ abstract class SafetySpotCsvContract(
                 phone = columns.phone(row),
                 regionCode = columns.regionCode(row),
             )
-        return CsvRowResult.Loaded(point)
+        return CsvRowLoaded(point)
     }
 
     // 종류 전용 거름 규칙 — 기본은 거르지 않는다.
