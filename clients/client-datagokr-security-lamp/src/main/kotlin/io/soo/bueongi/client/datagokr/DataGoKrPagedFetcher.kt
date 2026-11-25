@@ -51,7 +51,10 @@ class DataGoKrPagedFetcher(
             }
 
             val rows: List<JsonNode> = extractItems(response.body.items)
-            response.body.totalCount?.let { totalCount = it }
+            val pageTotalCount: Long? = response.body.totalCount
+            if (pageTotalCount != null) {
+                totalCount = pageTotalCount
+            }
             received += rows.size
             rows.mapNotNullTo(points) { it.toPoint(fields) }
 

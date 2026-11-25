@@ -61,10 +61,12 @@ class SlackAlertConfig(
             return conservativeMask(url)
         }
         val prefix: String = url.take(markerIndex + SERVICES_MARKER.length)
-        val segments: List<String> =
-            url.drop(markerIndex + SERVICES_MARKER.length)
-                .split("/")
-                .filter { it.isNotEmpty() }
+        val segments: ArrayList<String> = ArrayList()
+        for (segment in url.drop(markerIndex + SERVICES_MARKER.length).split("/")) {
+            if (segment.isNotEmpty()) {
+                segments.add(segment)
+            }
+        }
         if (segments.isEmpty()) {
             return conservativeMask(url)
         }

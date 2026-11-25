@@ -123,43 +123,35 @@ class SafetySpotCsvParser {
         val length: Int = text.length
         while (cursor < length) {
             val char: Char = text[cursor]
-            if (inQuotes) {
-                if (char == '"') {
-                    val isEscapedQuote: Boolean = cursor + 1 < length && text[cursor + 1] == '"'
-                    if (isEscapedQuote) {
-                        field.append('"')
-                        cursor++
-                    } else {
-                        inQuotes = false
-                    }
-                } else {
-                    field.append(char)
+            val nextIsQuote: Boolean = cursor + 1 < length && text[cursor + 1] == '"'
+            val nextIsNewline: Boolean = cursor + 1 < length && text[cursor + 1] == '\n'
+            when {
+                inQuotes && char == '"' && nextIsQuote -> {
+                    field.append('"')
+                    cursor++
                 }
-            } else {
-                when (char) {
-                    '"' -> inQuotes = true
-                    ',' -> {
-                        record.add(field.toString())
-                        field.setLength(0)
-                    }
-                    '\n' -> {
-                        record.add(field.toString())
-                        records.add(record)
-                        record = ArrayList()
-                        field.setLength(0)
-                    }
-                    '\r' -> {
-                        // CRLF 는 뒤따르는 \n 이 행을 끊는다. 여기서 끊으면 빈 행이 하나 더 생긴다.
-                        val isCrLf: Boolean = cursor + 1 < length && text[cursor + 1] == '\n'
-                        if (!isCrLf) {
-                            record.add(field.toString())
-                            records.add(record)
-                            record = ArrayList()
-                            field.setLength(0)
-                        }
-                    }
-                    else -> field.append(char)
+                inQuotes && char == '"' -> inQuotes = false
+                inQuotes -> field.append(char)
+                char == '"' -> inQuotes = true
+                char == ',' -> {
+                    record.add(field.toString())
+                    field.setLength(0)
                 }
+                char == '\n' -> {
+                    record.add(field.toString())
+                    records.add(record)
+                    record = ArrayList()
+                    field.setLength(0)
+                }
+                // CRLF 는 뒤따르는 \n 이 행을 끊는다. 여기서 끊으면 빈 행이 하나 더 생긴다.
+                char == '\r' && nextIsNewline -> {}
+                char == '\r' -> {
+                    record.add(field.toString())
+                    records.add(record)
+                    record = ArrayList()
+                    field.setLength(0)
+                }
+                else -> field.append(char)
             }
             cursor++
         }

@@ -15,8 +15,21 @@ class RegionNameCatalog(
 
     private val names: Map<String, RegionName> = load(objectMapper)
 
-    fun findByCode(code: String): RegionName =
-        names[code] ?: standardCodeRegion(code) ?: sidoOnlyRegion(code) ?: RegionName(sido = "", name = code)
+    fun findByCode(code: String): RegionName {
+        val named: RegionName? = names[code]
+        if (named != null) {
+            return named
+        }
+        val standardCodeNamed: RegionName? = standardCodeRegion(code)
+        if (standardCodeNamed != null) {
+            return standardCodeNamed
+        }
+        val sidoOnlyNamed: RegionName? = sidoOnlyRegion(code)
+        if (sidoOnlyNamed != null) {
+            return sidoOnlyNamed
+        }
+        return RegionName(sido = "", name = code)
+    }
 
     private fun sidoOnlyRegion(code: String): RegionName? {
         val sido: String = SIDO_ONLY_CODES[code] ?: return null

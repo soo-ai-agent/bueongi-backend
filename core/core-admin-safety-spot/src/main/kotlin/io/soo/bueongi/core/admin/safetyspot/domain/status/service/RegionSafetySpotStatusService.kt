@@ -50,7 +50,12 @@ class RegionSafetySpotStatusService(
     private fun pointsByTypeOf(code: String): Map<SafetySpotType, List<SafetySpotPoint>> {
         val pointsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
-            val inRegion: List<SafetySpotPoint> = safetySpots.index(type).all.filter { regionCodeOf(it) == code }
+            val inRegion: ArrayList<SafetySpotPoint> = ArrayList()
+            for (point in safetySpots.index(type).all) {
+                if (regionCodeOf(point) == code) {
+                    inRegion.add(point)
+                }
+            }
             if (inRegion.isNotEmpty()) {
                 pointsByType[type] = inRegion
             }

@@ -42,7 +42,10 @@ class ShareService(
         val ownerSecret: String = newToken()
         val now: Instant = clock.instant()
         val expiresAt: Instant = now.plusSeconds(hours.toLong() * SECONDS_PER_HOUR)
-        val expectedArrivalAt: Instant? = etaSeconds?.let { now.plusSeconds(it.toLong() + MISSED_ARRIVAL_GRACE_SECONDS) }
+        var expectedArrivalAt: Instant? = null
+        if (etaSeconds != null) {
+            expectedArrivalAt = now.plusSeconds(etaSeconds.toLong() + MISSED_ARRIVAL_GRACE_SECONDS)
+        }
         val session: ShareSession =
             ShareSession(
                 token = token,

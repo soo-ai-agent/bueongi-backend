@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanInstantiationException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -188,7 +189,10 @@ class ApiControllerAdvice(
                 setProperty("code", "METHOD_NOT_ALLOWED")
             }
         val headers = HttpHeaders()
-        ex.supportedHttpMethods?.let { headers.allow = it }
+        val supportedMethods: Set<HttpMethod>? = ex.supportedHttpMethods
+        if (supportedMethods != null) {
+            headers.allow = supportedMethods
+        }
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers).body(body)
     }
 

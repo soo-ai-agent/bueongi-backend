@@ -10,11 +10,9 @@ class GridSpatialIndex(
     points: List<SafetySpotPoint>,
 ) {
     // 한 지점의 시설 여러 대를 원천이 행으로 나눠 주므로, 좌표 5자리(≈1.1m)가 같으면 한 지점으로 센다.
-    private val distinct: List<SafetySpotPoint> =
-        points.distinctBy { Pair(roundCoord(it.lat), roundCoord(it.lng)) }
+    private val distinct: List<SafetySpotPoint> = distinctSpots(points)
 
-    private val buckets: Map<Long, List<SafetySpotPoint>> =
-        distinct.groupBy { cellKey(cellIndex(it.lat), cellIndex(it.lng)) }
+    private val buckets: Map<Long, List<SafetySpotPoint>> = groupByCell(distinct)
 
     val size: Int = distinct.size
 
@@ -107,6 +105,29 @@ class GridSpatialIndex(
         private const val MIN_LNG_DEG_METERS: Double = 86_000.0
 
         private const val COORD_SCALE: Double = 100_000.0
+
+        private fun distinctSpots(points: List<SafetySpotPoint>): List<SafetySpotPoint> {
+            val seenCoordinates: HashSet<Pair<Long, Long>> = HashSet()
+            val distinct: ArrayList<SafetySpotPoint> = ArrayList()
+            for (point in points) {
+                val coordinate: Pair<Long, Long> = Pair(roundCoord(point.lat), roundCoord(point.lng))
+                if (coordinate in seenCoordinates) {
+                    continue
+                }
+                seenCoordinates.add(coordinate)
+                distinct.add(point)
+            }
+            return distinct
+        }
+
+        private fun groupByCell(points: List<SafetySpotPoint>): Map<Long, List<SafetySpotPoint>> {
+            val buckets: LinkedHashMap<Long, ArrayList<SafetySpotPoint>> = LinkedHashMap()
+            for (point in points) {
+                val key: Long = cellKey(cellIndex(point.lat), cellIndex(point.lng))
+                buckets.getOrPut(key) { ArrayList() }.add(point)
+            }
+            return buckets
+        }
 
         private fun roundCoord(value: Double): Long {
             return Math.round(value * COORD_SCALE)

@@ -33,24 +33,21 @@ data class RegionSafetySpots(
             for (type in pointsByType.keys) {
                 quotas[type] = 0
             }
+            val types: List<SafetySpotType> = pointsByType.keys.toList()
             var remaining: Int = budget
-            while (remaining > 0) {
-                var handedOut: Int = 0
-                for ((type, points) in pointsByType) {
-                    if (remaining == 0) {
-                        break
-                    }
-                    val given: Int = quotas.getValue(type)
-                    if (given >= points.size) {
-                        continue
-                    }
-                    quotas[type] = given + 1
-                    remaining--
-                    handedOut++
+            var turn: Int = 0
+            var emptyTurnsInRow: Int = 0
+            while (remaining > 0 && emptyTurnsInRow < types.size) {
+                val type: SafetySpotType = types[turn % types.size]
+                turn++
+                val given: Int = quotas.getValue(type)
+                if (given >= pointsByType.getValue(type).size) {
+                    emptyTurnsInRow++
+                    continue
                 }
-                if (handedOut == 0) {
-                    break
-                }
+                quotas[type] = given + 1
+                remaining--
+                emptyTurnsInRow = 0
             }
             return quotas
         }

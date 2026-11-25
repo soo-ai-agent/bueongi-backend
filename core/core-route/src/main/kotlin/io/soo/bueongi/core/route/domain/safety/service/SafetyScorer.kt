@@ -54,10 +54,14 @@ class SafetyScorer(
         val weights: SafetyWeights = weightsCatalog.weightsAt(zonedAt(clock.millis()))
         val fills: Map<SafetyItem, Double> = fillsOf(counts, km, safePathOverlap)
         val normalized: Double? = normalizedScore(fills, weights, coverage)
-        val penalized: Double? = normalized?.let { applyRiskPenalty(it, counts.crimeProneArea, km) }
+        var score: Int? = null
+        if (normalized != null) {
+            val penalized: Double = applyRiskPenalty(normalized, counts.crimeProneArea, km)
+            score = (penalized * 100).roundToInt()
+        }
 
         return SafetyScore(
-            score = penalized?.let { (it * 100).roundToInt() },
+            score = score,
             scoreDetail =
                 SafetyScoreDetail(
                     routeKm = round3(routeKm),

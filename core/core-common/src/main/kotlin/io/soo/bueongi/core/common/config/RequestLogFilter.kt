@@ -20,7 +20,11 @@ class RequestLogFilter : OncePerRequestFilter() {
             filterChain.doFilter(request, response)
         } finally {
             val durationMs: Long = System.currentTimeMillis() - startedAt
-            val clientId: String? = request.getHeader(CLIENT_ID_HEADER)?.takeIf { it.isNotBlank() }
+            val clientIdHeader: String? = request.getHeader(CLIENT_ID_HEADER)
+            var clientId: String? = null
+            if (!clientIdHeader.isNullOrBlank()) {
+                clientId = clientIdHeader
+            }
             val caller: RequestCaller = callerOf(path)
             logRequest(
                 RequestLogLine(

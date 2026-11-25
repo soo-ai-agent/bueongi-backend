@@ -166,6 +166,15 @@ class SafetySpotCsvParserTest {
     }
 
     @Test
+    fun `따옴표로 감싼 필드 안의 겹따옴표는 따옴표 하나로 읽는다`() {
+        val csv: String = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,\"안심 \"\"24시\"\" 편의점\",서울 종로구 11"
+
+        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+
+        assertThat(result.points.single().name).isEqualTo("안심 \"24시\" 편의점")
+    }
+
+    @Test
     fun `CP949 로 인코딩된 CSV 도 한글 헤더로 파싱한다`() {
         val csv =
             """

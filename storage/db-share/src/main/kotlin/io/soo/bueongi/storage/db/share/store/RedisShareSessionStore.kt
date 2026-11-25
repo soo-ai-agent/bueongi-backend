@@ -37,7 +37,10 @@ class RedisShareSessionStore(
                     put(FIELD_CREATED_AT, session.createdAt.toString())
                     put(FIELD_EXPIRES_AT, session.expiresAt.toString())
                     put(FIELD_OWNER_SECRET, session.ownerSecret)
-                    session.expectedArrivalAt?.let { put(FIELD_EXPECTED_ARRIVAL_AT, it.toString()) }
+                    val expectedArrivalAt: Instant? = session.expectedArrivalAt
+                    if (expectedArrivalAt != null) {
+                        put(FIELD_EXPECTED_ARRIVAL_AT, expectedArrivalAt.toString())
+                    }
                 }
             redis.opsForHash<String, String>().putAll(shareKey, shareFields)
             redis.expire(shareKey, ttl)
@@ -50,8 +53,14 @@ class RedisShareSessionStore(
                         put(FIELD_LAT, location.lat.toString())
                         put(FIELD_LNG, location.lng.toString())
                         put(FIELD_UPDATED_AT, location.updatedAt.toString())
-                        location.remainingMeters?.let { put(FIELD_REMAINING_METERS, it.toString()) }
-                        location.remainingSeconds?.let { put(FIELD_REMAINING_SECONDS, it.toString()) }
+                        val remainingMeters: Double? = location.remainingMeters
+                        if (remainingMeters != null) {
+                            put(FIELD_REMAINING_METERS, remainingMeters.toString())
+                        }
+                        val remainingSeconds: Double? = location.remainingSeconds
+                        if (remainingSeconds != null) {
+                            put(FIELD_REMAINING_SECONDS, remainingSeconds.toString())
+                        }
                     }
                 redis.opsForHash<String, String>().putAll(locKey, fields)
                 redis.expire(locKey, ttl)

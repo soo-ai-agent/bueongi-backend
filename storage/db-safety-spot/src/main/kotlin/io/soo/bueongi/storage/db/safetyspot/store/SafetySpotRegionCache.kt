@@ -51,9 +51,12 @@ class SafetySpotRegionCache(
         }
         return try {
             val collection: StoredSafetySpotCollection = readMapper.readValue(file, StoredSafetySpotCollection::class.java)
-            val savedAt: Instant? = collection.savedAt?.let { Instant.parse(it) }
-            if (savedAt != null) {
-                savedAtByFile[cacheKey(type, regionCode)] = savedAt
+            val savedAtText: String? = collection.savedAt
+            var savedAt: Instant? = null
+            if (savedAtText != null) {
+                val parsed: Instant = Instant.parse(savedAtText)
+                savedAtByFile[cacheKey(type, regionCode)] = parsed
+                savedAt = parsed
             }
             savedAt
         } catch (e: Exception) {

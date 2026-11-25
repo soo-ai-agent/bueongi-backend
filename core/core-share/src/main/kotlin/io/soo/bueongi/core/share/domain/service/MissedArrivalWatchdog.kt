@@ -40,18 +40,8 @@ class MissedArrivalWatchdog(
             activeTokens.add(session.token)
             when (session.progressStatus(now)) {
                 ShareProgressStatus.IN_PROGRESS -> alertedTokens.remove(session.token)
-                ShareProgressStatus.ARRIVAL_LIKELY -> {
-                    if (session.token !in alertedTokens) {
-                        alertedTokens.add(session.token)
-                        alertArrivalLikely(session, now)
-                    }
-                }
-                ShareProgressStatus.MISSED_ARRIVAL_SUSPECT -> {
-                    if (session.token !in alertedTokens) {
-                        alertedTokens.add(session.token)
-                        alertMissedArrival(session, now)
-                    }
-                }
+                ShareProgressStatus.ARRIVAL_LIKELY -> alertArrivalLikely(session, now)
+                ShareProgressStatus.MISSED_ARRIVAL_SUSPECT -> alertMissedArrival(session, now)
             }
         }
         // 만료로 사라진 세션의 토큰을 비운다 — 안 비우면 집합이 계속 자란다.
@@ -59,6 +49,10 @@ class MissedArrivalWatchdog(
     }
 
     private fun alertMissedArrival(session: ShareSession, now: Instant) {
+        if (session.token in alertedTokens) {
+            return
+        }
+        alertedTokens.add(session.token)
         val expected: Instant = session.expectedArrivalAt ?: return
         val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
         val lastReportedAt: Instant? = session.location?.updatedAt
@@ -80,6 +74,10 @@ class MissedArrivalWatchdog(
     }
 
     private fun alertArrivalLikely(session: ShareSession, now: Instant) {
+        if (session.token in alertedTokens) {
+            return
+        }
+        alertedTokens.add(session.token)
         val expected: Instant = session.expectedArrivalAt ?: return
         val overdueMinutes: Long = Duration.between(expected, now).toMinutes()
         val masked: String = maskToken(session.token)
