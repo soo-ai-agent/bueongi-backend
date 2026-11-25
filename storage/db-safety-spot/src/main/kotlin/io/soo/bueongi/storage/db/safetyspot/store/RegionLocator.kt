@@ -1,12 +1,12 @@
-package io.soo.bueongi.core.safetyspot.domain.region.service
+package io.soo.bueongi.storage.db.safetyspot.store
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Component
 
+// 좌표가 속한 자치단체(개방자치단체코드 7자리)를 가장 가까운 CCTV 로 찾는다 — API 채우기와 업로드가 같은 기준을 쓴다.
 @Component
 class RegionLocator(
     private val safetySpots: SafetySpotSpatialSource,

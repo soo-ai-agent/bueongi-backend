@@ -2,18 +2,18 @@ package io.soo.bueongi.core.safetyspot.domain.fill.service
 
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
-import io.soo.bueongi.core.safetyspot.domain.region.service.RegionLocator
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.core.safetyspot.domain.safehouse.service.ChildSafeHouseFillService
 import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFillService
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.pickPointsAlong
+import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @Component
 class SafetySpotFillTrigger(

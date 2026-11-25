@@ -5,6 +5,7 @@ import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContra
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvParseResult
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
 import io.soo.bueongi.core.enums.SafetySpotType
+import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
@@ -18,13 +19,14 @@ class SafetySpotUploadService(
     private val uploadStore: SafetySpotUploadStore,
     private val liveStore: SafetySpotLiveStore,
     private val refreshStatusStore: SafetySpotRefreshStatusStore,
+    private val regionLocator: RegionLocator,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SafetySpotUploadService::class.java)
 
     fun upload(type: SafetySpotType, bytes: ByteArray): SafetySpotUploadResponse {
         val plain: ByteArray = gunzipIfNeeded(bytes)
         val contract: SafetySpotCsvContract = SafetySpotCsvContract.forType(type)
-        val parsed: SafetySpotCsvParseResult = parser.parse(plain, contract)
+        val parsed: SafetySpotCsvParseResult = parser.parse(plain, contract) { point -> regionLocator.locate(point) }
         if (parsed.points.isEmpty()) {
             throw EmptySafetySpotUploadException(received = parsed.received)
         }

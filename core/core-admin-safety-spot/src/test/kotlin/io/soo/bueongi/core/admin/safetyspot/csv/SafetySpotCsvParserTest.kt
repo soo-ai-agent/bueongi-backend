@@ -138,6 +138,19 @@ class SafetySpotCsvParserTest {
     }
 
     @Test
+    fun `지역 코드 칸이 없는 보안등 CSV 는 좌표로 찾은 지역 코드를 붙인다`() {
+        val csv =
+            """
+            보안등위치명,소재지지번주소,위도,경도
+            개천면0132,경상남도 고성군 개천면 가천리 1000-2,35.129938,128.2775089937
+            """.trimIndent()
+
+        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SECURITY_LAMP)) { "5340000" }
+
+        assertThat(result.points.single().regionCodeOrNull()).isEqualTo("5340000")
+    }
+
+    @Test
     fun `police 주소만 있고 좌표가 없으면 전부 skip(에러 아님)`() {
         val csv =
             """

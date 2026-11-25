@@ -3,6 +3,7 @@ package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.CsvColumns
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvParseResult
+import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPageBuilder
@@ -10,14 +11,18 @@ import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowLoaded
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
 import io.soo.bueongi.support.util.CP949
-import org.springframework.stereotype.Component
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
+import org.springframework.stereotype.Component
 
 @Component
 class SafetySpotCsvParser {
-    fun parse(bytes: ByteArray, contract: SafetySpotCsvContract): SafetySpotCsvParseResult {
+    fun parse(
+        bytes: ByteArray,
+        contract: SafetySpotCsvContract,
+        regionOf: (GeoPoint) -> String? = SafetySpotCsvContract.NO_REGION,
+    ): SafetySpotCsvParseResult {
         val records: List<List<String>> = tokenizeCsv(decode(bytes))
         val headerPos: Int = findHeaderRow(records)
         if (headerPos < 0) {
@@ -29,7 +34,7 @@ class SafetySpotCsvParser {
 
         val points: ArrayList<SafetySpotPoint> = ArrayList()
         for (row in dataRows) {
-            val result: CsvRowResult = contract.judge(row, columns)
+            val result: CsvRowResult = contract.judge(row, columns, regionOf)
             if (result is CsvRowLoaded) {
                 points.add(result.point)
             }

@@ -56,7 +56,8 @@ abstract class SafetySpotCsvContract(
         )
     }
 
-    fun judge(row: List<String>, columns: CsvColumns): CsvRowResult {
+    // regionOf: 지역 코드 칸이 없거나 빈 행을 좌표로 메운다 — 업로드된 지역에 API 조각을 다시 받지 않게 하려는 것.
+    fun judge(row: List<String>, columns: CsvColumns, regionOf: (GeoPoint) -> String? = NO_REGION): CsvRowResult {
         val geo: GeoPoint = readGeoPoint(row, columns) ?: return CsvRowSkipped(CsvSkipReason.NO_COORDINATE)
         val skip: CsvSkipReason? = skipReasonOf(row, columns)
         if (skip != null) {
@@ -72,7 +73,7 @@ abstract class SafetySpotCsvContract(
                 cameraCount = columns.cameraCount(row),
                 address = columns.address(row),
                 phone = columns.phone(row),
-                regionCode = columns.regionCode(row),
+                regionCode = columns.regionCode(row) ?: regionOf(geo),
             )
         return CsvRowLoaded(point)
     }
@@ -121,6 +122,8 @@ abstract class SafetySpotCsvContract(
     }
 
     companion object {
+        val NO_REGION: (GeoPoint) -> String? = { null }
+
         fun forType(type: SafetySpotType): SafetySpotCsvContract =
             when (type) {
                 SafetySpotType.CCTV -> CctvCsvContract()

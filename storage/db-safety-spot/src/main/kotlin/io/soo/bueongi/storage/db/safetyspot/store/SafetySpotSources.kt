@@ -52,9 +52,14 @@ class SafetySpotSources(
     }
 
     // 좌표가 겹치면 색인은 먼저 들어온 점을 남긴다 — API 가 파일보다 최신이라 앞에 둔다.
+    // 파일(CDN·업로드)에 이미 있는 지역의 API 조각은 넣지 않는다 — 같은 시설이 좌표만 조금 달라 두 번 세지 않게.
     private fun regionsBeforeFiles(): List<SafetySpotPoint> {
+        val fileRegions: Set<String> = files.mapNotNullTo(HashSet()) { it.regionCodeOrNull() }
         val points: ArrayList<SafetySpotPoint> = ArrayList()
-        for (regionPoints in regions.values) {
+        for ((regionCode, regionPoints) in regions) {
+            if (regionCode in fileRegions) {
+                continue
+            }
             points.addAll(regionPoints)
         }
         points.addAll(files)
