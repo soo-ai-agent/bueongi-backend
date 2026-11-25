@@ -1,87 +1,82 @@
-# 가로등: 데이터 저장
+# 가로등: 데이터 수집과 표시
 
-공통 구조(디스크 -> 조각 -> 색인)는 [DATA_STORAGE.md](../DATA_STORAGE.md)에 있다. 이 문서는 가로등만 다룬다.
+가로등 데이터가 어디서 와서 어떻게 저장되고 어디에 보이는지 정리한다. 여러 시설에 공통인 저장 구조는
+[DATA_STORAGE.md](../DATA_STORAGE.md)를 본다.
 
-숫자는 2026-10-11 샘플 삭제 뒤 로컬 서버 기동 로그와 저장소 파일을 세어 확인한 값이다.
+> 기준: 2026-11-25, 브랜치 `feat/nearby-safety-spot-counts`<br>
+> 건수: 저장소의 CDN 파일을 세어 확인한 값
 
-## 한 줄 요약
+## 한눈에 보기
 
-파이프라인이 넣은 **서울 가로등, 스마트가로등 파일 두 개**에, 재난안전데이터 **API로 받은 전국 1,500곳**을 더한다.
-와이어 이름은 `lamp`다.
+| 항목          | 내용                                                           |
+|---------------|----------------------------------------------------------------|
+| 원천          | 서울 가로등, 스마트 가로등(파이프라인), 재난안전데이터 가로등  |
+| 들어오는 길   | CDN 파일 + 경로 요청 시 외부 API 전국 1회 + 관리자 CSV 업로드  |
+| 외부 API 수집 | 재난안전데이터 공유 플랫폼 `DSSP-IF-00084` (전국)              |
+| 원본 CSV      | 저장소에 없음(파이프라인 입력은 `pipeline/data/csv/`)          |
+| 적재          | `cdn/lamp/seoul.json` 19,291건, `cdn/lamp/smart.json` 12,714건 |
+| 쓰는 곳       | 안전 점수(보안등과 합산), 경로 마커, 주변 안심시설             |
 
-## 어디서 오나
+## 필드
+
+가로등은 원본 CSV가 저장소에 없다. 서버가 읽는 필드는 들어오는 길마다 다르다.
+
+| 들어오는 길   | 좌표                                 | 이름                           | 주소                             | 지역 코드                              |
+|---------------|--------------------------------------|--------------------------------|----------------------------------|----------------------------------------|
+| CDN 파일      | `lat`, `lng`                         | `name`                         | -                                | -                                      |
+| 외부 API      | `XMAP_CRTS`, `YMAP_CRTS` (EPSG:5179) | -                              | `ROAD_NM_ADDR`, 없으면 `ADDR`    | `STDG_SGG_CD`                          |
+| 관리자 업로드 | `위도`, `경도`                       | `보안등위치명` 또는 `관리번호` | `설치위치` 또는 `소재지지번주소` | `개방자치단체코드` 또는 `제공기관코드` |
+
+CDN 파일은 파이프라인(`pipeline/`)이 원본 CSV를 위경도 JSON으로 바꿔 만든다. 원본 컬럼은
+[pipeline/data/csv/README.md](../../pipeline/data/csv/README.md)에 있다.
+
+## 흐름
 
 ```mermaid
 flowchart LR
-    SEOUL["cdn/lamp/seoul.json<br/>서울 가로등 19,291"] --> FILE["파일 조각"]
-    SMART["cdn/lamp/smart.json<br/>전국 스마트가로등 12,714"] --> FILE
-    API["재난안전데이터 API<br/>DSSP-IF-00084"] --> RC["region-cache/lamp/nationwide.json<br/>1,500"]
-    RC --> REGION["API 조각 nationwide"]
-    FILE --> IDX["가로등 색인 33,245곳"]
-    REGION --> IDX
-    IDX --> USE["안전 점수 조명 축, 지도 마커"]
+    subgraph 수집
+        A1["파이프라인<br/>CSV를 JSON으로"]
+        A2["경로 요청 후 백그라운드<br/>전국 1회"]
+        A3["관리자 CSV 업로드"]
+    end
+    subgraph 저장
+        B1["cdn/lamp/*.json"]
+        B2["data/region-cache/<br/>전국 JSON, 90일"]
+        B3["data/facility-uploads/lamp.json"]
+        C["가로등 색인(메모리)"]
+    end
+    subgraph 표시
+        E1["안전 점수<br/>보안등과 합쳐 조명 밀도"]
+        E2["경로 마커"]
+        E3["주변 안심시설<br/>반경 500m"]
+    end
+    A1 --> B1
+    A2 --> B2
+    A3 --> B3
+    B1 -->|"서버 기동 시"| C
+    B3 -->|"있으면 CDN 대신"| C
+    B2 --> C
+    C --> E1
+    C --> E2
+    C --> E3
 ```
 
-| 출처                    | 위치                                     |   건수 | 실데이터인가 | 근거 커밋  |
-|-------------------------|------------------------------------------|-------:|--------------|------------|
-| 서울 가로등 (C-1)       | `cdn/lamp/seoul.json`                    | 19,291 | 예           | `fd53e6a8` |
-| 전국 스마트가로등 (C-4) | `cdn/lamp/smart.json`                    | 12,714 | 예           | `cc3e7199` |
-| 재난안전데이터 API      | `data/region-cache/lamp/nationwide.json` |  1,500 | 예           | -          |
+- 서버는 켜질 때 CDN 파일을 읽고, 업로드가 있으면 그것으로 CDN 파일을 대신한다.
+- 외부 API는 경로 요청이 처음 들어올 때 전국을 한 번 받는다. 90일 캐시가 있으면 부르지 않고, 실패하면 10분 동안 다시
+  부르지 않는다.
+- API로 받은 조각은 업로드가 있어도 그대로 색인에 붙는다.
 
-API는 `clients/client-safetydata-street-lamp`의 `StreetLampClient`가
-부른다(`https://www.safetydata.go.kr/V2/api/DSSP-IF-00084`). API는 지역을 나누지 않고 전국을 한 번에 준다. 클라이언트가
-마지막 페이지까지 넘겨 받으므로, 1,500은 API가 가진 전체다.
+## 읽는 규칙
 
-```kotlin
-// StreetLampClient.kt:37: totalCount 에 닿을 때까지 페이지를 넘긴다(한 페이지 1,000건, 최대 50쪽)
-for (pageNo in 1..MAX_PAGES) {
-```
+- 외부 API 좌표는 EPSG:5179 평면좌표라 위경도로 바꾼다. 바꾼 결과가 한국 범위 밖이면 버린다.
+- 업로드 규격은 보안등과 같은 `LampCsvContract`다. 좌표가 빈 행은 버린다.
 
-## 언제 바뀌나
+## 갱신 방법
 
-경로를 찾을 때마다 수집을 시도하지만, 받은 지 90일이 안 됐으면 건너뛴다. 90일이 지나면 다시 받아 `nationwide` 조각을
-새 결과로 바꾼다.
+1. CDN 파일은 파이프라인 월간 실행으로 바뀐다. 절차는 [pipeline/README.md](../../pipeline/README.md)를 본다.
+2. 외부 API 조각은 90일이 지나면 다음 경로 요청 때 다시 받는다.
 
-```kotlin
-// StreetLampFillService.kt:60-65 (발췌)
-cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
-// ...
-liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
-```
+## 알아둘 점
 
-서울 가로등, 스마트가로등 파일은 실행 중에 바뀌지 않는다. 새로 받으려면 파이프라인을 다시 돌려 파일을 교체해야 한다.
-
-## 어디에 쓰이나
-
-가로등과 보안등을 **합쳐서** 안전 점수의 조명 축을 만든다. 지도 마커로도 나가고, 주변 안심시설
-집계(`GET /api/safety-spots/nearby`)에도 나간다.
-
-```kotlin
-// SafetyScorer.kt:108-110
-lamp =
-    countWithinCorridor(SafetySpotType.STREET_LAMP, path) +
-        countWithinCorridor(SafetySpotType.SECURITY_LAMP, path),
-```
-
-## 이 방식이 맞는가
-
-**맞는 점**: API가 전국 1,500건을 한 번에 주므로 지역을 나눌 필요가 없다. `nationwide` 조각 하나를 90일마다 바꾸는
-지금 방식이 맞다.
-
-**문제 1: 서울 가로등, 스마트가로등 파일을 새로 고칠 길이 서버에 없다.** 파이프라인을 사람이 다시 돌려야 해서, 오래
-두면 데이터가 낡는다.
-
-**문제 2: 첫 요청에는 API 데이터가 없을 수 있다.** 다만 전국 한 번 받기라 서버가 켜진 뒤 첫 경로 한 번에만 해당한다.
-
-서버는 경로를 찾을 때 API 수집을 **뒤에서(기다리지 않고)** 시작한다. 그래서 처음 가는 지역의 첫 경로 응답에는 그 지역
-API 데이터가 아직 없을 수 있다.
-
-```kotlin
-// RouteOptionService.kt:38: 수집을 맡기고 바로 점수 계산으로 넘어간다
-routePlannedHandler.onRoutePlanned(firstRoutePath)
-
-// SafetySpotFillTrigger.kt:38: 실제 수집은 별도 스레드에서 돈다
-executor.execute {
-```
-
-**권장**: 서울 가로등, 스마트가로등도 관리자 업로드로 갱신할 수 있게 절차를 문서화한다. 지금 구조를 바꿀 필요는 없다.
+- 키(`SAFETYDATA_SERVICE_KEY`)가 없으면 외부 API 채우기는 꺼지고 CDN 파일만 쓴다.
+- 지역 캐시는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 배포할 때마다 전국을 다시 받는다.
