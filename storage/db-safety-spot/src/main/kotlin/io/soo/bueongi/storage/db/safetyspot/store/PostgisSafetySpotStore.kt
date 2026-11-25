@@ -140,6 +140,11 @@ class PostgisSafetySpotStore(
 
     override fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>) {
         val source: String = apiSource(regionCode)
+        if (points.isEmpty()) {
+            // 다시 받은 결과가 비어도 전에 받은 API 데이터는 지우지 않는다 — 저장 시각만 새로 해 곧바로 다시 받지 않게 한다.
+            touchSlice(type, source)
+            return
+        }
         transactions.executeWithoutResult {
             deleteSlice(type, source)
             insert(type, source, points)
@@ -226,6 +231,15 @@ class PostgisSafetySpotStore(
                 .addValue("rowCount", rowCount)
                 .addValue("savedAt", Timestamp.from(clock.instant()))
         jdbc.update(UPSERT_SLICE_SQL, params)
+    }
+
+    private fun touchSlice(type: SafetySpotType, source: String) {
+        val params: MapSqlParameterSource =
+            MapSqlParameterSource()
+                .addValue("type", type.cdnType)
+                .addValue("source", source)
+                .addValue("savedAt", Timestamp.from(clock.instant()))
+        jdbc.update(TOUCH_SLICE_SQL, params)
     }
 
     private fun pointMapper(type: SafetySpotType): RowMapper<SafetySpotPoint> {
@@ -335,6 +349,10 @@ class PostgisSafetySpotStore(
         const val UPSERT_SLICE_SQL: String =
             "INSERT INTO safety_spot_slice (type, source, row_count, saved_at) VALUES (:type, :source, :rowCount, :savedAt) " +
                 "ON CONFLICT (type, source) DO UPDATE SET row_count = EXCLUDED.row_count, saved_at = EXCLUDED.saved_at"
+
+        const val TOUCH_SLICE_SQL: String =
+            "INSERT INTO safety_spot_slice (type, source, row_count, saved_at) VALUES (:type, :source, 0, :savedAt) " +
+                "ON CONFLICT (type, source) DO UPDATE SET saved_at = EXCLUDED.saved_at"
 
         const val SLICE_SAVED_AT_SQL: String =
             "SELECT saved_at FROM safety_spot_slice WHERE type = :type AND source = :source"

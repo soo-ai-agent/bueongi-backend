@@ -74,6 +74,15 @@ class PostgisSafetySpotStoreTest {
         assertThat(store.findByRegion(SafetySpotType.SECURITY_LAMP, "5340000").map { it.name }).containsExactly("업로드")
     }
 
+    @Test
+    fun `다시 받은 API 결과가 0건이면 기존 지역 데이터를 지우지 않는다`() {
+        store.replaceRegion(SafetySpotType.POLICE, "NATIONWIDE", listOf(SafetySpotPoint.of(SafetySpotType.POLICE, 37.5, 127.0, regionCode = "11110")))
+
+        store.replaceRegion(SafetySpotType.POLICE, "NATIONWIDE", emptyList())
+
+        assertThat(store.findByRegion(SafetySpotType.POLICE, "11110")).hasSize(1)
+    }
+
     private fun cctv(lat: Double, lng: Double): SafetySpotPoint {
         return SafetySpotPoint.of(SafetySpotType.CCTV, lat, lng)
     }
