@@ -142,12 +142,13 @@ java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
 openssl pkey -in jwt-private.pem -pubout -out jwt-public.pem
 
-export JWT_PRIVATE_KEY="$(openssl pkey -in jwt-private.pem -outform DER | base64 | tr -d '\n')"
+export JWT_PRIVATE_KEY="$(openssl pkcs8 -topk8 -nocrypt -in jwt-private.pem -outform DER | base64 | tr -d '\n')"
 export JWT_PUBLIC_KEY="$(openssl pkey -pubin -in jwt-public.pem -outform DER | base64 | tr -d '\n')"
 export BUEONGI_ADMIN_LOGIN_ID=admin
 export BUEONGI_ADMIN_PASSWORD_HASH="$(htpasswd -bnBC 12 admin '원하는 비밀번호' | cut -d: -f2 | tr -d '\n')"
 ```
 
+- 개인키는 PKCS#8 이어야 합니다. OpenSSL 3 의 `openssl pkey -outform DER` 는 PKCS#1 을 내보내 기동이 실패합니다.
 - `jwt-private.pem`, `.env.local`과 위 출력값은 커밋하지 않습니다.
 - 키를 바꿀 때는 공개키와 개인키를 같은 쌍으로 함께 바꿉니다. 이전에 발급한 토큰은 바로 무효가 됩니다.
 
