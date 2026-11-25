@@ -28,7 +28,11 @@ class MissedArrivalWatchdog(
     // 위치가 다시 들어오면(IN_PROGRESS) 비워서, 다음 정지 때 또 알린다. @Scheduled 단일 스레드라 동기화 불요.
     private val alertedTokens: MutableSet<String> = HashSet()
 
-    @Scheduled(fixedDelayString = "\${bueongi.share.watchdog-interval-ms:60000}")
+    // 첫 스캔도 한 주기 뒤 — 기동 직후(Redis 없는 컨텍스트 테스트 포함) 곧바로 저장소를 훑지 않는다.
+    @Scheduled(
+        fixedDelayString = "\${bueongi.share.watchdog-interval-ms:60000}",
+        initialDelayString = "\${bueongi.share.watchdog-interval-ms:60000}",
+    )
     fun scan() {
         val now: Instant = clock.instant()
         val activeTokens: MutableSet<String> = HashSet()
