@@ -1,104 +1,170 @@
-# bueongi backend — 위치 공유(보호자) 서버 설계 + 구현 노트
+# bueongi backend 위치 공유(보호자) 서버 설계와 구현 노트
 
-> **상태: MVP 계약 4종 + Redis 저장소 구현 완료(2026-06-19). 2026-11-25 저장소를 Redis 하나로 통일(DB·인메모리 폴백 제거).**
-> 칸반 태스크 `cdb5314d [Backend/Server] Redis 기반 위치 공유 최소 서버 설계/구현`(label `safe-return-mvp`, `role:Backend/Server`)의 산출물.
-> 기준 문서는 오케스트레이터 설계 `docs/mvp-orchestrator-design.md` **작업 4(Backend/Server)** — 그 4개 엔드포인트 계약과 Redis 키 모델로 정렬했다.
->
-> **이전(18~19회차) 설계와의 차이 — MVP 기준으로 재정렬한 내역**
-> | 항목 | 이전(`/api/share/sessions` 설계) | 현재(MVP 작업 4) |
-> |---|---|---|
-> | 경로 prefix | `/api/share/sessions` | `/share`(보호자 공개 URL 이라 `/api` 와 분리) |
-> | 생성 | `POST …/sessions` `{ttlSeconds}` | `POST /share/create` `{expires_in_hours: 1\|2\|3}` |
-> | 위치 갱신 | `PUT …/{shareId}/location` | `POST /share/{token}/location` |
-> | 조회 | `GET …/{shareId}` → 200/204/404 | `GET /share/{token}/location` → **항상 200 + `expired`** |
-> | 보호자 페이지 | (없음) | `GET /share/{token}` → **HTML(Leaflet+OSM, 5초 폴링)** |
-> | 종료 | `DELETE …/{shareId}` | (제거 — 자동 만료만, MVP 범위 밖) |
-> | TTL | 기본 6h·상한 12h(초 단위) | **1~3시간**(기본 1h) |
-> | 위치 stale(90s) | 있음 | (제거 — `expired` 만, MVP 단순화) |
-> | 정확도/방향 | `accuracyMeters`/`headingDegrees` | (제거 — `{lat,lng}` 만) |
-> | 응답 키 표기 | camelCase | **snake_case**(`share_url`,`expires_at`,`updated_at`) |
-> | Redis 구현 | 미착수(인메모리만) | **`RedisShareSessionStore` 구현**(`share:{token}`/`location:{token}` HASH+TTL) |
->
-> 프론트는 아직 백엔드 share API 를 소비하지 않으므로(클라이언트 `navigator.share`/SMS 만) 위 재정렬에 호환성 부담은 없다.
->
-> 기존 stateless API 계약은 `docs/API.md`. 이 문서는 그와 **다른 성격(stateful·실시간·TTL)** 의 영역이라 별도로 둔다.
+귀가 중인 사용자의 실시간 위치를 보호자가 로그인 없이 보는 위치 공유 서버의 설계 배경, 저장 모델, 코드 배치와 운영
+정책을 정리한다. 요청과 응답의 상세 형태는 [`API.md`](API.md)의 `/share` 절이 단일 레퍼런스다.
 
----
+> 상태: MVP 구현 완료(2026-06-19). 2026-11-25 저장소를 Redis 하나로 통일(DB와 인메모리 폴백 제거).<br>
+> 출발점: 칸반 태스크 `cdb5314d [Backend/Server] Redis 기반 위치 공유 최소 서버 설계/구현`(label `safe-return-mvp`)
 
-## 1. 배경 / 요구
+## 1. 배경과 요구
 
-- bueongi 는 안심 귀가 앱. 기존 백엔드는 **stateless·무외부의존**(장소 검색 + 경로/안심시설 비교)(`docs/API.md`).
-- 신규 요구(태스크 cdb5314d): 카카오택시 방식 — 사용자가 토큰 URL 을 외부 메신저로 공유하면 **보호자가 로그인 없이 실시간 위치를 5초 폴링으로 조회**하는 최소 서버.
-- 기존 도메인과 본질이 다름: 시간에 따라 변하는 라이브 위치(상태 있음) → **만료(TTL) 가능한 저장소(Redis)** 가 적합.
+- bueongi는 안심 귀가 앱이다. 위치 공유를 뺀 기존 API(장소 검색, 경로 비교, 주변 안심시설)는 상태를 저장하지 않는다.
+- 요구(태스크 cdb5314d): 사용자가 토큰 URL을 외부 메신저로 공유하면 보호자가 로그인 없이 실시간 위치를 5초 폴링으로
+  조회하는 최소 서버.
+- 시간에 따라 변하는 라이브 위치(상태 있음)라 기존 도메인과 성격이 다르다. 만료(TTL)를 강제할 수 있는 저장소(Redis)가
+  맞다.
 
 ## 2. 설계 원칙
 
-1. **`/share` prefix + 공통 에러 계약 재사용**: 좌표 오류는 `common/ApiExceptionHandler.kt` 의 RFC 7807 + `code`(400) 그대로. 위치 갱신의 토큰 없음/만료만 404 `SHARE_SESSION_NOT_FOUND`. CORS 는 `/api/**` 정책을 `/share/**` 에도 동일 적용.
-2. **PII 최소화 / 비식별 토큰**: 계정·전화번호 대신 추측 불가능한 128-bit URL-safe 랜덤 `token`(22자) 으로만 식별(링크 공유 모델).
-3. **자동 만료(TTL)**: 1~3시간 상한 TTL — 공유를 끄지 않아도 시간이 지나면 위치가 사라진다(무기한 추적 금지). 종료(DELETE) API 없이 만료로만 정리.
-4. **Redis 필수**: 위치 공유는 Redis 에만 저장한다. 연결이 끊기면 위치 공유 API 만 오류를 내고 서버 기동·다른 API 는 영향 없다. 보호자 지도는 키 불요(Leaflet+OpenStreetMap).
-5. **좌표 규약 동일**: lat ±90·lng ±180, 비유한(NaN/±Inf)·범위 밖 거부.
+1. `/share` prefix와 공통 에러 계약 재사용: 보호자가 브라우저로 여는 공개 URL이라 `/api`와 분리한다. 좌표 오류는
+   `core-common`의 `ApiControllerAdvice`가 내는 RFC 7807 + `code`(400) 그대로다. 토큰 없음/만료와 `owner_secret`
+   불일치는 404 `SHARE_SESSION_NOT_FOUND`로 같게 응답한다. CORS는 `/api/**` 정책을 `/share/**`에도 적용한다.
+2. 개인정보 최소화와 비식별 토큰: 계정이나 전화번호 대신 추측할 수 없는 128-bit URL-safe 랜덤 `token`(22자)으로만
+   식별한다(링크 공유 모델). 쓰기 요청은 생성 때만 받는 `owner_secret`으로 소유자를 확인한다.
+3. 자동 만료(TTL): 상한 TTL 1~3시간이라 공유를 끄지 않아도 시간이 지나면 위치가 사라진다(무기한 추적 금지). 사용자가
+   먼저 끝내려면 `POST /share/{token}/end`를 쓴다.
+4. Redis 필수: 위치 공유는 Redis에만 저장한다. 연결이 끊기면 위치 공유 API만 503 `SHARE_STORE_UNAVAILABLE`을 내고 서버
+   기동과 다른 API는 영향이 없다. 보호자 지도는 지도 SDK 키가 필요 없다(Leaflet과 OpenStreetMap).
+5. 좌표 규약 동일: lat -90~90, lng -180~180. 비숫자(`NaN`, `Infinity`)와 범위 밖 값은 거부한다.
 
-## 3. API 계약 (구현됨)
+## 3. API 계약
 
-base: 사용자 앱 호출은 `http://localhost:8119`. 상세 shape 은 `docs/API.md` 의 `/share` 섹션이 단일 레퍼런스.
+사용자 앱의 호출 대상은 dev 기준 `http://localhost:8119`다. 상세 형태는 [`API.md`](API.md)를 본다.
 
-| 메서드/경로 | 요청 | 응답 |
-|---|---|---|
-| `POST /share/create` | `{ expires_in_hours?: 1\|2\|3 }`(생략 시 1h) | `{ token, share_url, expires_at }` |
-| `POST /share/{token}/location` | `{ lat, lng }` | `{ updated_at, expires_at }` · 토큰 없음/만료 → 404 |
-| `GET /share/{token}/location` | (없음) | 항상 200 `{ lat, lng, updated_at, expired }`(만료/미존재 → `expired:true`+좌표 null, 첫 위치 전 → `expired:false`+좌표 null) |
-| `GET /share/{token}` | (없음) | `text/html` 보호자 지도 페이지(Leaflet+OSM, 5초 폴링 JS) |
+| 메서드 | 경로                      | 호출자    | 요약                                                   |
+|--------|---------------------------|-----------|--------------------------------------------------------|
+| `POST` | `/share/create`           | 사용자 앱 | 토큰, `owner_secret`, `share_url`, `expires_at` 발급   |
+| `POST` | `/share/{token}/location` | 사용자 앱 | 위치(와 남은 거리, 시간) 갱신                          |
+| `GET`  | `/share/{token}/location` | 보호자 웹 | 항상 200, 만료는 `expired: true`, 진행 상태는 `status` |
+| `POST` | `/share/{token}/route`    | 사용자 앱 | 목적지, 경로, 경로변 시설 올리기                       |
+| `GET`  | `/share/{token}/route`    | 보호자 웹 | 항상 200, 경로가 없으면 `route: null`                  |
+| `POST` | `/share/{token}/end`      | 사용자 앱 | 공유 종료(없는 토큰도 200)                             |
+| `POST` | `/share/{token}/watching` | 사용자 앱 | 보호자가 최근 12초 안에 위치를 조회했는지              |
+| `GET`  | `/share/{token}`          | 보호자    | `text/html` 보호자 지도 페이지(Leaflet, OSM, 5초 폴링) |
 
-신규 에러 `code`: `SHARE_SESSION_NOT_FOUND`(404, 위치 갱신 한정). 좌표 오류는 기존 `VALIDATION_FAILED`/`MALFORMED_REQUEST`(400) 재사용.
+관리자 화면용 조회(`/api/admin/share-status`, `/api/admin/share-sessions` 등)는 같은 모듈의 `ShareAdminController`에
+있다. 관리자 위치 조회는 보호자 시청 기록을 남기지 않는다.
 
-## 4. 데이터 모델 (Redis)
+위치 공유가 쓰는 에러 `code`:
+
+| code                      | HTTP | 발생 조건                                                |
+|---------------------------|-----:|----------------------------------------------------------|
+| `VALIDATION_FAILED`       |  400 | 좌표 범위 위반, 필수 값 누락, `expires_in_hours` 범위 밖 |
+| `MALFORMED_REQUEST`       |  400 | 깨진 JSON, `NaN` 같은 비숫자 리터럴                      |
+| `SHARE_SESSION_NOT_FOUND` |  404 | 토큰 없음/만료(쓰기 요청), `owner_secret` 누락/불일치    |
+| `INVALID_ROUTE_META`      |  422 | 공유 경로 `type`이 `safe`, `main`, `fast` 밖             |
+| `SHARE_STORE_UNAVAILABLE` |  503 | Redis 접근 실패(`Retry-After: 5`)                        |
+
+## 4. 데이터 모델(Redis)
 
 ```text
-share:{token}     HASH { created_at, expires_at }   EXPIRE = 상한 TTL(1~3h)
-location:{token}  HASH { lat, lng, updated_at }      EXPIRE = 동일 상한 TTL
+share:{token}     HASH   { created_at, expires_at, owner_secret, expected_arrival_at? }  EXPIRE = 상한 TTL(1~3h)
+location:{token}  HASH   { lat, lng, updated_at, remaining_meters?, remaining_seconds? }   EXPIRE = 같은 상한 TTL
+route:{token}     STRING 경로 JSON(목적지, 경로, 마커, 전체 거리/시간, 유형)                EXPIRE = 같은 상한 TTL
+viewer:{token}    STRING "1"                                                                EXPIRE = 12초
 ```
 
-- 상한 만료는 Redis native TTL 이 강제 → `find` 는 `share:{token}` 키 존재만 확인(없으면 만료/미존재).
-- 위치 키도 공유와 **동일 상한 TTL** — 만료 시 위치도 함께 삭제(잔존 추적 금지). PII 미저장(token·좌표·시각만).
+- 상한 만료는 Redis native TTL이 강제한다. `findByToken`은 `share:{token}` 키가 없으면 만료/미존재로 본다.
+- 위치와 경로 키도 공유와 같은 상한 TTL이라 만료 시 함께 사라진다(잔존 추적 금지). 개인정보는 저장하지 않는다.
+- `expected_arrival_at`은 생성 요청에 `eta_seconds`가 있을 때만 저장하며 `now + eta_seconds + 60초`다.
+- 남은 거리, 시간은 옛 이름(`remaining_m`, `remaining_s`)으로 저장된 값도 읽는다.
+- `viewer:{token}`은 보호자가 `GET /share/{token}/location`을 부를 때마다 12초 TTL로 다시 쓴다. `watching` 판정에
+  쓴다.
+- `POST /share/{token}/end`는 네 키를 함께 지운다.
+- 경로 JSON이 깨져 있으면 경로만 생략하고 공유와 위치는 계속 보여준다.
 
-## 5. 코드 배치 (구현됨, `io/soo/bueongi/share/`)
+## 5. 코드 배치
 
+```text
+core/core-share/src/main/kotlin/io/soo/bueongi/core/share/
+├── api/controller/
+│   ├── ShareController.kt         # /share 엔드포인트 8개
+│   ├── ShareAdminController.kt    # /api/admin/share-* 조회
+│   ├── ShareStoreAdvice.kt        # LocationStoreUnavailableException -> 503 SHARE_STORE_UNAVAILABLE
+│   └── GuardianPage.kt            # 보호자 HTML에 토큰을 JS 이스케이프해 주입
+├── api/request/                   # 요청 DTO, @Valid 좌표 검증, snake_case(@JsonProperty)
+├── api/response/                  # 응답 DTO(LocationView, RouteView, WatchResponse 등)
+└── domain/
+    ├── service/ShareService.kt          # 생성, 위치/경로 저장과 조회, 종료, 소유자 확인, 토큰 발급
+    ├── service/MissedArrivalWatchdog.kt # 미도착 의심, 도착 추정 감시
+    ├── model/SharePolicy.kt             # 기본 만료, 유예, 정지 판정, 도착 반경 상수와 진행 상태 판정
+    └── error/                           # SHARE_SESSION_NOT_FOUND, INVALID_ROUTE_META
+core/core-share/src/main/resources/share/guardian.html  # 보호자 지도 페이지(Leaflet, OSM, 5초 폴링)
+storage/db-share/src/main/kotlin/io/soo/bueongi/storage/db/share/
+├── store/ShareSessionStore.kt                 # 저장소 인터페이스
+├── store/RedisShareSessionStore.kt            # Redis 구현(위 키 모델)
+├── store/ShareStoreConfig.kt                  # Redis 저장소 빈 등록
+├── store/LocationStoreUnavailableException.kt # Redis 접근 실패
+└── model/                                     # ShareSession, StoredLocation, StoredRoute 등
+storage/db-share/src/main/resources/db-share.yml  # spring.data.redis.url = ${BUEONGI_REDIS_URL:redis://localhost:6379}
+storage/db-share/src/testFixtures/kotlin/.../store/InMemoryShareSessionStore.kt  # 테스트 대역
 ```
-ShareSessionStore.kt          # 인터페이스(save/find) + ShareSession/StoredLocation 모델
-RedisShareSessionStore.kt     # Redis 구현(share:{token}/location:{token} HASH+TTL)
-ShareStoreConfig.kt       # Redis 저장소 빈 등록(연결은 Spring Boot 자동 설정)
-(testFixtures) InMemoryShareSessionStore.kt  # 테스트 대역(ConcurrentHashMap + lazy 만료)
-ShareDtos.kt              # 요청/응답 + @Valid 좌표 검증 + snake_case(@JsonProperty)
-ShareService.kt           # 생성/위치 갱신/조회 + 1~3h TTL + 토큰 발급
-ShareController.kt        # 4개 엔드포인트(+ HTML 토큰 주입)
-resources/share/guardian.html  # 보호자 지도 페이지(Leaflet+OSM, 5초 폴링)
-```
-- Redis 연결은 Spring Boot 자동 설정이 `spring.data.redis.url`(`BUEONGI_REDIS_URL`) 로 만든다.
-- `ApiExceptionHandler` 에 `SHARE_SESSION_NOT_FOUND` 핸들러, `HealthService` 의 locationStore 라벨(불리언 파생, 키/주소 미노출).
 
-## 6. 인프라 / 설정 (env)
+- Redis 연결은 Spring Boot 자동 설정이 `spring.data.redis.url`(`BUEONGI_REDIS_URL`)로 만든다.
+- `SHARE_SESSION_NOT_FOUND`와 `INVALID_ROUTE_META`는 `ApiException` 하위 클래스라 공통 `ApiControllerAdvice`가
+  처리한다.
+- `/api/health`의 `locationStore`는 `ShareSessionStore.backend` 값이다. 운영 구현은 `"redis"`이고 주소와 자격증명은
+  노출하지 않는다.
 
-| env | 기본 | 설명 |
-|---|---|---|
-| `BUEONGI_REDIS_URL` | `redis://localhost:6379` | 위치 공유 저장 Redis. |
-| `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | `share_url` 의 base(운영은 공개 도메인). |
-| `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**` 공통 허용 origin(별도 보호자 웹 폴링 시 도메인 추가). |
+## 6. 미도착 감시
 
-## 7. 수용 기준 (구현·검증 완료)
+`MissedArrivalWatchdog`이 활성 공유를 주기적으로 훑어 진행 상태를 판정하고 운영 알림을 보낸다.
 
-1. 생성→위치 POST→GET 으로 같은 좌표 회수(왕복) — Redis(키 계약 모킹). ✅
-2. `expires_in_hours` 는 1·2·3 만 허용, 미지정 시 1h. ✅
-3. 상한 만료(1~3h) 경과 후 GET → `expired:true`(좌표 null), 위치 POST → 404. ✅
-4. 잘못된 좌표(범위 밖/비유한) POST → 400(기존 계약과 동일 code). ✅
-6. 응답/로그/health 에 PII·Redis 자격증명 미노출. ✅
-7. 보호자 HTML 이 키 없이(OSM) 렌더되고 토큰이 주입된다. ✅
+- 주기: `BUEONGI_WATCHDOG_INTERVAL_MS`(기본 60000ms). 첫 스캔도 기동 후 한 주기 뒤에 돈다.
+- 예정 시각 초과: `expected_arrival_at` 뒤 300초가 지났다. `eta_seconds` 없이 만든 공유는 판정하지 않는다.
+- 위치 정지: 마지막 위치 갱신 뒤 90초가 지났거나 위치가 한 번도 없다.
+- 둘 다 참이면 마지막 위치가 목적지 반경 30m 안일 때(남은 거리가 보고돼 있으면 그것도 30m 이하) `arrival_likely`,
+  아니면 `missed_arrival_suspect`다. 경로를 올리지 않았으면 목적지를 몰라 `missed_arrival_suspect`가 된다.
+- 알림 key는 `missed-arrival:<가린 토큰>`, `arrival-likely:<가린 토큰>`이며 토큰은 앞 6자만 남긴다. 같은 정지 상태가
+  이어지는 동안은 다시 알리지 않고, 위치가 다시 들어오면 다음 정지 때 또 알린다.
 
-## 8. Redis 장애 시 동작 정책
+## 7. 인프라와 설정
 
-- 저장소는 Redis 하나다(2026-11-25 통일). 연결 실패는 `LocationStoreUnavailableException` 으로 바뀌어 위치 공유 API 오류로 나간다. 폴백 저장소는 두지 않는다 — 폴백하면 재시작·다중 인스턴스에서 세션이 조용히 갈라진다.
-- 테스트는 `storage:db-share` testFixtures 의 `InMemoryShareSessionStore` 를 대역으로 쓴다(Redis 없이 전 테스트 통과).
+| 환경변수                       | 기본값                                         | 설명                                         |
+|--------------------------------|------------------------------------------------|----------------------------------------------|
+| `BUEONGI_REDIS_URL`            | `redis://localhost:6379`                       | 위치 공유 저장 Redis                         |
+| `BUEONGI_SHARE_BASE_URL`       | `http://localhost:8119`                        | `share_url`의 앞부분(운영은 공개 도메인)     |
+| `BUEONGI_CORS_ORIGINS`         | `https://localhost:3619,http://localhost:3619` | `/api/**`, `/share/**` 공통 허용 origin      |
+| `BUEONGI_WATCHDOG_INTERVAL_MS` | `60000`                                        | 미도착 감시 주기(ms), 첫 스캔 지연도 같은 값 |
 
-## 9. 범위 밖(v2)
+## 8. 수용 기준
 
-보호자 회원가입·페어링·푸시 알림·서버 발송 메시지·경로 이탈 자동감지·WebSocket/SSE 푸시(폴링으로 충분). 위치 정확도/방향 필드, 명시적 종료(DELETE)도 MVP 에서 제외.
+다음 기준을 구현하고 테스트로 검증했다.
+
+1. 생성, 위치 POST, GET 순으로 같은 좌표를 회수한다(Redis는 `StringRedisTemplate` 목으로 키 계약 검증).
+2. `expires_in_hours`는 1, 2, 3만 허용하고 미지정 시 1시간이다.
+3. 상한 만료(1~3시간) 경과 후 GET은 `expired: true`(좌표 null), 위치 POST는 404다.
+4. 잘못된 좌표(범위 밖, 비숫자) POST는 400이다(기존 계약과 같은 code).
+5. 응답, 로그, health에 개인정보와 Redis 자격증명이 나가지 않는다.
+6. 보호자 HTML이 키 없이(OSM) 렌더되고 토큰이 주입된다.
+
+## 9. Redis 장애 시 동작 정책
+
+- 저장소는 Redis 하나다(2026-11-25 통일). `RedisShareSessionStore`는 Redis 접근 실패(`DataAccessException`)를
+  `LocationStoreUnavailableException`으로 바꾸고, `ShareStoreAdvice`가 503 `SHARE_STORE_UNAVAILABLE`과
+  `Retry-After: 5`로 응답한다. 같은 때 `share-store-unavailable` 운영 알림을 보낸다.
+- 폴백 저장소는 두지 않는다. 폴백하면 재시작이나 다중 인스턴스에서 세션이 조용히 갈라진다.
+- 테스트는 `storage:db-share` testFixtures의 `InMemoryShareSessionStore`를 대역으로 쓴다(Redis 없이 전 테스트 통과).
+
+## 10. 범위 밖(v2)
+
+보호자 회원가입, 페어링, 푸시 알림, 서버 발송 메시지, 경로 이탈 자동 감지, WebSocket/SSE 푸시(폴링으로 충분), 위치
+정확도와 방향 필드.
+
+## 부록: 초기 설계(18~19회차)와의 차이
+
+MVP 이전 설계(`/api/share/sessions`)에서 현재 계약으로 바뀐 내역이다.
+
+| 항목          | 초기 설계                          | 현재                                                |
+|---------------|------------------------------------|-----------------------------------------------------|
+| 경로 prefix   | `/api/share/sessions`              | `/share`                                            |
+| 생성          | `POST .../sessions` `{ttlSeconds}` | `POST /share/create` `{expires_in_hours: 1\|2\|3}`  |
+| 위치 갱신     | `PUT .../{shareId}/location`       | `POST /share/{token}/location`                      |
+| 조회          | `GET .../{shareId}`, 200/204/404   | `GET /share/{token}/location`, 항상 200 + `expired` |
+| 보호자 페이지 | 없음                               | `GET /share/{token}`(HTML)                          |
+| 종료          | `DELETE .../{shareId}`             | `POST /share/{token}/end`(`owner_secret` 필요)      |
+| TTL           | 기본 6시간, 상한 12시간(초 단위)   | 1~3시간(기본 1시간)                                 |
+| 위치 stale    | 90초 지나면 stale                  | 90초 정지는 진행 상태(`status`) 판정에만 씀         |
+| 정확도/방향   | `accuracyMeters`, `headingDegrees` | 없음(`lat`, `lng`와 선택 남은 거리, 시간)           |
+| 응답 키 표기  | camelCase                          | snake_case(`share_url`, `expires_at`, `updated_at`) |
+| 저장소        | 인메모리만                         | `RedisShareSessionStore`(키 모델은 4절)             |
