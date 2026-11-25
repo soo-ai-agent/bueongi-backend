@@ -8,23 +8,23 @@
 
 ## 결론
 
-관계형 데이터베이스(DB)는 쓰지 않는다.
+안심시설(CCTV, 보안등, 비상벨 등)은 **PostgreSQL + PostGIS**(공간 질의를 하는 확장)에 둔다. 테이블은 둘이다. 시설
+한 곳이 `safety_spot` 한 행이고, 출처 조각마다 저장 시각이 `safety_spot_slice`에 남는다.
 
-안심시설(CCTV, 보안등, 비상벨 등)은 **원본을 디스크에 파일로 두고**, 서버가 켜질 때 그 파일을 읽어 **메모리에 검색용
-색인**을 만든다.
-
-경로 검색 같은 조회는 메모리 색인만 본다. 파일은 다시 읽지 않는다.
+경로 검색 같은 조회는 DB에 공간 질의를 보낸다. 서버 메모리에는 시설을 두지 않는다. 그래서 업로드 결과가 재배포 때
+사라지지 않고, 서버를 여러 대로 늘려도 모두 같은 데이터를 본다.
 
 위치 공유 세션은 **Redis**(만료 시각이 되면 스스로 지워지는 키-값 저장소)에만 둔다. 메모리 대체 저장소는 없다. Redis 가
 내려가 있으면 위치 공유 API 만 503 을 돌려주고 다른 API 는 영향이 없다.
 
-외부 API 로 받은 시설 데이터는 관리자 CSV 업로드나 재시작으로 지워지지 않는다.
+외부 API 로 받은 시설 데이터는 재시작으로 지워지지 않는다. 관리자 CSV 업로드는 업로드에 든 지역의 API 조각만 지운다.
 
 ## 안심시설별 문서
 
-종류마다 들어오는 길과 갱신 방식이 달라 문서를 나눴다. 각 문서 끝에 "이 방식이 맞는가"를 적었다.
+종류마다 들어오는 길과 갱신 방식이 달라 문서를 나눴다. 각 문서 끝에 "이 방식이 맞는가"를 적었다. "곳 수"는
+2026-10-11 메모리 색인 시절에 같은 좌표를 한 곳으로 센 값이다.
 
-| 종류                                             | 실데이터가 오는 곳              |    색인 | 판정                                                     |
+| 종류                                             | 실데이터가 오는 곳              |   곳 수 | 판정                                                     |
 |--------------------------------------------------|---------------------------------|--------:|----------------------------------------------------------|
 | [CCTV](safety-spots/cctv.md)                     | 관리자 업로드(원본 CSV)         | 212,932 | 맞음                                                     |
 | [가로등](safety-spots/street-lamp.md)            | CDN 파일 2개 + API 전국         |  33,245 | 맞음                                                     |
@@ -37,8 +37,8 @@
 
 ### 이 저장 방식은 적절한가
 
-**구조는 적절하다.** 공공 시설 데이터는 읽기만 하고, 새 판이 통째로 나오거나 지역 단위로 조회된다. 그래서 "원본은 파일,
-조회는 메모리 색인, 바꿀 때는 출처/지역 조각 단위" 구조가 데이터 성격과 맞는다.
+**구조는 적절하다.** 공공 시설 데이터는 읽기만 하고, 새 판이 통째로 나오거나 지역 단위로 조회된다. 그래서 "출처/지역
+조각 단위로 통째로 바꾸고, 조회는 공간 인덱스로" 구조가 데이터 성격과 맞는다.
 
 **문제는 구조보다 데이터 쪽에 있다.**
 
@@ -64,12 +64,16 @@
 | 보행신호등       | `pedestriansignal/PedestrianSignalSpot.kt`     |
 | 범죄주의구간     | `crimepronearea/CrimeProneAreaSpot.kt`         |
 
-모든 종류가 같이 쓰는 것은 종류 폴더 밖에 둔다. 부모 타입 `SafetySpotPoint`, 좌표, 파일 형식은 `model/`이고, 색인, 지역
-캐시, 업로드, 조각 묶기는 `store/`다.
+모든 종류가 같이 쓰는 것은 종류 폴더 밖에 둔다. 부모 타입 `SafetySpotPoint`와 좌표는 `model/`이고, DB 저장과 조회
+(`PostgisSafetySpotStore`), 기동 때 CDN 반영(`SafetySpotCdnFiles`, `SafetySpotCdnSync`), 재수집 주기 판정
+(`SafetySpotRegionCache`), 지역 코드 찾기(`RegionLocator`)는 `store/`다. 테이블은
+`src/main/resources/db/migration/V202611251400__create_safety_spot.sql`(Flyway)이 만든다.
+
+core 는 DB 를 직접 모른다. 조회는 `SafetySpotSpatialSource`, 쓰기는 `SafetySpotLiveStore` 인터페이스만 본다. 테스트는
+메모리 대역(`FakeSafetySpotSource`)을 쓴다.
 
 CSV 를 해석하는 코드는 storage 가 아니라 core 의 시설별 계약이다:
-`core-admin-safety-spot/.../domain/csv/<시설명>/XxxCsvContract.kt`. 업로드, 원본 미리보기, 적재가 전부 이 계약 하나로
-판정한다(적재는 업로드가 변환해 둔 JSON 을 읽는 것으로 일원화, 2026-10-11).
+`core-admin-safety-spot/.../domain/csv/<시설명>/XxxCsvContract.kt`. 업로드와 원본 미리보기가 이 계약 하나로 판정한다.
 
 외부 API 로 받는 코드는 storage 가 아니라 `core/core-safety-spot/.../domain/{streetlamp,securitylamp,safehouse,police}/`에
 있다. 무엇이 언제 부르는지는 [EXTERNAL_SERVICES.md](EXTERNAL_SERVICES.md)에 있다.
@@ -78,152 +82,72 @@ CSV 를 해석하는 코드는 storage 가 아니라 core 의 시설별 계약�
 
 ```mermaid
 flowchart LR
-    subgraph DISK["디스크 (재시작해도 남음)"]
-        CDN["cdn/{종류}/*.json<br/>파이프라인이 만든 시설 파일"]
-        CSV["data/source/{종류}/*.csv.gz<br/>공공데이터 원본 CSV (보관, 미리보기)"]
-        UP["data/facility-uploads/{종류}.json<br/>관리자가 올린 CSV 의 변환 결과"]
-        RC["data/region-cache/{종류}/{지역}.json<br/>외부 API 로 받은 결과"]
+    CDN["cdn/{종류}/*.json<br/>파이프라인이 만든 시설 파일"]
+    CSV["관리자 CSV 업로드"]
+    API["외부 API<br/>지역 하나씩"]
+
+    subgraph DB["PostgreSQL + PostGIS"]
+        SPOT["safety_spot<br/>source = cdn, upload, api:지역"]
+        SLICE["safety_spot_slice<br/>조각별 건수, 저장 시각"]
     end
 
-    subgraph MEM["메모리 (서버가 켜질 때 만듦)"]
-        FILE["파일 조각<br/>종류마다 1개"]
-        API["API 지역 조각<br/>지역마다 1개"]
-        IDX["격자 색인<br/>GridSpatialIndex"]
-    end
-
-    CDN --> FILE
-    CSV -. "관리자가 업로드 화면에서<br/>한 번 변환해 올린다" .-> UP
-    UP -. "업로드가 있으면<br/>CDN 파일 대신" .-> FILE
-    RC --> API
-    FILE --> IDX
-    API --> IDX
-    IDX --> QUERY["경로 검색<br/>반경, 경로 주변 시설 찾기"]
+    CDN -- "서버 기동 시<br/>업로드가 없는 종류만" --> SPOT
+    CSV -- "바로 반영" --> SPOT
+    API -- "경로 요청 뒤 백그라운드" --> SPOT
+    SPOT --> QUERY["공간 질의<br/>반경, 경로 주변 시설 찾기"]
+    CSV -. "원본 보관(미리보기용)" .-> ORIG["data/facility-uploads/originals/{종류}.csv"]
 ```
 
-시설 종류마다 위 구조가 하나씩 있다. 보안등이면 "보안등 파일 조각 1개 + 보안등 API 지역 조각 여러 개 -> 보안등 색인
-1개"다.
+출처 조각 하나는 `(type, source)` 쌍이다. 보안등이면 "업로드 조각 1개 + 자치단체마다 API 조각 1개"가 같은 테이블에 있다.
 
-## 2. 디스크: 시설 원본이 있는 네 곳
+| `source`        | 넣는 곳                   | 바뀌는 때                                    |
+|-----------------|---------------------------|----------------------------------------------|
+| `cdn`           | `SafetySpotCdnSync`(기동) | 서버가 켜질 때. 그 종류에 업로드가 없을 때만 |
+| `upload`        | 관리자 CSV 업로드         | 업로드할 때. 그 종류의 `cdn` 조각도 지운다   |
+| `api:<지역 키>` | 외부 API 채우기 서비스    | 그 지역을 받을 때(90일마다)                  |
 
-| 위치                                   | 누가 쓰나                                                   | 실제 예(2026-10-10 로컬 기준)                                                                 |
-|----------------------------------------|-------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `cdn/{종류}/*.json`                    | 백엔드 밖 파이프라인(`pipeline/`)                           | 가로등 `cdn/lamp/seoul.json`, `smart.json`, 비상벨 `cdn/emergency_bell/nationwide.json` 3개뿐 |
-| `data/source/{종류}/*.csv.gz`          | 사람이 공공데이터포털에서 받아 보관. 적재는 업로드를 거친다 | `전국보안등정보표준데이터.csv.gz`, `CCTV정보.csv.gz` 등                                       |
-| `data/region-cache/{종류}/{지역}.json` | 서버(외부 API 결과)                                         | 보안등 15개 지역, 가로등과 치안시설 `nationwide.json`, 지킴이집 지도 격자 10개                |
-| `data/facility-uploads/{종류}.json`    | 서버(관리자 CSV 업로드)                                     | `cctv.json`(319,164), `security_lamp.json`(55,459). 원본 CSV 를 업로드로 옮김(2026-10-11)     |
+지역 키는 종류마다 다르다. 보안등은 개방자치단체코드, 가로등과 치안시설은 전국 한 덩이 `nationwide`, 지킴이집은 지도 칸
+코드다.
 
-경로는 설정으로 바꿀 수 있다. 기본값은 각 저장소 클래스의 `@Value`에 있고, CDN 폴더는 `BUEONGI_FACILITY_DATA_DIR`, 업로드
-폴더는 `BUEONGI_FACILITY_UPLOAD_DIR` 환경변수로도 덮어쓴다(`db-safety-spot.yml`).
+## 2. 테이블
 
-```kotlin
-// SafetySpotRepository.kt:20 - CDN 파일 폴더
-@param:Value("\${bueongi.facility.data-dir:cdn}") private val configuredDir: String,
+`safety_spot`은 시설 한 곳이 한 행이다.
 
-// SafetySpotRegionCache.kt:24 - 외부 API 결과를 저장하는 폴더
-@param:Value("\${bueongi.facility.region-cache-dir:./data/region-cache}")
+| 컬럼                                                  | 내용                                                           |
+|-------------------------------------------------------|----------------------------------------------------------------|
+| `type`, `source`                                      | 시설 종류(`cctv`, `security_lamp` 등)와 출처 조각              |
+| `region_code`                                         | 지역 코드. 없을 수 있다                                        |
+| `name`, `address`, `phone`, `purpose`, `camera_count` | 마커와 화면에 보이는 값                                        |
+| `lat`, `lng`                                          | 위경도                                                         |
+| `geog`                                                | `GEOGRAPHY(Point, 4326)` 생성 컬럼. GIST 인덱스로 공간 질의    |
+| `lat_e5`, `lng_e5`                                    | 좌표 소수 5자리(약 1.1m) 생성 컬럼. 같은 지점을 한 곳으로 센다 |
+| `from_api`                                            | `source`가 `api:`로 시작하는지. 생성 컬럼                      |
 
-// SafetySpotUploadStore.kt:22 - 관리자 업로드 폴더
-@param:Value("\${bueongi.facility.upload-dir:./data/facility-uploads}") private val uploadDir: String,
-```
+인덱스는 `geog`의 GIST 하나와 `(type, source)`, `(type, region_code)` B-tree 둘이다.
 
-### 파일 하나의 모양
+`safety_spot_slice`는 조각마다 한 행이다. 키는 `(type, source)`이고 `row_count`, `saved_at`을 담는다. `saved_at`이
+`bueongi.facility.region-cache-ttl-days`(기본 90일)보다 오래되면 그 API 지역을 다시 받는다. 0건으로 받은 지역도
+기록해 그동안 다시 묻지 않는다.
 
-네 곳 중 JSON 파일(CDN, 지역 캐시, 업로드)은 모두 같은 모양이다. 한 파일에 `items` 목록이 있고, 항목 하나가 시설 한 곳이다.
+접속 설정은 `db-safety-spot.yml`이 `BUEONGI_DB_URL`, `BUEONGI_DB_USERNAME`, `BUEONGI_DB_PASSWORD`로 받는다.
+비밀번호는 기본값이 없고, `local` 프로파일만 개발용 값 `bueongi`를 준다. 마이그레이션 버전이 시각이라
+`spring.flyway.out-of-order: true`로 둔다.
 
-외부 API 결과 파일(`region-cache/security_lamp/3000000.json`, 종로구, 9,699건)의 실제 항목 하나:
+## 3. 서버가 켜질 때
 
-```json
-{
-  "savedAt": "2026-08-22T09:38:39.137297Z",
-  "items": [
-    {
-      "name": "01-옥인6길15",
-      "lat": 37.5814361,
-      "lng": 126.9645941,
-      "sigunguCode": "3000000",
-      "address": "서울특별시 종로구 옥인6길15",
-      "phone": "02-2148-3193"
-    }
-  ]
-}
-```
+1. Flyway 가 마이그레이션을 적용한다. 처음이면 `postgis` 확장과 두 표를 만든다.
+2. `SafetySpotCdnFiles`가 `cdn/`(`BUEONGI_FACILITY_DATA_DIR`)을 읽는다.
+3. `SafetySpotCdnSync`가 종류마다 CDN 시설을 `cdn` 조각으로 바꿔 넣는다. 그 종류에 `upload` 조각이 있으면 건너뛴다.
+4. 안심귀갓길(`safepath/`)과 신선도(`manifest.json`)는 작아서 DB 에 넣지 않고 메모리에 둔다.
 
-`savedAt`은 받은 시각이다. 이 시각에서 90일(`bueongi.facility.region-cache-ttl-days`)이 지나면 그 지역을 다시 받는다.
+업로드분과 API 조각은 DB 에 이미 있으므로 기동 때 다시 읽을 것이 없다.
 
-이 모양을 코드에서는 `StoredSafetySpotCollection`, `StoredSafetySpotItem`으로 읽고 쓴다. CDN 파일의 형식은 백엔드 밖
-`pipeline/src/types.ts`가 정한다.
-
-## 3. 서버가 켜질 때: 파일을 읽어 조각으로 묶는다
-
-순서는 다음과 같다.
-
-1. CDN 파일을 읽어 종류별 **파일 조각**을 만든다.
-2. 업로드 파일이 있는 종류는 파일 조각을 업로드 내용으로 **대신한다**.
-3. 지역 캐시 파일을 지역마다 읽어 **API 지역 조각**으로 붙인다. 단, 파일(CDN, 업로드)에 이미 있는 지역의 조각은 넣지 않는다.
-4. 종류마다 모든 조각을 합쳐 격자 색인을 만든다.
-
-```kotlin
-// SafetySpotRepository.kt:79-91 (발췌, … 는 생략한 줄)
-fileCount += readFiles(dir, filesByType)                      // 1. CDN 파일
-…
-val uploadedTypes: Int = overwriteWithUploads(filesByType)    // 2. 업로드가 있으면 파일 조각을 대신
-
-val sources: LinkedHashMap<SafetySpotType, SafetySpotSources> = LinkedHashMap()
-for ((type, points) in filesByType) {
-    sources[type] = SafetySpotSources.EMPTY.withFiles(points)
-}
-val cachedRegions: Int = addRegionCache(sources)              // 3. API 지역 조각
-sourcesByType.set(sources)                                    // 4. 색인은 조각을 만들 때 함께 생긴다
-```
-
-보안등을 예로 들면 이렇게 묶인다.
-
-```mermaid
-flowchart TB
-    A1["facility-uploads/security_lamp.json<br/>(원본 CSV 3개를 합쳐 업로드한 55,459곳)"] --> F
-    F["파일 조각"]
-
-    R1["region-cache/security_lamp/3000000.json<br/>종로구 9,699건"] --> G1["API 조각 3000000"]
-    R2["region-cache/security_lamp/3010000.json"] --> G2["API 조각 3010000"]
-    R3["… 15개 지역"] --> G3["API 조각 …"]
-
-    F --> IDX["보안등 색인 97,713곳"]
-    G1 --> IDX
-    G2 --> IDX
-    G3 --> IDX
-```
-
-조각을 묶는 타입은 `SafetySpotSources`다. 색인을 만들 때 API 조각을 파일 조각보다 앞에 둔다.
-
-```kotlin
-// SafetySpotSources.kt (발췌)
-class SafetySpotSources(
-    private val files: List<SafetySpotPoint>,                 // 파일 조각
-    private val regions: Map<String, List<SafetySpotPoint>>,  // 지역 코드 -> API 조각
-) {
-    val index: GridSpatialIndex = GridSpatialIndex(regionsBeforeFiles())
-    …
-}
-```
-
-색인은 좌표(소수점 5자리, 약 1.1m)가 같은 점을 한 곳으로 센다. 이때 먼저 들어온 점이 남는다. API 조각이 앞에 있으므로,
-파일과 API 에 같은 시설이 있으면 **더 최신인 API 쪽이 남는다**.
-
-```kotlin
-// GridSpatialIndex.kt:14 - 좌표가 같은 점은 먼저 들어온 하나만 남긴다
-points.distinctBy { Pair(roundCoord(it.lat), roundCoord(it.lng)) }
-```
-
-**확정**: 로컬 서버의 기동 로그로 확인했다(2026-10-11, 샘플 삭제 뒤).
-
-```text
-files=3, uploadedTypes=2, regions=27, cctv=212932, lamp=33245, securityLamp=97713, bell=75391, safehouse=1236,
-police=2875, pedestrianSignal=0, safepaths=0
-```
+**확정**: 새 DB 에 bootJar 를 띄워 Flyway 적용과 CDN 가로등 32,005건 반영을 확인했다(2026-11-25). 기동 로그 ERROR 0.
 
 ## 4. 실행 중에 바뀌는 두 경우
 
-실행 중에 데이터가 바뀌는 길은 둘뿐이다. 둘 다 **디스크에 먼저 쓰고, 메모리에서 해당 조각만 바꾼다.**
+실행 중에 데이터가 바뀌는 길은 둘뿐이다. 둘 다 **조각 하나를 지우고 새로 넣기를 한 트랜잭션으로** 한다
+(`JdbcTemplate.batchUpdate`, 1,000행씩, `reWriteBatchedInserts`). 읽는 쪽은 바뀌기 전이나 바뀐 뒤 둘 중 하나만 본다.
 
 ### 4-1. 외부 API 로 한 지역을 받을 때
 
@@ -233,41 +157,21 @@ police=2875, pedestrianSignal=0, safepaths=0
 sequenceDiagram
     participant Fill as SecurityLampFillService
     participant Api as 외부 API (공공데이터포털)
-    participant Cache as 지역 캐시 파일
-    participant Mem as 메모리 조각, 색인
+    participant DB as PostgreSQL
 
-    Fill->>Cache: 이 지역을 90일 안에 받았나? (isCached)
-    Cache-->>Fill: 아니오
+    Fill->>DB: 이 지역 보안등이 이미 있나? (existsInRegion)
+    Fill->>DB: api:3860000 조각을 90일 안에 받았나? (isCached)
+    DB-->>Fill: 아니오
     Fill->>Api: 지역 3860000 보안등 요청
     Api-->>Fill: 시설 목록
-    Fill->>Cache: region-cache/security_lamp/3860000.json 쓰기
-    Fill->>Mem: 3860000 조각만 교체 (replaceRegion)
-    Note over Mem: 다른 지역 조각과 파일 조각은 그대로
-```
-
-```kotlin
-// SecurityLampFillService.kt:74-79
-cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)               // 디스크에 먼저
-if (points.isEmpty()) {                                                     // 빈 결과는 메모리에 반영하지 않는다
-    events.hadNoCoordinates(SafetySpotType.SECURITY_LAMP, regionCode, fetched.size)
-    return 0
-}
-liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)  // 그 지역 조각만 교체
+    Fill->>DB: api:3860000 조각 교체 (replaceRegion)
+    Note over DB: 다른 조각은 그대로
 ```
 
 90일 뒤 다시 받으면 그 지역 조각이 새 결과로 바뀐다. 주소나 전화가 바뀐 시설은 새 값이 되고, 없어진 시설은 빠진다.
 
-다시 받은 결과가 **비어 있으면 기존 데이터를 지우지 않는다.** 메모리는 위 코드처럼 반영하지 않고, 파일은 기존 항목을
-그대로 두고 받은 시각만 새로 한다.
-
-```kotlin
-// SafetySpotRegionCache.kt:68-72
-// 다시 받은 결과가 비어도 전에 받은 API 데이터는 지우지 않는다 - 저장 시각만 새로 해 곧바로 다시 받지 않게 한다.
-var kept: List<SafetySpotPoint> = points
-if (points.isEmpty()) {
-    kept = load(type, regionCode)
-}
-```
+받은 결과가 비어 있으면 이전 API 조각은 지우지 않고 저장 시각만 새로 한다. 외부 API 가 잠시 빈 결과를 줘도 데이터가
+사라지지 않게 하고, 좌표를 주지 않는 지자체(마포, 강남 등)를 재수집 주기 동안 다시 묻지 않기 위해서다.
 
 ### 4-2. 관리자가 CSV 를 올릴 때
 
@@ -276,25 +180,32 @@ sequenceDiagram
     participant Admin as 관리자 화면
     participant Upload as SafetySpotUploadService
     participant Disk as 업로드 폴더
-    participant Mem as 메모리 조각, 색인
+    participant DB as PostgreSQL
 
     Admin->>Upload: 보안등 CSV 업로드
-    Upload->>Upload: 헤더 해석, 좌표 변환
-    Upload->>Disk: facility-uploads/security_lamp.json (변환 결과)
+    Upload->>Upload: 헤더 해석, 좌표 변환, 빠진 지역 코드 채우기
     Upload->>Disk: facility-uploads/originals/security_lamp.csv (원본)
-    Upload->>Mem: 파일 조각만 교체 (replaceFiles)
-    Note over Mem: API 지역 조각은 그대로
+    Upload->>DB: upload, cdn 조각 교체 + 업로드에 든 지역의 API 조각 삭제 (replaceFiles)
 ```
 
-```kotlin
-// SafetySpotUploadService.kt:31-33
-uploadStore.save(type, parsed.points)        // 변환 결과
-uploadStore.saveOriginal(type, plain)        // 원본 (관리자 CSV 보기 화면용, gz 는 풀어서 보관)
-liveStore.replaceFiles(type, parsed.points)  // 파일 조각만 교체
-```
+업로드는 그 종류의 **`upload`와 `cdn` 조각을 대신한다.** 업로드에 든 지역 코드와 같은 API 조각은 지운다. 같은 시설을
+좌표만 조금 달리 두 번 세지 않기 위해서다. 다른 지역의 API 조각은 남는다.
 
-업로드는 그 종류의 **파일 출처(CDN 파일, 이전 업로드)를 대신한다.** 외부 API 로 받은 지역 조각은 남는다. `.gz`로 올려도
-되고(한도 128MB, `BUEONGI_FACILITY_UPLOAD_MAX_SIZE`), CCTV 원본은 압축 그대로 올린다.
+지역 코드가 빈 행은 `RegionLocator`로 채운다. 20km 안에서 지역 코드가 있는 가장 가까운 CCTV 를 KNN(`<->`)으로 찾고,
+약 1km 칸(0.01도)마다 한 번만 묻는다. CCTV 가 먼저 올라가 있어야 찾을 수 있다.
+
+`.gz`로 올려도 되고(한도 128MB, `BUEONGI_FACILITY_UPLOAD_MAX_SIZE`), CCTV 원본은 압축 그대로 올린다. 원본 CSV 는
+관리자 CSV 보기 화면용으로 `{BUEONGI_FACILITY_UPLOAD_DIR}/originals/{종류}.csv`에 종류마다 최신 하나만 둔다.
+
+**확정**: 실제 원본을 올려 확인했다(2026-11-25). 같은 파일을 다시 올려도 중복이 생기지 않았다.
+
+| 종류   |   행 수 | 시간(초) |
+|--------|--------:|---------:|
+| CCTV   | 319,164 |     12.4 |
+| 비상벨 |  88,621 |      3.6 |
+| 보안등 |  55,458 |      2.6 |
+
+보안등 55,458행은 모두 지역 코드가 채워졌다.
 
 ### 원본 CSV 의 새 판이 나오면: 반영 절차
 
@@ -325,27 +236,24 @@ liveStore.replaceFiles(type, parsed.points)  // 파일 조각만 교체
 
 업로드하면 바로 반영되고 재시작 없이 유지된다. 교체 시각과 건수는 관리자 시설 현황 화면에 남는다.
 
-**확정**: 업로드 폴더와 지역 캐시 폴더를 임시 복사본으로 바꾼 별도 포트 서버에 보안등 CSV 2건을 올려 확인했다
-(2026-10-10). 보안등 색인이 97,715곳에서 49,490곳이 되었다. 지역 캐시에 있던 API 보안등 49,488곳 + 업로드 2곳이다.
+## 5. 조회: DB 공간 질의
 
-## 5. 조회: 메모리 색인만 본다
+core 는 `SafetySpotSpatialSource`의 질의 메서드만 부른다. 구현은 `PostgisSafetySpotStore`다.
 
-색인은 지도를 가로세로 0.001도(약 100m) 격자 칸으로 나누고, 칸마다 그 안의 시설 목록을 들고 있다.
+| 메서드                  | 하는 일                                                   |
+|-------------------------|-----------------------------------------------------------|
+| `findWithinCorridor`    | 경로 양옆 몇 m 안의 시설(`ST_DWithin`, geography 라 미터) |
+| `findWithinRadius`      | 한 점에서 반경 안의 시설                                  |
+| `existsWithinRadius`    | 반경 안에 하나라도 있는지                                 |
+| `findByRegion`          | 지역 코드 하나의 시설                                     |
+| `findNearestWithRegion` | 지역 코드가 있는 가장 가까운 시설(KNN `<->`)              |
+| `countByOrigin`         | 파일 출처와 API 출처 건수(관리자 현황)                    |
+| `tallyByRegion`         | 지역별 집계(관리자 지역 현황)                             |
 
-"이 경로 양옆 몇 m 안의 시설"을 물으면, 경로가 지나는 칸과 그 주변 칸만 훑은 뒤 거리를 다시 재서 걸러 낸다. 파일은
-읽지 않는다.
+같은 좌표(소수 5자리)는 `DISTINCT ON (lat_e5, lng_e5)`로 한 곳만 돌려준다. 겹치면 **더 최신인 API 출처가 남는다**
+(`ORDER BY ... from_api DESC`).
 
-```kotlin
-// GridSpatialIndex.kt:39, :104 (발췌)
-fun withinCorridor(path: List<GeoPoint>, corridorM: Double): List<SafetySpotPoint> { … }
-private const val CELL_DEG: Double = 0.001
-```
-
-조각 하나가 바뀌면 그 종류의 색인 전체를 다시 만든다. 실측 시간은 3.3만 곳 12ms, 9.8만 곳 51ms, 21만 곳 216ms다(5회
-중앙값, 2026-10-10).
-
-지역 하나를 받는 일은 지역마다 90일에 한 번이라 지금은 문제가 되지 않는다. 잦아지면 칸 단위로 빼고 넣는 방식으로
-바꾼다(`SafetySpotSources.kt`의 `ponytail:` 주석).
+**확정**: 실측(2026-11-25). 주변 안심시설 API 가 약 16ms(워밍 뒤), 서울 약 3km 경로의 회랑 질의가 종류당 4~20ms 였다.
 
 ## 6. 위치 공유 세션: Redis
 
@@ -399,13 +307,13 @@ flowchart LR
 
 ## 7. 재시작하면 남는 것과 사라지는 것
 
-| 데이터                                   | 저장 위치                                      | 재시작 후                         |
-|------------------------------------------|------------------------------------------------|-----------------------------------|
-| 안심시설(CDN, CSV, 업로드, API)          | 디스크 파일                                    | 남음. 같은 색인이 다시 만들어진다 |
-| 위치 공유 세션                           | Redis                                          | 남음(만료 전까지)                 |
-| 장애 알림 이력(최대 200건)               | 메모리(`SlackAlertNotifier.recentAlerts`)      | 사라짐                            |
-| 시설 교체 기록(마지막 업로드 시각, 건수) | 메모리(`SafetySpotRefreshStatusStore.records`) | 사라짐                            |
+| 데이터                                   | 저장 위치                                      | 재시작 후                           |
+|------------------------------------------|------------------------------------------------|-------------------------------------|
+| 안심시설(CDN, 업로드, API)               | PostgreSQL(운영 compose 의 `db-data` 볼륨)     | 남음                                |
+| 위치 공유 세션                           | Redis                                          | 남음(만료 전까지)                   |
+| 업로드 원본 CSV(미리보기용)              | 디스크 `data/facility-uploads/originals/`      | 남음. 컨테이너를 새로 만들면 사라짐 |
+| 안심귀갓길, 신선도                       | 메모리(`SafetySpotCdnFiles`)                   | 기동 때 CDN 파일에서 다시 읽음      |
+| 장애 알림 이력(최대 200건)               | 메모리(`SlackAlertNotifier.recentAlerts`)      | 사라짐                              |
+| 시설 교체 기록(마지막 업로드 시각, 건수) | 메모리(`SafetySpotRefreshStatusStore.records`) | 사라짐                              |
 
-메모리에만 있는 둘은 "최근 상태를 보여 주는" 용도라 재시작 때 비어도 괜찮다고 판단했다.
-
-알림이나 업로드 이력을 오래 남겨야 하거나, 사용자 계정처럼 사람마다 남는 데이터가 생기면 그때 DB 를 들인다.
+메모리에만 있는 마지막 둘은 "최근 상태를 보여 주는" 용도라 재시작 때 비어도 괜찮다고 판단했다.

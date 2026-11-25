@@ -10,24 +10,29 @@
 
 ## 기술 스택
 
-| 항목        | 버전                                      |
-|-------------|-------------------------------------------|
-| Kotlin      | 1.9.25                                    |
-| Spring Boot | 3.4.0                                     |
-| Java        | 21                                        |
-| 빌드        | Gradle 8.11 (wrapper 포함)                |
-| 저장소      | Redis(위치 공유), 파일(안심시설 CSV, CDN) |
+| 항목        | 버전                                                    |
+|-------------|---------------------------------------------------------|
+| Kotlin      | 1.9.25                                                  |
+| Spring Boot | 3.4.0                                                   |
+| Java        | 21                                                      |
+| 빌드        | Gradle 8.11 (wrapper 포함)                              |
+| 저장소      | PostgreSQL 16 + PostGIS 3.4(안심시설), Redis(위치 공유) |
 
 ## 로컬 실행
 
 ### 1. 준비
 
 - JDK 21이 필요합니다.
-- Redis가 필요합니다. 위치 공유 저장소이며, 없어도 서버는 뜨지만 위치 공유 API가 503을 돌려줍니다.
+- PostgreSQL + PostGIS와 Redis가 필요합니다. 저장소 루트의 `compose.yaml`이 둘을 함께 띄웁니다.
 
   ```bash
-  docker run -d -p 6379:6379 redis:7-alpine
+  docker compose up -d
   ```
+
+  - PostGIS(`postgis/postgis:16-3.4`, 5432)는 안심시설 저장소입니다. 닿지 않으면 서버가 기동하지 않습니다. 기동할 때
+    Flyway가 테이블을 만듭니다.
+  - Redis(6379)는 위치 공유 저장소입니다. 없어도 서버는 뜨지만 위치 공유 API가 503을 돌려줍니다.
+  - DB 비밀번호는 `local` 프로파일이 개발용 기본값 `bueongi`를 넣어 줍니다. compose의 값과 같습니다.
 
 - 저장소 루트에 `.env.local`(gitignore)을 만듭니다. 관리자 로그인 두 값이 없으면 기동하지 않습니다. 값을 만드는 법은
   [관리자 로그인 준비](#관리자-로그인-준비)를 참고합니다.
@@ -92,15 +97,19 @@ pathlib.Path('.env.local.properties').write_text('\n'.join(out)+'\n')"
 java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar
 ```
 
-- `test`는 전체 테스트를 돌립니다. 테스트는 인메모리 대역을 쓰므로 Redis가 없어도 됩니다.
+- `test`는 전체 테스트를 돌립니다. Redis는 인메모리 대역을 쓰므로 없어도 됩니다.
+- `context` 태그가 붙은 테스트(`@SpringBootTest`, PostGIS 저장소 테스트)는 실제 PostGIS에 붙습니다. 접속 정보는
+  `BUEONGI_DB_URL`, `BUEONGI_DB_USERNAME`, `BUEONGI_DB_PASSWORD`로 받고, 로컬은 `docker compose up -d`로 띄운 DB를
+  씁니다. CI(`backend-ci.yml`)는 postgis 서비스 컨테이너를 띄웁니다.
+- DB 없이 돌리려면 `./gradlew unitTest --no-daemon`을 씁니다. `context` 태그를 뺀 테스트만 돕니다.
 - `build`는 테스트 후 jar를 만듭니다. 실행 jar는 부팅 모듈 `core-app`의 산출물입니다.
 - 테스트 메서드 이름이 한글이라 로케일이 UTF-8이어야 합니다. CI는 `LANG=C.UTF-8`로 돕니다.
 - 부팅 모듈이 `core-app` 하나라 루트에서 `bootRun`, `bootJar`, `test`가 그대로 동작합니다.
 
 ## 환경변수
 
-모든 설정은 환경변수로 넣습니다. 관리자 인증 값 외에는 비워 두면 기본값이나 폴백으로 동작합니다. 시크릿은 코드,
-로그와 커밋에 넣지 않습니다.
+모든 설정은 환경변수로 넣습니다. 관리자 인증 값과 DB 비밀번호 외에는 비워 두면 기본값이나 폴백으로 동작합니다.
+시크릿은 코드, 로그와 커밋에 넣지 않습니다.
 
 ### 필수
 
@@ -110,26 +119,29 @@ java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar
 | `BUEONGI_ADMIN_PASSWORD_HASH` | 관리자 비밀번호의 bcrypt 해시. 원문은 저장하지 않습니다                                      |
 | `JWT_PUBLIC_KEY`              | 관리자 JWT 검증용 RSA 공개키(PEM 또는 base64-DER). `local` 프로파일에서는 생략할 수 있습니다 |
 | `JWT_PRIVATE_KEY`             | 관리자 JWT 발급용 PKCS#8 RSA 개인키. `local` 프로파일에서는 생략할 수 있습니다               |
+| `BUEONGI_DB_PASSWORD`         | 안심시설 DB 비밀번호. 기본값이 없고, `local` 프로파일만 개발용 값 `bueongi`를 씁니다         |
 
 ### 선택
 
-| 환경변수                       | 기본값                                         | 설명                                                               |
-|--------------------------------|------------------------------------------------|--------------------------------------------------------------------|
-| `BUEONGI_REDIS_URL`            | `redis://localhost:6379`                       | 위치 공유 Redis. 비밀번호가 있으면 `redis://:비밀번호@호스트:6379` |
-| `BUEONGI_SHARE_BASE_URL`       | `http://localhost:8119`                        | 공유 링크(`share_url`)의 앞부분. 운영은 보호자가 여는 공개 도메인  |
-| `BUEONGI_CORS_ORIGINS`         | `https://localhost:3619,http://localhost:3619` | `/api/**`, `/share/**`에 허용할 origin(쉼표 구분)                  |
-| `BUEONGI_ADMIN_EMAIL`          | (빈 값)                                        | 로그인 응답에 표시할 관리자 이메일                                 |
-| `TMAP_APP_KEY`                 | (빈 값)                                        | Tmap 경로와 장소 검색                                              |
-| `DATA_GO_KR_SERVICE_KEY`       | (빈 값)                                        | 공공데이터포털(보안등)                                             |
-| `SAFEMAP_SERVICE_KEY`          | (빈 값)                                        | 생활안전지도(경찰 시설)                                            |
-| `SAFETYDATA_SERVICE_KEY`       | (빈 값)                                        | 재난안전데이터(가로등)                                             |
-| `SLACK_WEBHOOK_URL`            | (빈 값)                                        | 운영 알림. 비우면 알림을 보내지 않음                               |
-| `SLACK_ALERT_THROTTLE_MINUTES` | `10`                                           | 같은 알림을 다시 보내기까지 기다리는 시간(분)                      |
-| `BUEONGI_FACILITY_DATA_DIR`    | `cdn`                                          | 안심시설 CDN 파일 디렉터리                                         |
-| `BUEONGI_FACILITY_CCTV_CSV`    | `data/source/cctv/CCTV정보.csv`                | CCTV 초기 적재 CSV. `.gz`도 읽음                                   |
-| `BUEONGI_WATCHDOG_INTERVAL_MS` | `60000`                                        | 도착 미확인 감시 주기(ms)                                          |
-| `BUEONGI_HTTP_CONNECT_TIMEOUT` | `3s`                                           | 외부 API 연결 타임아웃                                             |
-| `BUEONGI_HTTP_READ_TIMEOUT`    | `10s`                                          | 외부 API 응답 타임아웃                                             |
+| 환경변수                       | 기본값                                                                | 설명                                                               |
+|--------------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------|
+| `BUEONGI_DB_URL`               | `jdbc:postgresql://localhost:5432/bueongi?reWriteBatchedInserts=true` | 안심시설 DB(PostgreSQL + PostGIS)                                  |
+| `BUEONGI_DB_USERNAME`          | `bueongi`                                                             | 안심시설 DB 사용자                                                 |
+| `BUEONGI_REDIS_URL`            | `redis://localhost:6379`                                              | 위치 공유 Redis. 비밀번호가 있으면 `redis://:비밀번호@호스트:6379` |
+| `BUEONGI_SHARE_BASE_URL`       | `http://localhost:8119`                                               | 공유 링크(`share_url`)의 앞부분. 운영은 보호자가 여는 공개 도메인  |
+| `BUEONGI_CORS_ORIGINS`         | `https://localhost:3619,http://localhost:3619`                        | `/api/**`, `/share/**`에 허용할 origin(쉼표 구분)                  |
+| `BUEONGI_ADMIN_EMAIL`          | (빈 값)                                                               | 로그인 응답에 표시할 관리자 이메일                                 |
+| `TMAP_APP_KEY`                 | (빈 값)                                                               | Tmap 경로와 장소 검색                                              |
+| `DATA_GO_KR_SERVICE_KEY`       | (빈 값)                                                               | 공공데이터포털(보안등)                                             |
+| `SAFEMAP_SERVICE_KEY`          | (빈 값)                                                               | 생활안전지도(경찰 시설)                                            |
+| `SAFETYDATA_SERVICE_KEY`       | (빈 값)                                                               | 재난안전데이터(가로등)                                             |
+| `SLACK_WEBHOOK_URL`            | (빈 값)                                                               | 운영 알림. 비우면 알림을 보내지 않음                               |
+| `SLACK_ALERT_THROTTLE_MINUTES` | `10`                                                                  | 같은 알림을 다시 보내기까지 기다리는 시간(분)                      |
+| `BUEONGI_FACILITY_DATA_DIR`    | `cdn`                                                                 | 안심시설 CDN 파일 디렉터리. 기동 때 DB로 옮김                      |
+| `BUEONGI_FACILITY_CCTV_CSV`    | `data/source/cctv/CCTV정보.csv`                                       | 관리자 CSV 화면에 보여 줄 CCTV 원본(적재는 업로드로). `.gz`도 읽음 |
+| `BUEONGI_WATCHDOG_INTERVAL_MS` | `60000`                                                               | 도착 미확인 감시 주기(ms)                                          |
+| `BUEONGI_HTTP_CONNECT_TIMEOUT` | `3s`                                                                  | 외부 API 연결 타임아웃                                             |
+| `BUEONGI_HTTP_READ_TIMEOUT`    | `10s`                                                                 | 외부 API 응답 타임아웃                                             |
 
 - Slack 알림은 처리되지 않은 500, 시설 적재 0건, Tmap 경로 전면 실패, 장소 검색 실패, 도착 미확인 때 보냅니다.
 - CCTV 원천 CSV는 [`data/source/README.md`](data/source/README.md)를 참고합니다.
@@ -198,7 +210,7 @@ core/
 ├── core-common/             # 둘 이상의 도메인이 쓰는 것, 앱 전역 웹 설정(advice, CORS, 필터)
 └── core-enum/               # 여러 계층이 함께 쓰는 enum
 storage/
-├── db-safety-spot/          # 시설 데이터(파일)와 공간 인덱스
+├── db-safety-spot/          # 안심시설(PostgreSQL + PostGIS, Flyway)과 CDN 파일 반영
 └── db-share/                # 위치 공유 세션(Redis)
 clients/                     # 외부 API 어댑터: 서로, 상위를 참조하지 않음
 ├── client-place/            # 장소 검색 계약(외부 호출 없음)
@@ -236,7 +248,7 @@ support/
 2. 업무 흐름은 각 도메인 모듈의 `domain/*`에서 조율합니다.
 3. 상세 구현은 구현 레이어로 분리하고 재사용 가능한 단위로 씁니다(예: `SafetyScorer`, `SafeDetourPlanner`,
    `NearestPoliceFinder`).
-4. 저장소 접근은 `storage:db-<도메인>`으로 격리합니다. 파일과 Redis 접근 코드는 storage 밖에 두지 않습니다.
+4. 저장소 접근은 `storage:db-<도메인>`으로 격리합니다. DB, 파일과 Redis 접근 코드는 storage 밖에 두지 않습니다.
 5. 참조는 상위에서 하위로 한 방향입니다: `core-app` -> `core-<도메인>` -> (`core-common`, `core-enum`, storage,
    clients, support). storage, clients, support는 서로도, 상위도 참조하지 않습니다. 도메인 모듈 사이 순환은
    허용하지 않습니다.

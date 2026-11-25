@@ -56,8 +56,7 @@ flowchart LR
         A["관리자가 CSV 업로드<br/>.gz 그대로 가능"]
     end
     subgraph 저장
-        B["업로드 규격으로 행 판정"] --> C["data/facility-uploads/emergency_bell.json"]
-        C --> D["비상벨 색인(메모리)"]
+        B["업로드 규격으로 행 판정"] --> D["DB safety_spot<br/>source=upload"]
     end
     subgraph 표시
         E1["안전 점수<br/>경로 30m 안 비상벨 수"]
@@ -72,9 +71,10 @@ flowchart LR
     D --> E4
 ```
 
-- 업로드하면 색인을 바로 바꾸고, 서버가 다시 켜질 때는 업로드 파일을 읽는다.
-- 업로드 파일이 없을 때만 `cdn/emergency_bell/nationwide.json`(변환 스크립트 `data/ingest/bell_ingest.py`의 결과)을
-  읽는다. 이 파일은 `.gitignore` 대상이라 저장소에 없다.
+- 업로드하면 DB의 비상벨 `upload` 조각을 한 트랜잭션으로 바로 바꾼다. 재시작해도 DB에 남는다.
+- 2026-11-25 실제 원본 업로드에서 88,621행이 3.6초에 들어갔다.
+- 업로드가 없을 때만 서버가 켜질 때 `cdn/emergency_bell/nationwide.json`(변환 스크립트 `data/ingest/bell_ingest.py`의
+  결과)을 DB의 `cdn` 조각으로 옮긴다. 이 파일은 `.gitignore` 대상이라 저장소에 없다.
 
 ## 읽는 규칙
 
@@ -94,5 +94,5 @@ flowchart LR
 
 - 2026-11-25 전에는 원본 CSV를 업로드하면 0건이 들어갔다. 업로드 규격이 `WGS84위도`, `WGS84경도`, `설치위치`를 찾지
   않았기 때문이고, 지금은 고쳐졌다.
-- 업로드 결과(`data/facility-uploads`)는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 컨테이너를 새로
-  만들면 사라진다.
+- 업로드한 시설은 DB(운영 compose의 `db-data` 볼륨)에 남는다. 관리자 미리보기용 원본 CSV
+  (`data/facility-uploads/originals/emergency_bell.csv`)만 컨테이너 안 파일이라 컨테이너를 새로 만들면 사라진다.

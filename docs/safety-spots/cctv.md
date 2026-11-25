@@ -50,8 +50,7 @@ flowchart LR
         A["관리자가 CSV 업로드<br/>.gz 그대로 가능"]
     end
     subgraph 저장
-        B["업로드 규격으로 행 판정"] --> C["data/facility-uploads/cctv.json"]
-        C --> D["CCTV 색인(메모리)"]
+        B["업로드 규격으로 행 판정"] --> D["DB safety_spot<br/>source=upload"]
     end
     subgraph 표시
         E1["안전 점수<br/>경로 30m 안 CCTV 수"]
@@ -66,8 +65,10 @@ flowchart LR
     D --> E4
 ```
 
-- 업로드하면 색인을 바로 바꾸고, 서버가 다시 켜질 때는 `cctv.json`을 읽어 색인을 만든다.
-- 좌표가 같은 CCTV는 색인에서 하나로 합친다(2026-10-11 측정 212,932곳).
+- 업로드하면 DB의 CCTV `upload` 조각을 한 트랜잭션으로 바로 바꾼다. 재시작해도 DB에 남는다.
+- 2026-11-25 실제 원본 업로드에서 319,164행이 12.4초에 들어갔다.
+- 좌표가 같은 CCTV는 조회할 때 하나로 센다(2026-10-11 메모리 색인 기준 212,932곳).
+- 다른 시설의 지역 코드를 찾을 때 기준이 된다(가장 가까운 CCTV의 `개방자치단체코드`, 20km 안).
 - 원본 CSV(`data/source`)는 서버가 직접 읽지 않는다. 관리자 CSV 목록(`GET /api/admin/safety-spot-csv-files`)에 보관본으로만
   나온다.
 
@@ -91,5 +92,5 @@ flowchart LR
 
 - 주소는 `소재지지번주소`만 읽는다. 지번주소가 빈 행이 많아(예시 행도 비어 있음) 주소가 빈 마커가 생긴다.
   `소재지도로명주소`는 읽지 않는다.
-- 업로드 결과(`data/facility-uploads`)는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 컨테이너를 새로
-  만들면 사라진다.
+- 업로드한 시설은 DB(운영 compose의 `db-data` 볼륨)에 남는다. 관리자 미리보기용 원본 CSV
+  (`data/facility-uploads/originals/cctv.csv`)만 컨테이너 안 파일이라 볼륨이 없어 컨테이너를 새로 만들면 사라진다.

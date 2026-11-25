@@ -1,6 +1,6 @@
 # bueongi 배포 가이드
 
-이 디렉터리는 운영 스택(프론트 nginx, 백엔드, Redis, 선택 Caddy)을 docker compose로 띄우는 파일을 담습니다. 이 문서는
+이 디렉터리는 운영 스택(프론트 nginx, 백엔드, PostgreSQL + PostGIS, Redis, 선택 Caddy)을 docker compose로 띄우는 파일을 담습니다. 이 문서는
 구조, GitHub Actions 이미지 발행, 서버 배포 절차와 배포 때 주의할 점을 다룹니다.
 
 ## 구조
@@ -16,6 +16,7 @@
                                 ├─ /cdn/*           ─▶ [backend]   안심시설 정적 JSON
                                 └─ /share/create, /share/{token}/(location|end|watching|route)
                                                     ─▶ [backend]   위치 공유 API
+                                [backend] ──▶ [db]     안심시설(PostGIS, db-data 볼륨)
                                 [backend] ──▶ [redis]  위치 공유 세션(1~3시간 상한)
 ```
 
@@ -28,7 +29,9 @@
 - nginx 프록시 규칙은 dev(vite) 프록시를 운영에 옮긴 것입니다. 단일 세그먼트 `/share/{token}`은 보호자 뷰어이고,
   `/share/create`와 `/share/{token}/...`는 백엔드 API입니다.
 - 백엔드 이미지에는 `cdn/`(안심시설 데이터)이 `/app/cdn`으로 들어가고 `BUEONGI_FACILITY_DATA_DIR=/app/cdn`이
-  설정됩니다.
+  설정됩니다. 백엔드는 켜질 때 이 파일을 DB로 옮깁니다(업로드가 있는 종류는 건너뜀).
+- `db` 서비스는 `postgis/postgis:16-3.4`이고 데이터는 `db-data` 볼륨에 둡니다. 백엔드는 `db`의 헬스체크
+  (`pg_isready`)가 통과한 뒤에 뜹니다. 테이블은 백엔드가 기동할 때 Flyway로 만듭니다.
 
 ## CI/CD 파이프라인
 
@@ -64,7 +67,8 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
 
 ## 서버 배포
 
-1. 이 디렉터리(`deploy/`)를 서버에 복사하고 `.env`를 만듭니다. `PUBLIC_ORIGIN`, 키와 `DOMAIN`을 채웁니다.
+1. 이 디렉터리(`deploy/`)를 서버에 복사하고 `.env`를 만듭니다. `BUEONGI_DB_PASSWORD`, `PUBLIC_ORIGIN`, 키와
+   `DOMAIN`을 채웁니다. `BUEONGI_DB_PASSWORD`가 비어 있으면 compose가 기동을 거부합니다.
 
    ```bash
    cp .env.example .env
@@ -103,19 +107,22 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
 
 `.env.example`을 `.env`로 복사해 채웁니다. `.env`는 커밋하지 않습니다.
 
-| 환경변수                 | 기본값                  | 설명                                                                               |
-|--------------------------|-------------------------|------------------------------------------------------------------------------------|
-| `PUBLIC_ORIGIN`          | `http://localhost:8080` | 공개 origin. 백엔드 `BUEONGI_SHARE_BASE_URL`과 `BUEONGI_CORS_ORIGINS`에 들어갑니다 |
-| `HTTP_PORT`              | `8080`                  | 프론트 컨테이너의 호스트 포트                                                      |
-| `TMAP_APP_KEY`           | (빈 값)                 | Tmap 경로와 장소 검색                                                              |
-| `DATA_GO_KR_SERVICE_KEY` | (빈 값)                 | 공공데이터포털 보안등 지연 적재                                                    |
-| `SAFEMAP_SERVICE_KEY`    | (빈 값)                 | 생활안전지도 치안시설 지연 적재                                                    |
-| `SAFETYDATA_SERVICE_KEY` | (빈 값)                 | 재난안전데이터 가로등 지연 적재                                                    |
-| `SLACK_WEBHOOK_URL`      | (빈 값)                 | 운영 알림. 비우면 알림을 보내지 않습니다                                           |
-| `BUEONGI_REDIS_URL`      | `redis://redis:6379`    | 위치 공유 Redis. 외부 Redis를 쓸 때만 덮어씁니다                                   |
-| `DOMAIN`                 | (빈 값)                 | `tls` 프로필의 인증서 도메인. 이 프로필을 쓰면 필수입니다                          |
-| `BACKEND_TAG`            | `latest`                | 백엔드 이미지 태그 고정                                                            |
-| `FRONTEND_TAG`           | `latest`                | 프론트 이미지 태그 고정                                                            |
+| 환경변수                 | 기본값                                                         | 설명                                                                               |
+|--------------------------|----------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `PUBLIC_ORIGIN`          | `http://localhost:8080`                                        | 공개 origin. 백엔드 `BUEONGI_SHARE_BASE_URL`과 `BUEONGI_CORS_ORIGINS`에 들어갑니다 |
+| `HTTP_PORT`              | `8080`                                                         | 프론트 컨테이너의 호스트 포트                                                      |
+| `TMAP_APP_KEY`           | (빈 값)                                                        | Tmap 경로와 장소 검색                                                              |
+| `DATA_GO_KR_SERVICE_KEY` | (빈 값)                                                        | 공공데이터포털 보안등 지연 적재                                                    |
+| `SAFEMAP_SERVICE_KEY`    | (빈 값)                                                        | 생활안전지도 치안시설 지연 적재                                                    |
+| `SAFETYDATA_SERVICE_KEY` | (빈 값)                                                        | 재난안전데이터 가로등 지연 적재                                                    |
+| `SLACK_WEBHOOK_URL`      | (빈 값)                                                        | 운영 알림. 비우면 알림을 보내지 않습니다                                           |
+| `BUEONGI_DB_PASSWORD`    | (없음, 필수)                                                   | 안심시설 DB 비밀번호. `db` 컨테이너와 백엔드에 같은 값이 들어갑니다                |
+| `BUEONGI_DB_USERNAME`    | `bueongi`                                                      | 안심시설 DB 사용자                                                                 |
+| `BUEONGI_DB_URL`         | `jdbc:postgresql://db:5432/bueongi?reWriteBatchedInserts=true` | 안심시설 DB. 외부 DB를 쓸 때만 덮어씁니다                                          |
+| `BUEONGI_REDIS_URL`      | `redis://redis:6379`                                           | 위치 공유 Redis. 외부 Redis를 쓸 때만 덮어씁니다                                   |
+| `DOMAIN`                 | (빈 값)                                                        | `tls` 프로필의 인증서 도메인. 이 프로필을 쓰면 필수입니다                          |
+| `BACKEND_TAG`            | `latest`                                                       | 백엔드 이미지 태그 고정                                                            |
+| `FRONTEND_TAG`           | `latest`                                                       | 프론트 이미지 태그 고정                                                            |
 
 - `.env.example`의 `KAKAO_REST_API_KEY`는 compose가 어느 서비스에도 넘기지 않습니다.
 - compose는 `SAFE182_ESNTL_ID`, `SAFE182_AUTH_KEY`를 넘기지 않으므로 아동안전지킴이집 지연 적재는 꺼진 상태입니다.
@@ -131,10 +138,13 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
 3. **키가 없어도 서버는 뜹니다**: 외부 키는 모두 선택입니다. 다만 `TMAP_APP_KEY`가 없으면 경로 비교는 503
    `ROUTE_SEARCH_UNAVAILABLE`, 장소 검색은 503 `PLACE_SEARCH_UNAVAILABLE`을 돌려줍니다. 지어낸 경로나 검색 결과는
    내보내지 않습니다. 공공데이터 키가 없으면 해당 시설은 이미지에 든 `cdn/` 데이터와 관리자 업로드분만 씁니다.
-4. **Redis 필수**: 위치 공유 세션 저장소이며 compose가 함께 띄웁니다. 연결이 끊기면 위치 공유 API만 오류를 냅니다.
-5. **데이터 영속**: compose는 백엔드에 볼륨을 두지 않습니다. 관리자 CSV 업로드분(`./data/facility-uploads`)과
-   지연 적재 캐시(`./data/region-cache`)는 컨테이너를 다시 만들면 사라집니다.
-6. **API 요청 제한**: nginx가 `/api/*`, `/cdn/*`와 위치 공유 API에 IP당 10r/s(burst 20)를 걸고 초과분은 429로
+4. **DB 필수**: 안심시설 저장소(PostgreSQL + PostGIS)이며 compose가 함께 띄웁니다. 닿지 않으면 백엔드가 뜨지
+   않습니다.
+5. **Redis 필수**: 위치 공유 세션 저장소이며 compose가 함께 띄웁니다. 연결이 끊기면 위치 공유 API만 오류를 냅니다.
+6. **데이터 영속**: 관리자 CSV 업로드분과 외부 API로 받은 지역 데이터는 DB(`db-data` 볼륨)에 있어 컨테이너를 다시
+   만들어도 남습니다. `docker compose down -v`는 볼륨까지 지우므로 쓰지 않습니다. 관리자 CSV 보기 화면의 원본
+   미리보기 파일(`./data/facility-uploads/originals`)만 백엔드 컨테이너 안에 있어 다시 만들면 사라집니다.
+7. **API 요청 제한**: nginx가 `/api/*`, `/cdn/*`와 위치 공유 API에 IP당 10r/s(burst 20)를 걸고 초과분은 429로
    끊습니다(외부 API 쿼터 소진 공격 방어). 규칙은 프론트 이미지의 `deploy/nginx.default.conf.template`에 있습니다.
 
 ## 로컬에서 이미지 빌드

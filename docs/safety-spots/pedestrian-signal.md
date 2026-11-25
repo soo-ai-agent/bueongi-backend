@@ -38,15 +38,15 @@ flowchart LR
         A["관리자 CSV 업로드"]
     end
     subgraph 저장
-        B["data/facility-uploads/pedestrian_signal.json"] --> C["보행신호등 색인(메모리)"]
+        B["DB safety_spot<br/>source=upload"]
     end
     subgraph 표시
         E1["경로 마커"]
         E2["주변 안심시설<br/>반경 500m"]
     end
     A --> B
-    C --> E1
-    C --> E2
+    B --> E1
+    B --> E2
 ```
 
 ## 갱신 방법

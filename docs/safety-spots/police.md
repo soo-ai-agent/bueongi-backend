@@ -49,9 +49,9 @@ flowchart LR
         A2["관리자 CSV 업로드<br/>좌표가 있는 파일만"]
     end
     subgraph 저장
-        B1["data/region-cache/<br/>전국 JSON, 90일"]
-        B2["data/facility-uploads/police.json"]
-        C["치안시설 색인(메모리)"]
+        B1["DB safety_spot<br/>source=api:nationwide, 90일"]
+        B2["DB safety_spot<br/>source=upload"]
+        C["공간 질의<br/>PostGIS"]
     end
     subgraph 표시
         E1["안전 점수<br/>경로 30m 안 치안시설 수"]
@@ -69,8 +69,8 @@ flowchart LR
     C --> E4
 ```
 
-- 외부 API는 경로 요청이 처음 들어올 때 전국을 한 번 받는다. 90일 캐시가 있으면 부르지 않고, 실패하면 10분 동안 다시
-  부르지 않는다.
+- 외부 API는 경로 요청이 처음 들어올 때 전국을 한 번 받아 DB의 `api:nationwide` 조각으로 넣는다. 그 조각의 저장
+  시각(`safety_spot_slice.saved_at`)이 90일 안이면 부르지 않고, 실패하면 10분 동안 다시 부르지 않는다.
 - 경로 마커에 전화번호가 함께 나간다(`SafetySpotPoi.phone`). 다른 시설은 전화번호가 빈 문자열이다.
 
 ## 읽는 규칙

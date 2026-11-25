@@ -37,9 +37,9 @@ flowchart LR
         A2["관리자 CSV 업로드"]
     end
     subgraph 저장
-        B1["data/region-cache/<br/>지도 칸별 JSON, 90일"]
-        B2["data/facility-uploads/safehouse.json"]
-        C["지킴이집 색인(메모리)"]
+        B1["DB safety_spot<br/>source=api:지도 칸, 90일"]
+        B2["DB safety_spot<br/>source=upload"]
+        C["공간 질의<br/>PostGIS"]
     end
     subgraph 표시
         E1["안전 점수<br/>경로 30m 안 지킴이집 수"]
@@ -58,7 +58,8 @@ flowchart LR
 ```
 
 - 경로를 찾으면 경로를 따라 2km마다(최대 12곳) 좌표를 뽑고, 그 좌표가 속한 지도 칸을 API에 묻는다.
-- 90일 캐시가 있는 칸은 부르지 않고, 실패한 칸은 10분 동안 다시 부르지 않는다.
+- 받은 칸은 DB의 `api:<칸 코드>` 조각이 된다. 저장 시각(`safety_spot_slice.saved_at`)이 90일 안인 칸은 부르지 않고,
+  실패한 칸은 10분 동안 다시 부르지 않는다.
 - API가 쿼터 초과 코드(`80`)를 주면 이번 수집을 멈추고 기존 데이터를 그대로 둔다.
 
 ## 읽는 규칙
@@ -73,4 +74,4 @@ flowchart LR
 ## 알아둘 점
 
 - 운영 docker-compose가 안전Dream 키(`SAFE182_*`)를 백엔드에 넘기지 않아, 운영에서는 이 채우기가 꺼져 있다.
-- 지역 캐시는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 배포할 때마다 다시 받는다.
+- 받은 칸은 DB(운영 compose의 `db-data` 볼륨)에 남아 배포하거나 재시작해도 90일 동안 다시 받지 않는다.

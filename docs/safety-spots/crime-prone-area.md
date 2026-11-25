@@ -37,13 +37,13 @@ flowchart LR
         A["관리자 CSV 업로드"]
     end
     subgraph 저장
-        B["data/facility-uploads/crime_prone_area.json"] --> C["범죄주의구간 색인(메모리)"]
+        B["DB safety_spot<br/>source=upload"]
     end
     subgraph 표시
         E["안전 점수 감점<br/>경로 100m 안 구간 수"]
     end
     A --> B
-    C --> E
+    B --> E
 ```
 
 다른 시설은 경로 30m 안을 세지만, 범죄주의구간은 경로 100m 안을 센다.

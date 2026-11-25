@@ -40,31 +40,32 @@ flowchart LR
         A3["관리자 CSV 업로드"]
     end
     subgraph 저장
-        B1["cdn/lamp/*.json"]
-        B2["data/region-cache/<br/>전국 JSON, 90일"]
-        B3["data/facility-uploads/lamp.json"]
-        C["가로등 색인(메모리)"]
+        B1["DB safety_spot<br/>source=cdn"]
+        B2["DB safety_spot<br/>source=api:nationwide, 90일"]
+        B3["DB safety_spot<br/>source=upload"]
+        C["공간 질의<br/>PostGIS"]
     end
     subgraph 표시
         E1["안전 점수<br/>보안등과 합쳐 조명 밀도"]
         E2["경로 마커"]
         E3["주변 안심시설<br/>반경 500m"]
     end
-    A1 --> B1
+    A1 -->|"서버 기동 시 cdn/lamp/*.json"| B1
     A2 --> B2
-    A3 --> B3
-    B1 -->|"서버 기동 시"| C
-    B3 -->|"있으면 CDN 대신"| C
+    A3 -->|"cdn 조각을 대신"| B3
+    B1 --> C
+    B3 --> C
     B2 --> C
     C --> E1
     C --> E2
     C --> E3
 ```
 
-- 서버는 켜질 때 CDN 파일을 읽고, 업로드가 있으면 그것으로 CDN 파일을 대신한다.
-- 외부 API는 경로 요청이 처음 들어올 때 전국을 한 번 받는다. 90일 캐시가 있으면 부르지 않고, 실패하면 10분 동안 다시
-  부르지 않는다.
-- API 조각은 전국 하나라, 업로드가 있어도 함께 색인에 붙는다(지역 단위로 겹침을 가리지 않는다).
+- 서버는 켜질 때 CDN 파일을 DB의 `cdn` 조각으로 옮긴다(2026-11-25 새 DB에서 32,005건). 업로드가 있으면 CDN 파일을
+  건너뛴다.
+- 외부 API는 경로 요청이 처음 들어올 때 전국을 한 번 받아 `api:nationwide` 조각으로 넣는다. 그 조각의 저장
+  시각(`safety_spot_slice.saved_at`)이 90일 안이면 부르지 않고, 실패하면 10분 동안 다시 부르지 않는다.
+- API 조각은 전국 하나라, 업로드가 있어도 지워지지 않고 함께 조회된다(지역 단위로 겹침을 가리지 않는다).
 
 ## 읽는 규칙
 
@@ -79,4 +80,4 @@ flowchart LR
 ## 알아둘 점
 
 - 키(`SAFETYDATA_SERVICE_KEY`)가 없으면 외부 API 채우기는 꺼지고 CDN 파일만 쓴다.
-- 지역 캐시는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 배포할 때마다 전국을 다시 받는다.
+- API로 받은 전국 조각은 DB(운영 compose의 `db-data` 볼륨)에 남아 배포하거나 재시작해도 90일 동안 다시 받지 않는다.

@@ -57,9 +57,9 @@ flowchart LR
         A2["경로 요청 후 백그라운드<br/>경로가 지나는 자치단체"]
     end
     subgraph 저장
-        B1["data/facility-uploads/security_lamp.json"]
-        B2["data/region-cache/<br/>자치단체별 JSON, 90일"]
-        C["보안등 색인(메모리)"]
+        B1["DB safety_spot<br/>source=upload"]
+        B2["DB safety_spot<br/>source=api:자치단체 코드, 90일"]
+        C["공간 질의<br/>PostGIS"]
     end
     subgraph 표시
         E1["안전 점수<br/>가로등과 합쳐 조명 밀도"]
@@ -67,7 +67,7 @@ flowchart LR
         E3["주변 안심시설<br/>반경 500m"]
     end
     A1 --> B1
-    A2 -->|"색인에 없는 자치단체만"| B2
+    A2 -->|"DB에 없는 자치단체만"| B2
     B1 --> C
     B2 --> C
     C --> E1
@@ -76,8 +76,10 @@ flowchart LR
 ```
 
 - 경로를 찾으면 경로를 따라 2km마다(최대 12곳) 좌표를 뽑아 자치단체를 찾는다.
-- 그 자치단체가 이미 색인에 있거나 90일 캐시에 있으면 API를 부르지 않는다. 실패하면 10분 동안 다시 부르지 않는다.
-- 업로드에 이미 있는 자치단체는 API로 받지 않는다. 캐시에 남은 그 지역의 API 조각도 색인에 넣지 않는다.
+- 그 자치단체의 보안등이 이미 DB에 있거나, `api:<자치단체 코드>` 조각의 저장 시각(`safety_spot_slice.saved_at`)이
+  90일 안이면 API를 부르지 않는다. 실패하면 10분 동안 다시 부르지 않는다.
+- 업로드에 이미 있는 자치단체는 API로 받지 않는다. 업로드할 때 그 지역의 API 조각을 DB에서 지운다.
+- 2026-11-25 원본 3개를 합친 업로드에서 55,458행이 2.6초에 들어갔고, 전원 지역 코드가 채워졌다.
 
 ## 읽는 규칙
 
@@ -96,7 +98,8 @@ flowchart LR
 
 ## 알아둘 점
 
-- 자치단체 파일 두 개처럼 지역 코드 칸이 없는 CSV는 업로드할 때 좌표로 자치단체를 찾아 붙인다(가까운 CCTV의
-  `개방자치단체코드`). CCTV가 먼저 올라가 있어야 찾을 수 있다.
+- 자치단체 파일 두 개처럼 지역 코드 칸이 없는 CSV는 업로드할 때 좌표로 자치단체를 찾아 붙인다(20km 안에서 가장
+  가까운 CCTV의 `개방자치단체코드`, 약 1km 칸마다 한 번). CCTV가 먼저 올라가 있어야 찾을 수 있다.
 - API 키(`DATA_GO_KR_SERVICE_KEY`)가 없으면 API 채우기는 꺼지고 업로드분만 쓴다.
-- 업로드 결과와 지역 캐시는 실행 중에 생기는 파일이다. 운영 docker-compose에 볼륨이 없어 컨테이너를 새로 만들면 사라진다.
+- 업로드분과 API 지역 조각은 DB(운영 compose의 `db-data` 볼륨)에 남는다. 관리자 미리보기용 원본 CSV
+  (`data/facility-uploads/originals/security_lamp.csv`)만 컨테이너 안 파일이라 컨테이너를 새로 만들면 사라진다.
