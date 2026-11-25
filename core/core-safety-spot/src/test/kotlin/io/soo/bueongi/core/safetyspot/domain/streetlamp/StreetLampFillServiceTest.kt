@@ -20,6 +20,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.nio.file.Path
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
@@ -76,7 +77,7 @@ class StreetLampFillServiceTest {
         val service: StreetLampFillService =
             StreetLampFillService(
                 client = client,
-                cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+                cache = SafetySpotRegionCache(FakeLiveStore(), 90L, Clock.systemUTC()),
                 liveStore = FakeLiveStore(),
                 retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
                 events = mock(),
@@ -117,7 +118,7 @@ class StreetLampFillServiceTest {
     ): StreetLampFillService =
         StreetLampFillService(
             client = client,
-            cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+            cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
             liveStore = liveStore,
             events = events,
         )

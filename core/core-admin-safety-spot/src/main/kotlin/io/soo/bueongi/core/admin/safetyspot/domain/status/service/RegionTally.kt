@@ -2,8 +2,7 @@ package io.soo.bueongi.core.admin.safetyspot.domain.status.service
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.support.util.isInKorea
+import io.soo.bueongi.storage.db.safetyspot.model.RegionSpotTally
 
 internal class RegionTally {
     val countsByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
@@ -13,19 +12,13 @@ internal class RegionTally {
     private var lngSum: Double = 0.0
     private var locatedCount: Int = 0
 
-    fun add(type: SafetySpotType, point: SafetySpotPoint, fromApi: Boolean) {
-        countsByType[type] = (countsByType[type] ?: 0) + 1
-        if (fromApi) {
-            apiCount++
-        } else {
-            fileCount++
-        }
-        if (!isInKorea(point.lat, point.lng)) {
-            return
-        }
-        latSum += point.lat
-        lngSum += point.lng
-        locatedCount++
+    fun add(row: RegionSpotTally) {
+        countsByType[row.type] = (countsByType[row.type] ?: 0) + row.total
+        apiCount += row.apiCount
+        fileCount += row.total - row.apiCount
+        latSum += row.latSum
+        lngSum += row.lngSum
+        locatedCount += row.locatedCount
     }
 
     fun center(): GeoPoint? {

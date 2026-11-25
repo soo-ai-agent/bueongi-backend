@@ -18,7 +18,7 @@ class SafetySpotUploadControllerTestConfig {
         val dir: String = Files.createTempDirectory("fac-upload-controller-test").toFile().absolutePath
         return SafetySpotUploadService(
             parser = SafetySpotCsvParser(),
-            uploadStore = SafetySpotUploadStore(ObjectMapper(), dir),
+            uploadStore = SafetySpotUploadStore(dir),
             liveStore = FakeLiveStore(),
             refreshStatusStore = SafetySpotRefreshStatusStore(),
             regionLocator = RegionLocator(FakeSafetySpotSource()),

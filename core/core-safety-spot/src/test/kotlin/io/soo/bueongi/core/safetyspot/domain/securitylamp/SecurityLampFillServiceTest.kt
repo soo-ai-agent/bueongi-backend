@@ -11,6 +11,8 @@ import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import java.nio.file.Path
+import java.time.Clock
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -19,7 +21,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.nio.file.Path
 
 class SecurityLampFillServiceTest {
     @Test
@@ -95,7 +96,7 @@ class SecurityLampFillServiceTest {
             FakeSafetySpotSource(mapOf(SafetySpotType.SECURITY_LAMP to listOf(loaded)))
         return SecurityLampFillService(
             client = client,
-            cache = SafetySpotRegionCache(ObjectMapper(), dir.toString()),
+            cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
             liveStore = liveStore,
             safetySpots = source,
             events = events,

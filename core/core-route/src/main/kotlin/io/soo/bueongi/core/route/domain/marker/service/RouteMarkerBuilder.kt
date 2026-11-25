@@ -8,7 +8,6 @@ import io.soo.bueongi.core.route.domain.marker.model.toPoi
 import io.soo.bueongi.core.route.domain.safety.service.SafetyScorer
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.support.util.pickEvenly
 import org.springframework.stereotype.Component
@@ -24,8 +23,7 @@ class RouteMarkerBuilder(
         raw.add(SafetySpotPoi(type = SafetySpotPoiType.END, x = 0, y = 0, lat = destination.lat, lng = destination.lng))
 
         for ((markerType, safetySpotType) in MARKER_TYPES) {
-            val typeIndex: GridSpatialIndex = safetySpots.index(safetySpotType)
-            val alongPath: List<SafetySpotPoint> = typeIndex.withinCorridor(path, corridor)
+            val alongPath: List<SafetySpotPoint> = safetySpots.findWithinCorridor(safetySpotType, path, corridor)
             val shown: List<SafetySpotPoint> = alongPath.pickEvenly(MAX_MARKERS_PER_TYPE)
             for (safetySpot in shown) {
                 raw.add(safetySpot.toPoi(markerType))

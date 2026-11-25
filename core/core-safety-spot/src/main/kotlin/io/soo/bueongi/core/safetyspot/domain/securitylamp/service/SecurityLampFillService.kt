@@ -29,7 +29,7 @@ class SecurityLampFillService(
     private val inFlight: ConcurrentHashMap<String, Boolean> = ConcurrentHashMap()
 
     private fun skipReason(regionCode: String): String? {
-        if (safetySpots.index(SafetySpotType.SECURITY_LAMP).regions.contains(regionCode)) {
+        if (safetySpots.existsInRegion(SafetySpotType.SECURITY_LAMP, regionCode)) {
             return "이미 적재됨(인덱스)"
         }
         if (cache.isCached(SafetySpotType.SECURITY_LAMP, regionCode)) {
@@ -70,13 +70,12 @@ class SecurityLampFillService(
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
-        // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 캐시로 남겨 매번 다시 받지 않게 한다.
-        cache.save(SafetySpotType.SECURITY_LAMP, regionCode, points)
+        // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 기록해 재수집 주기 동안 다시 받지 않게 한다.
+        liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
         if (points.isEmpty()) {
             events.hadNoCoordinates(SafetySpotType.SECURITY_LAMP, regionCode, fetched.size)
             return 0
         }
-        liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
         log.info("보안등 지역 채움: region={}, 받은={}, 좌표있음={}", regionCode, fetched.size, points.size)
         return points.size
     }

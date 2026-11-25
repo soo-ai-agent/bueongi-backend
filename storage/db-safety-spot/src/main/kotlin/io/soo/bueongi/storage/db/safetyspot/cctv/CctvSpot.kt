@@ -21,4 +21,12 @@ data class CctvSpot(
     override fun phoneOrNull(): String? {
         return null
     }
+
+    override fun purposeOrNull(): String? {
+        return purpose
+    }
+
+    override fun cameraCountOrNull(): Int? {
+        return cameraCount
+    }
 }

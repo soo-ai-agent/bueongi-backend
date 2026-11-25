@@ -1,4 +1,7 @@
 spring:
+  # 로컬 개발 DB(compose.yaml 의 postgis). 개발용 값이라 저장소에 둔다 — 운영은 환경변수로 넣는다.
+  datasource:
+    password: ${BUEONGI_DB_PASSWORD:bueongi}
   config:
     import:
       - optional:file:.env.local[.properties]

@@ -30,8 +30,15 @@ services:
       BUEONGI_CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:8080}
       # 위치공유 저장소(필수)
       BUEONGI_REDIS_URL: ${BUEONGI_REDIS_URL:-redis://redis:6379}
+      # 안심시설 저장소(필수, PostgreSQL + PostGIS)
+      BUEONGI_DB_URL: ${BUEONGI_DB_URL:-jdbc:postgresql://db:5432/bueongi?reWriteBatchedInserts=true}
+      BUEONGI_DB_USERNAME: ${BUEONGI_DB_USERNAME:-bueongi}
+      BUEONGI_DB_PASSWORD: ${BUEONGI_DB_PASSWORD:?BUEONGI_DB_PASSWORD 를 .env 에 넣어야 합니다}
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'curl', '-fs', 'http://localhost:8119/api/health']
       interval: 30s
@@ -49,6 +56,22 @@ services:
       BACKEND_ORIGIN: http://backend:8119
     ports:
       - '${HTTP_PORT:-8080}:80'
+
+  # 안심시설 저장소. postgis 이미지는 postgis 확장을 미리 만들어 둔다.
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bueongi
+      POSTGRES_USER: ${BUEONGI_DB_USERNAME:-bueongi}
+      POSTGRES_PASSWORD: ${BUEONGI_DB_PASSWORD:?BUEONGI_DB_PASSWORD 를 .env 에 넣어야 합니다}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${BUEONGI_DB_USERNAME:-bueongi} -d bueongi']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    volumes:
+      - db-data:/var/lib/postgresql/data
 
   # 위치공유 저장소. TTL 은 백엔드가 키별로 건다.
   redis:
@@ -77,6 +100,7 @@ services:
       - caddy-config:/config
 
 volumes:
+  db-data:
   redis-data:
   caddy-data:
   caddy-config:

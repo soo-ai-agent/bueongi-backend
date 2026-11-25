@@ -13,7 +13,6 @@ import io.soo.bueongi.core.route.domain.service.RouteOptionAssembler
 import io.soo.bueongi.core.route.domain.service.RouteOptionService
 import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRepository
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
@@ -43,7 +42,7 @@ import org.springframework.test.web.servlet.post
     RouteCandidateMerger::class,
     SafetyScorer::class,
     SafetySpotWaypointPlanner::class,
-    SafetySpotRepository::class,
+    EmptySafetySpotSourceConfig::class,
     SafetySpotUploadStore::class,
 )
 class RouteOptionControllerTest(

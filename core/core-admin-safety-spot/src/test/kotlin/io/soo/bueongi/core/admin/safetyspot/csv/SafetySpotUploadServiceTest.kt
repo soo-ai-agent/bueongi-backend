@@ -24,14 +24,14 @@ class SafetySpotUploadServiceTest {
     private fun service(tmp: Path, liveStore: SafetySpotLiveStore, statusStore: SafetySpotRefreshStatusStore) =
         SafetySpotUploadService(
             parser = SafetySpotCsvParser(),
-            uploadStore = SafetySpotUploadStore(mapper, tmp.toFile().absolutePath),
+            uploadStore = SafetySpotUploadStore(tmp.toFile().absolutePath),
             liveStore = liveStore,
             refreshStatusStore = statusStore,
             regionLocator = RegionLocator(FakeSafetySpotSource()),
         )
 
     @Test
-    fun `업로드는 파일 저장 + 라이브 교체 + 상태 기록을 하고 집계를 반환한다`(
+    fun `업로드는 원본 보관 + 저장소 교체 + 상태 기록을 하고 집계를 반환한다`(
         @TempDir tmp: Path,
     ) {
         val liveStore = FakeLiveStore()
@@ -52,7 +52,7 @@ class SafetySpotUploadServiceTest {
         assertThat(result.saved).isEqualTo(2)
         assertThat(result.skipped).isEqualTo(1)
 
-        assertThat(File(tmp.toFile(), "cctv.json")).exists()
+        assertThat(File(tmp.toFile(), "originals/cctv.csv")).exists()
         assertThat(liveStore.lastType).isEqualTo(SafetySpotType.CCTV)
         assertThat(liveStore.lastPoints).hasSize(2)
         val record = statusStore.findByType(SafetySpotType.CCTV)!!

@@ -1,11 +1,20 @@
-# storage:db-safety-spot 소유 설정 — 안심시설 데이터 적재(파일).
+# storage:db-safety-spot 소유 설정 — 안심시설 저장소(PostgreSQL + PostGIS)와 배포 CDN 파일.
+spring:
+  datasource:
+    # 대량 적재가 배치 INSERT 를 한 문장으로 다시 써서 보내게 reWriteBatchedInserts 를 켠다.
+    url: ${BUEONGI_DB_URL:jdbc:postgresql://localhost:5432/bueongi?reWriteBatchedInserts=true}
+    username: ${BUEONGI_DB_USERNAME:bueongi}
+    # 비밀값이라 기본값을 두지 않는다. 로컬은 application-local.yml 이 compose 의 개발용 값을 준다.
+    password: ${BUEONGI_DB_PASSWORD}
+  flyway:
+    # 마이그레이션 버전이 시각(YYYYMMDDHHmm)이라 병렬 브랜치의 더 이른 버전이 나중에 머지될 수 있다.
+    out-of-order: true
+
 bueongi:
   facility:
-    # 안심시설(CDN) 데이터 디렉터리. 미설정이면 실행 경로 기준 cdn.
-    # 디렉터리가 없으면 빈 인덱스로 동작하고, safe-compare 는 점수 0/마커 없이 진행된다.
+    # 배포 CDN 디렉터리. 기동할 때 시설은 DB 로 옮기고 안심귀갓길·신선도는 메모리에 둔다.
     data-dir: ${BUEONGI_FACILITY_DATA_DIR:cdn}
     # 전국 CCTV 원본 CSV 의 위치 — 관리자 CSV 화면의 목록·미리보기에만 쓴다.
-    # 적재는 관리자 업로드(facility-uploads)로 일원화했다(2026-10-11).
     cctv-csv: ${BUEONGI_FACILITY_CCTV_CSV:CCTV정보.csv}
-    # 관리자 CSV 업로드분 영속 디렉터리. 부팅 시 {cdnType}.json 이 있으면 그 종류를 통째로 교체한다(업로드 우선, 재기동 유지).
+    # 관리자가 올린 CSV 원본 보관 디렉터리(미리보기용). 시설 자체는 DB 에 있다.
     upload-dir: ${BUEONGI_FACILITY_UPLOAD_DIR:./data/facility-uploads}

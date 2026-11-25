@@ -36,7 +36,7 @@ class SafetySpotWaypointPlanner(
     private fun findNearRoute(routePath: List<GeoPoint>): List<SafetySpotPoint> {
         val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
         for (spotType in CLUSTER_SPOT_TYPES) {
-            val spots: List<SafetySpotPoint> = safetySpots.index(spotType).withinCorridor(routePath, CLUSTER_RADIUS_METERS)
+            val spots: List<SafetySpotPoint> = safetySpots.findWithinCorridor(spotType, routePath, CLUSTER_RADIUS_METERS)
             spotsNearRoute.addAll(spots)
         }
         return spotsNearRoute

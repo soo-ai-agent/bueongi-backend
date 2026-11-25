@@ -56,13 +56,12 @@ class StreetLampFillService(
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
-        // 좌표를 하나도 못 받았어도 캐시로 남겨 매번 다시 받지 않게 한다.
-        cache.save(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
+        // 좌표를 하나도 못 받았어도 기록해 재수집 주기 동안 다시 받지 않게 한다.
+        liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
         if (points.isEmpty()) {
             events.hadNoCoordinates(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched.size)
             return 0
         }
-        liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
         log.info("가로등 채움: 받은={}, 좌표있음={}", fetched.size, points.size)
         return points.size
     }

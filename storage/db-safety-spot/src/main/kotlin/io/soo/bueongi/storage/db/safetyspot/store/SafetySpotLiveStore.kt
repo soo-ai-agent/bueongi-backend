@@ -2,12 +2,16 @@ package io.soo.bueongi.storage.db.safetyspot.store
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
+import java.time.Instant
 
-// 두 교체 모두 원자적이다 — 조회는 교체 전/후 한쪽의 일관된 색인만 본다.
+// 실행 중 안심시설 쓰기 창구. 출처 조각 하나를 통째로 바꾼다(지우고 넣기를 한 트랜잭션으로).
 interface SafetySpotLiveStore {
-    // 파일 출처(CDN·CSV·업로드)만 바꾸고, API 로 받은 지역 데이터는 남긴다.
+    // 관리자 업로드. 그 종류의 업로드와 배포 CDN 을 대신하고, 업로드에 든 지역의 API 조각을 지운다.
     fun replaceFiles(type: SafetySpotType, points: List<SafetySpotPoint>)
 
-    // 그 지역의 API 데이터만 바꾼다 — 다른 지역과 파일 출처는 그대로다.
+    // 외부 API 로 받은 지역 하나. 0건이어도 기록해 재수집 주기 동안 다시 묻지 않게 한다.
     fun replaceRegion(type: SafetySpotType, regionCode: String, points: List<SafetySpotPoint>)
+
+    // 그 지역 조각을 마지막으로 바꾼 시각. 받은 적이 없으면 null.
+    fun savedAtOf(type: SafetySpotType, regionCode: String): Instant?
 }

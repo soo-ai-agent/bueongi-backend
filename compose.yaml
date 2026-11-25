@@ -1,0 +1,21 @@
+# 로컬 개발용 저장소 — `docker compose up -d` 후 `SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon`.
+# 값은 application-local.yml 의 기본값과 맞춘 개발용이다. 운영은 deploy/docker-compose.yml 을 쓴다.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: bueongi
+      POSTGRES_USER: bueongi
+      POSTGRES_PASSWORD: bueongi
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+volumes:
+  db-data:

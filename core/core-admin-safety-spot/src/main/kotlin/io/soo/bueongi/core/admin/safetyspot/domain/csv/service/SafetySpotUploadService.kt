@@ -26,11 +26,19 @@ class SafetySpotUploadService(
     fun upload(type: SafetySpotType, bytes: ByteArray): SafetySpotUploadResponse {
         val plain: ByteArray = gunzipIfNeeded(bytes)
         val contract: SafetySpotCsvContract = SafetySpotCsvContract.forType(type)
-        val parsed: SafetySpotCsvParseResult = parser.parse(plain, contract) { point -> regionLocator.locate(point) }
+        // ponytail: 약 1km 칸(소수 2자리)마다 한 번만 찾는다 — 경계 1km 안의 행은 이웃 지역으로 붙을 수 있다. 정확도가 문제되면 행정경계 폴리곤으로.
+        val regionByCell: HashMap<String, String?> = HashMap()
+        val parsed: SafetySpotCsvParseResult =
+            parser.parse(plain, contract) { point ->
+                val cell: String = "%.2f,%.2f".format(point.lat, point.lng)
+                if (!regionByCell.containsKey(cell)) {
+                    regionByCell[cell] = regionLocator.locate(point)
+                }
+                regionByCell[cell]
+            }
         if (parsed.points.isEmpty()) {
             throw EmptySafetySpotUploadException(received = parsed.received)
         }
-        uploadStore.save(type, parsed.points)
         uploadStore.saveOriginal(type, plain)
         liveStore.replaceFiles(type, parsed.points)
         val saved: Int = parsed.points.size

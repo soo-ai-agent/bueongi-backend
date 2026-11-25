@@ -85,7 +85,7 @@ class SafetyScorer(
         }
         for (type in SPOT_TYPES_BY_ITEM.getValue(item)) {
             for (point in scorePoints) {
-                if (safetySpots.index(type).withinRadius(point, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()) {
+                if (safetySpots.existsWithinRadius(type, point, DATA_PRESENCE_RADIUS_METERS)) {
                     return true
                 }
             }
@@ -120,11 +120,11 @@ class SafetyScorer(
     }
 
     private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int {
-        return safetySpots.index(type).withinCorridor(path, DEFAULT_CORRIDOR_METERS).size
+        return safetySpots.findWithinCorridor(type, path, DEFAULT_CORRIDOR_METERS).size
     }
 
     private fun countRiskNear(path: List<GeoPoint>): Int {
-        return safetySpots.index(SafetySpotType.CRIME_PRONE_AREA).withinCorridor(path, RISK_CORRIDOR_METERS).size
+        return safetySpots.findWithinCorridor(SafetySpotType.CRIME_PRONE_AREA, path, RISK_CORRIDOR_METERS).size
     }
 
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthMeters: Double): Double {

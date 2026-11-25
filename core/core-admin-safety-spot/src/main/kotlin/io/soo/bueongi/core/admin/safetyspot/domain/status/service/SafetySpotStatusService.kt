@@ -5,7 +5,7 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.SafetySpotStatus
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotRefreshRecord
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSources
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotOriginCount
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Service
 
@@ -18,12 +18,12 @@ class SafetySpotStatusService(
         val safetySpots: ArrayList<SafetySpotStatus> = ArrayList()
         for (type in SafetySpotType.entries) {
             val record: SafetySpotRefreshRecord? = refreshStatusStore.findByType(type)
-            val sources: SafetySpotSources = safetySpotSource.sources(type)
+            val origin: SafetySpotOriginCount = safetySpotSource.countByOrigin(type)
             safetySpots.add(
                 SafetySpotStatus(
                     type = type,
-                    fileCount = sources.fileOriginCount,
-                    apiCount = sources.apiOriginCount,
+                    fileCount = origin.fileCount,
+                    apiCount = origin.apiCount,
                     lastRefreshAtMs = record?.atEpochMs,
                     lastRefreshCount = record?.replacedCount,
                 ),

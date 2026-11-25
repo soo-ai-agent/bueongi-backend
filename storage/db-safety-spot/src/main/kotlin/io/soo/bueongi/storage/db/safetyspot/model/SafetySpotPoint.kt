@@ -30,6 +30,15 @@ abstract class SafetySpotPoint {
 
     abstract fun phoneOrNull(): String?
 
+    // 설치 목적과 카메라 수는 CCTV 만 원천이 준다.
+    open fun purposeOrNull(): String? {
+        return null
+    }
+
+    open fun cameraCountOrNull(): Int? {
+        return null
+    }
+
     companion object {
         fun of(
             type: SafetySpotType,

@@ -19,11 +19,11 @@ class NearbySafetySpotService(
                 continue
             }
             // 이 지역에 색인된 자료 자체가 없는 종류는 응답에서 뺀다 — 앱이 0 대신 "자료 없음"으로 그린다.
-            val hasDataInArea: Boolean = safetySpots.index(type).withinRadius(center, DATA_PRESENCE_RADIUS_METERS).isNotEmpty()
+            val hasDataInArea: Boolean = safetySpots.existsWithinRadius(type, center, DATA_PRESENCE_RADIUS_METERS)
             if (!hasDataInArea) {
                 continue
             }
-            val nearbySpots: List<SafetySpotPoint> = safetySpots.index(type).withinRadius(center, NEARBY_RADIUS_METERS)
+            val nearbySpots: List<SafetySpotPoint> = safetySpots.findWithinRadius(type, center, NEARBY_RADIUS_METERS)
             countsByType[type] = nearbySpots.size
             spotsByType[type] = closestSpots(center, nearbySpots)
         }

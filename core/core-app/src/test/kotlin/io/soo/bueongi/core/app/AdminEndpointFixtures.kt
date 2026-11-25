@@ -8,9 +8,8 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySp
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.share.domain.service.ShareService
-import io.soo.bueongi.storage.db.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import io.soo.bueongi.storage.db.share.model.ShareSession
@@ -28,30 +27,14 @@ import org.springframework.context.annotation.Bean
 @TestConfiguration
 class AdminEndpointFixtures {
     @Bean
-    fun safetySpotSource(): SafetySpotSpatialSource =
-        object : SafetySpotSpatialSource {
-            private val cctv =
-                GridSpatialIndex(
-                    // 인덱스가 같은 좌표를 하나로 세므로 지점을 달리한다.
-                    List(2) { i ->
-                        SafetySpotPoint.of(
-                            type = SafetySpotType.CCTV,
-                            lat = 37.5 + i * 0.001,
-                            lng = 127.0,
-                            regionCode = "3130000",
-                        )
-                    },
-                )
-
-            override fun index(type: SafetySpotType): GridSpatialIndex =
-                if (type == SafetySpotType.CCTV) {
-                    cctv
-                } else {
-                    GridSpatialIndex(emptyList())
-                }
-
-            override val safePaths: List<SafePath> = emptyList()
+    fun safetySpotSource(): SafetySpotSpatialSource {
+        // 저장소가 같은 좌표를 하나로 세므로 지점을 달리한다.
+        val cctv: ArrayList<SafetySpotPoint> = ArrayList()
+        for (i in 0 until 2) {
+            cctv.add(SafetySpotPoint.of(type = SafetySpotType.CCTV, lat = 37.5 + i * 0.001, lng = 127.0, regionCode = "3130000"))
         }
+        return FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to cctv))
+    }
 
     @Bean
     fun safetySpotStatusService(source: SafetySpotSpatialSource): SafetySpotStatusService {

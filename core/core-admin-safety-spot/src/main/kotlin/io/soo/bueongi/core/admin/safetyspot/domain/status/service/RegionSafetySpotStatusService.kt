@@ -9,7 +9,6 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpot
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSources
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Service
 
@@ -20,12 +19,9 @@ class RegionSafetySpotStatusService(
 ) {
     fun summarize(): List<RegionSafetySpotResponse> {
         val talliesByRegion: LinkedHashMap<String, RegionTally> = LinkedHashMap()
-        for (type in SafetySpotType.entries) {
-            val sources: SafetySpotSources = safetySpots.sources(type)
-            for (point in sources.index.all) {
-                val tally: RegionTally = talliesByRegion.getOrPut(regionCodeOf(point)) { RegionTally() }
-                tally.add(type, point, fromApi = sources.isCollectedFromApi(point))
-            }
+        for (row in safetySpots.tallyByRegion()) {
+            val tally: RegionTally = talliesByRegion.getOrPut(regionCodeOf(row.regionCode)) { RegionTally() }
+            tally.add(row)
         }
         val rows: ArrayList<RegionSafetySpotCount> = ArrayList(talliesByRegion.size)
         for ((code, tally) in talliesByRegion) {
@@ -47,14 +43,14 @@ class RegionSafetySpotStatusService(
     }
 
     private fun pointsByTypeOf(code: String): Map<SafetySpotType, List<SafetySpotPoint>> {
+        // 지역 코드가 없는 시설은 저장소에 빈 코드로 있다.
+        var storedCode: String = code
+        if (code == UNKNOWN_REGION) {
+            storedCode = ""
+        }
         val pointsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
-            val inRegion: ArrayList<SafetySpotPoint> = ArrayList()
-            for (point in safetySpots.index(type).all) {
-                if (regionCodeOf(point) == code) {
-                    inRegion.add(point)
-                }
-            }
+            val inRegion: List<SafetySpotPoint> = safetySpots.findByRegion(type, storedCode)
             if (inRegion.isNotEmpty()) {
                 pointsByType[type] = inRegion
             }
@@ -62,8 +58,8 @@ class RegionSafetySpotStatusService(
         return pointsByType
     }
 
-    private fun regionCodeOf(point: SafetySpotPoint): String {
-        val code: String = point.regionCodeOrNull().orEmpty().trim()
+    private fun regionCodeOf(storedCode: String): String {
+        val code: String = storedCode.trim()
         return code.ifEmpty { UNKNOWN_REGION }
     }
 

@@ -32,7 +32,7 @@ class SafetySpotCsvFileServiceTest {
         GZIPOutputStream(buffer).use { stream -> stream.write(csv.toByteArray()) }
         val gz = File(tmp, "CCTV정보.csv.gz")
         gz.writeBytes(buffer.toByteArray())
-        val uploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path)
+        val uploadStore = SafetySpotUploadStore(File(tmp, "uploads").path)
         val none: String = File(tmp, "none").path
         val fileStore = SafetySpotCsvFileStore(uploadStore, gz.path, none, none, none)
         val service = SafetySpotCsvFileService(fileStore, SafetySpotCsvParser())
@@ -49,7 +49,7 @@ class SafetySpotCsvFileServiceTest {
     fun `업로드 원본은 업로드 때와 같은 판정으로 행을 보여 준다`(
         @TempDir tmp: File,
     ) {
-        val uploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path)
+        val uploadStore = SafetySpotUploadStore(File(tmp, "uploads").path)
         val csv = "위도,경도,관리기관명,설치목적구분\n37.5,127.0,종로구청,생활방범\n37.5,127.0,교통과,교통단속\n"
         uploadStore.saveOriginal(SafetySpotType.CCTV, csv.toByteArray())
 
@@ -81,7 +81,7 @@ class SafetySpotCsvFileServiceTest {
     fun `목록에 없는 이름은 경로처럼 보여도 열지 않는다`(
         @TempDir tmp: File,
     ) {
-        val uploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path)
+        val uploadStore = SafetySpotUploadStore(File(tmp, "uploads").path)
         uploadStore.saveOriginal(SafetySpotType.CCTV, "위도,경도\n37.5,127.0\n".toByteArray())
 
         assertThatThrownBy { service(tmp, uploadStore).readPage(SafetySpotCsvOrigin.UPLOAD, "../uploads/cctv.csv", 0, 50, false, "") }
@@ -90,7 +90,7 @@ class SafetySpotCsvFileServiceTest {
 
     private fun service(
         tmp: File,
-        uploadStore: SafetySpotUploadStore = SafetySpotUploadStore(ObjectMapper(), File(tmp, "uploads").path),
+        uploadStore: SafetySpotUploadStore = SafetySpotUploadStore(File(tmp, "uploads").path),
     ): SafetySpotCsvFileService {
         val none: String = File(tmp, "none").path
         val fileStore = SafetySpotCsvFileStore(uploadStore, "", none, none, none)

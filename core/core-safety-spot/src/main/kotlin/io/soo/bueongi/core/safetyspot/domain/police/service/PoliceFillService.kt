@@ -56,13 +56,12 @@ class PoliceFillService(
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
-        // 좌표를 하나도 못 받았어도 캐시로 남겨 매번 다시 받지 않게 한다.
-        cache.save(SafetySpotType.POLICE, NATIONWIDE, points)
+        // 좌표를 하나도 못 받았어도 기록해 재수집 주기 동안 다시 받지 않게 한다.
+        liveStore.replaceRegion(SafetySpotType.POLICE, NATIONWIDE, points)
         if (points.isEmpty()) {
             events.hadNoCoordinates(SafetySpotType.POLICE, NATIONWIDE, fetched.size)
             return 0
         }
-        liveStore.replaceRegion(SafetySpotType.POLICE, NATIONWIDE, points)
         log.info("치안시설 채움: 받은={}, 좌표있음={}", fetched.size, points.size)
         return points.size
     }

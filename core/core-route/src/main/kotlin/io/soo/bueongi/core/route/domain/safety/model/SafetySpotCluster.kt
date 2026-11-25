@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.route.domain.safety.model
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.GridSpatialIndex
 import kotlin.math.floor
 
 data class SafetySpotCluster(
@@ -36,7 +35,7 @@ data class SafetySpotCluster(
             for (spot in spots) {
                 val latCell: Int = floor(spot.lat / CELL_DEG).toInt()
                 val lngCell: Int = floor(spot.lng / CELL_DEG).toInt()
-                val key: Long = GridSpatialIndex.cellKey(latCell, lngCell)
+                val key: Long = (latCell.toLong() shl 32) xor (lngCell.toLong() and 0xffffffffL)
                 spotsByCell.getOrPut(key) { ArrayList() }.add(spot)
             }
 

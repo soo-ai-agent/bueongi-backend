@@ -56,12 +56,11 @@ class ChildSafeHouseFillService(
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
-        // 바다·산처럼 시설이 없는 칸도 있다 — 빈 결과도 캐시로 남겨 매번 다시 받지 않게 한다.
-        cache.save(SafetySpotType.SAFEHOUSE, tile.code, points)
+        // 바다·산처럼 시설이 없는 칸도 있다 — 빈 결과도 기록해 재수집 주기 동안 다시 받지 않게 한다.
+        liveStore.replaceRegion(SafetySpotType.SAFEHOUSE, tile.code, points)
         if (points.isEmpty()) {
             return 0
         }
-        liveStore.replaceRegion(SafetySpotType.SAFEHOUSE, tile.code, points)
         log.info("아동안전지킴이집 격자 채움: tile={}, 받은={}", tile.code, points.size)
         return points.size
     }
