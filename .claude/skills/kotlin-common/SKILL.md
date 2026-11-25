@@ -1,0 +1,413 @@
+---
+paths:
+  - "**/*.kt"
+  - "**/*.kts"
+name: kotlin-common
+description: Kotlin + Spring Boot 백엔드 전 레이어 공통 규칙. 자료형 선언, 불변성(세터 금지), 조건문·반복문 풀어쓰기(람다·함수형 체이닝 자제), 이름 규약, 예외, 주석 최소화, 검증 기준을 담는다. 이 프로젝트에서 Kotlin 코드를 작성하거나 리뷰할 때 레이어 스킬(module-layout, controller, dto, domain-service, implement, entity, repository)과 항상 함께 사용한다.
+---
+
+# 공통 규칙
+
+## 판단 순서 — 규칙이 부딪히면 위쪽이 이긴다
+
+1. **IDE(IntelliJ) 경고** — 경고와 아래 규칙이 부딪히면 경고를 따라 코드를 고친다.
+   검사를 끄는 것은 따르면 목적 자체가 무너질 때뿐이고, 끌 때는 프로파일에 사유를 적는다.
+2. **와이어 계약** — API 응답 필드명·에러 코드·저장 스키마는 실호출로 확인하기 전에는 바꾸지 않는다.
+3. **읽기 쉬움** — 처음 보는 사람이 주석 없이 흐름을 따라갈 수 있는가. 쉬운 낱말, 짧은 문장, 한 줄에 한 가지 일.
+4. **구조 규칙** — 모듈 경계·계층 방향·소유권(레이어 스킬들).
+5. **적게 쓰기** — 위를 다 만족하면 코드·함수·파일은 적을수록 좋다.
+
+셋째와 다섯째가 부딪히면 **읽기 쉬움이 이긴다.** 짧게 만들려고 한 줄에 여러 일을 겹치지 않는다.
+
+다섯째(적게 쓰기)를 극단까지 미는 스킬이 사용자 레벨 `ponytail` 인데, **각 스킬 적발 신호의 Critical 은 ponytail 로도 무를 수 없다** — 테스트가 필요한 새 동작의 테스트 동반(아래 「검증」)이 대표다.
+
+## 최상위 원칙 — 저장소 README 가 정본이다
+
+저장소 전체의 코드 규칙은 [README.md](../../../README.md) 「코드 작성 규칙」(1~18조)이 정본으로 갖는다
+— 레이어와 모듈, 이름, 도메인 모델, 기초 문법과 가독성, URL.
+
+이 문서의 모든 규칙은 그 조문에 종속된다. 여기에는 조문을 옮겨 적지 않는다 — 두 곳에 적히면 한쪽만 고쳐진다.
+
+설계 판단(이 로직을 누구에게 맡길 것인가)은 아래 「data class 도 메서드를 갖는다」와 **kotlin-module-layout** 「소유 판정」이,
+과설계 방지는 `ponytail` 이 담당한다 — 둘 다 백엔드 작업에서 항상 함께 적용된다.
+
+이름 짓기와 추상화 레벨(함수를 어떻게 쪼개고 무엇이라 부를 것인가)은 **kotlin-abstraction** 이 정한다 — 이 문서의 「이름」·「주석」과 짝을 이룬다.
+
+## 자료형
+
+- 공개 함수의 반환 타입, 프로퍼티 타입, 생성자 파라미터 타입은 **항상 명시한다.** 타입 추론에 맡기지 않는다.
+
+- 지역 변수도 리터럴이 아니면 타입을 적는다.
+
+- `Any`, `Map<String, Any>`, `List<Any>` 를 도메인 코드에서 쓰지 않는다. 필드를 아는 데이터는 필드를 적는다.
+
+- nullable(`?`)은 "정말 없을 수 있는 값"에만 쓴다. 습관적 `?` 금지.
+
+- `!!` 는 금지다. 필요하면 `?: throw XxxNotFoundException()` 으로 없음을 명시적으로 다룬다.
+
+```kotlin
+// ✅
+fun findActive(memberId: Long): MemberResult { ... }
+val names: List<String> = members.map { it.name }
+
+// ❌ 반환 타입 생략, !! 사용
+fun findActive(memberId: Long) = repository.findById(memberId).get()!!
+```
+
+## 불변성 — 세터를 만들지 않는다
+
+- 도메인 모델·DTO·Result 는 `data class` + **`val` 만** 쓴다. `var` 금지.
+
+- 엔티티의 변경 가능한 상태는 `var` 이되 **`protected set`** 이며, 변경은 엔티티 행위 메서드로만 한다 (kotlin-entity 참고).
+
+- 컬렉션은 `List`/`Set`(읽기 전용)으로 노출한다. `MutableList` 를 반환하거나 프로퍼티로 공개하지 않는다.
+
+- 값을 바꿔야 하면 `copy()` 로 새 객체를 만든다.
+
+```kotlin
+// ✅ 변경은 새 객체로
+val updated: TodoResult = result.copy(done = true)
+
+// ❌ 밖에서 아무 때나 바꿀 수 있는 상태
+data class TodoResult(
+    var done: Boolean,
+)
+```
+
+## 조건문·반복문 — 길어도 풀어서 쓴다
+
+- 판단·분기·누적이 들어가는 로직은 람다로 압축하지 않고 `if`/`for` 로 풀어서 쓴다. `firstOrNull { }`·`any { }`·`fold`·`filter { }.map { }` 연쇄가 대상이다.
+
+- 기준은 글자 수가 아니라 **"처음 보는 사람이 위에서 아래로 읽으며 흐름을 따라갈 수 있는가"**다. 짧은 코드가 곧 단순한 코드가 아니다.
+
+- `map` 은 최소한으로 쓴다. 판단 없는 단순 변환 한 단계라도 그 변환이 반복되는 자리라면 변환을 가진 쪽에 목록판을 둔다 —
+  응답 DTO 목록은 컨트롤러에서 `map` 하지 않고 DTO 의 `from(목록)` 을 부른다(kotlin-dto). 체이닝은 언제나 풀어 쓴다.
+
+- 람다가 필요해 보이는 자리(SAM 변환 등)도 이름 있는 클래스로 만들어 의도를 드러낸다.
+
+```kotlin
+// ✅ 판단이 들어가면 풀어서 쓴다 — 흐름이 그대로 보인다
+var firstActive: Member? = null
+for (member in members) {
+    if (member.isActive) {
+        firstActive = member
+        break
+    }
+}
+
+// ❌ 한 줄이지만 판단이 람다 안에 숨는다
+val firstActive: Member? = members.firstOrNull { it.isActive }
+```
+
+## 겹친 계산은 이름 있는 중간 변수로 나눈다
+
+한 문장에 계산·생성·호출이 겹치면 읽는 사람이 안쪽부터 거꾸로 풀어야 한다. **한 줄에 한 가지 일** — 중간 결과마다 이름을 주고, 마지막 줄은 그 이름들로 짧아진다.
+
+```kotlin
+// ❌ 세 겹 — 평균 계산, 덩어리 생성, 목록 추가가 한 문장에
+clusters.add(SafetySpotCluster(GeoPoint(sumLat / spots.size, sumLng / spots.size), weight = spots.size))
+
+// ✅ 한 줄에 하나 — 이름이 뜻을 말한다
+val center = GeoPoint(sumLat / spots.size, sumLng / spots.size)
+val cluster = SafetySpotCluster(center, weight = spots.size)
+clusters.add(cluster)
+```
+
+`maxOf(abs(b.lat - a.lat), abs(b.lng - a.lng))` 처럼 연산이 겹친 식도 같다 — `latSpanDeg`·`lngSpanDeg` 로 나눈 뒤 `maxOf` 한다. 이름을 붙일 수 없을 만큼 사소한 겹침(인자 하나의 `toString()` 등)은 그대로 둔다.
+
+## 함수 안에 클래스를 선언하지 않는다
+
+함수 본문 안의 `data class` 는 처음 읽는 사람이 "이게 왜 여기 있지"부터 묻게 만들고, 대개 `var` 누적 그릇이나 임시 묶음이라 다른 규칙도 함께 어긴다.
+
+- 임시 묶음이 필요하면 **클래스 멤버의 `private data class`** 로 올리고 한 줄 설명을 단다.
+
+- `var` 누적 그릇이라면 선언을 올리기 전에 구조를 본다 — 목록으로 모은 뒤 계산하면 그릇 자체가 사라지는 경우가 많다(`groupBy` 꼴의 수집 후 집계).
+
+```kotlin
+// ❌ 함수 안 선언 + var 누적
+fun findClusters(...): List<Cluster> {
+    data class Acc(
+        var sumLat: Double = 0.0,
+        var count: Int = 0,
+    )
+    ...
+}
+
+// ✅ 모아 두고 나중에 계산 — 그릇이 필요 없다
+val spotsByCell: LinkedHashMap<Long, ArrayList<Spot>> = LinkedHashMap()
+for (spot in spots) {
+    spotsByCell.getOrPut(cellKey(spot)) { ArrayList() }.add(spot)
+}
+for (cellSpots in spotsByCell.values) {
+    // 여기서 합·평균을 계산한다
+}
+```
+
+## 클래스 선언 — 생성자 파라미터는 줄마다 하나
+
+생성자 파라미터가 있는 클래스 선언은 **파라미터가 하나여도** 여러 줄로 편다. 여는 괄호 뒤에서 줄을 바꾸고, 한 줄에 파라미터 하나, 닫는 괄호는 자기 줄에 둔다. ktlint 의 trailing-comma 규칙에 따라 마지막 파라미터 뒤에도 쉼표를 둔다.
+
+```kotlin
+// ✅ 하나여도 펴서 쓴다
+class PlaceController(
+    private val placeSearchService: PlaceSearchService,
+) {
+
+// ❌ 한 줄에 접음 — 파라미터가 늘 때 diff 가 선언 줄 전체를 다시 쓴다
+class PlaceController(private val placeSearchService: PlaceSearchService) {
+```
+
+파라미터가 늘어도 기존 줄이 안 바뀌고(diff 한 줄), 모든 클래스 선언이 같은 모양이 된다.
+
+## 파일 하나에 최상위 선언 하나
+
+최상위 `class`·`interface`·`object`·`enum class`·`data class`·`annotation class` 는 **각자 자기 파일**에 둔다. 파일 이름은 그 선언 이름과 **정확히 같다** — `TodoFinder.kt` 안에는 `TodoFinder` 하나뿐이다.
+
+왜 — 찾을 때 파일 이름으로 바로 가고, git 이력이 타입 단위로 남고, 리뷰 diff 가 그 타입에서 끝난다.
+여러 타입을 모아 둔 파일은 관련 없는 변경이 계속 쌓이며 모두가 같은 파일을 고치는 충돌 지점이 된다.
+
+**같은 파일에 둬도 되는 것은 셋뿐이다.**
+
+| 같이 둬도 되는 것 | 왜 |
+|---|---|
+| 중첩 타입(`nested`·`inner`)과 `companion object` | 바깥 타입 없이는 뜻이 없다 |
+| `sealed` 계층의 하위 타입 | 경우의 수를 한눈에 봐야 뜻이 통한다. 하위가 많아 파일이 길어지면 그때 나눈다 |
+| 그 타입 전용 `internal` 확장 함수 | 변환 함수처럼 소유자가 분명하고 모듈 밖에서 안 쓰는 것 |
+
+**이런 파일을 만들지 않는다** — `Dtos.kt`·`Models.kt`·`Enums.kt`·`Constants.kt`·`Common.kt` 처럼 여러 타입을 담은 파일, 복수형 이름 파일.
+
+값만 모으고 싶어도 마찬가지다. 상수는 파일이 아니라 **쓰는 클래스의 `companion`** 이 갖는다(아래 "object 를 언제 걷고 언제 남기나").
+
+**대상은 타입 선언이다.** 한 관심사의 최상위 함수를 모은 파일(`KoreanCharsets.kt` 의 인코딩 함수들처럼)은 이 규칙의 대상이 아니다 — 그때 파일 이름은 함수 하나가 아니라 **그 관심사**를 가리킨다.
+
+```kotlin
+// X — 한 파일에 셋. 어느 것을 고쳐도 같은 파일이 바뀐다
+// TodoDtos.kt
+data class TodoCreateRequest(
+    val title: String,
+)
+data class TodoResponse(
+    val id: Long,
+    val title: String,
+)
+enum class TodoStatus { TODO, DONE }
+```
+
+```kotlin
+// O — 파일 셋. 이름으로 바로 찾고, 이력도 따로 남는다
+// TodoCreateRequest.kt · TodoResponse.kt · TodoStatus.kt
+```
+
+## 이름
+
+- 클래스명은 **대상(도메인/역할/책임)** 을 나타낸다: `TodoService`, `TodoFinder`, `TodoEntity`.
+
+- 메서드명은 **그 클래스 맥락에서의 동작**을 나타낸다.
+
+- 메서드명은 동사 하나로 짧게 쓴다: `find`, `save`, `list`, `create`, `update`, `delete`. **대상은 클래스 이름이 대신 말한다** — 정본은 README 8조.
+
+- 같은 대상에 대해 조건이 갈리면 조건만 보강한다: `getById`, `listActive`. 대상을 덧붙여야 뜻이 통하면(`findRouteOptions`) 메서드가 그 클래스 대상 밖의 일을 하는 신호다 — 그 대상을 이름으로 가진 클래스로 옮긴다.
+
+- 도메인 용어를 클래스·메서드명에 일관되게 반영한다. 같은 개념을 두 단어로 부르지 않는다.
+
+## 예외
+
+- 도메인 오류는 `ApiException`(`core-common/.../common/error/`)을 상속한 예외로 던진다. 그 예외가 status·code·detail 을 스스로 갖고, `ApiControllerAdvice` 가 `ProblemDetail`(+ `code`)로 내보낸다.
+
+- `storage`·`clients`·`support` 는 `core-common` 을 의존하지 않는다. 그곳은 표준 예외(`check`·`require`)나 자기 모듈의 예외를 던지거나 `null` 을 돌려주고, **core 가 받아 `ApiException` 하위 예외로 바꾼다.**
+
+- `try/catch` 는 **처리할 수 있는 타입만** 잡는다. `catch (e: Exception)` 은 전역 핸들러(`ApiControllerAdvice`)와 배치 루프 같은 최상위 경계에서만 쓴다.
+
+- 잡되 처리하지 않을 것은 잡지 않는다. 로그만 찍고 다시 던질 거면 `catch` 를 없앤다.
+
+- 예외를 바꿔 던질 때 원인을 잃지 않는다: `throw XxxFailedException(cause = e)`.
+
+- `catch` 블록에는 왜 이 타입인지, 왜 여기서 멈추는지 주석을 남긴다.
+
+## 주석
+
+- 주석은 **규칙을 어겼을 때와 특이사항이 있을 때만** 쓴다. 코드가 하는 일을 그대로 옮겨 적지 않는다.
+
+- 남겨야 하는 경우: 의도적 규칙 예외, 외부 시스템의 이상 동작 우회, 성능 때문에 택한 비직관적 구현, 삭제 조건이 있는 임시 코드.
+
+- 남기기로 한 주석은 **이해가 우선이다 — 같은 내용을 겹쳐 말해도 된다.** 간결함을 지키려고 조건·이유·버린 대안을 압축하면
+  읽는 사람이 되짚어야 한다. "하는 일 → 조건과 대응 → 버린 방법과 그 대가" 순서로 문장을 나눠서 편다.
+
+- 주석 속 낱말도 코드 낱말과 같은 기준이다 — 모호한 지시어(점·한도·값) 대신 무엇의 무엇인지 적고(경로를 이루는 좌표,
+  개수 한도), 개발 은어(truthy)를 쓰지 않는다. 시그니처의 파라미터가 바로 아래 보이면 그 이름을 그대로 써도 된다.
+
+```kotlin
+// ✅ 규칙 예외와 이유
+// 외부 정산 API 가 5xx 를 200 으로 내려보내 본문으로 판별한다 (2026-03 벤더 확인)
+if (body.code != "OK") {
+    throw ExternalCallFailedException()
+}
+
+// ❌ 코드를 그대로 옮긴 주석
+// id 로 todo 를 찾는다
+val todo: Todo = finder.getById(id)
+```
+
+## 검증
+
+- 테스트가 필요한 새 동작(새 분기·정책·검증·계산 — 확정된 기능 중 자주 바뀌거나 직접 실행해 보기 어려운 것)에는 유닛 테스트를 **같은 변경에** 포함한다. 검증은 그 기능의 결과 하나로 최소한만 한다.
+
+- 테스트 메서드 하나는 기능 하나만 검증한다. 상세 규칙은 `kotlin-test` 스킬을 따른다.
+
+- 커밋 전 검증 명령이 통과해야 한다. 이 저장소에는 `ktlintCheck`·`unitTest`(`context` 태그 제외)·`test`(전체)가 있다.
+  DB·컨텍스트가 필요한 `context` 테스트까지 돌리려면 로컬 PostGIS 가 떠 있어야 한다(**kotlin-config** 「로컬 DB」).
+
+  **없는 태스크를 적어 두면 검사가 도는 대신 `Task not found` 가 나고, 그걸 몇 번 보면 검증 절 전체를 건너뛰게 된다.** 다른 저장소로 옮길 때는 `./gradlew tasks` 로 다시 확인한다.
+
+- 테스트를 지우거나 단언을 약화해 통과시키지 않는다.
+
+## IDE 경고가 이 문서보다 우선한다
+
+경고와 규칙이 부딪히면 **경고를 따라 코드를 고친다.** 검사를 끄는 것은 그 검사를 따르면
+목적 자체가 무너질 때뿐이고, 끌 때는 `.idea/inspectionProfiles/` 에 사유를 적어 팀이 공유한다.
+
+## 지나가기만 하는 함수는 호출부로 합친다
+
+한 번만 쓰이면서 **이름이 본문보다 덜 말하는** 함수는 지운다.
+판정은 하나 — **호출부에 그대로 넣었을 때 더 잘 읽히는가.**
+
+이름이 공식·관용구·좌표계 변환처럼 본문이 못 보여주는 것을 담으면 남긴다.
+지우는 대신 **그 데이터를 가진 타입의 메서드로 옮기는** 편이 나을 때도 있다
+(`statusOf(record)` → `record.status()`).
+
+## object 를 언제 걷고 언제 남기나
+
+위에서부터 묻고 걸리면 멈춘다.
+
+1. **소유할 도메인 객체가 있는가?** 있으면 그 타입의 메서드로 옮긴다.
+2. **메서드 이름이 홀로 서는가?** `escape`·`normalize`·`parse` 처럼 object 이름을 빌려야
+   뜻이 통하면 이름을 자립시켜 **최상위 함수**로 올린다(`escapeForJs`·`normalizeRequestPath`).
+3. **같은 이름이 둘 이상이라 네임스페이스가 구분자로 일하는가?** 그때만 object 로 남긴다.
+4. **상수만 모여 있는가?** 쓰는 클래스의 `companion object` 로 옮긴다.
+
+## data class 도 메서드를 갖는다 — util 로 빼기 전에 소유자를 찾는다
+
+**데이터만 있고 행동이 없는 타입 옆에, 그 데이터를 다루는 함수 모음이 따로 서 있으면 위반이다.**
+`data class` 는 값을 담기만 하는 그릇이 아니다. 그 값으로 하는 계산은 그 타입의 메서드다.
+
+```kotlin
+// X — 좌표는 데이터, 계산은 남의 것
+data class GeoPoint(
+    val lat: Double,
+    val lng: Double,
+)
+
+object SpatialMath {
+    fun distanceMeters(a: GeoPoint, b: GeoPoint): Double {
+        …
+    }
+}
+val d = SpatialMath.distanceMeters(from, to)
+```
+
+```kotlin
+// O — 자기 값으로 하는 계산은 자기가 안다
+data class GeoPoint(
+    val lat: Double,
+    val lng: Double,
+) {
+    fun distanceMetersTo(other: GeoPoint): Double {
+        …
+    }
+}
+val d = from.distanceMetersTo(to)
+```
+
+**첫 인자가 항상 같은 타입인 함수**는 그 타입의 메서드이거나 확장 함수여야 한다는 신호다.
+컬렉션을 받는 함수도 마찬가지다 — `List<GeoPoint>` 확장으로 올린다.
+
+### util 로 내릴 것과 내리지 말 것
+
+`support:util` 같은 공용 모듈에 내리기 전에 **소유자가 있는지 먼저 묻는다.** 판정은 하나다.
+
+> **다른 프로젝트에 그대로 옮겨도 말이 되는가?**
+
+| 내린다 | 내리지 않는다 |
+|---|---|
+| 좌표계 변환·통계 계산처럼 도메인을 모르는 순수 함수 | 우리 도메인 타입을 인자로 받는 것 — 그 타입의 메서드다 |
+| 문자열·날짜·인코딩 다루기 | 우리 업무 규칙을 아는 것(임계값·가중치·정책) |
+| 우리 이름을 하나도 안 쓰는 것 | 상위 계층 타입에 의존하는 것 |
+
+**util 로 내렸는데 인자에 우리 도메인 타입이 있으면 잘못 내린 것이다.** 되돌려 소유자에게 준다.
+
+## "없음"에 이름을 준다 — null 을 흘려보내지 않는다
+
+값이 없는 상태에 뜻이 있으면 `null` 이 아니라 **이름**을 준다. 부르는 쪽이 `null` 을 보고
+"아직인가, 끝난 건가, 실패한 건가"를 되짚게 만들지 않는다.
+
+```kotlin
+// X — 셋 다 null 이라 부르는 쪽이 구분할 수 없다
+fun findLocation(token: String): LocationView?
+```
+
+```kotlin
+// O — 없음에도 이름이 있다
+class LocationView private constructor(…) {
+    companion object {
+        // 아직 첫 보고 전
+        fun waiting(): LocationView {
+            …
+        }
+
+        // 기한이 지남
+        val EXPIRED: LocationView = …
+    }
+}
+```
+
+조회 메서드의 `get`/`find` 규약(`getXxx` 는 없으면 예외, `findXxx` 는 `null`)은 그대로 지키되,
+**그 없음이 화면·응답에 그대로 나가는 값이면** 이름 있는 상태로 바꾼다.
+
+## 이름은 영어 실력과 무관하게 읽혀야 한다
+
+표준 영어라도 추상적이면 바꾼다. 판정 순서:
+중학교 영어에 나오는가 → 한국어 한 단어로 옮겨지는가 → 이미 쓰는 낱말과 겹치지 않는가.
+약어는 원문이 널리 쓰이는 것만 둔다(`CSV`·`JWT`).
+
+**예시 값을 코드에 박지 않는다.** 기본값처럼 보이는 이메일·토큰이 응답으로 새어 나간다.
+환경변수로 주지 않으면 빈 값으로 둔다.
+
+## 적발 신호
+
+| 신호 | 문제 | 심각도 |
+|---|---|---|
+| 한 파일에 최상위 선언이 둘 이상 (중첩·sealed 하위 제외) | 이름으로 못 찾고 이력이 섞인다 | Important |
+| 파일 이름과 그 안의 선언 이름이 다름 | 검색이 끊긴다 | Important |
+| `Dtos.kt`·`Models.kt`·`Enums.kt` 류 모음 파일 | 계속 자라는 충돌 지점 | Important |
+| 도메인 모델·DTO 에 `var` | 예측 불가능한 상태 변경 | Critical |
+| `!!` 사용 | 런타임 NPE 위험 | Critical |
+| `Any`·`Map<String, Any>` 로 도메인 데이터 전달 | 자료형 뭉개기 | Critical |
+| 최상위 경계가 아닌 곳의 `catch (e: Exception)` | 원인 은폐 | Critical |
+| 원인(`cause`) 없이 예외 교체 | 스택 유실 | Important |
+| 공개 함수 반환 타입 생략 | 계약 불명확 | Important |
+| 습관적 nullable(`?`) | 없음 처리 책임 전가 | Important |
+| `MutableList` 노출 | 외부에서 내부 상태 변형 | Important |
+| 판단·누적이 든 람다 체이닝 (`firstOrNull { }`·`fold` 등) | 흐름이 람다 안에 숨음 | Important |
+| 계산·생성·호출이 겹친 한 문장 (중간 이름 없음) | 안쪽부터 거꾸로 읽어야 함 | Important |
+| 함수 본문 안의 클래스 선언 | 자리 밖 선언, 대개 `var` 그릇 동반 | Important |
+| 코드를 그대로 옮긴 주석 | 소음 | Important |
+| 새 동작에 유닛 테스트 없음 | 미검증 동작 유입 | Critical |
+| 구현이 하나뿐인데 신설한 인터페이스·추상 클래스·설정 옵션 (확장 지점 미리 두기). 예외는 둘 — 갈아 끼우기로 정한 외부 공급자의 계약(kotlin-client 「계약 모듈」), storage 의 Store 인터페이스(kotlin-repository 「Store 인터페이스」) | 요청받지 않은 추상화 — `ponytail` 위반 | Critical |
+
+## 체크리스트
+
+- [ ] 최상위 선언이 파일마다 하나이고, 파일 이름이 그 이름과 같은가
+
+- [ ] 공개 API 의 타입이 전부 명시됐는가
+
+- [ ] `var`·`!!`·`Any` 가 없는가
+
+- [ ] 상태 변경이 정해진 경로(엔티티 메서드·`copy`)로만 일어나는가
+
+- [ ] 판단·반복이 람다 없이 `if`/`for` 로 풀려 있는가
+
+- [ ] 주석이 규칙 예외·특이사항에만 있는가
+
+- [ ] 새 동작마다 유닛 테스트가 있고, 한 메서드가 한 기능만 검증하는가
+
+- [ ] `./gradlew ktlintCheck unitTest` 가 통과하는가 (DB 를 건드렸다면 `test` 까지)
