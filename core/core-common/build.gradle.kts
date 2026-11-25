@@ -3,4 +3,5 @@ dependencies {
     api(project(":storage:db-safety-spot"))
     implementation(project(":support:logging"))
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 }

@@ -66,6 +66,6 @@ class RequestLogFilter : OncePerRequestFilter() {
     private companion object {
         const val CLIENT_ID_HEADER: String = "X-Client-Id"
         val ADMIN_PREFIXES: List<String> = listOf("/api/admin", "/api/v1/auth")
-        val EXCLUDED_PREFIXES: List<String> = listOf("/actuator", "/healthz", "/cdn")
+        val EXCLUDED_PREFIXES: List<String> = listOf("/healthz", "/cdn")
     }
 }

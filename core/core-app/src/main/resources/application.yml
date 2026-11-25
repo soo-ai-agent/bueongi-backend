@@ -22,7 +22,6 @@ spring:
   config:
     import:
       - logging.yml
-      - monitoring.yml
       - client-slack.yml
       - client-datagokr-security-lamp.yml
       - db-safety-spot.yml
