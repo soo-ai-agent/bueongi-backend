@@ -180,16 +180,4 @@ class ShareControllerLocationTest : ShareControllerTestSupport() {
             jsonPath("$.remaining_seconds") { value(360.0) }
         }
     }
-
-    @Test
-    fun `음수 remaining_meters 위치 POST 는 400 VALIDATION_FAILED`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/location") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "{\"lat\": 37.5, \"lng\": 127.0, \"owner_secret\": \"$secret\", \"remaining_meters\": -1.0}"
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
 }

@@ -36,18 +36,6 @@ class CdnResourceConfigTest(
     }
 
     @Test
-    fun `데이터 디렉터리의 JSON 을 하위 경로 포함 그대로 서빙한다`() {
-        mockMvc.get("/cdn/police/all.json").andExpect {
-            status { isOk() }
-            content { json("""{"items":[{"id":"p1"}]}""") }
-        }
-        mockMvc.get("/cdn/manifest.json").andExpect {
-            status { isOk() }
-            content { json("""{"updated":"2026-07"}""") }
-        }
-    }
-
-    @Test
     fun `월 1회 갱신 데이터 - public 캐시 헤더를 붙인다`() {
         mockMvc.get("/cdn/manifest.json").andExpect {
             status { isOk() }

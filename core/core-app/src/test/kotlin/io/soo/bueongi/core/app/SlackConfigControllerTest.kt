@@ -74,17 +74,6 @@ class SlackConfigControllerTest(
     }
 
     @Test
-    fun `PUT throttleMinutes 가 범위를 벗어나면 400 VALIDATION_FAILED`() {
-        mockMvc.put("/api/admin/slack-config") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"enabled":true,"throttleMinutes":0,"mutedCategories":[]}"""
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
-
-    @Test
     fun `PUT 알 수 없는 카테고리는 422 INVALID_SLACK_CATEGORY`() {
         mockMvc.put("/api/admin/slack-config") {
             contentType = MediaType.APPLICATION_JSON

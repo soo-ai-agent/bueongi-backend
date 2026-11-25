@@ -20,6 +20,8 @@ class TmapPlaceClient(
     private val restClient: RestClient = restClientBuilder.clone().build()
 
     override fun search(keyword: String): List<Place> {
+        // 키 없이 부르면 Tmap 이 401 로 거절한다 — 매 요청 헛호출을 보내지 않는다.
+        check(appKey.isNotEmpty()) { "Tmap 앱 키 미설정 — 장소 검색을 부르지 않는다." }
         val response: JsonNode =
             restClient.get()
                 .uri(POI_SEARCH_ENDPOINT) { builder -> buildPoiSearchUri(builder, keyword) }

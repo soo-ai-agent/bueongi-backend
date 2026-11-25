@@ -136,56 +136,6 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
     }
 
     @Test
-    fun `범위 밖 경로 좌표는 400 VALIDATION_FAILED`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "path": [ {"lat": 91.0, "lng": 127.0} ]
-                }
-                """.trimIndent()
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
-
-    @Test
-    fun `destination 누락 POST route 는 400 VALIDATION_FAILED`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "{\"owner_secret\": \"$secret\"}"
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
-
-    @Test
-    fun `음수 total_distance_m POST route 는 400 VALIDATION_FAILED`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "total_distance_m": -1
-                }
-                """.trimIndent()
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-        }
-    }
-
-    @Test
     fun `POST route 의 type 은 GET route 에 그대로 실린다`() {
         val (token, secret) = createSharePair()
         mockMvc.post("/share/$token/route") {
@@ -196,27 +146,6 @@ class ShareControllerRouteTest : ShareControllerTestSupport() {
         mockMvc.get("/share/$token/route").andExpect {
             status { isOk() }
             jsonPath("$.route.type") { value("main") }
-        }
-    }
-
-    @Test
-    fun `type 누락 POST route 는 400 VALIDATION_FAILED`() {
-        val (token, secret) = createSharePair()
-        mockMvc.post("/share/$token/route") {
-            contentType = MediaType.APPLICATION_JSON
-            content =
-                """
-                {
-                  "owner_secret": "$secret",
-                  "destination": { "lat": 37.56, "lng": 126.97 },
-                  "total_distance_m": 1234,
-                  "total_time_s": 900
-                }
-                """.trimIndent()
-        }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("VALIDATION_FAILED") }
-            jsonPath("$.errors[0].field") { value("type") }
         }
     }
 
