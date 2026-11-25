@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":core:core-admin-auth"))
     implementation(project(":storage:db-safety-spot"))
     implementation(project(":storage:db-share"))
+    testImplementation(testFixtures(project(":storage:db-share")))
     implementation(project(":clients:client-tmap"))
     implementation(project(":clients:client-tmap-place"))
     implementation(project(":clients:client-slack"))

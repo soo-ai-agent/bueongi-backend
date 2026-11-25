@@ -12,7 +12,7 @@
                                                ├─ /cdn/*       ─▶ backend       안심시설 정적 JSON
                                                └─ /share/create, /share/{t}/(location|end|watching|route)
                                                                ─▶ backend       위치 공유 API
-                                  [backend] ──(기본 H2 파일 DB · 선택 redis)── 위치공유 세션(1~3h 상한)
+                                  [backend] ──(redis)── 위치공유 세션(1~3h 상한)
 ```
 
 - **이미지**: `ghcr.io/soo-ai-agent/bueongi`(관리자·보호자 웹), `ghcr.io/soo-ai-agent/bueongi-backend`(백엔드)
@@ -61,8 +61,7 @@ echo $GHCR_PAT | docker login ghcr.io -u <github-user> --password-stdin
 # 3) 기동 — 프로필 조합 선택
 docker compose pull
 docker compose up -d                                   # HTTP(앞단 TLS 프록시 뒤에 둘 때)
-docker compose --profile redis up -d                   # + Redis 위치공유 저장소
-docker compose --profile tls --profile redis up -d     # + Caddy 자동 HTTPS(80/443 개방 필요)
+docker compose --profile tls up -d                     # + Caddy 자동 HTTPS(80/443 개방 필요)
 
 # 4) 확인
 curl -fs http://localhost:${HTTP_PORT:-8080}/api/health   # {"status":"UP",...}
@@ -81,8 +80,7 @@ docker compose pull && docker compose up -d
    도메인이 바뀌면 프론트 이미지는 재빌드(Variable 수정 후 docker-publish 재실행)해야 한다.
 3. **키 없이도 뜬다** — 모든 외부 키는 선택이다. 없으면 결정론적 폴백(목업 경로·시드 검색·MapMock)
    으로 동작하므로, 스테이징은 키 없이 먼저 올려 구조를 검증할 수 있다.
-4. **Redis 는 선택** — 미설정 시 인메모리 위치공유(단일 인스턴스 한정, 재시작 시 세션 소실).
-   운영은 `--profile redis` 권장.
+4. **Redis 는 필수** — 위치공유 세션 저장소다. compose 가 함께 띄운다. 연결이 끊기면 위치공유 API 만 오류를 낸다.
 5. **API 요청 제한** — nginx 가 `/api/*`·`/cdn/*`·위치공유 API 에 IP 당 10r/s(burst 20)를 걸고
    초과분은 429 로 끊는다(외부 API 쿼터 소진 공격 방어). 규칙은 프론트 이미지의 `deploy/nginx.default.conf.template`.
 

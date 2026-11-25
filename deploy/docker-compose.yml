@@ -1,10 +1,9 @@
-# bueongi 운영 스택 — 프론트(nginx SPA+프록시) + 백엔드(Spring 8119) [+ redis, + caddy TLS]
+# bueongi 운영 스택 — 프론트(nginx SPA+프록시) + 백엔드(Spring 8119) + redis [+ caddy TLS]
 #
 # 사용:
 #   cp .env.example .env  # 값 채우기
 #   docker compose pull && docker compose up -d                  # 기본(HTTP, 리버스 프록시 뒤)
-#   docker compose --profile redis up -d                         # Redis 위치공유 저장소 포함
-#   docker compose --profile tls --profile redis up -d           # Caddy 자동 HTTPS 포함
+#   docker compose --profile tls up -d                           # Caddy 자동 HTTPS 포함
 #
 # 중요: 위치(geolocation)·클립보드 등 브라우저 보안 컨텍스트 API 때문에
 # 공개 배포는 반드시 HTTPS 여야 한다(tls 프로필 또는 앞단 TLS 프록시).
@@ -29,12 +28,10 @@ services:
       # 보호자 공유 URL base = 사용자에게 보이는 공개 origin (share_url = {base}/share/{token})
       BUEONGI_SHARE_BASE_URL: ${PUBLIC_ORIGIN:-http://localhost:8080}
       BUEONGI_CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:8080}
-      # 위치공유 저장소 — 기본은 H2 파일 DB(share-db 볼륨, 재시작에도 세션 유지). 비우면 redis-url, 둘 다 없으면 인메모리.
-      BUEONGI_DB_URL: ${BUEONGI_DB_URL:-jdbc:h2:file:/data/share-db}
-      # redis 프로필 사용 시 자동 배선. db-url 이 있으면 DB 가 우선한다.
-      BUEONGI_REDIS_URL: ${BUEONGI_REDIS_URL:-}
-    volumes:
-      - share-db:/data
+      # 위치공유 저장소(필수)
+      BUEONGI_REDIS_URL: ${BUEONGI_REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - redis
     healthcheck:
       test: ['CMD', 'curl', '-fs', 'http://localhost:8119/api/health']
       interval: 30s
@@ -53,10 +50,9 @@ services:
     ports:
       - '${HTTP_PORT:-8080}:80'
 
-  # 위치공유 저장소(선택): --profile redis. TTL 은 백엔드가 키별로 건다.
+  # 위치공유 저장소. TTL 은 백엔드가 키별로 건다.
   redis:
     image: redis:7-alpine
-    profiles: ['redis']
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'no', '--maxmemory', '64mb', '--maxmemory-policy', 'allkeys-lru']
     volumes:
@@ -81,7 +77,6 @@ services:
       - caddy-config:/config
 
 volumes:
-  share-db:
   redis-data:
   caddy-data:
   caddy-config:

@@ -46,8 +46,4 @@ pluginManagement {
             }
         }
     }
-    plugins {
-        kotlin("plugin.jpa") version "1.9.25"
-        kotlin("plugin.allopen") version "1.9.25"
-    }
 }

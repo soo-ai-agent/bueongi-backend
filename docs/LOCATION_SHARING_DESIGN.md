@@ -1,6 +1,6 @@
 # bueongi backend — 위치 공유(보호자) 서버 설계 + 구현 노트
 
-> **상태: MVP 계약 4종 + Redis/인메모리 저장소 구현 완료(2026-06-19).**
+> **상태: MVP 계약 4종 + Redis 저장소 구현 완료(2026-06-19). 2026-11-25 저장소를 Redis 하나로 통일(DB·인메모리 폴백 제거).**
 > 칸반 태스크 `cdb5314d [Backend/Server] Redis 기반 위치 공유 최소 서버 설계/구현`(label `safe-return-mvp`, `role:Backend/Server`)의 산출물.
 > 기준 문서는 오케스트레이터 설계 `docs/mvp-orchestrator-design.md` **작업 4(Backend/Server)** — 그 4개 엔드포인트 계약과 Redis 키 모델로 정렬했다.
 >
@@ -29,14 +29,14 @@
 
 - bueongi 는 안심 귀가 앱. 기존 백엔드는 **stateless·무외부의존**(장소 검색 + 경로/안심시설 비교)(`docs/API.md`).
 - 신규 요구(태스크 cdb5314d): 카카오택시 방식 — 사용자가 토큰 URL 을 외부 메신저로 공유하면 **보호자가 로그인 없이 실시간 위치를 5초 폴링으로 조회**하는 최소 서버.
-- 기존 도메인과 본질이 다름: 시간에 따라 변하는 라이브 위치(상태 있음) → **만료(TTL) 가능한 저장소(Redis)** 가 적합. Redis 미주입 시 인메모리 폴백.
+- 기존 도메인과 본질이 다름: 시간에 따라 변하는 라이브 위치(상태 있음) → **만료(TTL) 가능한 저장소(Redis)** 가 적합.
 
 ## 2. 설계 원칙
 
 1. **`/share` prefix + 공통 에러 계약 재사용**: 좌표 오류는 `common/ApiExceptionHandler.kt` 의 RFC 7807 + `code`(400) 그대로. 위치 갱신의 토큰 없음/만료만 404 `SHARE_SESSION_NOT_FOUND`. CORS 는 `/api/**` 정책을 `/share/**` 에도 동일 적용.
 2. **PII 최소화 / 비식별 토큰**: 계정·전화번호 대신 추측 불가능한 128-bit URL-safe 랜덤 `token`(22자) 으로만 식별(링크 공유 모델).
 3. **자동 만료(TTL)**: 1~3시간 상한 TTL — 공유를 끄지 않아도 시간이 지나면 위치가 사라진다(무기한 추적 금지). 종료(DELETE) API 없이 만료로만 정리.
-4. **외부 키 없이 기동(MVP 일관)**: `BUEONGI_REDIS_URL` 미주입(로컬/CI)이면 인메모리 폴백 + `/api/health.locationStore`(`"redis"|"memory"`) 라벨. 보호자 지도도 키 불요(Leaflet+OpenStreetMap).
+4. **Redis 필수**: 위치 공유는 Redis 에만 저장한다. 연결이 끊기면 위치 공유 API 만 오류를 내고 서버 기동·다른 API 는 영향 없다. 보호자 지도는 키 불요(Leaflet+OpenStreetMap).
 5. **좌표 규약 동일**: lat ±90·lng ±180, 비유한(NaN/±Inf)·범위 밖 거부.
 
 ## 3. API 계약 (구현됨)
@@ -59,7 +59,7 @@ share:{token}     HASH { created_at, expires_at }   EXPIRE = 상한 TTL(1~3h)
 location:{token}  HASH { lat, lng, updated_at }      EXPIRE = 동일 상한 TTL
 ```
 
-- 상한 만료는 Redis native TTL 이 강제 → `find` 는 `share:{token}` 키 존재만 확인(없으면 만료/미존재). 인메모리는 `find` 시점 lazy 비교로 동치.
+- 상한 만료는 Redis native TTL 이 강제 → `find` 는 `share:{token}` 키 존재만 확인(없으면 만료/미존재).
 - 위치 키도 공유와 **동일 상한 TTL** — 만료 시 위치도 함께 삭제(잔존 추적 금지). PII 미저장(token·좌표·시각만).
 
 ## 5. 코드 배치 (구현됨, `io/soo/bueongi/share/`)
@@ -67,38 +67,37 @@ location:{token}  HASH { lat, lng, updated_at }      EXPIRE = 동일 상한 TTL
 ```
 ShareSessionStore.kt          # 인터페이스(save/find) + ShareSession/StoredLocation 모델
 RedisShareSessionStore.kt     # Redis 구현(share:{token}/location:{token} HASH+TTL)
-InMemoryShareSessionStore.kt  # 폴백(ConcurrentHashMap + lazy 만료)
-ShareStoreConfig.kt       # redis-url 유무로 Redis↔인메모리 택1(상호배타 Condition)
+ShareStoreConfig.kt       # Redis 저장소 빈 등록(연결은 Spring Boot 자동 설정)
+(testFixtures) InMemoryShareSessionStore.kt  # 테스트 대역(ConcurrentHashMap + lazy 만료)
 ShareDtos.kt              # 요청/응답 + @Valid 좌표 검증 + snake_case(@JsonProperty)
 ShareService.kt           # 생성/위치 갱신/조회 + 1~3h TTL + 토큰 발급
 ShareController.kt        # 4개 엔드포인트(+ HTML 토큰 주입)
 resources/share/guardian.html  # 보호자 지도 페이지(Leaflet+OSM, 5초 폴링)
 ```
-- `BueongiApplication` 은 `RedisAutoConfiguration` 제외(URL 미지정 시 localhost 자동연결 방지). `ShareStoreConfig` 가 URL 주입 시에만 Lettuce 팩토리 생성.
+- Redis 연결은 Spring Boot 자동 설정이 `spring.data.redis.url`(`BUEONGI_REDIS_URL`) 로 만든다.
 - `ApiExceptionHandler` 에 `SHARE_SESSION_NOT_FOUND` 핸들러, `HealthService` 의 locationStore 라벨(불리언 파생, 키/주소 미노출).
 
 ## 6. 인프라 / 설정 (env)
 
 | env | 기본 | 설명 |
 |---|---|---|
-| `BUEONGI_REDIS_URL` | (빈 값) | 예 `redis://localhost:6379`. **미설정 시 인메모리 폴백**(MVP·CI 무중단). |
+| `BUEONGI_REDIS_URL` | `redis://localhost:6379` | 위치 공유 저장 Redis. |
 | `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119` | `share_url` 의 base(운영은 공개 도메인). |
 | `BUEONGI_CORS_ORIGINS` | `http://localhost:3619` | `/api/**`·`/share/**` 공통 허용 origin(별도 보호자 웹 폴링 시 도메인 추가). |
 
 ## 7. 수용 기준 (구현·검증 완료)
 
-1. 생성→위치 POST→GET 으로 같은 좌표 회수(왕복) — 인메모리·Redis(키 계약 모킹) 양쪽. ✅
+1. 생성→위치 POST→GET 으로 같은 좌표 회수(왕복) — Redis(키 계약 모킹). ✅
 2. `expires_in_hours` 는 1·2·3 만 허용, 미지정 시 1h. ✅
 3. 상한 만료(1~3h) 경과 후 GET → `expired:true`(좌표 null), 위치 POST → 404. ✅
 4. 잘못된 좌표(범위 밖/비유한) POST → 400(기존 계약과 동일 code). ✅
-5. Redis 미설정 환경에서 전 기능 동작 + `/api/health.locationStore == "memory"`. ✅(스모크 검증)
 6. 응답/로그/health 에 PII·Redis 자격증명 미노출. ✅
 7. 보호자 HTML 이 키 없이(OSM) 렌더되고 토큰이 주입된다. ✅
 
-## 8. Redis 미구성 시 동작 정책
+## 8. Redis 장애 시 동작 정책
 
-- `BUEONGI_REDIS_URL` 이 비어있으면 Redis 템플릿 빈이 만들어지지 않아 `ShareStoreConfig.locationStore` 가 `InMemoryShareSessionStore`(단일 인스턴스, 재시작 시 휘발) 를 고른다. 같은 `ShareSessionStore` 계약으로 동작한다. 외부 인프라·키 없이 전 기능·전 테스트가 그린.
-- 운영에서 Redis 를 켜려면 `BUEONGI_REDIS_URL` 주입만으로 `RedisShareSessionStore`(native TTL) 로 무코드변경 전환된다. 다중 인스턴스·재시작 내구성이 필요하면 Redis 를 권장.
+- 저장소는 Redis 하나다(2026-11-25 통일). 연결 실패는 `LocationStoreUnavailableException` 으로 바뀌어 위치 공유 API 오류로 나간다. 폴백 저장소는 두지 않는다 — 폴백하면 재시작·다중 인스턴스에서 세션이 조용히 갈라진다.
+- 테스트는 `storage:db-share` testFixtures 의 `InMemoryShareSessionStore` 를 대역으로 쓴다(Redis 없이 전 테스트 통과).
 
 ## 9. 범위 밖(v2)
 

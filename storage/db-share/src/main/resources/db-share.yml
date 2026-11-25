@@ -1,7 +1,6 @@
-# storage:db-share 소유 설정 — 위치 공유 저장소(DB·Redis).
-bueongi:
-  share:
-    # DB 접속 JDBC URL(예: jdbc:h2:file:./data/share-db). 채우면 DB 저장소가 켜진다 — Redis 보다 우선.
-    db-url: ${BUEONGI_DB_URL:}
-    # Redis 접속 URL(예: redis://localhost:6379). 둘 다 미설정(빈 값)이면 인메모리 폴백으로 동작(외부 인프라 불요).
-    redis-url: ${BUEONGI_REDIS_URL:}
+# storage:db-share 소유 설정 — 위치 공유 저장소(Redis).
+spring:
+  data:
+    redis:
+      # 비밀번호가 있으면 redis://:비밀번호@호스트:6379
+      url: ${BUEONGI_REDIS_URL:redis://localhost:6379}

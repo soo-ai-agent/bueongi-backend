@@ -3,12 +3,12 @@ package io.soo.bueongi.storage.db.share.store
 import io.soo.bueongi.storage.db.share.model.ShareSession
 
 interface ShareSessionStore {
-    // health 응답에 그대로 나간다: "db" | "redis" | "memory" — 자격증명·주소는 노출 금지.
+    // health 응답에 그대로 나간다: 운영은 "redis"(테스트 대역은 "memory") — 자격증명·주소는 노출 금지.
     val backend: String
 
     fun save(session: ShareSession)
 
-    // 계약: 만료 강제는 저장소 책임이다(Redis native TTL 과 인메모리 lazy 비교가 동치).
+    // 계약: 만료 강제는 저장소 책임이다(Redis native TTL).
     fun findByToken(token: String): ShareSession?
 
     fun deleteByToken(token: String)

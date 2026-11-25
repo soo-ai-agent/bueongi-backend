@@ -67,12 +67,12 @@
 **200 응답** (`HealthStatus`):
 
 ```json
-{ "status": "UP", "service": "bueongi-backend", "locationStore": "memory" }
+{ "status": "UP", "service": "bueongi-backend", "locationStore": "redis" }
 ```
 
 - `status`: 항상 `"UP"`(요청 처리 가능하면 도달).
 - `service`: `"bueongi-backend"`.
-- `locationStore`: `"db"`=DB(`BUEONGI_DB_URL`) / `"redis"`=Redis / `"memory"`=인메모리 폴백(둘 다 미주입 시). **저장소 종류 라벨일 뿐 URL·자격증명은 절대 노출하지 않는다.** (위치 공유 섹션 참조)
+- `locationStore`: `"redis"` 고정(연결 상태가 아니라 저장소 종류). **저장소 종류 라벨일 뿐 URL·자격증명은 절대 노출하지 않는다.** (위치 공유 섹션 참조)
 
 ---
 
@@ -151,7 +151,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 **503 `ROUTE_SEARCH_U
 귀가 중인 사용자가 공유 토큰을 발급받아 **외부 메신저로 URL 을 직접 공유**하면, 보호자는 토큰 URL 만으로(로그인 없이) 위치를 5초 폴링으로 본다. **다른 엔드포인트와 달리 stateful** — Redis TTL 로 1~3시간 후 자동 만료된다. 출처: `share/ShareController.kt`, `share/ShareDtos.kt`, `share/ShareService.kt`, `share/ShareSessionStore.kt`, `share/RedisShareSessionStore.kt`, `share/InMemoryShareSessionStore.kt`.
 
 > **경로 prefix**: 보호자가 브라우저로 직접 여는 공개 URL 이라 앱 전용 `/api` 와 분리해 `/share` 하위에 둔다. CORS 는 `/api/**` 와 동일 정책으로 `/share/**` 에도 허용(별도 origin 보호자 웹의 교차 출처 폴링 지원).
-> **저장소**: `ShareSessionStore` 추상화. `BUEONGI_DB_URL` 주입 시 `JpaShareSessionStore`(JPA 엔티티 `ShareSessionEntity`, H2 파일 기본), 없고 `BUEONGI_REDIS_URL` 주입 시 `RedisShareSessionStore`, 둘 다 미주입(로컬/CI) 시 `InMemoryShareSessionStore` 폴백. 활성 저장소는 `GET /api/health.locationStore`(`"db"`/`"redis"`/`"memory"`)로 확인. DB 는 TTL 이 없어 만료 행을 10분 주기 스윕으로 지우고, 조회는 `expires_at` 로 거른다.
+> **저장소**: `ShareSessionStore` 추상화, 운영 구현은 `RedisShareSessionStore` 하나(`BUEONGI_REDIS_URL`). 만료는 Redis 키 TTL 이 강제한다. Redis 연결이 끊기면 위치 공유 API 는 `LocationStoreUnavailableException` 으로 오류를 낸다.
 > **Redis 키 모델**: `share:{token}` HASH `{ created_at, expires_at }` + `location:{token}` HASH `{ lat, lng, updated_at, remaining_meters, remaining_seconds }`(남은 거리·시간은 옛 이름 `remaining_m`·`remaining_s` 로 저장된 값도 읽는다). 둘 다 동일 상한 TTL(1~3h)로 함께 자동 삭제 — 공유가 만료되면 위치도 잔존하지 않는다.
 > **프라이버시**: `token` 은 128-bit URL-safe 랜덤(추측 불가). 계정·전화번호 등 PII 미저장. 1~3시간 상한 TTL 로 무기한 추적을 막는다 — 공유를 끄지 않아도 반드시 만료된다. 보호자 회원가입/페어링/푸시/서버 발송 메시지는 **범위 밖**.
 

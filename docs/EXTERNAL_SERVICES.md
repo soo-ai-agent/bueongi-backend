@@ -65,7 +65,7 @@ main() 시작
   │     ├─ 안심시설 적재   BUEONGI_FACILITY_DATA_DIR(기본 cdn)의 JSON/CSV 를 읽어
   │     │                  메모리 인덱스 구성. **로컬 파일이다 — 네트워크 아님.**
   │     │                  디렉터리가 없으면 경고 로그 후 빈 적재로 계속 뜬다.
-  │     └─ Redis 연결      BUEONGI_REDIS_URL 있을 때만. 없으면 인메모리 폴백이라 연결 자체가 없다.
+  │     └─ Redis 연결      BUEONGI_REDIS_URL(기본 redis://localhost:6379). 첫 사용 시 연결한다.
   │
   ├─ ③ 8119 포트 오픈 → "Started" 로그
   │
@@ -130,8 +130,8 @@ CSV 와 똑같은 데이터를 위해 자치단체마다 수십 회를 쓴다(�
 
 ### Redis (위치 공유 저장) — `storage:db-share`
 
-- **언제**: 켜질 때 연결(설정 시), 이후 공유 세션 읽기/쓰기마다.
-- **안 되면**: 미설정 시 인메모리 폴백 — 단일 인스턴스·재시작 시 휘발이지만 계약은 동일.
+- **언제**: 공유 세션 읽기/쓰기마다(필수).
+- **안 되면**: 위치 공유 API 만 오류(`LocationStoreUnavailableException`). 서버 기동과 다른 API 는 영향 없다.
 - 외부 "API" 라기보다 우리 인프라다. 여기 적는 이유는 켜질 때 바깥에 접속하는 유일한 것이라서다.
 
 ## 4. 한 호출의 해부 — 코드가 실제로 하는 일
@@ -286,17 +286,17 @@ SlackAlertNotifier   ① 이력 기록(발송 여부와 무관하게 남김)
 
 ```bash
 curl -s localhost:8119/api/health
-# {"status":"UP","service":"bueongi-backend","locationStore":"redis|memory"}
+# {"status":"UP","service":"bueongi-backend","locationStore":"redis"}
 ```
 
-- `locationStore: redis` = Redis 연결됨 / `memory` = 인메모리 폴백.
+- `locationStore` 는 저장소 종류라 항상 `redis` 다. 연결 여부는 위치 공유 API 호출로 확인한다.
 
 ## 6. 요약 표
 
 | 서비스 | 켜질 때 | 부르는 조건 | 실패 시 |
 |---|---|---|---|
 | CDN 파일(시설) | **읽음(로컬)** | 기동 1회 | 경고 로그 + 빈 적재로 기동 |
-| Redis | 연결(설정 시) | 공유 세션 I/O | 인메모리 폴백 |
+| Redis | 안 부름(첫 사용 시 연결) | 공유 세션 I/O | 위치 공유 API 오류 |
 | Tmap | 안 부름 | 경로 요청 | 폴백 경로 + Slack |
 | Tmap 장소 | 안 부름 | 장소 검색 요청 | 503 + Slack |
 | Slack | 안 부름 | 사건 발생 | 로그만 (알림 유실) |
