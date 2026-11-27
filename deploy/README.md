@@ -115,7 +115,6 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
 | `DATA_GO_KR_SERVICE_KEY` | (빈 값)                                                        | 공공데이터포털 보안등 지연 적재                                                    |
 | `SAFEMAP_SERVICE_KEY`    | (빈 값)                                                        | 생활안전지도 치안시설 지연 적재                                                    |
 | `SAFETYDATA_SERVICE_KEY` | (빈 값)                                                        | 재난안전데이터 가로등 지연 적재                                                    |
-| `SLACK_WEBHOOK_URL`      | (빈 값)                                                        | 운영 알림. 비우면 알림을 보내지 않습니다                                           |
 | `BUEONGI_DB_PASSWORD`    | (없음, 필수)                                                   | 안심시설 DB 비밀번호. `db` 컨테이너와 백엔드에 같은 값이 들어갑니다                |
 | `BUEONGI_DB_USERNAME`    | `bueongi`                                                      | 안심시설 DB 사용자                                                                 |
 | `BUEONGI_DB_URL`         | `jdbc:postgresql://db:5432/bueongi?reWriteBatchedInserts=true` | 안심시설 DB. 외부 DB를 쓸 때만 덮어씁니다                                          |

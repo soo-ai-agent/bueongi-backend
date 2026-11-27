@@ -11,14 +11,15 @@
 
 **켜질 때 외부 API 호출은 없다.** 기동 중에 바깥과 닿는 것은 우리 인프라인 PostgreSQL 뿐이다(Flyway 마이그레이션,
 CDN 파일 반영). Redis 는 첫 사용 때 연결한다.
-외부 API(Tmap, 공공데이터 4종, Slack)는 전부 **사용자 요청이나 사건이 있어야** 불린다.
+외부 API(Tmap, 공공데이터 4종)는 전부 **사용자 요청이 있어야** 불린다.
 
 ```text
 켜질 때        PostgreSQL 연결, Flyway, CDN 파일을 DB 로 반영  <- 외부 API 없음
-켜진 뒤        도착 감시 루프(60초마다, Redis 의 공유 세션만 훑음)
+켜진 뒤        주기적으로 도는 작업 없음
 요청이 올 때   Tmap(경로, 장소 검색), 경로 요청 뒤 공공데이터 4종(뒤에서 채우기)
-사건이 날 때   Slack(운영 알림)
 ```
+
+운영 알림은 앱이 보내지 않는다. 서버의 로그 감시가 ERROR 로그와 5xx 요청 로그를 보고 알린다.
 
 ### 외부 접점 목록
 
@@ -30,7 +31,6 @@ CDN 파일 반영). Redis 는 첫 사용 때 연결한다.
 | 가로등           | `clients:client-safetydata-street-lamp` | `www.safetydata.go.kr` | `SAFETYDATA_SERVICE_KEY` |
 | 치안시설         | `clients:client-safemap`                | `safemap.go.kr`        | `SAFEMAP_SERVICE_KEY`    |
 | 아동안전지킴이집 | `clients:client-safe182`                | `www.safe182.go.kr`    | `SAFE182_AUTH_KEY`       |
-| Slack 웹훅       | `clients:client-slack`                  | `hooks.slack.com`      | `SLACK_WEBHOOK_URL`      |
 | PostgreSQL       | `storage:db-safety-spot`                | `BUEONGI_DB_URL` 값    | `BUEONGI_DB_PASSWORD`    |
 | Redis            | `storage:db-share`                      | `BUEONGI_REDIS_URL` 값 | 없음                     |
 
@@ -46,16 +46,13 @@ flowchart LR
         PC[core-place]
         SH[core-share]
         SS[core-safety-spot<br/>SafetySpotFillTrigger]
-        OPS[core-admin-ops<br/>사건 리스너]
         TM[client-tmap]
         TP[client-tmap-place]
         PUB[공공데이터 clients 4종]
-        SN[SlackAlertNotifier]
     end
     subgraph 외부
         TMAP[Tmap API]
         GOV[공공데이터 API]
-        SLACK[Slack 웹훅]
         REDIS[(Redis)]
         PG[(PostgreSQL<br/>PostGIS)]
     end
@@ -65,16 +62,12 @@ flowchart LR
     RC -. 경로가 정해지면 .-> SS --> PUB -->|GET| GOV
     FE -->|장소 검색| PC --> TP -->|GET| TMAP
     FE -->|위치 공유| SH --> REDIS
-    RC -. 실패 사건 .-> OPS
-    PC -. 실패 사건 .-> OPS
-    SS -. 실패 사건 .-> OPS
-    OPS --> SN -->|비동기 POST| SLACK
     FILES -->|켜질 때 DB 로 반영| 백엔드
     RC -->|공간 질의| PG
     SS -->|받은 지역 저장| PG
 ```
 
-- **실선**은 요청이 있을 때만 흐르는 호출, **점선**은 뒤에서 이어지는 작업이나 실패했을 때만 나는 사건이다.
+- **실선**은 요청이 있을 때만 흐르는 호출, **점선**은 뒤에서 이어지는 작업이다.
 - 켜질 때 외부 API 로 나가는 것은 없다. 안심시설 CDN 파일은 로컬 디스크이고, 그것을 넣을 DB 만 연결한다.
 
 ## 1. 켜질 때: 기동 타임라인
@@ -93,9 +86,7 @@ main() 시작
   │     │                  CDN 디렉터리가 없으면 경고 로그 후 계속 뜬다.
   │     └─ Redis 설정      BUEONGI_REDIS_URL(기본 redis://localhost:6379). 연결은 첫 사용 때 한다.
   │
-  ├─ 3. 포트 오픈        기본 8080, local 프로파일 8119. "Started" 로그
-  │
-  └─ 4. 백그라운드 시작  도착 감시 루프(아래 2절). 첫 스캔은 한 주기 뒤다.
+  └─ 3. 포트 오픈        기본 8080, local 프로파일 8119. "Started" 로그
 ```
 
 **기동 때는 외부 API 를 부르지 않는다.** 부팅을 외부 API 지연에 묶지 않기 위해서다. 기본 시설 데이터는 파이프라인이 만든
@@ -104,14 +95,8 @@ CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, �
 
 ## 2. 켜진 뒤: 백그라운드
 
-| 무엇                    | 주기                      | 바깥과의 접점                    |
-|-------------------------|---------------------------|----------------------------------|
-| `MissedArrivalWatchdog` | 60초                      | Redis 의 활성 공유 세션만 읽는다 |
-| `SafetySpotFillTrigger` | 경로 요청이 성공할 때마다 | 공공데이터 API 4종(아래)         |
-
-- `MissedArrivalWatchdog`의 주기는 `BUEONGI_WATCHDOG_INTERVAL_MS`(기본 60000)다. 첫 스캔도 기동 후 한 주기 뒤에 돈다.
-  놓친 도착이나 도착 후 끝내지 않은 공유를 발견하면 사건을 발행하고, 그 사건을 받은 쪽이 Slack 을 부른다(3절).
-- `SafetySpotFillTrigger`는 전용 `safety-spot-fill` 스레드 하나에서만 돌고, **요청 스레드를 막지 않는다.**
+기동 뒤 주기적으로 도는 작업은 없다. 뒤에서 도는 것은 `SafetySpotFillTrigger` 하나이고, 경로 요청이 성공할 때마다
+공공데이터 API 4종(아래)을 부른다. 전용 `safety-spot-fill` 스레드 하나에서만 돌고, **요청 스레드를 막지 않는다.**
 
 ### 안심시설 뒤에서 채우기: `SafetySpotFillTrigger`
 
@@ -138,16 +123,16 @@ CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, �
 
 받은 것은 DB `safety_spot`에 `source = api:<지역코드>` 조각으로 들어가고, 받은 시각은 `safety_spot_slice.saved_at`에
 남는다. 0건이어도 기록한다. 가로등과 치안시설은 지역이 없어 코드 자리에 `nationwide`를, 지킴이집은 격자 칸 번호를 쓴다.
-실패하면 사건을 발행하고 기존 데이터를 유지하되 **10분 냉각** 후에만 다시 시도한다. 원천 장애 중 요청마다 실패 호출이 반복되지 않게 하려는 것이다
-(`FillFailureCooldown`).
+실패하면 `log.warn` 한 줄을 남기고 기존 데이터를 유지하되 **10분 냉각** 후에만 다시 시도한다. 원천 장애 중 요청마다
+실패 호출이 반복되지 않게 하려는 것이다(`FillFailureCooldown`).
 
-## 3. 요청이나 사건이 있을 때: 외부 서비스별
+## 3. 요청이 올 때: 외부 서비스별
 
 ### Tmap 보행 경로: `clients:client-tmap`
 
 - **언제**: 사용자가 경로 비교를 요청할 때만 부른다(`POST /api/routes`).
-- **안 되면**: 경로 후보가 하나도 없으면 503 `ROUTE_SEARCH_UNAVAILABLE`과 Slack 사건 `tmap-route-failed`가 난다. 폴백
-  경로는 없다. 서버는 죽지 않는다.
+- **안 되면**: 경로 후보가 하나도 없으면 503 `ROUTE_SEARCH_UNAVAILABLE`로 응답한다. 폴백 경로는 없다. 서버는 죽지
+  않는다.
 - 응답 본문에 NUL(0x00)이 섞여 오는 실측 사례가 있어 문자열로 받아 다듬은 뒤 파싱한다(`sanitizeTmapJson`,
   `TmapResponseText.kt`).
 
@@ -155,23 +140,14 @@ CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, �
 
 - **언제**: 장소 검색 요청일 때만 부른다(`GET /api/places/search?keyword=...`). 키는 경로와 같은 `bueongi.tmap.app-key`
   (`client-tmap.yml`, `TMAP_APP_KEY`)다.
-- **안 되면**: 호출 실패는 503 `PLACE_SEARCH_UNAVAILABLE`과 Slack 사건 `place-search-failed`로 이어진다. 키가 비어 있어도
-  호출은 나가고 Tmap 이 거부해 같은 길을 탄다. 폴백 결과는 없다.
+- **안 되면**: 호출 실패는 503 `PLACE_SEARCH_UNAVAILABLE`로 이어진다. 키가 비어 있어도 호출은 나가고 Tmap 이 거부해
+  같은 길을 탄다. 폴백 결과는 없다.
 
 ### 공공데이터 4종: 안심시설 채우기
 
 - **언제**: 경로 요청이 성공한 뒤 `SafetySpotFillTrigger`가 뒤에서 부른다(2절).
-- **안 되면**: 기존 데이터를 유지하고 Slack 사건 `safety-spot-fetch-failed`를 낸다. 받았는데 좌표가 하나도 없으면
-  `safety-spot-no-coordinates`를 낸다. 사용자 응답에는 영향이 없다.
-
-### Slack 운영 알림: `clients:client-slack`
-
-- **언제**: 사건이 났을 때만 부른다. 도메인은 Slack 을 모른다. 사건(`OperationEvent`, `ApiErrorResponded`)을 발행하면
-  `core-admin-ops`의 리스너가 받아 `AlertNotifier`(구현 `SlackAlertNotifier`)로 보낸다.
-- 알림 종류는 `AlertCategory`가 정한다: 처리 못한 500(`api-500`), 장소 검색 실패, 경로 검색 실패, 미도착 의심, 도착
-  추정(공유 미종료), 위치 공유 저장소 장애, 시설 수집 실패, 시설 좌표 없음.
-- 같은 사건 key 는 스로틀 창 안에서 1번만 보낸다. 창은 `SLACK_ALERT_THROTTLE_MINUTES`(기본 10분)다.
-- `SLACK_WEBHOOK_URL`이 비어 있으면 전체 무발송이다(무해). 관리자 화면에서 끄거나 종류별로 뮤트할 수도 있다.
+- **안 되면**: 기존 데이터를 유지하고 종류별 `*FillService`가 `log.warn` 한 줄을 남긴다. 받았는데 좌표가 하나도
+  없을 때도 `log.warn` 한 줄이다. 사용자 응답에는 영향이 없다.
 
 ### PostgreSQL 안심시설 저장: `storage:db-safety-spot`
 
@@ -182,9 +158,9 @@ CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, �
 
 ### Redis 위치 공유 저장: `storage:db-share`
 
-- **언제**: 공유 세션 읽기/쓰기마다(필수), 그리고 도착 감시 루프가 활성 세션을 훑을 때.
-- **안 되면**: 위치 공유 API 만 503(`LocationStoreUnavailableException`, 코드 `SHARE_STORE_UNAVAILABLE`)을 돌려주고 Slack
-  사건 `share-store-unavailable`을 낸다. 서버 기동과 다른 API 는 영향이 없다.
+- **언제**: 공유 세션 읽기/쓰기마다(필수).
+- **안 되면**: 위치 공유 API 만 503(`LocationStoreUnavailableException`, 코드 `SHARE_STORE_UNAVAILABLE`)을 돌려주고
+  ERROR 로그를 남긴다(`ShareStoreAdvice`). 서버 기동과 다른 API 는 영향이 없다.
 - 외부 "API"라기보다 우리 인프라다. 연결은 Spring Boot 자동구성(`spring.data.redis.url`)이 첫 사용 때 맺는다.
 
 ## 4. 한 호출의 해부: 코드가 실제로 하는 일
@@ -194,14 +170,13 @@ CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, �
 ```text
 스프링 자동구성 RestClient.Builder ──┬──> TmapRouteClient       (clone().build())
    ^ 전역 타임아웃이 여기 걸린다     ├──> TmapPlaceClient       (clone().build())
-                                     ├──> 공공데이터 clients 4종 (clone().build())
-                                     └──> SlackAlertNotifier    (clone().build())
+                                     └──> 공공데이터 clients 4종 (clone().build())
 ```
 
 - **타임아웃은 yml 한 곳에서 전부 적용된다**(`application.yml`의 `spring.http.client`): 연결 3초
   (`BUEONGI_HTTP_CONNECT_TIMEOUT`), 응답 10초(`BUEONGI_HTTP_READ_TIMEOUT`). 미설정이면 무한대라, 외부가 느려지는
   "슬로우 장애"에서 우리 스레드가 전부 잡혀 전체 장애로 번진다.
-- **키는 생성자에서 주입**받는다(`@Value`). 경로, 공공데이터, Slack 클라이언트는 키가 비어 있으면 `isEnabled = false`라
+- **키는 생성자에서 주입**받는다(`@Value`). 경로와 공공데이터 클라이언트는 키가 비어 있으면 `isEnabled = false`라
   **호출 자체를 안 한다.** 장소 검색 클라이언트에는 이 게이트가 없다(3절).
 - **통신 응답 모양(JSON 구조)은 clients 모듈 밖으로 안 나간다.**
   - 경로: 클라이언트가 외부 JSON 을 자기 타입(`TmapRoute`)으로 받아 내보내고, core 의 경계 한 곳(`RouteFinder`)이
@@ -280,8 +255,7 @@ TmapRouteClient.fetch(출발, 도착, 도착 이름, 옵션, 경유지): 한 번
 
 `RouteFinder`가 받은 `TmapRoute`를 `RouteCandidate`로 바꾸고, null 인 옵션은 후보에서 뺀다. 세 옵션이 **전부** null 이면
 `RouteOptionService`가 `RouteSearchUnavailableException`을 던져 503 `ROUTE_SEARCH_UNAVAILABLE`("지금은 경로를 찾을 수
-없습니다")로 응답한다. 폴백 경로는 만들지 않는다. 그 오류 응답이 사건(`ApiErrorResponded`)이 되어 `ApiErrorEventListener`가
-`tmap-route-failed`(`AlertCategory.ROUTE_SEARCH_FAILED`) 알림을 Slack 으로 보낸다.
+없습니다")로 응답한다. 폴백 경로는 만들지 않는다. 요청 로그에는 상태 코드 503 이 실린 줄이 남는다.
 
 ### 장소 검색: 계약에서 호출까지
 
@@ -292,58 +266,37 @@ PlaceSearchService.search(키워드)          <- core 는 PlaceSearchClient 계�
                                    헤더 appKey: ***
                                    │
                                    ├─ 성공 -> 응답을 Place 로 번역해 반환 -> PlaceResponse
-                                   └─ 예외 -> PlaceSearchUnavailableException(503)
-                                              -> 사건 place-search-failed -> Slack
+                                   └─ 예외 -> warn 로그 한 줄
+                                              -> PlaceSearchUnavailableException(503)
 ```
 
-### Slack 알림: 도메인은 Slack 을 모른다
+### 운영 알림: 앱은 로그만 남긴다
 
-시설 수집 실패를 예로 든다.
+운영 알림은 앱이 보내지 않는다. 서버의 로그 감시가 ERROR 로그와 5xx 요청 로그를 보고 알린다. 앱이 할 일은 그 감시가
+읽을 줄을 빠뜨리지 않고 남기는 것이다.
 
-```mermaid
-sequenceDiagram
-    participant D as SecurityLampFillService
-    participant P as SafetySpotFillEventPublisher
-    participant E as 스프링 이벤트 버스
-    participant O as OperationEventListener
-    participant N as SlackAlertNotifier
-    participant W as Slack 웹훅
+| 상황                      | 레벨    | 남기는 곳             | 로그                                       |
+|---------------------------|---------|-----------------------|--------------------------------------------|
+| 처리 못한 예외(500)       | `ERROR` | `ApiControllerAdvice` | `미처리 예외`로 시작하는 줄, 상태 코드 500 |
+| 위치 공유 저장소 장애     | `ERROR` | `ShareStoreAdvice`    | `미처리 예외`로 시작하는 줄, 상태 코드 503 |
+| 4xx, 5xx 응답             | `WARN`  | `RequestLogFilter`    | 상태 코드가 실린 요청 로그 한 줄           |
+| 장소 검색 실패            | `WARN`  | `PlaceSearchService`  | `외부 장소 검색 실패`로 시작하는 줄        |
+| Tmap 경로 후보 하나 실패  | `WARN`  | `TmapRouteClient`     | `tmap 호출 실패`로 시작하는 줄             |
+| 시설 수집 실패, 좌표 없음 | `WARN`  | 종류별 `*FillService` | 종류 이름과 범위가 실린 한 줄              |
 
-    D->>P: fetchFailed(type, scope)  (Slack 이란 말이 없다)
-    P->>E: OperationEvent(key, title, detail)
-    E->>O: @EventListener 수신
-    O->>N: notify(key, title, detail)
-    N->>N: 이력 기록, 활성/뮤트 확인, 스로틀
-    N--)W: 비동기 POST (전용 스레드)
-    Note over N,W: 실패해도 로그만, 앱 무영향
-```
-
-```text
-도메인 코드          events.fetchFailed(...)                <- Slack 이란 말이 없다
-    │                (도메인마다 발행 전용 서비스, 예: SafetySpotFillEventPublisher)
-    v
-스프링 이벤트        OperationEvent(key, title, detail) 발행
-    v                (오류 응답은 ApiControllerAdvice 가 ApiErrorResponded 를 발행)
-core-admin-ops       OperationEventListener, ApiErrorEventListener 가 받아
-                     AlertNotifier.notify(key, ...) 호출
-    v
-SlackAlertNotifier   1. 이력 기록(발송 여부와 무관하게 남김)
-                     2. 웹훅 미설정, 토글 off, 뮤트 카테고리면 여기서 끝(무해)
-                     3. 같은 key 는 스로틀 창(기본 10분)에 1번만. 장애 중 알림 폭주 방지
-                     4. 전용 단일 스레드로 비동기 발송. 사용자 요청 스레드를 안 막는다
-                     5. 발송 실패해도 로그만 남기고 앱은 무영향
-```
+- 로그에는 예외 클래스 이름까지만 남긴다. 스택과 예외 메시지에는 인증키가 실린 외부 URL 이 섞여 올 수 있다.
+- 시설 수집 실패와 좌표 없음을 보여 주던 관리자 화면은 없다. 확인은 로그로 한다.
 
 ### 설계 원칙 한 줄 요약
 
-| 원칙                    | 코드에서                        |
-|-------------------------|---------------------------------|
-| 키 없으면 안 부른다     | `isEnabled` 게이트              |
-| 실패를 위로 안 던진다   | null 반환 + 사건 발행           |
-| 느린 외부에 안 끌려간다 | 전역 타임아웃 3s/10s            |
-| 통신 모양은 모듈 안에   | 클라이언트가 우리 말로 번역     |
-| 원인을 잃지 않는다      | 예외 클래스 이름을 로그에 남김  |
-| 시크릿은 어디에도       | appKey, 인증키, 웹훅 URL 비로그 |
+| 원칙                    | 코드에서                       |
+|-------------------------|--------------------------------|
+| 키 없으면 안 부른다     | `isEnabled` 게이트             |
+| 실패를 위로 안 던진다   | null 반환 + warn 로그 한 줄    |
+| 느린 외부에 안 끌려간다 | 전역 타임아웃 3s/10s           |
+| 통신 모양은 모듈 안에   | 클라이언트가 우리 말로 번역    |
+| 원인을 잃지 않는다      | 예외 클래스 이름을 로그에 남김 |
+| 시크릿은 어디에도       | appKey, 인증키 비로그          |
 
 ## 5. 지금 상태를 확인하는 법
 
@@ -363,8 +316,7 @@ curl -s localhost:8119/api/health
 |----------------|--------------------------|----------------------|--------------------------------------|
 | PostgreSQL     | **연결(Flyway)**         | 시설 조회, 저장      | 기동 실패, 시설 API 오류             |
 | 안심시설 파일  | **읽음(로컬)**           | 기동 1회, DB 로 반영 | 경고 로그 + DB 의 기존 데이터로 동작 |
-| Redis          | 안 부름(첫 사용 때 연결) | 공유 세션 읽기/쓰기  | 위치 공유 API 503 + Slack            |
-| Tmap 경로      | 안 부름                  | 경로 요청            | 503 + Slack                          |
-| Tmap 장소      | 안 부름                  | 장소 검색 요청       | 503 + Slack                          |
-| 공공데이터 4종 | 안 부름                  | 경로 요청 뒤(뒤에서) | 기존 데이터 유지 + Slack             |
-| Slack          | 안 부름                  | 사건 발생            | 로그만(알림 유실)                    |
+| Redis          | 안 부름(첫 사용 때 연결) | 공유 세션 읽기/쓰기  | 위치 공유 API 503                    |
+| Tmap 경로      | 안 부름                  | 경로 요청            | 503                                  |
+| Tmap 장소      | 안 부름                  | 장소 검색 요청       | 503                                  |
+| 공공데이터 4종 | 안 부름                  | 경로 요청 뒤(뒤에서) | 기존 데이터 유지                     |

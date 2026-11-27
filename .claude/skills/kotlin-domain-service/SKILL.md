@@ -98,32 +98,32 @@ orderEventPublisher.orderCompleted(orderId)
    직접 부르지 않는다 — `OrderEventPublisher` 처럼 그 일만 하는 클래스가 맡는다.
    사건 이름이 도메인 어휘로 드러나고(`orderCompleted`), 테스트가 그 클래스만 가짜로 바꾸면 된다.
 
-2. **사건 타입은 `core-common` 에 둔다**(`core-common/.../common/event/` — `OperationEvent`·`ApiErrorResponded` 등).
+2. **사건 타입은 `core-common` 에 둔다**(`core-common/.../common/event/`).
+   지금은 사건 타입이 하나도 없어 이 패키지도 없다. 첫 사건 타입을 만들 때 함께 만든다.
    발행 도메인에 두면 받는 쪽이 그 도메인을 의존하게 되어 "도메인을 넘지 않는다"가 깨진다.
 
-3. **받는 쪽(`@EventListener`)은 그 일을 업으로 하는 도메인이다.** 운영 알림이면 `core-admin-ops` 가 받는다.
+3. **받는 쪽(`@EventListener`)은 그 일을 업으로 하는 도메인이다.**
+   운영 알림은 사건으로 보내지 않는다. 앱은 알림을 보내지 않고 로그만 남긴다(`kotlin-logging`).
    `support` 모듈은 상위(core)를 참조할 수 없으므로 리스너를 거기 두지 않는다.
 
 **도메인을 넘는 사건의 리스너는 무조건 비동기다.** 발행한 도메인의 요청 스레드가 다른 도메인의
-일(알림 발송 등)에 붙잡히면 안 된다 — 리스너에 `@Async` 를 붙이고 executor 를 설정한다(`kotlin-config`).
-받는 쪽 안에 또 다른 비동기 계약이 있더라도 리스너의 `@Async` 는 유지한다 — 경계의 비동기는
-받는 쪽 구현이 아니라 이 규칙이 보장한다.
+일에 붙잡히면 안 된다 — 리스너에 `@Async` 를 붙이고 executor 를 설정한다(`kotlin-config`).
 트랜잭션 커밋 후에 받아야 하는 사건이면 `@Async` 와 함께
 `@TransactionalEventListener(phase = AFTER_COMMIT)` 를 쓴다 — 롤백된 주문의 알림이 나가는 것을 막는다.
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| 리포지토리·엔티티 직접 사용 | 구현 레이어 우회 | Critical |
-| 트랜잭션 애너테이션 없는 다단계 쓰기 | 부분 반영 위험 | Critical |
-| 구현 레이어에도 `@Transactional` | 경계 중복 | Critical |
-| 엔티티·응답 DTO 반환 | 레이어 침범 | Critical |
-| 트랜잭션 안 외부 시스템 호출 | 롤백 범위 오염·지연 | Critical |
-| 조회 전용에 `readOnly` 누락 | 불필요한 더티 체킹 | Important |
-| 서비스에 쿼리·변환 상세 | 재사용 불가·비대화 | Important |
-| 다른 도메인 모듈의 클래스 주입 | 경계 침범 | Critical |
-| 도메인을 넘는 이벤트 리스너에 `@Async` 없음 | 발행 도메인 스레드가 남의 일에 묶임 | Critical |
+| 신호                                        | 문제                                | 심각도    |
+|---------------------------------------------|-------------------------------------|-----------|
+| 리포지토리·엔티티 직접 사용                 | 구현 레이어 우회                    | Critical  |
+| 트랜잭션 애너테이션 없는 다단계 쓰기        | 부분 반영 위험                      | Critical  |
+| 구현 레이어에도 `@Transactional`            | 경계 중복                           | Critical  |
+| 엔티티·응답 DTO 반환                        | 레이어 침범                         | Critical  |
+| 트랜잭션 안 외부 시스템 호출                | 롤백 범위 오염·지연                 | Critical  |
+| 조회 전용에 `readOnly` 누락                 | 불필요한 더티 체킹                  | Important |
+| 서비스에 쿼리·변환 상세                     | 재사용 불가·비대화                  | Important |
+| 다른 도메인 모듈의 클래스 주입              | 경계 침범                           | Critical  |
+| 도메인을 넘는 이벤트 리스너에 `@Async` 없음 | 발행 도메인 스레드가 남의 일에 묶임 | Critical  |
 
 ## 체크리스트
 

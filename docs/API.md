@@ -46,11 +46,6 @@
 | `GET`  | `/api/admin/share-sessions`                          | 관리자 | 활성 공유 목록                    |
 | `GET`  | `/api/admin/share-sessions/{token}/location`         | 관리자 | 공유 위치 조회(시청 기록 없음)    |
 | `GET`  | `/api/admin/share-sessions/{token}/route`            | 관리자 | 공유 경로 조회                    |
-| `GET`  | `/api/admin/alerts`                                  | 관리자 | 장애 알림 이력                    |
-| `GET`  | `/api/admin/slack-config`                            | 관리자 | Slack 알림 설정 조회              |
-| `PUT`  | `/api/admin/slack-config`                            | 관리자 | Slack 알림 설정 편집              |
-| `POST` | `/api/admin/slack-config/test`                       | 관리자 | Slack 테스트 발송                 |
-| `GET`  | `/api/admin/safety-spot-fetches`                     | 관리자 | 시설 외부 수집 현황               |
 | `GET`  | `/api/admin/safety-spot-status`                      | 관리자 | 시설 적재 현황                    |
 | `GET`  | `/api/admin/safety-spot-status/regions`              | 관리자 | 지역별 시설 현황                  |
 | `GET`  | `/api/admin/safety-spot-status/regions/{code}/spots` | 관리자 | 지역 시설 목록                    |
@@ -107,7 +102,6 @@
 | `SAME_ORIGIN_DESTINATION`        |  422 | Same Origin And Destination | `destination`(직선거리) | 출발-도착 직선거리 1m 미만                                    |
 | `TRIP_TOO_FAR`                   |  422 | Trip Too Far                | `destination`(직선거리) | 출발-도착 직선거리 100km 초과                                 |
 | `INVALID_ROUTE_META`             |  422 | Invalid Route Metadata      | `type`                  | 공유 경로의 `type`이 `safe`, `main`, `fast` 밖                |
-| `INVALID_SLACK_CATEGORY`         |  422 | Invalid Slack Category      | `mutedCategories`       | Slack 설정의 뮤트 목록에 알 수 없는 카테고리 key              |
 | `INTERNAL_ERROR`                 |  500 | Internal Server Error       | 없음                    | 미처리 예외. 응답에 스택트레이스나 예외 메시지를 싣지 않는다  |
 | `PLACE_SEARCH_UNAVAILABLE`       |  503 | Place Search Unavailable    | 없음                    | 외부 장소 검색(Tmap POI) 호출 실패                            |
 | `ROUTE_SEARCH_UNAVAILABLE`       |  503 | Route Search Unavailable    | 없음                    | Tmap 경로 후보를 하나도 얻지 못함                             |
@@ -272,8 +266,8 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 503 `ROUTE_SEARCH_UNA
 
 - `expires_in_hours`(선택): 만료까지의 시간(시). 1, 2, 3만 허용하고 범위 밖은 400 `VALIDATION_FAILED`. 생략하면(빈
   POST 포함) 1시간(`DEFAULT_EXPIRES_HOURS`)이다.
-- `eta_seconds`(선택, 1 이상): 예상 도착까지 남은 시간(초). 미도착 감시(`MissedArrivalWatchdog`)의 기준이며 앱은 ETA를
-  아는 경우에만 보낸다.
+- `eta_seconds`(선택, 1 이상): 예상 도착까지 남은 시간(초). 위치 조회 응답의 진행 상태(`status`)를 판정하는 기준이며
+  앱은 ETA를 아는 경우에만 보낸다.
 
 200 응답(`CreateShareResponse`):
 
@@ -334,7 +328,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 503 `ROUTE_SEARCH_UNA
 ```
 
 - `remaining_meters`, `remaining_seconds`: 마지막 위치 갱신에 실린 값이며 없으면 null이다.
-- `status`: 서버가 판정한 진행 상태다.
+- `status`: 서버가 조회할 때마다 판정하는 진행 상태다. 응답에 싣기만 하고 운영자에게 따로 알리지 않는다.
   - `in_progress`: 정상 진행.
   - `arrival_likely`: 예정 시각 초과와 위치 정지인데 마지막 위치가 목적지 반경 30m 안이다. 도착 후 공유만 끝내지 않은
     것으로 추정한다. 보호자 웹은 경고 대신 도착 추정 안내를 그린다.
@@ -433,122 +427,6 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 503 `ROUTE_SEARCH_UNA
 - `/api/admin/**`는 `Authorization: Bearer <access token>`이 필요하다. 없거나 유효하지 않으면 401 `UNAUTHORIZED`,
   관리자 권한이 없으면 403 `FORBIDDEN`. refresh token으로는 관리자 API를 부를 수 없다.
 
-## `GET /api/admin/alerts`: 장애 알림 이력(관리자)
-
-최신순 알림 이력이다. `limit`(기본 100)은 1~500으로 잘라 쓴다. 출처:
-`core-admin-ops/.../controller/AlertController.kt`, `api/response/AlertResponse.kt`. 각 항목의 종류, 이름, 심각도는
-서버가 알림 key의 `:` 앞부분으로 `AlertCategory`(아래 표)를 찾아 싣고, 화면은 그대로 그린다.
-
-200 응답(`AlertsResponse`):
-
-```json
-{
-  "alerts": [
-    {
-      "atEpochMs": 1720000000000,
-      "key": "safety-spot-fetch-failed:cctv",
-      "title": "CCTV 수집 실패",
-      "detail": "...",
-      "category": "safety-spot-fetch-failed",
-      "label": "시설 수집 실패",
-      "severity": "degraded"
-    }
-  ]
-}
-```
-
-- `severity`: `critical`(즉시 확인), `degraded`(부분 장애), `unknown` 중 하나. 표에 없는 key면 `unknown`이고
-  `category`와 `label`은 key의 `:` 앞부분 그대로다.
-
-## `/api/admin/slack-config`: Slack 알림 설정(관리자)
-
-운영 알림(Slack)의 발송 on/off, 스로틀, 카테고리별 뮤트를 웹에서 편집한다. 설정은 메모리에만 있어 재시작하면 환경변수
-값으로 돌아간다. 출처: `core-admin-ops/.../controller/SlackConfigController.kt`,
-`domain/slack/service/SlackConfigService.kt`, `core-enum/.../AlertCategory.kt`,
-`clients/client-slack/.../SlackAlertConfig.kt`.
-
-- webhook은 편집할 수 없다. webhook URL은 환경변수 시크릿(`SLACK_WEBHOOK_URL` -> `bueongi.alert.slack-webhook-url`)
-  이라 편집 대상이 아니며, 조회할 때도 원문 대신 마스킹 값만 돌려준다. `/services/` 형식이면
-  `https://hooks.slack.com/services/T***/B***/***`처럼 가리고, 형식이 다르면 앞 8자만 남기고 `***`를 붙인다.
-- 실제 Slack 전송 조건은 `webhookConfigured && enabled`다. 뮤트된 카테고리는 발송만 생략하고 장애 이력
-  (`GET /api/admin/alerts`)에는 그대로 남는다.
-- 스로틀 기본값은 `SLACK_ALERT_THROTTLE_MINUTES`(기본 10분)이다.
-
-### 알림 카테고리
-
-카테고리는 8종이며 `core-enum`의 `AlertCategory`가 정본이다. 알림을 보내는 곳도 같은 enum으로 key를 만들므로, 아래
-key는 실제 알림 key의 `:` 앞부분과 항상 일치한다.
-
-| key                          | label                  | severity   | 실제 알림 key 예                       |
-|------------------------------|------------------------|------------|----------------------------------------|
-| `api-500`                    | 서버 오류(미처리 500)  | `critical` | `api-500:<예외 클래스>`                |
-| `place-search-failed`        | 장소 검색 실패         | `degraded` | `place-search-failed`                  |
-| `tmap-route-failed`          | 경로 검색 실패         | `degraded` | `tmap-route-failed`                    |
-| `missed-arrival`             | 미도착 의심            | `critical` | `missed-arrival:<가린 토큰>`           |
-| `arrival-likely`             | 도착 추정(공유 미종료) | `degraded` | `arrival-likely:<가린 토큰>`           |
-| `share-store-unavailable`    | 위치 공유 저장소 장애  | `critical` | `share-store-unavailable`              |
-| `safety-spot-fetch-failed`   | 시설 수집 실패         | `degraded` | `safety-spot-fetch-failed:<cdnType>`   |
-| `safety-spot-no-coordinates` | 시설 좌표 없음         | `degraded` | `safety-spot-no-coordinates:<cdnType>` |
-
-### `GET /api/admin/slack-config`: 현재 설정 조회
-
-200 응답(`SlackConfigResponse`):
-
-```json
-{
-  "webhookConfigured": true,
-  "webhookMasked": "https://hooks.slack.com/services/T***/B***/***",
-  "enabled": true,
-  "throttleMinutes": 10,
-  "categories": [
-    { "key": "api-500", "label": "서버 오류(미처리 500)", "muted": false },
-    { "key": "place-search-failed", "label": "장소 검색 실패", "muted": false },
-    { "key": "tmap-route-failed", "label": "경로 검색 실패", "muted": false },
-    { "key": "missed-arrival", "label": "미도착 의심", "muted": false },
-    { "key": "arrival-likely", "label": "도착 추정(공유 미종료)", "muted": false },
-    { "key": "share-store-unavailable", "label": "위치 공유 저장소 장애", "muted": false },
-    { "key": "safety-spot-fetch-failed", "label": "시설 수집 실패", "muted": false },
-    { "key": "safety-spot-no-coordinates", "label": "시설 좌표 없음", "muted": false }
-  ]
-}
-```
-
-- `webhookConfigured`: webhook 환경변수 설정 여부. `webhookMasked`: 마스킹 URL이며 미설정이면 빈 문자열이다.
-- `enabled`: 마스터 발송 토글. webhook이 있으면 `true`로 시작한다. `throttleMinutes`: 같은 key 재발송 억제 창(분).
-- `categories`: 항상 위 8종이 `AlertCategory` 선언 순서로 실리고, 각 항목에 `muted` 여부가 있다.
-
-### `PUT /api/admin/slack-config`: 설정 편집
-
-요청 본문(`SlackConfigUpdateRequest`):
-
-```json
-{ "enabled": true, "throttleMinutes": 30, "mutedCategories": ["api-500", "tmap-route-failed"] }
-```
-
-- `enabled`(필수): 마스터 발송 토글. 누락하면 400 `VALIDATION_FAILED`.
-- `throttleMinutes`(필수): 1~1440. 범위 밖이면 400 `VALIDATION_FAILED`.
-- `mutedCategories`(선택, 기본 `[]`): 뮤트할 카테고리 key 목록. 위 8종 밖의 key가 하나라도 있으면 422
-  `INVALID_SLACK_CATEGORY`로 전체를 거부한다(부분 적용 없음).
-- webhook은 본문에 없으므로 편집할 수 없다.
-
-200 응답: 갱신된 `SlackConfigResponse`(GET과 같은 형태).
-
-### `POST /api/admin/slack-config/test`: 테스트 발송
-
-발송할 수 있는 상태(`webhookConfigured && enabled`)면 테스트 메시지를 동기로 한 번 보낸다(스로틀과 뮤트 무시). 발송
-실패, 예외, 비활성은 모두 `sent: false`이며 예외를 던지지 않는다.
-
-요청: 본문 없음.
-
-200 응답(`SlackTestResponse`):
-
-```json
-{ "sent": true, "enabled": true }
-```
-
-- `sent`: 테스트 발송이 성공했는가.
-- `enabled`: 현재 발송할 수 있는 상태인가(`webhookConfigured && enabled`).
-
 ## 도메인 상수
 
 | 상수                           |     값 | 단위 | 출처                       |
@@ -570,7 +448,4 @@ key는 실제 알림 key의 `:` 앞부분과 항상 일치한다.
 | `VIEWER_WINDOW_SECONDS`        |     12 | 초   | `ShareSessionStore`        |
 | `MAX_ROUTE_PATH_POINTS`        |   4000 | 개   | `SaveRouteRequest`         |
 | `MAX_ROUTE_MARKERS`            |    300 | 개   | `SaveRouteRequest`         |
-| `MIN_THROTTLE_MINUTES`         |      1 | 분   | `SlackAlertConfig`         |
-| `MAX_THROTTLE_MINUTES`         |   1440 | 분   | `SlackAlertConfig`         |
-| `HISTORY_MAX_LIMIT`            |    500 | 건   | `AlertNotifier`            |
 | `MAX_PAGE_SIZE`(CSV 쪽)        |    200 | 행   | `SafetySpotCsvFileService` |

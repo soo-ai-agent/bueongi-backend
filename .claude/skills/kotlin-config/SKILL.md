@@ -20,28 +20,27 @@ spring:
   config:
     import:
       - logging.yml
-      - client-slack.yml
       - db-safety-spot.yml
       - db-share.yml
       - client-tmap.yml
 ```
 
-| 무엇을 설정하나 | 어느 파일 |
-|---|---|
-| DB 접속·Flyway·(엔티티가 있으면) JPA | `storage/db-<이름>/src/main/resources/db-<이름>.yml` |
-| Redis 접속 | `storage/db-share/src/main/resources/db-share.yml` |
-| 외부 API 주소 | `clients/client-<이름>/src/main/resources/client-<이름>.yml` |
-| 로그 레벨·문자셋 | `support/logging/src/main/resources/logging.yml` |
+| 무엇을 설정하나                                  | 어느 파일                                                    |
+|--------------------------------------------------|--------------------------------------------------------------|
+| DB 접속·Flyway·(엔티티가 있으면) JPA             | `storage/db-<이름>/src/main/resources/db-<이름>.yml`         |
+| Redis 접속                                       | `storage/db-share/src/main/resources/db-share.yml`           |
+| 외부 API 주소                                    | `clients/client-<이름>/src/main/resources/client-<이름>.yml` |
+| 로그 레벨·문자셋                                 | `support/logging/src/main/resources/logging.yml`             |
 | 서버 포트·멀티파트·HTTP 타임아웃 등 앱 전역, JWT | 부팅 모듈 `core/core-app/src/main/resources/application.yml` |
 
 **새 모듈을 만들면 그 모듈의 yml 을 만들고 `application.yml` 의 `import` 에 한 줄 추가한다.** 빠뜨리면 설정이 조용히 무시된다.
 
 ## 프로파일은 둘 — default 와 local
 
-| 프로파일 | 무엇을 위한 것 | 파일 | DB |
-|---|---|---|---|
-| (default) | 운영·CI. 모든 값을 환경변수로 받는다 | 각 모듈 yml | 운영 PostgreSQL + PostGIS (`deploy/README.md`) |
-| `local` | 개발 PC. `SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon` | `core-app/src/main/resources/application-local.yml` | docker compose 의 PostGIS |
+| 프로파일  | 무엇을 위한 것                                                        | 파일                                                | DB                                             |
+|-----------|-----------------------------------------------------------------------|-----------------------------------------------------|------------------------------------------------|
+| (default) | 운영·CI. 모든 값을 환경변수로 받는다                                  | 각 모듈 yml                                         | 운영 PostgreSQL + PostGIS (`deploy/README.md`) |
+| `local`   | 개발 PC. `SPRING_PROFILES_ACTIVE=local ./gradlew bootRun --no-daemon` | `core-app/src/main/resources/application-local.yml` | docker compose 의 PostGIS                      |
 
 `local` 이 하는 일(현행): `.env.local`·`.env.local.properties` 를 `spring.config.import` 로 읽고, 포트를 8119 로 두고,
 JWT 키가 없으면 임시 키쌍을 만든다. **local 만을 위한 값은 `application-local.yml` 에 둔다** — 모듈 yml 에 `on-profile: local` 절을 흩뿌리지 않는다.
@@ -95,11 +94,11 @@ bueongi:
 
 `${...}` 는 환경변수에서 채워진다. 넣는 곳은 셋이다.
 
-| 어디서 | 어떻게 |
-|---|---|
-| 로컬 셸·`bootRun` | 저장소 루트 `.env.local`(gitignore) — `local` 프로파일이 읽는다 |
-| IntelliJ 실행 | 따옴표를 벗긴 `.env.local.properties`(gitignore) — 만드는 법은 README 「IntelliJ에서 실행」 |
-| 운영 | 서버의 `deploy/docker-compose.yml` `environment` 절과 `.env` ([deploy/README.md](../../../deploy/README.md)) |
+| 어디서            | 어떻게                                                                                                       |
+|-------------------|--------------------------------------------------------------------------------------------------------------|
+| 로컬 셸·`bootRun` | 저장소 루트 `.env.local`(gitignore) — `local` 프로파일이 읽는다                                              |
+| IntelliJ 실행     | 따옴표를 벗긴 `.env.local.properties`(gitignore) — 만드는 법은 README 「IntelliJ에서 실행」                  |
+| 운영              | 서버의 `deploy/docker-compose.yml` `environment` 절과 `.env` ([deploy/README.md](../../../deploy/README.md)) |
 
 환경변수 이름은 README 「환경변수」 표에 함께 적는다. 새 키를 추가하면 그 표에 한 줄 더한다.
 
@@ -130,16 +129,16 @@ data class ExampleApiProperties(
 
 - 설정을 읽는 클래스는 그 설정을 쓰는 모듈에 둔다. 다른 모듈의 설정을 직접 읽지 않는다. clients 모듈이면 `internal` 로 둔다(**kotlin-client**).
 
-- 비동기 리스너용 executor 처럼 앱 전역 설정은 `core-common/.../common/config/` 에 둔다(`SchedulingConfig` 와 같은 자리).
+- 비동기 리스너용 executor 처럼 앱 전역 설정은 `core-common/.../common/config/` 에 둔다(`ClockConfig` 와 같은 자리).
 
 ## 설정으로 뺄 것과 코드에 둘 것
 
 기준은 하나다 — **환경(로컬·운영)마다 달라지는 값인가.**
 
-| | 어디에 | 예 |
-|---|---|---|
-| 환경마다 다르다 | yml + `@ConfigurationProperties`/`@Value` | 포트, 키, URL, 임계값, 서비스 이름 |
-| 계약·프로토콜 값이라 달라지면 안 된다 | 코드 상수 (또는 닫힌 집합이면 enum) | 응답 상태 문자열, 와이어 값, 에러 code |
+|                                       | 어디에                                    | 예                                     |
+|---------------------------------------|-------------------------------------------|----------------------------------------|
+| 환경마다 다르다                       | yml + `@ConfigurationProperties`/`@Value` | 포트, 키, URL, 임계값, 서비스 이름     |
+| 계약·프로토콜 값이라 달라지면 안 된다 | 코드 상수 (또는 닫힌 집합이면 enum)       | 응답 상태 문자열, 와이어 값, 에러 code |
 
 - **yml 에 이미 있는 값을 코드 상수로 복제하지 않는다.** `spring.application.name` 이 있는데
   `const val SERVICE_NAME = "..."` 을 또 두면 한쪽만 바뀌어 어긋난다 — 주입받아 쓴다.
@@ -150,17 +149,17 @@ data class ExampleApiProperties(
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| yml·코드에 비밀번호·토큰·키의 실제 값 | 저장소 이력에 영구히 남는 유출 | Critical |
-| 비밀값에 실제 값을 기본값으로 부여 (`${DB_PASSWORD:secret}`) | 설정 누락을 모른 채 잘못된 값으로 기동 | Critical |
-| 로컬·테스트 DB 를 H2 등 메모리 DB 로 대체 | PostGIS 쿼리가 운영에서야 터진다 | Critical |
-| 새 모듈 yml 을 만들고 `import` 에 추가 안 함 | 설정이 조용히 무시됨 | Important |
-| 모듈 yml 에 `on-profile: local` 절을 흩뿌림 | local 값이 여러 파일로 흩어짐 — `application-local.yml` 로 | Important |
-| 같은 값을 여러 곳에 복사 | 하나만 고치고 나머지를 잊음 | Important |
-| `@Value` 를 여러 클래스에 흩뿌림 | 타입 없음, 어디서 쓰는지 추적 불가 | Important |
-| 다른 모듈의 설정 키를 직접 읽음 | 모듈 경계 침범 | Important |
-| 새 환경변수를 README 「환경변수」 표에 안 적음 | 운영자가 모른다 | Important |
+| 신호                                                         | 문제                                                       | 심각도    |
+|--------------------------------------------------------------|------------------------------------------------------------|-----------|
+| yml·코드에 비밀번호·토큰·키의 실제 값                        | 저장소 이력에 영구히 남는 유출                             | Critical  |
+| 비밀값에 실제 값을 기본값으로 부여 (`${DB_PASSWORD:secret}`) | 설정 누락을 모른 채 잘못된 값으로 기동                     | Critical  |
+| 로컬·테스트 DB 를 H2 등 메모리 DB 로 대체                    | PostGIS 쿼리가 운영에서야 터진다                           | Critical  |
+| 새 모듈 yml 을 만들고 `import` 에 추가 안 함                 | 설정이 조용히 무시됨                                       | Important |
+| 모듈 yml 에 `on-profile: local` 절을 흩뿌림                  | local 값이 여러 파일로 흩어짐 — `application-local.yml` 로 | Important |
+| 같은 값을 여러 곳에 복사                                     | 하나만 고치고 나머지를 잊음                                | Important |
+| `@Value` 를 여러 클래스에 흩뿌림                             | 타입 없음, 어디서 쓰는지 추적 불가                         | Important |
+| 다른 모듈의 설정 키를 직접 읽음                              | 모듈 경계 침범                                             | Important |
+| 새 환경변수를 README 「환경변수」 표에 안 적음               | 운영자가 모른다                                            | Important |
 
 ## 체크리스트
 

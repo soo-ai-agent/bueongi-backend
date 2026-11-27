@@ -313,7 +313,6 @@ flowchart LR
 | 위치 공유 세션                           | Redis                                          | 남음(만료 전까지)                   |
 | 업로드 원본 CSV(미리보기용)              | 디스크 `data/facility-uploads/originals/`      | 남음. 컨테이너를 새로 만들면 사라짐 |
 | 안심귀갓길, 신선도                       | 메모리(`SafetySpotCdnFiles`)                   | 기동 때 CDN 파일에서 다시 읽음      |
-| 장애 알림 이력(최대 200건)               | 메모리(`SlackAlertNotifier.recentAlerts`)      | 사라짐                              |
 | 시설 교체 기록(마지막 업로드 시각, 건수) | 메모리(`SafetySpotRefreshStatusStore.records`) | 사라짐                              |
 
-메모리에만 있는 마지막 둘은 "최근 상태를 보여 주는" 용도라 재시작 때 비어도 괜찮다고 판단했다.
+메모리에만 있는 시설 교체 기록은 "최근 상태를 보여 주는" 용도라 재시작 때 비어도 괜찮다고 판단했다.

@@ -135,15 +135,12 @@ java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar
 | `DATA_GO_KR_SERVICE_KEY`       | (빈 값)                                                               | 공공데이터포털(보안등)                                             |
 | `SAFEMAP_SERVICE_KEY`          | (빈 값)                                                               | 생활안전지도(경찰 시설)                                            |
 | `SAFETYDATA_SERVICE_KEY`       | (빈 값)                                                               | 재난안전데이터(가로등)                                             |
-| `SLACK_WEBHOOK_URL`            | (빈 값)                                                               | 운영 알림. 비우면 알림을 보내지 않음                               |
-| `SLACK_ALERT_THROTTLE_MINUTES` | `10`                                                                  | 같은 알림을 다시 보내기까지 기다리는 시간(분)                      |
 | `BUEONGI_FACILITY_DATA_DIR`    | `cdn`                                                                 | 안심시설 CDN 파일 디렉터리. 기동 때 DB로 옮김                      |
 | `BUEONGI_FACILITY_CCTV_CSV`    | `data/source/cctv/CCTV정보.csv`                                       | 관리자 CSV 화면에 보여 줄 CCTV 원본(적재는 업로드로). `.gz`도 읽음 |
-| `BUEONGI_WATCHDOG_INTERVAL_MS` | `60000`                                                               | 도착 미확인 감시 주기(ms)                                          |
 | `BUEONGI_HTTP_CONNECT_TIMEOUT` | `3s`                                                                  | 외부 API 연결 타임아웃                                             |
 | `BUEONGI_HTTP_READ_TIMEOUT`    | `10s`                                                                 | 외부 API 응답 타임아웃                                             |
 
-- Slack 알림은 처리되지 않은 500, 시설 적재 0건, Tmap 경로 전면 실패, 장소 검색 실패, 도착 미확인 때 보냅니다.
+- 운영 알림은 앱이 보내지 않습니다. 서버의 로그 감시가 ERROR 로그와 5xx 요청 로그를 보고 알립니다.
 - CCTV 원천 CSV는 [`data/source/README.md`](data/source/README.md)를 참고합니다.
 
 ### 관리자 로그인 준비
@@ -205,7 +202,6 @@ core/
 ├── core-place/              # 장소 검색
 ├── core-safety-spot/        # 안심시설 적재와 주변 조회
 ├── core-admin-auth/         # 관리자 로그인, JWT, SecurityConfig
-├── core-admin-ops/          # 운영 알림, Slack 설정, 외부 수집 현황
 ├── core-admin-safety-spot/  # 관리자 시설 현황, CSV 업로드
 ├── core-common/             # 둘 이상의 도메인이 쓰는 것, 앱 전역 웹 설정(advice, CORS, 필터)
 └── core-enum/               # 여러 계층이 함께 쓰는 enum
@@ -216,14 +212,12 @@ clients/                     # 외부 API 어댑터: 서로, 상위를 참조하
 ├── client-place/            # 장소 검색 계약(외부 호출 없음)
 ├── client-tmap-place/       # 장소 검색 Tmap 구현
 ├── client-tmap/             # Tmap 경로
-├── client-slack/            # 운영 알림 발송
 ├── client-safemap/          # 안심시설 공공 API
 ├── client-safe182/
 ├── client-datagokr-security-lamp/
 └── client-safetydata-street-lamp/
 support/
 ├── logging/
-├── monitoring/
 └── util/                    # 도메인 지식 없는 범용 함수(좌표 변환, 통계, 포맷 등)
 ```
 

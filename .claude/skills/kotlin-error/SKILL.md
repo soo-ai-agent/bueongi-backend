@@ -60,7 +60,6 @@ advice 는 종류를 묻지 않고 값만 옮겨 담는다. 새 예외를 추가
 ```kotlin
 @ExceptionHandler(ApiException::class)
 fun handleApi(ex: ApiException): ProblemDetail {
-    events.publishEvent(ApiErrorResponded(code = ex.code, causeName = ex.cause?.javaClass?.simpleName))
     return ex.toProblemDetail()
 }
 ```
@@ -72,21 +71,21 @@ fun handleApi(ex: ApiException): ProblemDetail {
 (`MethodArgumentNotValidException`·`HttpMessageNotReadableException`·`MethodArgumentTypeMismatchException`·`MissingServletRequestParameterException` 등),
 모두 같은 `ProblemDetail` + `code`(`VALIDATION_FAILED`·`MALFORMED_REQUEST` 등) 모양으로 낸다. 프레임워크 예외가 새로 문제를 일으킬 때만 늘린다.
 
-| 프레임워크 예외 | 언제 | 응답 |
-|---|---|---|
-| `MethodArgumentNotValidException` | `@Valid` 검증 실패 | 400 `VALIDATION_FAILED` + `errors` |
+| 프레임워크 예외                   | 언제                | 응답                                                        |
+|-----------------------------------|---------------------|-------------------------------------------------------------|
+| `MethodArgumentNotValidException` | `@Valid` 검증 실패  | 400 `VALIDATION_FAILED` + `errors`                          |
 | `HttpMessageNotReadableException` | 본문 누락·깨진 JSON | 400 `MALFORMED_REQUEST` (없으면 **500 으로 나간다** — 실측) |
 
 ## 예외는 던지는 도메인이 소유한다
 
 `throw` 하는 모듈을 센다.
 
-| 던지는 모듈 | 사는 곳 |
-|---|---|
-| 한 도메인 | 그 도메인의 `domain/error/` |
-| 둘 이상 | `core-common` |
-| 베이스·공용 값(`ApiException`·`ApiFieldError`) | `core-common` |
-| `storage`·`clients`·`support` | **`ApiException` 을 던지지 않는다** — `core-common` 을 의존하지 않기 때문이다 |
+| 던지는 모듈                                    | 사는 곳                                                                       |
+|------------------------------------------------|-------------------------------------------------------------------------------|
+| 한 도메인                                      | 그 도메인의 `domain/error/`                                                   |
+| 둘 이상                                        | `core-common`                                                                 |
+| 베이스·공용 값(`ApiException`·`ApiFieldError`) | `core-common`                                                                 |
+| `storage`·`clients`·`support`                  | **`ApiException` 을 던지지 않는다** — `core-common` 을 의존하지 않기 때문이다 |
 
 `api/request` 에서 던지는 예외도 `domain/error` 에 둔다(`api/` → `domain/` 은 허용 방향).
 **옮긴 뒤 "다른 도메인이 이 예외를 import 하는가"를 세어 0인지 확인한다.**
@@ -132,22 +131,22 @@ fun getById(id: Long): TodoResult {
 
 ## 상태코드 고르기
 
-| 상황 | 상태 | 로그 레벨 |
-|---|---|---|
-| 요청 값이 형식·검증에 어긋남 | 400 | `WARN` |
-| 로그인하지 않았거나 토큰이 만료됨 | 401 | `WARN` |
-| 로그인했지만 그 **기능**을 쓸 권한이 없음 (관리자 전용 API 에 일반 토큰) | 403 | `WARN` |
-| 대상이 없음, 또는 **남의 소유물** | 404 | `WARN` |
-| 이미 있음·상태가 맞지 않아 못 함 (중복 가입, 이미 완료) | 409 | `WARN` |
-| 의존 저장소가 없음 (Redis 미연결 등) | 503 | `WARN` |
-| 우리 코드나 외부 시스템이 잘못됨 | 500 | `ERROR` |
+| 상황                                                                     | 상태 | 로그 레벨 |
+|--------------------------------------------------------------------------|------|-----------|
+| 요청 값이 형식·검증에 어긋남                                             | 400  | `WARN`    |
+| 로그인하지 않았거나 토큰이 만료됨                                        | 401  | `WARN`    |
+| 로그인했지만 그 **기능**을 쓸 권한이 없음 (관리자 전용 API 에 일반 토큰) | 403  | `WARN`    |
+| 대상이 없음, 또는 **남의 소유물**                                        | 404  | `WARN`    |
+| 이미 있음·상태가 맞지 않아 못 함 (중복 가입, 이미 완료)                  | 409  | `WARN`    |
+| 의존 저장소가 없음 (Redis 미연결 등)                                     | 503  | `WARN`    |
+| 우리 코드나 외부 시스템이 잘못됨                                         | 500  | `ERROR`   |
 
 **403 과 404 의 경계는 하나다 — 403 은 "기능" 권한, 남의 소유물은 언제나 404 다.** 소유자 스코프가 있는 자원에서
 "있지만 네 것이 아님"을 403 으로 알려주면 남의 데이터가 존재한다는 사실이 새어 나간다(**kotlin-auth**).
 
 **로그 레벨의 기준은 하나다 — "새벽에 깨워야 하는가."**
 
-사용자가 잘못 보낸 요청(4xx)은 정상 동작이므로 `WARN` 이나 `INFO` 다. `ERROR` 는 **우리가 고쳐야 할 것**에만 쓴다. 4xx 를 `ERROR` 로 찍으면 진짜 장애가 로그에 묻히고 Slack 알림이 무뎌진다.
+사용자가 잘못 보낸 요청(4xx)은 정상 동작이므로 `WARN` 이나 `INFO` 다. `ERROR` 는 **우리가 고쳐야 할 것**에만 쓴다. 4xx 를 `ERROR` 로 찍으면 진짜 장애가 로그에 묻히고, `ERROR` 를 보고 알리는 서버 로그 감시의 알림이 무뎌진다.
 
 ## 응답 메시지에 담아도 되는 것
 
@@ -187,20 +186,20 @@ catch (e: IOException) {
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| 컨트롤러의 `try/catch` | 예외 처리 중복·누락 | Critical |
-| 사유 주석 없는 `catch (e: Exception)` | 진짜 장애가 묻힘 | Critical |
-| 원인(`cause`)을 버리는 예외 교체 | 디버깅 불가 | Critical |
-| 예외 메시지에 스택·SQL·내부 ID·개인정보 | 정보 유출 | Critical |
-| 남의 소유물에 403 을 응답 (404 가 아님) | 남의 데이터 존재 여부 노출 | Critical |
-| 실패 응답을 래퍼로 감싸거나 `code`·`errors` 이름을 바꿈 | 와이어 계약 파손 | Critical |
-| storage·clients 가 `ApiException` 을 던짐 (`core-common` 의존) | 하위가 상위를 안다 | Critical |
-| 좁은 핸들러가 포괄 `Exception` 핸들러 아래에 있음 | 좁은 핸들러가 안 걸림 | Critical |
-| 4xx 상황을 `ERROR` 로 | 진짜 장애가 로그에 묻힘 | Important |
-| 실패마다 예외를 새로 만듦 (기존 status·code 로 충분한데) | 코드만 늘고 구분은 안 됨 | Important |
-| `ApiException` 으로 될 실패에 advice 핸들러를 추가 | 응답을 정하는 자리가 둘이 됨 | Important |
-| 서비스가 `HttpStatus`·`ResponseEntity` 를 직접 다룸 | 레이어 침범 | Important |
+| 신호                                                           | 문제                         | 심각도    |
+|----------------------------------------------------------------|------------------------------|-----------|
+| 컨트롤러의 `try/catch`                                         | 예외 처리 중복·누락          | Critical  |
+| 사유 주석 없는 `catch (e: Exception)`                          | 진짜 장애가 묻힘             | Critical  |
+| 원인(`cause`)을 버리는 예외 교체                               | 디버깅 불가                  | Critical  |
+| 예외 메시지에 스택·SQL·내부 ID·개인정보                        | 정보 유출                    | Critical  |
+| 남의 소유물에 403 을 응답 (404 가 아님)                        | 남의 데이터 존재 여부 노출   | Critical  |
+| 실패 응답을 래퍼로 감싸거나 `code`·`errors` 이름을 바꿈        | 와이어 계약 파손             | Critical  |
+| storage·clients 가 `ApiException` 을 던짐 (`core-common` 의존) | 하위가 상위를 안다           | Critical  |
+| 좁은 핸들러가 포괄 `Exception` 핸들러 아래에 있음              | 좁은 핸들러가 안 걸림        | Critical  |
+| 4xx 상황을 `ERROR` 로                                          | 진짜 장애가 로그에 묻힘      | Important |
+| 실패마다 예외를 새로 만듦 (기존 status·code 로 충분한데)       | 코드만 늘고 구분은 안 됨     | Important |
+| `ApiException` 으로 될 실패에 advice 핸들러를 추가             | 응답을 정하는 자리가 둘이 됨 | Important |
+| 서비스가 `HttpStatus`·`ResponseEntity` 를 직접 다룸            | 레이어 침범                  | Important |
 
 ## 체크리스트
 

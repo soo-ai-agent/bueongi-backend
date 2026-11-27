@@ -14,13 +14,13 @@ description: 요청·응답 DTO 작성과 리뷰 규칙. api/request 와 api/res
 
 Spring 템플릿(`team-dodn/spring-boot-kotlin-template`)의 규약을 그대로 따른다. 접미사만 보면 그 타입이 어느 레이어의 것인지 알 수 있어야 한다.
 
-| 무엇 | 접미사 | 예 | 자리 |
-|---|---|---|---|
-| 컨트롤러 요청 DTO | **`Request`** | `TodoCreateRequest` | `api/request/` |
-| 컨트롤러 응답 DTO | **`Response`** | `TodoResponse`, 중첩은 `TodoItemResponse` | `api/response/` |
-| 외부 API 어댑터 DTO | **`Request`·`Response`** | `PayApproveResponse` | `clients/client-*/` |
-| 도메인 입력 모델 | `Command` | `TodoCreateCommand` | `<도메인>/domain/model/` |
-| 도메인 결과 모델 | **`Result`** | `TodoResult` | `<도메인>/domain/model/` |
+| 무엇                | 접미사                   | 예                                        | 자리                     |
+|---------------------|--------------------------|-------------------------------------------|--------------------------|
+| 컨트롤러 요청 DTO   | **`Request`**            | `TodoCreateRequest`                       | `api/request/`           |
+| 컨트롤러 응답 DTO   | **`Response`**           | `TodoResponse`, 중첩은 `TodoItemResponse` | `api/response/`          |
+| 외부 API 어댑터 DTO | **`Request`·`Response`** | `PayApproveResponse`                      | `clients/client-*/`      |
+| 도메인 입력 모델    | `Command`                | `TodoCreateCommand`                       | `<도메인>/domain/model/` |
+| 도메인 결과 모델    | **`Result`**             | `TodoResult`                              | `<도메인>/domain/model/` |
 
 **`Dto` 접미사는 쓰지 않는다.** 경계는 접미사(`Request`·`Response`)와 패키지(`api/request`·`api/response`)가 이미 말한다. 도메인 모델(`Command`·`Result`)과 이름이 겹칠 일도 없다.
 
@@ -108,10 +108,10 @@ data class TodoResponse(
   클래스 위에 한 줄로 몰아 적으면 어느 필드 이야기인지 흐려진다.
 
   ```kotlin
-  data class SlackConfigSummary(
-      val webhookConfigured: Boolean,
-      // 웹훅을 설정하지 않으면 null 이 가능함
-      val webhookMasked: String?,
+  data class LocationSummary(
+      val expired: Boolean,
+      // 첫 위치 갱신 전이면 null 이 가능함
+      val updatedAt: Instant?,
   )
   ```
 
@@ -124,17 +124,17 @@ data class TodoResponse(
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| DTO 에 `var` | 예측 불가능한 상태 변경 | Critical |
-| 응답 DTO 가 엔티티를 입력으로 받음 | 저장소 격리 붕괴 | Critical |
-| 비밀번호·해시·내부 필드 노출 | 정보 유출 | Critical |
-| `@field:` 없는 검증 애너테이션 | 검증이 동작하지 않음 | Critical |
-| DTO 이름이 `Request`·`Response` 로 끝나지 않음 | 경계가 이름으로 안 보임 | Important |
-| 이름에 `Dto` 접미사 | 접미사·패키지가 이미 말하는 것의 중복 | Important |
-| 변환 로직이 컨트롤러에 흩어짐 | 중복·불일치 | Important |
-| 검증 메시지 없음 | 클라이언트가 원인 모름 | Important |
-| 습관적 nullable 필드 | 계약 불명확 | Important |
+| 신호                                           | 문제                                  | 심각도    |
+|------------------------------------------------|---------------------------------------|-----------|
+| DTO 에 `var`                                   | 예측 불가능한 상태 변경               | Critical  |
+| 응답 DTO 가 엔티티를 입력으로 받음             | 저장소 격리 붕괴                      | Critical  |
+| 비밀번호·해시·내부 필드 노출                   | 정보 유출                             | Critical  |
+| `@field:` 없는 검증 애너테이션                 | 검증이 동작하지 않음                  | Critical  |
+| DTO 이름이 `Request`·`Response` 로 끝나지 않음 | 경계가 이름으로 안 보임               | Important |
+| 이름에 `Dto` 접미사                            | 접미사·패키지가 이미 말하는 것의 중복 | Important |
+| 변환 로직이 컨트롤러에 흩어짐                  | 중복·불일치                           | Important |
+| 검증 메시지 없음                               | 클라이언트가 원인 모름                | Important |
+| 습관적 nullable 필드                           | 계약 불명확                           | Important |
 
 ## 체크리스트
 

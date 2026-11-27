@@ -85,10 +85,9 @@ core/core-share/src/main/kotlin/io/soo/bueongi/core/share/
 ├── api/request/                   # 요청 DTO, @Valid 좌표 검증, snake_case(@JsonProperty)
 ├── api/response/                  # 응답 DTO(LocationView, RouteView, WatchResponse 등)
 └── domain/
-    ├── service/ShareService.kt          # 생성, 위치/경로 저장과 조회, 종료, 소유자 확인, 토큰 발급
-    ├── service/MissedArrivalWatchdog.kt # 미도착 의심, 도착 추정 감시
-    ├── model/SharePolicy.kt             # 기본 만료, 유예, 정지 판정, 도착 반경 상수와 진행 상태 판정
-    └── error/                           # SHARE_SESSION_NOT_FOUND, INVALID_ROUTE_META
+    ├── service/ShareService.kt    # 생성, 위치/경로 저장과 조회, 종료, 소유자 확인, 토큰 발급
+    ├── model/SharePolicy.kt       # 기본 만료, 유예, 정지 판정, 도착 반경 상수와 진행 상태 판정
+    └── error/                     # SHARE_SESSION_NOT_FOUND, INVALID_ROUTE_META
 core/core-share/src/main/resources/share/guardian.html  # 보호자 지도 페이지(Leaflet, OSM, 5초 폴링)
 storage/db-share/src/main/kotlin/io/soo/bueongi/storage/db/share/
 ├── store/ShareSessionStore.kt                 # 저장소 인터페이스
@@ -106,26 +105,24 @@ storage/db-share/src/testFixtures/kotlin/.../store/InMemoryShareSessionStore.kt 
 - `/api/health`의 `locationStore`는 `ShareSessionStore.backend` 값이다. 운영 구현은 `"redis"`이고 주소와 자격증명은
   노출하지 않는다.
 
-## 6. 미도착 감시
+## 6. 진행 상태 판정
 
-`MissedArrivalWatchdog`이 활성 공유를 주기적으로 훑어 진행 상태를 판정하고 운영 알림을 보낸다.
+보호자가 `GET /share/{token}/location`을 부를 때마다 `ShareService`가 진행 상태(`status`)를 계산해 응답에 싣는다
+(`SharePolicy.kt`의 `progressStatus`). 주기적으로 훑는 감시는 없고, 이 상태로 운영자에게 알리지도 않는다.
 
-- 주기: `BUEONGI_WATCHDOG_INTERVAL_MS`(기본 60000ms). 첫 스캔도 기동 후 한 주기 뒤에 돈다.
 - 예정 시각 초과: `expected_arrival_at` 뒤 300초가 지났다. `eta_seconds` 없이 만든 공유는 판정하지 않는다.
 - 위치 정지: 마지막 위치 갱신 뒤 90초가 지났거나 위치가 한 번도 없다.
 - 둘 다 참이면 마지막 위치가 목적지 반경 30m 안일 때(남은 거리가 보고돼 있으면 그것도 30m 이하) `arrival_likely`,
   아니면 `missed_arrival_suspect`다. 경로를 올리지 않았으면 목적지를 몰라 `missed_arrival_suspect`가 된다.
-- 알림 key는 `missed-arrival:<가린 토큰>`, `arrival-likely:<가린 토큰>`이며 토큰은 앞 6자만 남긴다. 같은 정지 상태가
-  이어지는 동안은 다시 알리지 않고, 위치가 다시 들어오면 다음 정지 때 또 알린다.
+- 둘 중 하나라도 거짓이면 `in_progress`다.
 
 ## 7. 인프라와 설정
 
-| 환경변수                       | 기본값                                         | 설명                                         |
-|--------------------------------|------------------------------------------------|----------------------------------------------|
-| `BUEONGI_REDIS_URL`            | `redis://localhost:6379`                       | 위치 공유 저장 Redis                         |
-| `BUEONGI_SHARE_BASE_URL`       | `http://localhost:8119`                        | `share_url`의 앞부분(운영은 공개 도메인)     |
-| `BUEONGI_CORS_ORIGINS`         | `https://localhost:3619,http://localhost:3619` | `/api/**`, `/share/**` 공통 허용 origin      |
-| `BUEONGI_WATCHDOG_INTERVAL_MS` | `60000`                                        | 미도착 감시 주기(ms), 첫 스캔 지연도 같은 값 |
+| 환경변수                 | 기본값                                         | 설명                                     |
+|--------------------------|------------------------------------------------|------------------------------------------|
+| `BUEONGI_REDIS_URL`      | `redis://localhost:6379`                       | 위치 공유 저장 Redis                     |
+| `BUEONGI_SHARE_BASE_URL` | `http://localhost:8119`                        | `share_url`의 앞부분(운영은 공개 도메인) |
+| `BUEONGI_CORS_ORIGINS`   | `https://localhost:3619,http://localhost:3619` | `/api/**`, `/share/**` 공통 허용 origin  |
 
 ## 8. 수용 기준
 
@@ -142,7 +139,8 @@ storage/db-share/src/testFixtures/kotlin/.../store/InMemoryShareSessionStore.kt 
 
 - 저장소는 Redis 하나다(2026-11-25 통일). `RedisShareSessionStore`는 Redis 접근 실패(`DataAccessException`)를
   `LocationStoreUnavailableException`으로 바꾸고, `ShareStoreAdvice`가 503 `SHARE_STORE_UNAVAILABLE`과
-  `Retry-After: 5`로 응답한다. 같은 때 `share-store-unavailable` 운영 알림을 보낸다.
+  `Retry-After: 5`로 응답하고 ERROR 로그(`미처리 예외 | 공유 저장소 | 503 | ...`)를 남긴다. 운영 알림은 앱이 보내지
+  않는다. 서버의 로그 감시가 ERROR 로그와 5xx 요청 로그를 보고 알린다.
 - 폴백 저장소는 두지 않는다. 폴백하면 재시작이나 다중 인스턴스에서 세션이 조용히 갈라진다.
 - 테스트는 `storage:db-share` testFixtures의 `InMemoryShareSessionStore`를 대역으로 쓴다(Redis 없이 전 테스트 통과).
 

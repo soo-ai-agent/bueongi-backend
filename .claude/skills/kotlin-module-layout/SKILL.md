@@ -19,21 +19,21 @@ description: 멀티모듈 배치와 레이어 의존 방향 규칙. 새 파일�
 
 ```
 core/     core-app(부팅) · core-route · core-share · core-place · core-safety-spot
-          core-admin-auth · core-admin-ops · core-admin-safety-spot · core-common · core-enum
+          core-admin-auth · core-admin-safety-spot · core-common · core-enum
 storage/  db-safety-spot · db-share
-clients/  client-place(계약) · client-tmap-place · client-tmap · client-slack · client-safemap
+clients/  client-place(계약) · client-tmap-place · client-tmap · client-safemap
           client-safe182 · client-datagokr-security-lamp · client-safetydata-street-lamp
-support/  logging · monitoring · util
+support/  logging · util
 ```
 
 ## 저장 타입과 도메인 모델이 둘인 이유
 
 같은 "할 일" 하나를 두 가지 타입으로 표현한다. 헷갈리기 쉬우니 먼저 구분한다.
 
-| | 무엇인가 | 어디 사나 |
-|---|---|---|
-| `TodoEntity` 또는 저장 모델(`SafetySpot` 류 불변 data class) | **DB 테이블의 한 행.** JPA 엔티티라면 애너테이션이 붙고 영속성 문맥에 묶인다. JdbcTemplate·Redis 를 쓰는 storage 는 불변 저장 모델을 돌려준다 | `storage` 모듈 소유 |
-| `Todo` | **업무 개념.** 프레임워크를 모르는 순수한 데이터 | `core:core-todo` 의 도메인·서비스·컨트롤러 |
+|                                                              | 무엇인가                                                                                                                                      | 어디 사나                                  |
+|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| `TodoEntity` 또는 저장 모델(`SafetySpot` 류 불변 data class) | **DB 테이블의 한 행.** JPA 엔티티라면 애너테이션이 붙고 영속성 문맥에 묶인다. JdbcTemplate·Redis 를 쓰는 storage 는 불변 저장 모델을 돌려준다 | `storage` 모듈 소유                        |
+| `Todo`                                                       | **업무 개념.** 프레임워크를 모르는 순수한 데이터                                                                                              | `core:core-todo` 의 도메인·서비스·컨트롤러 |
 
 storage 의 **불변 저장 모델**은 Store 인터페이스의 반환 타입이라 core 가 읽을 수 있다(**kotlin-repository** 「Store 인터페이스」).
 JPA **엔티티**는 변경 감지 문맥에 묶여 있어 구현 레이어 위로 올리지 않는다.
@@ -44,15 +44,15 @@ JPA **엔티티**는 변경 감지 문맥에 묶여 있어 구현 레이어 위�
 
 ## 모듈
 
-| 모듈 | 담는 것 | 담지 않는 것 |
-|---|---|---|
-| `core:core-app` | **유일한 부팅 모듈.** 부팅 클래스, `application.yml`·`application-local.yml`, `/api/health`·`/api/app-info`, 웹 테스트(`@WebMvcTest`·`@SpringBootTest`) | 특정 도메인의 Controller·Service |
-| `core:core-<도메인>` | 한 도메인을 통째로 — 그 도메인의 Controller·DTO·Service·구현체·도메인 모델 | 다른 도메인의 코드, 저장 구현, 외부 호출 |
-| `core:core-common` | **둘 이상의 도메인이** 쓰는 것만 — `ApiException`·`ApiControllerAdvice`, 사건 타입, 공용 요청 DTO, 전역 웹 설정(CORS·필터) | 한 도메인만 쓰는 것 |
-| `core:core-enum` | **여러 모듈이** 공유하는 enum | 한 모듈만 쓰는 enum, 값·로직 |
-| `storage:db-<이름>` | 저장·조회. Store 인터페이스와 구현, 엔티티·리포지토리, 저장 모델, 그 테이블의 Flyway 마이그레이션 | 비즈니스 흐름, HTTP, `core-common` 의존 |
-| `clients:client-*` | 외부 시스템 호출 어댑터 | 비즈니스 판단, 저장소 접근, `core-common` 의존 |
-| `support:*` | 로깅·모니터링(알림 인터페이스)·도메인 지식 없는 범용 함수 | 도메인 코드 일체 |
+| 모듈                 | 담는 것                                                                                                                                                 | 담지 않는 것                                   |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| `core:core-app`      | **유일한 부팅 모듈.** 부팅 클래스, `application.yml`·`application-local.yml`, `/api/health`·`/api/app-info`, 웹 테스트(`@WebMvcTest`·`@SpringBootTest`) | 특정 도메인의 Controller·Service               |
+| `core:core-<도메인>` | 한 도메인을 통째로 — 그 도메인의 Controller·DTO·Service·구현체·도메인 모델                                                                              | 다른 도메인의 코드, 저장 구현, 외부 호출       |
+| `core:core-common`   | **둘 이상의 도메인이** 쓰는 것만 — `ApiException`·`ApiControllerAdvice`, 사건 타입, 공용 요청 DTO, 전역 웹 설정(CORS·필터)                              | 한 도메인만 쓰는 것                            |
+| `core:core-enum`     | **여러 모듈이** 공유하는 enum                                                                                                                           | 한 모듈만 쓰는 enum, 값·로직                   |
+| `storage:db-<이름>`  | 저장·조회. Store 인터페이스와 구현, 엔티티·리포지토리, 저장 모델, 그 테이블의 Flyway 마이그레이션                                                       | 비즈니스 흐름, HTTP, `core-common` 의존        |
+| `clients:client-*`   | 외부 시스템 호출 어댑터                                                                                                                                 | 비즈니스 판단, 저장소 접근, `core-common` 의존 |
+| `support:*`          | 로깅·도메인 지식 없는 범용 함수                                                                                                                         | 도메인 코드 일체                               |
 
 ### 도메인 모듈 안은 두 겹이다
 
@@ -89,10 +89,10 @@ core/core-<도메인>/…/core/<도메인>/
 
 엔드포인트(또는 화면)를 뿌리로 두고 그 파일을 **누가 import 하는지** 센다.
 
-| 세어 본 결과 | 자리 |
-|---|---|
-| 한 도메인만 쓴다 | 그 도메인 안 |
-| 둘 이상이 쓴다 | 공용 모듈(`core-common`·`core-enum`)로 올린다 |
+| 세어 본 결과                       | 자리                                                     |
+|------------------------------------|----------------------------------------------------------|
+| 한 도메인만 쓴다                   | 그 도메인 안                                             |
+| 둘 이상이 쓴다                     | 공용 모듈(`core-common`·`core-enum`)로 올린다            |
 | 이름이 도메인을 말하는데 남도 쓴다 | **소유 도메인에 남긴다.** 쓰는 쪽이 그 도메인을 참조한다 |
 
 **4. 공용으로 올리기 전에 한 번 더 묻는다.**
@@ -116,9 +116,9 @@ core/core-<도메인>/…/core/<도메인>/
 
 역참조가 0인 것만으로는 부족하다. **바깥(부팅 모듈·다른 도메인)이 그 모듈을 import 하는지 센다.**
 
-| 재는 것 | 나눌 값이 있는 신호 |
-|---|---|
-| 역참조 수 | 0 (필요조건일 뿐) |
+| 재는 것              | 나눌 값이 있는 신호                 |
+|----------------------|-------------------------------------|
+| 역참조 수            | 0 (필요조건일 뿐)                   |
 | **바깥의 import 수** | **1 이상.** 0이면 패키지로 충분하다 |
 
 Spring 은 컴포넌트 스캔으로 빈을 찾으므로, 도메인 안쪽 협력자를 모듈로 떼어도
@@ -236,20 +236,20 @@ Controller  →  Domain Service  →  Implement  →  Repository / Client
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| 컨트롤러가 리포지토리·엔티티를 직접 참조 | 레이어 건너뛰기 | Critical |
-| 엔티티가 도메인 모듈에 노출됨(반환·파라미터) | 저장소 격리 붕괴 | Critical |
-| 도메인 서비스가 리포지토리를 직접 호출 | 구현 레이어 우회 | Critical |
-| 하위 레이어가 상위 타입을 import | 역방향 의존 | Critical |
-| 도메인 모듈이 다른 도메인 모듈을 의존 (`project(":core:core-<다른 도메인>")`) | 도메인 경계 침범 | Critical |
-| storage·clients 가 `core-common` 을 의존 | 하위가 상위를 안다 | Critical |
-| core·storage·support 모듈 안의 외부 호출(RestClient·SDK) | 외부 연동은 clients 모듈 전용 | Critical |
-| 도메인 모델에 JPA·Web 애너테이션 | 프레임워크 침투 | Important |
-| 쓰는 쪽이 소유한 계산·타입 (주어가 다른 도메인인데 여기 있음) | 소유 판정 위반 — 주어에게 돌려준다 | Important |
-| 한 도메인만 쓰는데 공용 모듈에 올라간 타입 | 공용이 잡동사니가 된다 | Important |
-| 도메인 모듈 안에서 `api/`·`domain/` 구분 없이 파일 누적 | 경계 흐려짐 | Important |
-| 웹 테스트(`@WebMvcTest`·`@SpringBootTest`)가 `core-app` 밖에 있음 | 부팅 모듈 밖에서는 컨텍스트가 뜨지 않는다 | Important |
+| 신호                                                                          | 문제                                      | 심각도    |
+|-------------------------------------------------------------------------------|-------------------------------------------|-----------|
+| 컨트롤러가 리포지토리·엔티티를 직접 참조                                      | 레이어 건너뛰기                           | Critical  |
+| 엔티티가 도메인 모듈에 노출됨(반환·파라미터)                                  | 저장소 격리 붕괴                          | Critical  |
+| 도메인 서비스가 리포지토리를 직접 호출                                        | 구현 레이어 우회                          | Critical  |
+| 하위 레이어가 상위 타입을 import                                              | 역방향 의존                               | Critical  |
+| 도메인 모듈이 다른 도메인 모듈을 의존 (`project(":core:core-<다른 도메인>")`) | 도메인 경계 침범                          | Critical  |
+| storage·clients 가 `core-common` 을 의존                                      | 하위가 상위를 안다                        | Critical  |
+| core·storage·support 모듈 안의 외부 호출(RestClient·SDK)                      | 외부 연동은 clients 모듈 전용             | Critical  |
+| 도메인 모델에 JPA·Web 애너테이션                                              | 프레임워크 침투                           | Important |
+| 쓰는 쪽이 소유한 계산·타입 (주어가 다른 도메인인데 여기 있음)                 | 소유 판정 위반 — 주어에게 돌려준다        | Important |
+| 한 도메인만 쓰는데 공용 모듈에 올라간 타입                                    | 공용이 잡동사니가 된다                    | Important |
+| 도메인 모듈 안에서 `api/`·`domain/` 구분 없이 파일 누적                       | 경계 흐려짐                               | Important |
+| 웹 테스트(`@WebMvcTest`·`@SpringBootTest`)가 `core-app` 밖에 있음             | 부팅 모듈 밖에서는 컨텍스트가 뜨지 않는다 | Important |
 
 ## 체크리스트
 
