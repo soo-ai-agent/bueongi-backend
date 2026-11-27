@@ -13,7 +13,7 @@
                                 ├─ /admin/*         admin.html     관리자 SPA
                                 ├─ /share/{token}   guardian.html  보호자 지도 뷰어
                                 ├─ /api/*           ─▶ [backend]   장소 검색, 경로, 헬스
-                                ├─ /cdn/*           ─▶ [backend]   안심시설 정적 JSON
+                                ├─ /cdn/*           ─▶ [backend]   안심시설 정적 JSON(지금은 파일 없음)
                                 └─ /share/create, /share/{token}/(location|end|watching|route)
                                                     ─▶ [backend]   위치 공유 API
                                 [backend] ──▶ [db]     안심시설(PostGIS, db-data 볼륨)
@@ -28,8 +28,7 @@
   헬스체크 `http://localhost:8119/api/health`).
 - nginx 프록시 규칙은 dev(vite) 프록시를 운영에 옮긴 것입니다. 단일 세그먼트 `/share/{token}`은 보호자 뷰어이고,
   `/share/create`와 `/share/{token}/...`는 백엔드 API입니다.
-- 백엔드 이미지에는 `cdn/`(안심시설 데이터)이 `/app/cdn`으로 들어가고 `BUEONGI_FACILITY_DATA_DIR=/app/cdn`이
-  설정됩니다. 백엔드는 켜질 때 이 파일을 DB로 옮깁니다(업로드가 있는 종류는 건너뜀).
+- 백엔드 이미지에는 안심시설 데이터가 들어 있지 않습니다. 시설은 관리자 CSV 업로드와 외부 API로 DB에 들어갑니다.
 - `db` 서비스는 `postgis/postgis:16-3.4`이고 데이터는 `db-data` 볼륨에 둡니다. 백엔드는 `db`의 헬스체크
   (`pg_isready`)가 통과한 뒤에 뜹니다. 테이블은 백엔드가 기동할 때 Flyway로 만듭니다.
 
@@ -45,7 +44,7 @@ GitHub Actions 워크플로는 다음과 같습니다.
 | `bueongi-backend` | `backend-skill-review.yml` | `.kt`, `.kts` 변경 PR                        | ktlint, 파일 규칙, 스킬 규칙 리뷰 코멘트 |
 | `bueongi-backend` | `docker-publish.yml`       | main push, `v*.*.*` 태그, 수동 실행          | `./gradlew test` 후 GHCR 이미지 발행     |
 
-- `backend-ci.yml`은 `docs/`, `deploy/`, `cdn/`과 `.md`만 바뀐 push와 PR에서는 돌지 않습니다.
+- `backend-ci.yml`은 `docs/`, `deploy/`와 `.md`만 바뀐 push와 PR에서는 돌지 않습니다.
 - 백엔드 이미지 태그는 `latest`(main), `1.2.3`(`v1.2.3` 태그), `sha-<커밋>`(모든 발행, 롤백용 고정 태그)입니다.
 
 ### 저장소 설정
@@ -133,7 +132,7 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
    `docker-publish`를 다시 돌려 이미지를 재빌드합니다.
 3. **키가 없어도 서버는 뜹니다**: 외부 키는 모두 선택입니다. 다만 `TMAP_APP_KEY`가 없으면 경로 비교는 503
    `ROUTE_SEARCH_UNAVAILABLE`, 장소 검색은 503 `PLACE_SEARCH_UNAVAILABLE`을 돌려줍니다. 지어낸 경로나 검색 결과는
-   내보내지 않습니다. 공공데이터 키가 없으면 해당 시설은 이미지에 든 `cdn/` 데이터와 관리자 업로드분만 씁니다.
+   내보내지 않습니다. 공공데이터 키가 없으면 해당 시설은 관리자 업로드분만 씁니다.
 4. **DB 필수**: 안심시설 저장소(PostgreSQL + PostGIS)이며 compose가 함께 띄웁니다. 닿지 않으면 백엔드가 뜨지
    않습니다.
 5. **Redis 필수**: 위치 공유 세션 저장소이며 compose가 함께 띄웁니다. 연결이 끊기면 위치 공유 API만 오류를 냅니다.
@@ -147,7 +146,7 @@ private이면 배포 서버에서 `read:packages` 권한 PAT로 `docker login gh
 
 레지스트리 없이 이미지를 만들어 띄울 수 있습니다.
 
-1. 백엔드 이미지를 만듭니다. 빌드 컨텍스트는 `cdn/`을 포함하는 저장소 루트입니다.
+1. 백엔드 이미지를 만듭니다. 빌드 컨텍스트는 저장소 루트입니다.
 
    ```bash
    cd bueongi-backend && docker build -t ghcr.io/soo-ai-agent/bueongi-backend:latest .

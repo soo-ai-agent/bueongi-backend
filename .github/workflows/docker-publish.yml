@@ -1,5 +1,5 @@
 # 백엔드 컨테이너 이미지 발행 — main push 와 v* 태그에서 테스트 통과 후
-# GHCR(ghcr.io/<owner>/<repo>)로 push 한다. cdn/ 데이터가 이미지에 구워진다.
+# GHCR(ghcr.io/<owner>/<repo>)로 push 한다.
 name: docker-publish
 
 on:

@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component
 import java.io.File
 import java.io.IOException
 
-// 배포 이미지에 든 CDN 파일(cdn/{종류}/*.json, safepath/, manifest.json)을 읽는다.
+// CDN 디렉터리가 있으면 그 파일(cdn/{종류}/*.json, safepath/, manifest.json)을 읽는다.
+// 저장소와 이미지에는 지금 그 디렉터리가 없다(2026-11-27).
 // 시설은 SafetySpotCdnSync 가 DB 로 옮기고, 안심귀갓길과 신선도는 작아서 메모리에 둔다.
 @Component
 class SafetySpotCdnFiles(
@@ -43,7 +44,7 @@ class SafetySpotCdnFiles(
     fun load() {
         val dir: File? = resolveDataDir()
         if (dir == null) {
-            log.warn("안심시설 CDN 디렉터리를 찾지 못했습니다(configured='{}'). CDN 파일 없이 동작합니다.", configuredDir)
+            log.info("안심시설 CDN 디렉터리 없음(configured='{}') — 업로드와 외부 API 데이터만 씁니다.", configuredDir)
             return
         }
         loadedPoints = readPoints(dir)

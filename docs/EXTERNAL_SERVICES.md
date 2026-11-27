@@ -9,12 +9,11 @@
 
 ## 한눈 요약
 
-**켜질 때 외부 API 호출은 없다.** 기동 중에 바깥과 닿는 것은 우리 인프라인 PostgreSQL 뿐이다(Flyway 마이그레이션,
-CDN 파일 반영). Redis 는 첫 사용 때 연결한다.
+**켜질 때 외부 API 호출은 없다.** 기동 중에 바깥과 닿는 것은 우리 인프라인 PostgreSQL 뿐이다(Flyway 마이그레이션). Redis 는 첫 사용 때 연결한다.
 외부 API(Tmap, 공공데이터 4종)는 전부 **사용자 요청이 있어야** 불린다.
 
 ```text
-켜질 때        PostgreSQL 연결, Flyway, CDN 파일을 DB 로 반영  <- 외부 API 없음
+켜질 때        PostgreSQL 연결, Flyway  <- 외부 API 없음
 켜진 뒤        주기적으로 도는 작업 없음
 요청이 올 때   Tmap(경로, 장소 검색), 경로 요청 뒤 공공데이터 4종(뒤에서 채우기)
 ```
@@ -56,19 +55,17 @@ flowchart LR
         REDIS[(Redis)]
         PG[(PostgreSQL<br/>PostGIS)]
     end
-    FILES[/안심시설 CDN 파일<br/>로컬 디스크/]
 
     FE -->|경로 요청| RC --> TM -->|POST| TMAP
     RC -. 경로가 정해지면 .-> SS --> PUB -->|GET| GOV
     FE -->|장소 검색| PC --> TP -->|GET| TMAP
     FE -->|위치 공유| SH --> REDIS
-    FILES -->|켜질 때 DB 로 반영| 백엔드
     RC -->|공간 질의| PG
     SS -->|받은 지역 저장| PG
 ```
 
 - **실선**은 요청이 있을 때만 흐르는 호출, **점선**은 뒤에서 이어지는 작업이다.
-- 켜질 때 외부 API 로 나가는 것은 없다. 안심시설 CDN 파일은 로컬 디스크이고, 그것을 넣을 DB 만 연결한다.
+- 켜질 때 외부 API 로 나가는 것은 없다. DB 만 연결한다.
 
 ## 1. 켜질 때: 기동 타임라인
 
@@ -81,16 +78,15 @@ main() 시작
   ├─ 2. 빈 조립
   │     ├─ PostgreSQL     BUEONGI_DB_URL 로 연결하고 Flyway 가 마이그레이션을 적용한다.
   │     │                  DB 에 닿지 않으면 여기서 죽는다.
-  │     ├─ 안심시설 반영   BUEONGI_FACILITY_DATA_DIR(기본 cdn)의 JSON 을 읽어 DB 의 cdn 조각으로 바꾼다.
-  │     │                  업로드가 있는 종류는 건너뛴다. 업로드분과 API 조각은 이미 DB 에 있다.
-  │     │                  CDN 디렉터리가 없으면 경고 로그 후 계속 뜬다.
+  │     ├─ 안심시설 반영   BUEONGI_FACILITY_DATA_DIR(기본 cdn) 디렉터리가 있으면 JSON 을 DB 의 cdn 조각으로 바꾼다.
+  │     │                  지금 저장소와 이미지에는 그 디렉터리가 없어 건너뛴다. 업로드분과 API 조각은 이미 DB 에 있다.
   │     └─ Redis 설정      BUEONGI_REDIS_URL(기본 redis://localhost:6379). 연결은 첫 사용 때 한다.
   │
   └─ 3. 포트 오픈        기본 8080, local 프로파일 8119. "Started" 로그
 ```
 
-**기동 때는 외부 API 를 부르지 않는다.** 부팅을 외부 API 지연에 묶지 않기 위해서다. 기본 시설 데이터는 저장소에 든
-CDN 파일과 관리자가 올린 CSV(둘 다 DB 에 저장)로 들어오고, 모자란 부분은 **경로 요청이 닿을 때 뒤에서 받는다**(2절).
+**기동 때는 외부 API 를 부르지 않는다.** 부팅을 외부 API 지연에 묶지 않기 위해서다. 기본 시설 데이터는 관리자가 올린 CSV(DB 에
+저장)로 들어오고, 모자란 부분은 **경로 요청이 닿을 때 뒤에서 받는다**(2절).
 저장 위치와 적재 순서는 [`DATA_STORAGE.md`](DATA_STORAGE.md)에 있다.
 
 ## 2. 켜진 뒤: 백그라운드

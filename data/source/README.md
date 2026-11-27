@@ -27,7 +27,8 @@ CSV 화면의 원본 목록과 미리보기(`SafetySpotCsvFileStore`)와 출처 
 | `street-lamp/전국스마트가로등표준데이터.csv.gz`              | data.go.kr 스마트가로등(`tn_pubr_public_smart_streetlight_api`) |  12,714 |         - |         - | 2020-11-30 ~ 2026-05-22 |
 
 - 전국 보안등 CSV의 50,000행은 포털 다운로드에서 잘린 값입니다.
-- 가로등 두 파일은 `cdn/lamp/`의 JSON을 만든 원본입니다(2026-11-27 `pipeline/data/csv/`에서 옮김).
+- 가로등 두 파일은 합쳐서 가로등으로 업로드합니다. 절차는
+  [`docs/safety-spots/street-lamp.md`](../../docs/safety-spots/street-lamp.md)를 봅니다.
 - 경찰 CSV는 좌표 열이 없어 지오코딩이 필요합니다.
 
 ### CCTV와 비상벨은 API와 같은 판입니다

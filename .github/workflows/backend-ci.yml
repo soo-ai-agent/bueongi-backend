@@ -5,10 +5,10 @@ name: backend-ci
 on:
   push:
     branches: [main, 'feat/**', 'claude/**']
-    paths-ignore: ['docs/**', 'deploy/**', 'cdn/**', '**.md']
+    paths-ignore: ['docs/**', 'deploy/**', '**.md']
   pull_request:
     branches: [main]
-    paths-ignore: ['docs/**', 'deploy/**', 'cdn/**', '**.md']
+    paths-ignore: ['docs/**', 'deploy/**', '**.md']
 
 concurrency:
   group: backend-ci-${{ github.ref }}

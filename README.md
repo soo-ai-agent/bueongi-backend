@@ -135,7 +135,7 @@ java -jar core/core-app/build/libs/core-app-0.0.1-SNAPSHOT.jar
 | `DATA_GO_KR_SERVICE_KEY`       | (빈 값)                                                               | 공공데이터포털(보안등)                                             |
 | `SAFEMAP_SERVICE_KEY`          | (빈 값)                                                               | 생활안전지도(경찰 시설)                                            |
 | `SAFETYDATA_SERVICE_KEY`       | (빈 값)                                                               | 재난안전데이터(가로등)                                             |
-| `BUEONGI_FACILITY_DATA_DIR`    | `cdn`                                                                 | 안심시설 CDN 파일 디렉터리. 기동 때 DB로 옮김                      |
+| `BUEONGI_FACILITY_DATA_DIR`    | `cdn`                                                                 | 안심시설 CDN 파일 디렉터리(선택). 있으면 기동 때 DB로 옮김         |
 | `BUEONGI_FACILITY_CCTV_CSV`    | `data/source/cctv/CCTV정보.csv`                                       | 관리자 CSV 화면에 보여 줄 CCTV 원본(적재는 업로드로). `.gz`도 읽음 |
 | `BUEONGI_HTTP_CONNECT_TIMEOUT` | `3s`                                                                  | 외부 API 연결 타임아웃                                             |
 | `BUEONGI_HTTP_READ_TIMEOUT`    | `10s`                                                                 | 외부 API 응답 타임아웃                                             |

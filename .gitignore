@@ -32,4 +32,3 @@ build/
 .env.*
 !.env.example
 secrets/
-cdn/uploads/
