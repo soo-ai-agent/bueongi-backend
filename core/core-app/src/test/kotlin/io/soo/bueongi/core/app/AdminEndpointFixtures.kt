@@ -1,8 +1,6 @@
 package io.soo.bueongi.core.app
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.soo.bueongi.client.slack.SlackAlertConfig
-import io.soo.bueongi.core.admin.ops.domain.slack.service.SlackConfigService
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionNameCatalog
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.RegionSafetySpotStatusService
 import io.soo.bueongi.core.admin.safetyspot.domain.status.service.SafetySpotStatusService
@@ -19,8 +17,6 @@ import io.soo.bueongi.storage.db.share.model.StoredRoute
 import io.soo.bueongi.storage.db.share.model.StoredRouteDestination
 import io.soo.bueongi.storage.db.share.store.InMemoryShareSessionStore
 import io.soo.bueongi.storage.db.share.store.ShareSessionStore
-import io.soo.bueongi.support.monitoring.AlertNotifier
-import io.soo.bueongi.support.monitoring.AlertRecord
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 
@@ -79,26 +75,7 @@ class AdminEndpointFixtures {
     @Bean
     fun shareService(store: ShareSessionStore): ShareService = ShareService(store, FIXED_CLOCK, SHARE_BASE_URL)
 
-    @Bean
-    fun alertNotifier(): AlertNotifier =
-        object : AlertNotifier {
-            override val isEnabled: Boolean = false
-
-            override fun notify(key: String, title: String, detail: String) = Unit
-
-            override fun findRecent(limit: Int): List<AlertRecord> =
-                listOf(AlertRecord(atEpochMs = 42L, key = "tmap-route-fallback", title = "Tmap 경로 API 실패", detail = "폴백"))
-        }
-
-    @Bean
-    fun slackAlertConfig(): SlackAlertConfig = SlackAlertConfig(webhookUrl = "", throttleMinutes = 10)
-
-    @Bean
-    fun slackConfigService(config: SlackAlertConfig, notifier: AlertNotifier): SlackConfigService = SlackConfigService(config, notifier)
-
     companion object {
-        var lastLimit: Int = -1
-
         val FIXED_NOW: java.time.Instant = java.time.Instant.parse("2026-06-19T12:00:00Z")
         val FIXED_CLOCK: java.time.Clock = java.time.Clock.fixed(FIXED_NOW, java.time.ZoneOffset.UTC)
 

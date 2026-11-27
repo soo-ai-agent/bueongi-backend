@@ -1,19 +1,15 @@
 package io.soo.bueongi.core.safetyspot.domain.streetlamp
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampClient
 import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
-import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
@@ -80,7 +76,6 @@ class StreetLampFillServiceTest {
                 cache = SafetySpotRegionCache(FakeLiveStore(), 90L, Clock.systemUTC()),
                 liveStore = FakeLiveStore(),
                 retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
-                events = mock(),
             )
 
         service.fill()
@@ -93,33 +88,28 @@ class StreetLampFillServiceTest {
     }
 
     @Test
-    fun `수집이 실패하면 알리고 기존 데이터를 유지한다`(
+    fun `수집이 실패하면 기존 데이터를 유지한다`(
         @TempDir dir: Path,
     ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetch()).thenReturn(null)
         val liveStore = FakeLiveStore()
-        val events: SafetySpotFillEventPublisher = mock()
 
-        val added: Int = service(dir, client, liveStore, events).fill()
+        val added: Int = service(dir, client, liveStore).fill()
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(events).fetchFailed(SafetySpotType.STREET_LAMP, NATIONWIDE)
-        verify(events, never()).hadNoCoordinates(any(), any(), any())
     }
 
     private fun service(
         dir: Path,
         client: StreetLampClient,
         liveStore: SafetySpotLiveStore,
-        events: SafetySpotFillEventPublisher = mock(),
     ): StreetLampFillService =
         StreetLampFillService(
             client = client,
             cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
             liveStore = liveStore,
-            events = events,
         )
 }

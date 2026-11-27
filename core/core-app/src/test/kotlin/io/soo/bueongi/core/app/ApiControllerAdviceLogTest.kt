@@ -13,7 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationEventPublisher
 import ch.qos.logback.classic.Logger as LogbackLogger
 
 class ApiControllerAdviceLogTest {
@@ -61,7 +60,7 @@ class ApiControllerAdviceLogTest {
     fun `저장소 장애도 같은 형식으로 남긴다`() {
         val appender = captureLogs(ShareStoreAdvice::class.java)
 
-        ShareStoreAdvice(ApplicationEventPublisher { }).handleUnavailable(
+        ShareStoreAdvice().handleUnavailable(
             LocationStoreUnavailableException("findByToken", RuntimeException("redis down")),
         )
 
@@ -83,5 +82,5 @@ class ApiControllerAdviceLogTest {
         assertThat(line).contains("🔗 ${currentTraceId()}")
     }
 
-    private fun advice(): ApiControllerAdvice = ApiControllerAdvice(ApplicationEventPublisher { })
+    private fun advice(): ApiControllerAdvice = ApiControllerAdvice()
 }

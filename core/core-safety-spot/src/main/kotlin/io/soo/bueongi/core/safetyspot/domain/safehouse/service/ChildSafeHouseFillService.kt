@@ -4,7 +4,6 @@ import io.soo.bueongi.client.safe182.ChildSafeHouseClient
 import io.soo.bueongi.client.safe182.ChildSafeHousePoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.safehouse.SafeHouseSpot
@@ -21,7 +20,6 @@ class ChildSafeHouseFillService(
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
-    private val events: SafetySpotFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(ChildSafeHouseFillService::class.java)
 
@@ -49,10 +47,9 @@ class ChildSafeHouseFillService(
 
     private fun fetchAndStore(tile: MapTile): Int {
         val fetched: List<ChildSafeHousePoint>? = client.fetchWithin(tile.toBounds())
-        events.fetchPerformed(SafetySpotType.SAFEHOUSE, tile.code, fetched?.size)
         if (fetched == null) {
             retryGate.record(tile.code)
-            events.fetchFailed(SafetySpotType.SAFEHOUSE, tile.code)
+            log.warn("{} 수집 실패 — 기존 데이터 유지, 쉬는 시간 뒤 다시 시도 (범위={})", SafetySpotType.SAFEHOUSE.label, tile.code)
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)

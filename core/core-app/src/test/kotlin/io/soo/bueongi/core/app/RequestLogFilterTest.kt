@@ -156,7 +156,7 @@ class RequestLogFilterTest {
         val filter = RequestLogFilter()
 
         filter.doFilter(
-            MockHttpServletRequest("GET", "/api/admin/alerts"),
+            MockHttpServletRequest("GET", "/api/admin/me"),
             MockHttpServletResponse(),
             chainSetting(200),
         )

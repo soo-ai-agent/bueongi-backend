@@ -23,8 +23,6 @@ services:
       DATA_GO_KR_SERVICE_KEY: ${DATA_GO_KR_SERVICE_KEY:-}
       SAFEMAP_SERVICE_KEY: ${SAFEMAP_SERVICE_KEY:-}
       SAFETYDATA_SERVICE_KEY: ${SAFETYDATA_SERVICE_KEY:-}
-      # 운영 알림(Slack webhook, 없으면 비활성)
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
       # 보호자 공유 URL base = 사용자에게 보이는 공개 origin (share_url = {base}/share/{token})
       BUEONGI_SHARE_BASE_URL: ${PUBLIC_ORIGIN:-http://localhost:8080}
       BUEONGI_CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost:8080}

@@ -13,7 +13,6 @@ dependencies {
     implementation(project(":core:core-share"))
     implementation(project(":core:core-place"))
     implementation(project(":core:core-route"))
-    implementation(project(":core:core-admin-ops"))
     implementation(project(":core:core-admin-safety-spot"))
     implementation(project(":core:core-admin-auth"))
     implementation(project(":storage:db-safety-spot"))
@@ -21,9 +20,7 @@ dependencies {
     testImplementation(testFixtures(project(":storage:db-share")))
     implementation(project(":clients:client-tmap"))
     implementation(project(":clients:client-tmap-place"))
-    implementation(project(":clients:client-slack"))
     implementation(project(":support:logging"))
-    implementation(project(":support:monitoring"))
     implementation(project(":support:util"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")

@@ -1,15 +1,11 @@
 package io.soo.bueongi.core.common.error
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import io.soo.bueongi.core.common.event.ApiErrorResponded
-import io.soo.bueongi.core.common.event.OperationEvent
-import io.soo.bueongi.core.enums.AlertCategory
 import io.soo.bueongi.support.logging.currentRequestOrigin
 import io.soo.bueongi.support.logging.traceColumn
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeanInstantiationException
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -27,14 +23,11 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
-class ApiControllerAdvice(
-    private val events: ApplicationEventPublisher,
-) {
+class ApiControllerAdvice {
     private val log: Logger = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     @ExceptionHandler(ApiException::class)
     fun handleApi(ex: ApiException): ProblemDetail {
-        events.publishEvent(ApiErrorResponded(code = ex.code, causeName = ex.cause?.javaClass?.simpleName))
         return ex.toProblemDetail()
     }
 
@@ -223,13 +216,6 @@ class ApiControllerAdvice(
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
             action = "500 INTERNAL_ERROR 응답",
             ex = ex,
-        )
-        events.publishEvent(
-            OperationEvent(
-                key = AlertCategory.SERVER_ERROR.keyOf(ex.javaClass.simpleName),
-                title = "처리되지 않은 서버 오류(500)",
-                detail = "${ex.javaClass.simpleName}: ${ex.message ?: "메시지 없음"}",
-            ),
         )
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,

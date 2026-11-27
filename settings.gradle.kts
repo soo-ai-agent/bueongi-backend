@@ -7,7 +7,6 @@ include(
     "core:core-share",
     "core:core-place",
     "core:core-route",
-    "core:core-admin-ops",
     "core:core-admin-safety-spot",
     "core:core-admin-auth",
     "core:core-app",
@@ -16,13 +15,11 @@ include(
     "clients:client-place",
     "clients:client-tmap",
     "clients:client-tmap-place",
-    "clients:client-slack",
     "clients:client-datagokr-security-lamp",
     "clients:client-safemap",
     "clients:client-safe182",
     "clients:client-safetydata-street-lamp",
     "support:logging",
-    "support:monitoring",
     "support:util",
 )
 

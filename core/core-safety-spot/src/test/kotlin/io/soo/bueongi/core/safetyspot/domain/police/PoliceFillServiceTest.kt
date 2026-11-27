@@ -1,12 +1,8 @@
 package io.soo.bueongi.core.safetyspot.domain.police
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.client.safemap.SafemapPoliceClient
 import io.soo.bueongi.client.safemap.SafemapPolicePoint
-import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
-import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
-import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
 import io.soo.bueongi.storage.db.safetyspot.police.PoliceSpot
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
@@ -14,7 +10,6 @@ import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
@@ -72,21 +67,18 @@ class PoliceFillServiceTest {
     }
 
     @Test
-    fun `수집이 실패하면 알리고 기존 데이터를 유지한다`(
+    fun `수집이 실패하면 기존 데이터를 유지한다`(
         @TempDir dir: Path,
     ) {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetch()).thenReturn(null)
         val liveStore = FakeLiveStore()
-        val events: SafetySpotFillEventPublisher = mock()
 
-        val added: Int = service(dir, client, liveStore, events).fill()
+        val added: Int = service(dir, client, liveStore).fill()
 
         assertThat(added).isZero()
         assertThat(liveStore.appended).isEmpty()
-        verify(events).fetchFailed(SafetySpotType.POLICE, NATIONWIDE)
-        verify(events, never()).hadNoCoordinates(any(), any(), any())
     }
 
     @Test
@@ -104,7 +96,6 @@ class PoliceFillServiceTest {
                 cache = SafetySpotRegionCache(FakeLiveStore(), 90L, Clock.systemUTC()),
                 liveStore = FakeLiveStore(),
                 retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
-                events = mock(),
             )
 
         service.fill()
@@ -120,12 +111,10 @@ class PoliceFillServiceTest {
         dir: Path,
         client: SafemapPoliceClient,
         liveStore: SafetySpotLiveStore,
-        events: SafetySpotFillEventPublisher = mock(),
     ): PoliceFillService =
         PoliceFillService(
             client = client,
             cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
             liveStore = liveStore,
-            events = events,
         )
 }

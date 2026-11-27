@@ -1,7 +1,6 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.client.tmap.TmapRouteClient
-import io.soo.bueongi.core.common.event.ApiErrorResponded
 import io.soo.bueongi.core.common.route.RoutePlannedHandler
 import io.soo.bueongi.core.route.api.controller.RouteOptionController
 import io.soo.bueongi.core.route.domain.marker.service.RouteMarkerBuilder
@@ -14,7 +13,6 @@ import io.soo.bueongi.core.route.domain.service.RouteOptionService
 import io.soo.bueongi.core.route.domain.service.RouteTypeAssigner
 import io.soo.bueongi.core.route.domain.service.RouteTypeCatalog
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,15 +21,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import org.springframework.test.context.event.ApplicationEvents
-import org.springframework.test.context.event.RecordApplicationEvents
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 
 @Tag("context")
 @WebMvcTest(RouteOptionController::class)
 @AutoConfigureMockMvc(addFilters = false)
-@RecordApplicationEvents
 @Import(
     RouteTypeCatalog::class,
     RouteOptionService::class,
@@ -81,20 +76,6 @@ class RouteOptionControllerTest(
             status { isServiceUnavailable() }
             jsonPath("$.code") { value("ROUTE_SEARCH_UNAVAILABLE") }
         }
-    }
-
-    @Test
-    fun `경로 탐색이 503 으로 끝나면 Tmap 경로 실패 알림을 보낸다`(applicationEvents: ApplicationEvents) {
-        mockMvc.post("/api/routes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = validBody
-        }.andExpect {
-            status { isServiceUnavailable() }
-        }
-
-        val errorEvents: List<ApiErrorResponded> = applicationEvents.stream(ApiErrorResponded::class.java).toList()
-        assertThat(errorEvents).hasSize(1)
-        assertThat(errorEvents[0].code).isEqualTo("ROUTE_SEARCH_UNAVAILABLE")
     }
 
     @Test

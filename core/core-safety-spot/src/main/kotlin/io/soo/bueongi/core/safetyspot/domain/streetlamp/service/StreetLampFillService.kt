@@ -5,7 +5,6 @@ import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
-import io.soo.bueongi.core.safetyspot.domain.fill.service.SafetySpotFillEventPublisher
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
@@ -21,7 +20,6 @@ class StreetLampFillService(
     private val cache: SafetySpotRegionCache,
     private val liveStore: SafetySpotLiveStore,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
-    private val events: SafetySpotFillEventPublisher,
 ) {
     private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
 
@@ -49,17 +47,16 @@ class StreetLampFillService(
 
     private fun fetchAndStore(): Int {
         val fetched: List<StreetLampPoint>? = client.fetch()
-        events.fetchPerformed(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched?.size)
         if (fetched == null) {
             retryGate.record(NATIONWIDE)
-            events.fetchFailed(SafetySpotType.STREET_LAMP, NATIONWIDE)
+            log.warn("{} 수집 실패 — 기존 데이터 유지, 쉬는 시간 뒤 다시 시도 (범위={})", SafetySpotType.STREET_LAMP.label, NATIONWIDE)
             return 0
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         // 좌표를 하나도 못 받았어도 기록해 재수집 주기 동안 다시 받지 않게 한다.
         liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
         if (points.isEmpty()) {
-            events.hadNoCoordinates(SafetySpotType.STREET_LAMP, NATIONWIDE, fetched.size)
+            log.warn("{} {}건을 받았으나 좌표가 없어 적재 0건 (범위={})", SafetySpotType.STREET_LAMP.label, fetched.size, NATIONWIDE)
             return 0
         }
         log.info("가로등 채움: 받은={}, 좌표있음={}", fetched.size, points.size)

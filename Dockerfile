@@ -26,19 +26,18 @@ COPY core/core-safety-spot/build.gradle.kts ./core/core-safety-spot/
 COPY core/core-share/build.gradle.kts ./core/core-share/
 COPY core/core-place/build.gradle.kts ./core/core-place/
 COPY core/core-route/build.gradle.kts ./core/core-route/
-COPY core/core-admin-ops/build.gradle.kts ./core/core-admin-ops/
 COPY core/core-admin-safety-spot/build.gradle.kts ./core/core-admin-safety-spot/
 COPY core/core-admin-auth/build.gradle.kts ./core/core-admin-auth/
 COPY core/core-app/build.gradle.kts ./core/core-app/
 COPY storage/db-safety-spot/build.gradle.kts ./storage/db-safety-spot/
 COPY storage/db-share/build.gradle.kts ./storage/db-share/
 COPY clients/client-tmap/build.gradle.kts ./clients/client-tmap/
-COPY clients/client-slack/build.gradle.kts ./clients/client-slack/
+COPY clients/client-tmap-place/build.gradle.kts ./clients/client-tmap-place/
 COPY clients/client-datagokr-security-lamp/build.gradle.kts ./clients/client-datagokr-security-lamp/
 COPY clients/client-safemap/build.gradle.kts ./clients/client-safemap/
 COPY clients/client-safe182/build.gradle.kts ./clients/client-safe182/
 COPY clients/client-safetydata-street-lamp/build.gradle.kts ./clients/client-safetydata-street-lamp/
-COPY support/monitoring/build.gradle.kts ./support/monitoring/
+COPY support/logging/build.gradle.kts ./support/logging/
 COPY support/util/build.gradle.kts ./support/util/
 RUN ./gradlew --no-daemon --version \
     && (./gradlew --no-daemon :core:core-app:dependencies > /dev/null 2>&1 || true)
