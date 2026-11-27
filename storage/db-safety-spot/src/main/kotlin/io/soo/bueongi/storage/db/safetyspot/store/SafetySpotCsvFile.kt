@@ -9,7 +9,7 @@ data class SafetySpotCsvFile(
     val name: String,
     val sizeBytes: Long,
     val modifiedAtMs: Long,
-    /** false 면 서버가 이 파일을 읽지 않는다 — 파이프라인이 CDN JSON 으로 바꿔 쓰는 원천이다. */
+    /** false 면 서버가 이 파일을 읽지 않는다 — 보관용 원본이고 적재는 관리자 업로드로 한다. */
     val isReadByServer: Boolean,
     val isReplacedByUpload: Boolean,
     internal val file: File,

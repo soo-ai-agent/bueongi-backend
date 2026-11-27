@@ -24,7 +24,6 @@ data/region-cache/
 # 저장소 루트(bueongi-service)에서 함께 옮겨 온 규칙 — 분리 전에는 루트 .gitignore 가 막았다
 build/
 .gradle/
-node_modules/
 *.log
 *.pem
 *.p12
@@ -33,6 +32,4 @@ node_modules/
 .env.*
 !.env.example
 secrets/
-# 전국 비상벨 수집 산출(대용량 — 재생성 가능, 비커밋)
-cdn/emergency_bell/nationwide.json
 cdn/uploads/

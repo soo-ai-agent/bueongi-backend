@@ -7,8 +7,8 @@
 # 부팅 모듈은 core:core-app 하나뿐이라 루트 `bootJar` 가 정확히 그 모듈만 패키징한다
 # (라이브러리 모듈들은 bootJar 비활성). cdn/ 을 이미지에 포함하는 이유: 안심시설 점수 계산
 # 입력(FacilityRepository)과 프론트 정적 데이터(/cdn HTTP 서빙)가 같은 디렉터리라서,
-# 이미지 하나로 외부 볼륨 없이 자립 동작한다. 월 1회 파이프라인이 cdn/ 을 갱신해
-# main 에 커밋하면 docker-publish 워크플로우가 새 데이터로 이미지를 다시 발행한다.
+# 이미지 하나로 외부 볼륨 없이 자립 동작한다. cdn/ 이 바뀌어 main 에 올라가면
+# docker-publish 워크플로우가 새 데이터로 이미지를 다시 발행한다.
 
 # ---- 빌드 단계: gradle wrapper 로 bootJar 생성 ----
 FROM eclipse-temurin:21-jdk AS build
@@ -59,7 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 WORKDIR /app
 
 COPY --from=build /workspace/core/core-app/build/libs/*.jar app.jar
-# 안심시설 정적 데이터(파이프라인 산출) — 점수 계산 입력 + /cdn HTTP 서빙 원본.
+# 안심시설 정적 데이터 — 점수 계산 입력 + /cdn HTTP 서빙 원본.
 COPY cdn /app/cdn
 ENV BUEONGI_FACILITY_DATA_DIR=/app/cdn
 

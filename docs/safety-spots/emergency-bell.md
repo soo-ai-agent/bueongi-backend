@@ -73,8 +73,6 @@ flowchart LR
 
 - 업로드하면 DB의 비상벨 `upload` 조각을 한 트랜잭션으로 바로 바꾼다. 재시작해도 DB에 남는다.
 - 2026-11-25 실제 원본 업로드에서 88,621행이 3.6초에 들어갔다.
-- 업로드가 없을 때만 서버가 켜질 때 `cdn/emergency_bell/nationwide.json`(변환 스크립트 `data/ingest/bell_ingest.py`의
-  결과)을 DB의 `cdn` 조각으로 옮긴다. 이 파일은 `.gitignore` 대상이라 저장소에 없다.
 
 ## 읽는 규칙
 

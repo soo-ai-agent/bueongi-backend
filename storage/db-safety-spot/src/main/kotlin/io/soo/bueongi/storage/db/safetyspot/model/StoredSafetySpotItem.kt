@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.Nulls
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 
-// 파일 형식은 pipeline/src/types.ts 가 정하고 원천이 비운 칸은 빠진 채 온다 — 좌표가 비면 행을 버리고, 나머지는 시설의 빈 칸이 된다.
+// CDN 파일(cdn/README.md)은 원천이 비운 칸이 빠진 채 온다 — 좌표가 비면 행을 버리고, 나머지는 시설의 빈 칸이 된다.
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class StoredSafetySpotItem(
     val name: String? = null,

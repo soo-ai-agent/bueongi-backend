@@ -1,7 +1,5 @@
-# 백엔드 컨테이너 이미지 발행 — main push(월간 파이프라인의 cdn 갱신 커밋 포함)와
-# v* 태그에서 테스트 통과 후 GHCR(ghcr.io/<owner>/<repo>)로 push 한다.
-# cdn/ 데이터가 이미지에 구워지므로, 파이프라인이 main 에 cdn 을 갱신 커밋하면
-# 이 워크플로우가 자동으로 최신 데이터 이미지를 다시 발행한다(월 1회 갱신 체계 완결).
+# 백엔드 컨테이너 이미지 발행 — main push 와 v* 태그에서 테스트 통과 후
+# GHCR(ghcr.io/<owner>/<repo>)로 push 한다. cdn/ 데이터가 이미지에 구워진다.
 name: docker-publish
 
 on:

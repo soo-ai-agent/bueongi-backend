@@ -50,7 +50,6 @@ bueongi:
     allowed-origins: ${BUEONGI_CORS_ORIGINS:https://localhost:3619,http://localhost:3619}
 
   facility:
-    # 시설 데이터는 파이프라인이 만든 CDN 파일이 원천이다(백엔드는 외부 API 를 직접 부르지 않는다).
     # 경로는 각 컴포넌트의 @Value 기본값(data-dir=cdn, cctv-csv, upload-dir)을 쓰고 필요할 때만 덮어쓴다.
 
   share:

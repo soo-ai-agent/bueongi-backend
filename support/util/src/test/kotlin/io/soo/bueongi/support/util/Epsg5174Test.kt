@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 
 class Epsg5174Test {
-    // 파이프라인 proj4(같은 +towgs84 정의, h=0)로 뽑은 기준값이다.
+    // proj4(같은 +towgs84 정의, h=0)로 뽑은 기준값이다.
     private val anchors: List<Epsg5174Anchor> =
         listOf(
             Epsg5174Anchor("서울시청", 37.5665, 126.9780, 197986.7269, 451579.8938),

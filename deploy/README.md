@@ -44,12 +44,9 @@ GitHub Actions 워크플로는 다음과 같습니다.
 | `bueongi-backend` | `backend-ci.yml`           | `main`, `feat/**`, `claude/**` push, main PR | `./gradlew test`(UTF-8 로케일)           |
 | `bueongi-backend` | `backend-skill-review.yml` | `.kt`, `.kts` 변경 PR                        | ktlint, 파일 규칙, 스킬 규칙 리뷰 코멘트 |
 | `bueongi-backend` | `docker-publish.yml`       | main push, `v*.*.*` 태그, 수동 실행          | `./gradlew test` 후 GHCR 이미지 발행     |
-| `bueongi-backend` | `pipeline-monthly.yml`     | 매월 1일 18:00 UTC, 수동 실행                | `cdn/` 재생성 후 변경분 커밋             |
 
-- `backend-ci.yml`은 `docs/`, `deploy/`, `pipeline/`, `cdn/`과 `.md`만 바뀐 push와 PR에서는 돌지 않습니다.
+- `backend-ci.yml`은 `docs/`, `deploy/`, `cdn/`과 `.md`만 바뀐 push와 PR에서는 돌지 않습니다.
 - 백엔드 이미지 태그는 `latest`(main), `1.2.3`(`v1.2.3` 태그), `sha-<커밋>`(모든 발행, 롤백용 고정 태그)입니다.
-- `pipeline-monthly.yml`은 `GITHUB_TOKEN`으로 push합니다. GitHub는 `GITHUB_TOKEN`으로 만든 이벤트로 다른
-  워크플로를 시작하지 않으므로, 월간 `cdn/` 커밋 뒤 새 데이터 이미지는 `docker-publish.yml`을 수동 실행해 발행합니다.
 
 ### 저장소 설정
 
