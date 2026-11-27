@@ -29,6 +29,24 @@ jobs:
     env:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
+      # context 태그 테스트(@SpringBootTest, PostGIS 저장소)가 붙는 DB - backend-ci.yml 과 같다
+      BUEONGI_DB_URL: jdbc:postgresql://localhost:5432/bueongi?reWriteBatchedInserts=true
+      BUEONGI_DB_USERNAME: bueongi
+      BUEONGI_DB_PASSWORD: bueongi
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: bueongi
+          POSTGRES_USER: bueongi
+          POSTGRES_PASSWORD: bueongi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bueongi -d bueongi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
