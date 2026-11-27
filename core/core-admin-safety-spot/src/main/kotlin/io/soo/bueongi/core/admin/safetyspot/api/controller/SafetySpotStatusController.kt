@@ -17,12 +17,12 @@ class SafetySpotStatusController(
 ) {
     @GetMapping("/api/admin/safety-spot-status")
     fun find(): SafetySpotStatusResponse {
-        return safetySpotStatusService.summarize()
+        return safetySpotStatusService.find()
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions")
     fun findRegions(): List<RegionSafetySpotResponse> {
-        return regionStatusService.summarize()
+        return regionStatusService.list()
     }
 
     @GetMapping("/api/admin/safety-spot-status/regions/{code}/spots")

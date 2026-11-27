@@ -65,7 +65,7 @@ flowchart LR
 ## 읽는 규칙
 
 - 외부 API는 지도 칸의 경계(`minX`, `minY`, `maxX`, `maxY`)와 시설 구분 코드 `09`(아동안전지킴이집)로 묻는다.
-- 업로드 규격(`SafeHouseCsvContract`)은 `위도`, `경도`가 빈 행을 버린다.
+- 업로드 규격(`SafeHouseCsvFormat`)은 `위도`, `경도`가 빈 행을 버린다.
 
 ## 갱신 방법
 

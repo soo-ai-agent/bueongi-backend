@@ -1,10 +1,9 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.safetyspot.api.response.CsvRowStatus
 import io.soo.bueongi.core.admin.safetyspot.api.response.SafetySpotCsvPageResponse
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvFileService
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvReader
 import io.soo.bueongi.core.admin.safetyspot.domain.error.InvalidCsvPageException
 import io.soo.bueongi.core.admin.safetyspot.domain.error.SafetySpotCsvFileNotFoundException
 import io.soo.bueongi.core.enums.SafetySpotType
@@ -35,7 +34,7 @@ class SafetySpotCsvFileServiceTest {
         val uploadStore = SafetySpotUploadStore(File(tmp, "uploads").path)
         val none: String = File(tmp, "none").path
         val fileStore = SafetySpotCsvFileStore(uploadStore, gz.path, none, none, none)
-        val service = SafetySpotCsvFileService(fileStore, SafetySpotCsvParser())
+        val service = SafetySpotCsvFileService(fileStore, SafetySpotCsvReader())
 
         val page: SafetySpotCsvPageResponse = service.readPage(SafetySpotCsvOrigin.SOURCE, "CCTV정보.csv.gz", 0, 50, false, "")
 
@@ -94,6 +93,6 @@ class SafetySpotCsvFileServiceTest {
     ): SafetySpotCsvFileService {
         val none: String = File(tmp, "none").path
         val fileStore = SafetySpotCsvFileStore(uploadStore, "", none, none, none)
-        return SafetySpotCsvFileService(fileStore, SafetySpotCsvParser())
+        return SafetySpotCsvFileService(fileStore, SafetySpotCsvReader())
     }
 }

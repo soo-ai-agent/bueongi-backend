@@ -59,7 +59,7 @@ class CsvColumnsTest {
 
         assertThat(columns.address(row)).isNull()
         assertThat(columns.phone(row)).isNull()
-        assertThat(columns.projectedX(row)).isNull()
+        assertThat(columns.x(row)).isNull()
     }
 
     @Test

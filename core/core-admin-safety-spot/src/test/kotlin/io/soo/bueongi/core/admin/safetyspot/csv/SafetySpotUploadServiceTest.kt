@@ -2,7 +2,7 @@ package io.soo.bueongi.core.admin.safetyspot.csv
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvReader
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotUploadService
 import io.soo.bueongi.core.admin.safetyspot.domain.error.EmptySafetySpotUploadException
 import io.soo.bueongi.core.enums.SafetySpotType
@@ -11,19 +11,19 @@ import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotUploadStore
-import java.io.File
-import java.nio.file.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.File
+import java.nio.file.Path
 
 class SafetySpotUploadServiceTest {
     private val mapper = ObjectMapper()
 
     private fun service(tmp: Path, liveStore: SafetySpotLiveStore, statusStore: SafetySpotRefreshStatusStore) =
         SafetySpotUploadService(
-            parser = SafetySpotCsvParser(),
+            reader = SafetySpotCsvReader(),
             uploadStore = SafetySpotUploadStore(tmp.toFile().absolutePath),
             liveStore = liveStore,
             refreshStatusStore = statusStore,

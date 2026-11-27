@@ -291,8 +291,8 @@ CSV 해석은 하지 않는다. 업로드가 변환해 둔 JSON만 읽는다(202
 | `resolveDataDir()`                        | 비공개               | 조회 | 후보 경로 중 실제 존재하는 디렉터리 찾기                   |
 | `parseCollection(file)`                   | 비공개               | 변환 | JSON 파일을 DTO로(실패 시 null)                            |
 
-CSV 해석은 `core/core-admin-safety-spot`의 `domain/csv/<시설>/XxxCsvContract`와
-`domain/csv/service/SafetySpotCsvParser`가 맡는다. gz 해제, 인코딩 감지, 행 판정을 하며 업로드와 미리보기가 같은 계약을
+CSV 해석은 `core/core-admin-safety-spot`의 `domain/csv/<시설>/XxxCsvFormat`와
+`domain/csv/service/SafetySpotCsvReader`가 맡는다. gz 해제, 인코딩 감지, 행 판정을 하며 업로드와 미리보기가 같은 형식을
 쓴다.
 
 공개 5개 중 4개(조회 2, 저장 2)는 인터페이스 계약 그대로다. 비공개 8개가 전부 부팅 적재의 하위 단계라, 서빙(조회,

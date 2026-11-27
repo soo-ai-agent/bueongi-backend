@@ -72,8 +72,8 @@
 core 는 DB 를 직접 모른다. 조회는 `SafetySpotSpatialSource`, 쓰기는 `SafetySpotLiveStore` 인터페이스만 본다. 테스트는
 메모리 대역(`FakeSafetySpotSource`)을 쓴다.
 
-CSV 를 해석하는 코드는 storage 가 아니라 core 의 시설별 계약이다:
-`core-admin-safety-spot/.../domain/csv/<시설명>/XxxCsvContract.kt`. 업로드와 원본 미리보기가 이 계약 하나로 판정한다.
+CSV 를 해석하는 코드는 storage 가 아니라 core 의 시설별 형식이다:
+`core-admin-safety-spot/.../domain/csv/<시설명>/XxxCsvFormat.kt`. 업로드와 원본 미리보기가 이 형식 하나로 판정한다.
 
 외부 API 로 받는 코드는 storage 가 아니라 `core/core-safety-spot/.../domain/{streetlamp,securitylamp,safehouse,police}/`에
 있다. 무엇이 언제 부르는지는 [EXTERNAL_SERVICES.md](EXTERNAL_SERVICES.md)에 있다.

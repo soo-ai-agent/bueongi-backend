@@ -16,10 +16,14 @@ data class RegionSafetySpotResponse(
     companion object {
         fun from(count: RegionSafetySpotCount): RegionSafetySpotResponse {
             val counts: LinkedHashMap<String, Int> = LinkedHashMap()
-            for ((type, n) in count.countsByType) {
-                counts[type.cdnType] = n
+            for ((type, typeCount) in count.countsByType) {
+                counts[type.cdnType] = typeCount
             }
             val center: GeoPoint? = count.center
+            var centerResponse: RegionCenterResponse? = null
+            if (center != null) {
+                centerResponse = RegionCenterResponse.from(center)
+            }
             return RegionSafetySpotResponse(
                 code = count.code,
                 sido = count.sido,
@@ -28,12 +32,7 @@ data class RegionSafetySpotResponse(
                 total = count.total,
                 fileCount = count.fileCount,
                 apiCount = count.apiCount,
-                center =
-                    if (center == null) {
-                        null
-                    } else {
-                        RegionCenterResponse.from(center)
-                    },
+                center = centerResponse,
             )
         }
 

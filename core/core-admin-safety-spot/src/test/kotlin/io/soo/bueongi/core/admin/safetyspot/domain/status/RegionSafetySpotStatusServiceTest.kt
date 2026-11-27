@@ -32,7 +32,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.BELL, 37.52, 127.02, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.map { it.code }).containsExactly(MAPO, CHANGNYEONG)
         val mapo: RegionSafetySpotResponse = summary.first()
@@ -56,7 +56,7 @@ class RegionSafetySpotStatusServiceTest {
                 apiPoints = mapOf(SafetySpotType.SECURITY_LAMP to listOf(apiPoint)),
             )
 
-        val summary = RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper())).summarize()
+        val summary = RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper())).list()
 
         val mapo: RegionSafetySpotResponse = summary.single()
         assertThat(mapo.total).isEqualTo(3)
@@ -69,7 +69,7 @@ class RegionSafetySpotStatusServiceTest {
         val summary =
             service(
                 mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, regionCode = MAPO))),
-            ).summarize()
+            ).list()
 
         assertThat(summary.single().sido).isEqualTo("서울특별시")
         assertThat(summary.single().name).isEqualTo("마포구")
@@ -86,7 +86,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.7, 128.8, regionCode = GANGNEUNG),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.map { it.sido }.toSet()).containsExactly("강원특별자치도")
         assertThat(summary.map { it.name }).containsExactlyInAnyOrder("화천군", "강릉시")
@@ -97,7 +97,7 @@ class RegionSafetySpotStatusServiceTest {
         val summary =
             service(
                 mapOf(SafetySpotType.CCTV to listOf(SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, regionCode = "9999999"))),
-            ).summarize()
+            ).list()
 
         assertThat(summary.single().name).isEqualTo("9999999")
         assertThat(summary.single().sido).isEmpty()
@@ -114,7 +114,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.6, 127.1, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.sumOf { it.total }).isEqualTo(2)
         assertThat(summary.map { it.code }).contains("unknown")
@@ -131,7 +131,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 34.8, 126.4, regionCode = MOKPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["북구"]).isEqualTo("광주광역시")
@@ -149,7 +149,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 34.9, 127.5, regionCode = SUNCHEON),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.single().sido).isEqualTo("전라남도")
     }
@@ -166,7 +166,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 34.7, 127.7, regionCode = YEOSU),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["금천구"]).isEqualTo("서울특별시")
@@ -187,7 +187,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.8, 127.7, regionCode = "42110"),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["11110"]).isEqualTo("서울특별시")
@@ -206,7 +206,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 34.80, 126.40, regionCode = "12110"),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["12300"]).isEqualTo("광주광역시")
@@ -223,7 +223,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.5, 127.0, regionCode = "99999"),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.single().name).isEqualTo("99999")
         assertThat(summary.single().sido).isEmpty()
@@ -242,7 +242,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 34.46, 126.25, regionCode = "5000000"),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val bySido: Map<String, String> = summary.associate { it.name to it.sido }
         assertThat(bySido["3490000"]).isEqualTo("인천광역시")
@@ -263,7 +263,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.60, 127.20, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val center: RegionCenterResponse = summary.single().center ?: error("중심 좌표가 있어야 한다")
         assertThat(center.lat).isCloseTo(37.55, within(1e-9))
@@ -282,7 +282,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, Double.NaN, 127.0, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val row: RegionSafetySpotResponse = summary.single()
         assertThat(row.total).isEqualTo(3)
@@ -301,7 +301,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 0.0, 0.0, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         assertThat(summary.single().center).isNull()
     }
@@ -318,7 +318,7 @@ class RegionSafetySpotStatusServiceTest {
                             SafetySpotPoint.of(SafetySpotType.CCTV, 37.56, 126.91, regionCode = MAPO),
                         ),
                 ),
-            ).summarize()
+            ).list()
 
         val unknown = summary.single { it.code == "unknown" }
         assertThat(unknown.total).isEqualTo(2)

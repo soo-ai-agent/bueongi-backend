@@ -28,7 +28,7 @@ class SafetySpotStatusServiceTest {
                 recordUpload(SafetySpotType.CCTV, replacedCount = 372, atEpochMs = 1_700_000_000_000L)
             }
 
-        val summary = SafetySpotStatusService(source, holder).summarize()
+        val summary = SafetySpotStatusService(source, holder).find()
 
         assertThat(summary.safetySpots.map { it.type })
             .containsExactly(
@@ -57,7 +57,7 @@ class SafetySpotStatusServiceTest {
     fun `갱신 이력이 전혀 없으면 시각과 건수가 null 이다`() {
         val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to points(SafetySpotType.CCTV, 5)))
 
-        val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).summarize()
+        val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).find()
 
         assertThat(summary.safetySpots).allSatisfy { f ->
             assertThat(f.lastRefreshAtMs).isNull()
@@ -74,7 +74,7 @@ class SafetySpotStatusServiceTest {
                 apiPoints = mapOf(SafetySpotType.SECURITY_LAMP to points(SafetySpotType.SECURITY_LAMP, 4, lng = 126.9)),
             )
 
-        val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).summarize()
+        val summary = SafetySpotStatusService(source, SafetySpotRefreshStatusStore()).find()
 
         val lamp = summary.safetySpots.first { it.type == SafetySpotType.SECURITY_LAMP }
         assertThat(lamp.apiCount).isEqualTo(4)
@@ -90,7 +90,7 @@ class SafetySpotStatusServiceTest {
                 recordUpload(SafetySpotType.CCTV, replacedCount = 315_459, atEpochMs = 1L)
             }
 
-        val summary = SafetySpotStatusService(source, holder).summarize()
+        val summary = SafetySpotStatusService(source, holder).find()
 
         assertThat(summary.safetySpots.first { it.type == SafetySpotType.CCTV }.lastRefreshAtMs).isEqualTo(1L)
         assertThat(summary.safetySpots.first { it.type == SafetySpotType.PEDESTRIAN_SIGNAL }.lastRefreshAtMs).isNull()

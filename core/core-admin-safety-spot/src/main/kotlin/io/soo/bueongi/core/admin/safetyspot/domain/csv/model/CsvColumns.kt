@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
-// 인덱스가 null 이면 이 CSV 에 그 헤더가 없다 — 읽기 함수는 헤더가 없거나 칸 값을 읽을 수 없으면 null 을 돌려준다.
+// 칸 번호(Index)가 null 이면 이 CSV 에 그 머리글이 없다 — 읽기 함수는 머리글이 없거나 칸 값을 읽을 수 없으면 null 을 돌려준다.
 class CsvColumns(
     val hasLatLng: Boolean,
     val coordSystem: SafetySpotCoordSystem,
@@ -29,9 +29,9 @@ class CsvColumns(
 
     fun longitude(row: List<String>): Double? = numberAt(row, lngIndex)
 
-    fun projectedX(row: List<String>): Double? = numberAt(row, xIndex)
+    fun x(row: List<String>): Double? = numberAt(row, xIndex)
 
-    fun projectedY(row: List<String>): Double? = numberAt(row, yIndex)
+    fun y(row: List<String>): Double? = numberAt(row, yIndex)
 
     fun cameraCount(row: List<String>): Int? {
         val text: String = textAt(row, cameraCountIndex) ?: return null

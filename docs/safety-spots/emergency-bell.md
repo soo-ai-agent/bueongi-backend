@@ -76,7 +76,7 @@ flowchart LR
 
 ## 읽는 규칙
 
-업로드 규격은 `core-admin-safety-spot`의 `BellCsvContract`다.
+업로드 규격은 `core-admin-safety-spot`의 `BellCsvFormat`다.
 
 1. 좌표는 `WGS84위도`, `WGS84경도`(없으면 `위도`, `경도`)를 읽는다. 둘 다 없으면 옛 판의 `X좌표`, `Y좌표`(EPSG:5174)를
    위경도로 바꾼다. 좌표가 빈 행은 버린다.

@@ -1,11 +1,15 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.RegionCodeFinder
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvContract
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvParser
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvFormat
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvReader
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
+import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.securitylamp.SecurityLampSpot
+import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.support.util.Epsg5179
 import org.assertj.core.api.Assertions.assertThat
@@ -14,8 +18,8 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.zip.GZIPOutputStream
 
-class SafetySpotCsvParserTest {
-    private val parser = SafetySpotCsvParser()
+class SafetySpotCsvReaderTest {
+    private val reader = SafetySpotCsvReader()
 
     private fun bytes(text: String, charset: Charset = Charsets.UTF_8): ByteArray = text.toByteArray(charset)
 
@@ -30,7 +34,7 @@ class SafetySpotCsvParserTest {
             999.0,127.0,불량,서울 4,생활방범,1
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.CCTV))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.CCTV))
 
         assertThat(result.coordSystem).isEqualTo(SafetySpotCoordSystem.WGS84)
         assertThat(result.received).isEqualTo(4)
@@ -52,7 +56,7 @@ class SafetySpotCsvParserTest {
             3000000,37.5,127.0,종로구청,생활방범
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.CCTV))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.CCTV))
 
         val cctv: CctvSpot = result.points.single() as CctvSpot
         assertThat(cctv.openLocalGovCode).isEqualTo("3000000")
@@ -66,7 +70,7 @@ class SafetySpotCsvParserTest {
             37.5,127.0,안심약국,서울 종로구 대로 1
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE))
 
         assertThat(result.coordSystem).isEqualTo(SafetySpotCoordSystem.WGS84)
         assertThat(result.points).hasSize(1)
@@ -82,7 +86,7 @@ class SafetySpotCsvParserTest {
             37.5,127.0,L-001,서울 종로구 5
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.STREET_LAMP))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.STREET_LAMP))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("L-001")
@@ -98,7 +102,7 @@ class SafetySpotCsvParserTest {
             $x,$y,종로파출소,서울 종로구 6
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.POLICE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.POLICE))
 
         assertThat(result.coordSystem).isEqualTo(SafetySpotCoordSystem.EPSG5179)
         assertThat(result.points).hasSize(1)
@@ -115,7 +119,7 @@ class SafetySpotCsvParserTest {
             $x,$y,강남역 3번출구,서울 강남구 7
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.BELL))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.BELL))
 
         assertThat(result.coordSystem).isEqualTo(SafetySpotCoordSystem.EPSG5174)
         assertThat(result.points).hasSize(1)
@@ -131,7 +135,7 @@ class SafetySpotCsvParserTest {
             3000000,서울시 종로구 보건소 화장실,서울특별시 종로구 옥인동 45-30,37.5732,127.0016
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.BELL))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.BELL))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("서울시 종로구 보건소 화장실")
@@ -145,7 +149,11 @@ class SafetySpotCsvParserTest {
             개천면0132,경상남도 고성군 개천면 가천리 1000-2,35.129938,128.2775089937
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SECURITY_LAMP)) { "5340000" }
+        val nearbyCctv: SafetySpotPoint = SafetySpotPoint.of(SafetySpotType.CCTV, lat = 35.13, lng = 128.2775, regionCode = "5340000")
+        val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to listOf(nearbyCctv)))
+        val regionCodeFinder = RegionCodeFinder(RegionLocator(source))
+
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SECURITY_LAMP), regionCodeFinder)
 
         assertThat(result.points.single().regionCodeOrNull()).isEqualTo("5340000")
     }
@@ -159,7 +167,7 @@ class SafetySpotCsvParserTest {
             중부파출소,서울 중구 대로 9,02-200
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.POLICE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.POLICE))
 
         assertThat(result.received).isEqualTo(2)
         assertThat(result.points).isEmpty()
@@ -174,7 +182,7 @@ class SafetySpotCsvParserTest {
             37.5,127.0,종로치안센터,서울 종로구 10
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.POLICE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.POLICE))
 
         assertThat(result.coordSystem).isEqualTo(SafetySpotCoordSystem.WGS84)
         assertThat(result.points).hasSize(1)
@@ -185,7 +193,7 @@ class SafetySpotCsvParserTest {
     fun `따옴표로 감싼 필드 안의 콤마는 하나의 값으로 읽는다`() {
         val csv: String = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,\"안심, 편의점\",\"서울 종로구, 11\""
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("안심, 편의점")
@@ -193,10 +201,20 @@ class SafetySpotCsvParserTest {
     }
 
     @Test
+    fun `줄 끝이 CRLF 여도 행 수와 마지막 칸이 그대로다`() {
+        val csv: String = "위도,경도,업소명,소재지도로명주소\r\n37.5,127.0,가게1,서울 종로구 11\r\n37.6,127.1,가게2,서울 종로구 12\r\n"
+
+        val page = reader.readPage(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE), 0, 50, false, "")
+
+        assertThat(page.totalRows).isEqualTo(2)
+        assertThat(page.rows.first().cells.last()).isEqualTo("서울 종로구 11")
+    }
+
+    @Test
     fun `따옴표로 감싼 필드 안의 겹따옴표는 따옴표 하나로 읽는다`() {
         val csv: String = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,\"안심 \"\"24시\"\" 편의점\",서울 종로구 11"
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE))
 
         assertThat(result.points.single().name).isEqualTo("안심 \"24시\" 편의점")
     }
@@ -209,7 +227,7 @@ class SafetySpotCsvParserTest {
             37.5,127.0,종로구청,서울 종로구 12,생활방범,3
             """.trimIndent()
 
-        val result = parser.parse(bytes(csv, Charset.forName("MS949")), SafetySpotCsvContract.forType(SafetySpotType.CCTV))
+        val result = reader.readPoints(bytes(csv, Charset.forName("MS949")), SafetySpotCsvFormat.forType(SafetySpotType.CCTV))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("종로구청")
@@ -217,7 +235,7 @@ class SafetySpotCsvParserTest {
 
     @Test
     fun `헤더만 있고 데이터가 없으면 received 0 points 0`() {
-        val result = parser.parse(bytes("위도,경도,업소명,소재지도로명주소\n"), SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+        val result = reader.readPoints(bytes("위도,경도,업소명,소재지도로명주소\n"), SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE))
 
         assertThat(result.received).isZero()
         assertThat(result.points).isEmpty()
@@ -228,7 +246,7 @@ class SafetySpotCsvParserTest {
         val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
         val body = "위도,경도,업소명,소재지도로명주소\n37.5,127.0,안심마트,서울 13".toByteArray(Charsets.UTF_8)
 
-        val result = parser.parse(bom + body, SafetySpotCsvContract.forType(SafetySpotType.SAFEHOUSE))
+        val result = reader.readPoints(bom + body, SafetySpotCsvFormat.forType(SafetySpotType.SAFEHOUSE))
 
         assertThat(result.points).hasSize(1)
         assertThat(result.points.first().name).isEqualTo("안심마트")
@@ -240,7 +258,7 @@ class SafetySpotCsvParserTest {
         val buffer = ByteArrayOutputStream()
         GZIPOutputStream(buffer).use { stream -> stream.write(csv.toByteArray(Charset.forName("MS949"))) }
 
-        val result = parser.parse(buffer.toByteArray(), SafetySpotCsvContract.forType(SafetySpotType.CCTV))
+        val result = reader.readPoints(buffer.toByteArray(), SafetySpotCsvFormat.forType(SafetySpotType.CCTV))
 
         assertThat(result.points).hasSize(1)
         val point = result.points.single() as CctvSpot
@@ -252,7 +270,7 @@ class SafetySpotCsvParserTest {
     fun `보안등 표준데이터의 보안등위치명을 이름으로 읽는다`() {
         val csv = "보안등위치명,위도,경도,제공기관코드\n길끝,37.5,127.0,3000000\n"
 
-        val result = parser.parse(bytes(csv), SafetySpotCsvContract.forType(SafetySpotType.SECURITY_LAMP))
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SECURITY_LAMP))
 
         val point = result.points.single() as SecurityLampSpot
         assertThat(point.name).isEqualTo("길끝")

@@ -12,44 +12,45 @@ data class RegionSafetySpots(
     val spots: List<SafetySpotPoint>,
 ) {
     companion object {
+        // 지도에는 maxCount 개까지만 보여 준다. total 은 자르기 전의 전체 수다.
         fun from(
             code: String,
             region: RegionName,
             pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>,
-            budget: Int,
+            maxCount: Int,
         ): RegionSafetySpots {
-            val quotas: Map<SafetySpotType, Int> = roundRobinQuotasOf(pointsByType, budget)
-            val shown: ArrayList<SafetySpotPoint> = ArrayList(budget)
+            val showCountByType: Map<SafetySpotType, Int> = shareByType(pointsByType, maxCount)
+            val shownSpots: ArrayList<SafetySpotPoint> = ArrayList(maxCount)
             var total: Int = 0
             for ((type, points) in pointsByType) {
-                shown.addAll(points.pickEvenly(quotas.getValue(type)))
+                val showCount: Int = showCountByType.getValue(type)
+                shownSpots.addAll(points.pickEvenly(showCount))
                 total += points.size
             }
-            return RegionSafetySpots(code = code, sido = region.sido, name = region.name, total = total, spots = shown)
+            return RegionSafetySpots(code = code, sido = region.sido, name = region.name, total = total, spots = shownSpots)
         }
 
-        private fun roundRobinQuotasOf(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, budget: Int): Map<SafetySpotType, Int> {
-            val quotas: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
+        // 보여 줄 자리를 종류마다 돌아가며 하나씩 나눠 준다 — 수가 많은 종류가 자리를 다 차지하지 않게 하려는 것이다.
+        // 자리가 다 차거나, 한 바퀴를 돌아도 더 줄 종류가 없으면 멈춘다.
+        private fun shareByType(pointsByType: Map<SafetySpotType, List<SafetySpotPoint>>, maxCount: Int): Map<SafetySpotType, Int> {
+            val showCountByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
             for (type in pointsByType.keys) {
-                quotas[type] = 0
+                showCountByType[type] = 0
             }
-            val types: List<SafetySpotType> = pointsByType.keys.toList()
-            var remaining: Int = budget
-            var turn: Int = 0
-            var emptyTurnsInRow: Int = 0
-            while (remaining > 0 && emptyTurnsInRow < types.size) {
-                val type: SafetySpotType = types[turn % types.size]
-                turn++
-                val given: Int = quotas.getValue(type)
-                if (given >= pointsByType.getValue(type).size) {
-                    emptyTurnsInRow++
-                    continue
+            var leftCount: Int = maxCount
+            var gaveInThisRound: Boolean = true
+            while (leftCount > 0 && gaveInThisRound) {
+                gaveInThisRound = false
+                for ((type, points) in pointsByType) {
+                    val showCount: Int = showCountByType.getValue(type)
+                    if (leftCount > 0 && showCount < points.size) {
+                        showCountByType[type] = showCount + 1
+                        leftCount--
+                        gaveInThisRound = true
+                    }
                 }
-                quotas[type] = given + 1
-                remaining--
-                emptyTurnsInRow = 0
             }
-            return quotas
+            return showCountByType
         }
     }
 }

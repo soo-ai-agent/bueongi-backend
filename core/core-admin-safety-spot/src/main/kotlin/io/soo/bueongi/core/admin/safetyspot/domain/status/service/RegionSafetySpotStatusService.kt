@@ -7,85 +7,72 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionName
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpots
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.RegionSpotTally
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
 import org.springframework.stereotype.Service
 
 @Service
 class RegionSafetySpotStatusService(
-    private val safetySpots: SafetySpotSpatialSource,
+    private val safetySpotSource: SafetySpotSpatialSource,
     private val regionNames: RegionNameCatalog,
 ) {
-    fun summarize(): List<RegionSafetySpotResponse> {
-        val talliesByRegion: LinkedHashMap<String, RegionTally> = LinkedHashMap()
-        for (row in safetySpots.tallyByRegion()) {
-            val tally: RegionTally = talliesByRegion.getOrPut(regionCodeOf(row.regionCode)) { RegionTally() }
-            tally.add(row)
+    fun list(): List<RegionSafetySpotResponse> {
+        val rowsByCode: LinkedHashMap<String, ArrayList<RegionSpotTally>> = LinkedHashMap()
+        for (row in safetySpotSource.tallyByRegion()) {
+            val code: String = shownCodeOf(row.regionCode)
+            rowsByCode.getOrPut(code) { ArrayList() }.add(row)
         }
-        val rows: ArrayList<RegionSafetySpotCount> = ArrayList(talliesByRegion.size)
-        for ((code, tally) in talliesByRegion) {
-            rows.add(rowOf(code, tally))
+
+        val counts: ArrayList<RegionSafetySpotCount> = ArrayList(rowsByCode.size)
+        for ((code, rows) in rowsByCode) {
+            val region: RegionName = regionNames.findByCode(code)
+            counts.add(RegionSafetySpotCount.from(code, region, rows))
         }
-        rows.sortByDescending { it.total }
-        return RegionSafetySpotResponse.from(rows)
+        counts.sortByDescending { it.total }
+        return RegionSafetySpotResponse.from(counts)
     }
 
     fun findByCode(code: String, limit: Int): RegionSafetySpotsResponse {
         if (limit <= 0) {
             throw InvalidSpotLimitException(limit)
         }
-        val budget: Int = limit.coerceAtMost(MAX_SPOTS)
-        val pointsByType: Map<SafetySpotType, List<SafetySpotPoint>> = pointsByTypeOf(code)
+        val maxCount: Int = minOf(limit, MAX_SPOTS)
+        val pointsByType: Map<SafetySpotType, List<SafetySpotPoint>> = findPointsByType(code)
         val region: RegionName = regionNames.findByCode(code)
-        val found: RegionSafetySpots = RegionSafetySpots.from(code, region, pointsByType, budget)
+        val found: RegionSafetySpots = RegionSafetySpots.from(code, region, pointsByType, maxCount)
         return RegionSafetySpotsResponse.from(found)
     }
 
-    private fun pointsByTypeOf(code: String): Map<SafetySpotType, List<SafetySpotPoint>> {
-        // 지역 코드가 없는 시설은 저장소에 빈 코드로 있다.
-        var storedCode: String = code
-        if (code == UNKNOWN_REGION) {
-            storedCode = ""
-        }
+    private fun findPointsByType(code: String): Map<SafetySpotType, List<SafetySpotPoint>> {
+        val storedCode: String = storedCodeOf(code)
         val pointsByType: LinkedHashMap<SafetySpotType, List<SafetySpotPoint>> = LinkedHashMap()
         for (type in SafetySpotType.entries) {
-            val inRegion: List<SafetySpotPoint> = safetySpots.findByRegion(type, storedCode)
-            if (inRegion.isNotEmpty()) {
-                pointsByType[type] = inRegion
+            val points: List<SafetySpotPoint> = safetySpotSource.findByRegion(type, storedCode)
+            if (points.isNotEmpty()) {
+                pointsByType[type] = points
             }
         }
         return pointsByType
     }
 
-    private fun regionCodeOf(storedCode: String): String {
+    // 지역 코드가 없는 시설은 저장소에 빈 코드로 있다. 화면에는 "unknown" 으로 보여 준다.
+    private fun shownCodeOf(storedCode: String): String {
         val code: String = storedCode.trim()
-        return code.ifEmpty { UNKNOWN_REGION }
-    }
-
-    private fun rowOf(code: String, tally: RegionTally): RegionSafetySpotCount {
-        val region: RegionName = regionNames.findByCode(code)
-        return RegionSafetySpotCount(
-            code = code,
-            sido = region.sido,
-            name = region.name,
-            countsByType = tally.countsByType,
-            fileCount = tally.fileCount,
-            apiCount = tally.apiCount,
-            center = centerOf(code, tally),
-        )
-    }
-
-    private fun centerOf(code: String, tally: RegionTally): GeoPoint? {
-        if (code == UNKNOWN_REGION) {
-            return null
+        if (code.isEmpty()) {
+            return RegionSafetySpotCount.UNKNOWN_CODE
         }
-        return tally.center()
+        return code
+    }
+
+    private fun storedCodeOf(shownCode: String): String {
+        if (shownCode == RegionSafetySpotCount.UNKNOWN_CODE) {
+            return ""
+        }
+        return shownCode
     }
 
     private companion object {
-        const val UNKNOWN_REGION: String = "unknown"
-
         const val MAX_SPOTS: Int = 5_000
     }
 }

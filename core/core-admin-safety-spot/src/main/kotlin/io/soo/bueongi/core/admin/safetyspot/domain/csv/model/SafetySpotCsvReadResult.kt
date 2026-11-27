@@ -2,7 +2,7 @@ package io.soo.bueongi.core.admin.safetyspot.domain.csv.model
 
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 
-data class SafetySpotCsvParseResult(
+data class SafetySpotCsvReadResult(
     val coordSystem: SafetySpotCoordSystem,
     val received: Int,
     val points: List<SafetySpotPoint>,

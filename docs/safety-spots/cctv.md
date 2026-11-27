@@ -74,7 +74,7 @@ flowchart LR
 
 ## 읽는 규칙
 
-업로드 규격은 `core-admin-safety-spot`의 `CctvCsvContract`다.
+업로드 규격은 `core-admin-safety-spot`의 `CctvCsvFormat`다.
 
 1. 좌표는 `WGS84위도`, `WGS84경도`를 읽는다. 둘 중 하나가 없으면 그 행을 버린다.
 2. `설치목적구분`이 생활방범, 다목적, 어린이보호, 차량방범인 행만 남긴다.
