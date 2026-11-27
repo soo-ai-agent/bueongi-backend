@@ -69,8 +69,8 @@ curl http://localhost:8119/api/health
 
 ### IntelliJ에서 실행
 
-프로젝트를 열면 `.run/`에 저장된 실행 구성 "Bueongi Backend (8119)"가 보입니다. 프로파일(`local`), 포트(8119)와
-작업 디렉터리가 들어 있어 실행 버튼만 누르면 됩니다.
+`core:core-app`의 `BueongiApplication`을 실행합니다. 활성 프로파일을 `local`로, 작업 디렉터리를 저장소 루트로
+지정합니다. 포트(8119)와 `.env.local`은 `local` 프로파일이 알아서 잡습니다.
 
 단, 따옴표를 벗긴 `.env.local.properties`(gitignore)가 있어야 합니다. `.env.local`의 따옴표 값(`'$2y$...'`)은
 셸용이라 스프링이 그대로 읽으면 따옴표까지 해시로 받아 기동이 실패합니다. `.env.local`을 바꿨다면 아래 명령으로 다시
