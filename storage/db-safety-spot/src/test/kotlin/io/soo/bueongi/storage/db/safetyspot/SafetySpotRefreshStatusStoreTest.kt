@@ -22,14 +22,14 @@ class SafetySpotRefreshStatusStoreTest {
     fun `같은 종류를 다시 올리면 갱신되고 다른 종류의 기록은 남는다`() {
         val store = SafetySpotRefreshStatusStore()
 
-        store.recordUpload(SafetySpotType.CCTV, replacedCount = 100, atEpochMs = 1L)
-        store.recordUpload(SafetySpotType.BELL, replacedCount = 5, atEpochMs = 2L)
-        store.recordUpload(SafetySpotType.CCTV, replacedCount = 120, atEpochMs = 3L)
+        store.recordUpload(SafetySpotType.CCTV, replacedCount = 100, savedAtMs = 1L)
+        store.recordUpload(SafetySpotType.BELL, replacedCount = 5, savedAtMs = 2L)
+        store.recordUpload(SafetySpotType.CCTV, replacedCount = 120, savedAtMs = 3L)
 
         assertThat(store.findByType(SafetySpotType.CCTV))
-            .isEqualTo(SafetySpotRefreshRecord(atEpochMs = 3L, replacedCount = 120))
+            .isEqualTo(SafetySpotRefreshRecord(savedAtMs = 3L, replacedCount = 120))
         assertThat(store.findByType(SafetySpotType.BELL))
-            .isEqualTo(SafetySpotRefreshRecord(atEpochMs = 2L, replacedCount = 5))
+            .isEqualTo(SafetySpotRefreshRecord(savedAtMs = 2L, replacedCount = 5))
     }
 
     @Test
@@ -42,12 +42,12 @@ class SafetySpotRefreshStatusStoreTest {
 
         pool.execute {
             start.await()
-            repeat(rounds) { store.recordUpload(SafetySpotType.BELL, replacedCount = it, atEpochMs = it.toLong()) }
+            repeat(rounds) { store.recordUpload(SafetySpotType.BELL, replacedCount = it, savedAtMs = it.toLong()) }
             done.countDown()
         }
         pool.execute {
             start.await()
-            repeat(rounds) { store.recordUpload(SafetySpotType.CCTV, replacedCount = it, atEpochMs = it.toLong()) }
+            repeat(rounds) { store.recordUpload(SafetySpotType.CCTV, replacedCount = it, savedAtMs = it.toLong()) }
             done.countDown()
         }
         start.countDown()

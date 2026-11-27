@@ -445,7 +445,7 @@ Tmap 키가 없거나 후보 호출이 전부 실패하면 503 `ROUTE_SEARCH_UNA
 | `OVERDUE_SECONDS`              |    300 | 초   | `SharePolicy.kt`           |
 | `LOCATION_STOPPED_SECONDS`     |     90 | 초   | `SharePolicy.kt`           |
 | `ARRIVAL_RADIUS_METERS`        |     30 | m    | `SharePolicy.kt`           |
-| `VIEWER_WINDOW_SECONDS`        |     12 | 초   | `ShareSessionStore`        |
+| `WATCHED_FOR_SECONDS`          |     12 | 초   | `ShareSessionStore`        |
 | `MAX_ROUTE_PATH_POINTS`        |   4000 | 개   | `SaveRouteRequest`         |
 | `MAX_ROUTE_MARKERS`            |    300 | 개   | `SaveRouteRequest`         |
 | `MAX_PAGE_SIZE`(CSV 쪽)        |    200 | 행   | `SafetySpotCsvFileService` |

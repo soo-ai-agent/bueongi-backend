@@ -13,7 +13,7 @@ interface ShareSessionStore {
 
     fun deleteByToken(token: String)
 
-    fun markViewed(token: String)
+    fun markWatched(token: String)
 
     fun isWatched(token: String): Boolean
 
@@ -23,6 +23,6 @@ interface ShareSessionStore {
 
     companion object {
         // 보호자 폴링 주기(5초)의 2~3배 여유를 유지해야 한다.
-        const val VIEWER_WINDOW_SECONDS: Long = 12L
+        const val WATCHED_FOR_SECONDS: Long = 12L
     }
 }

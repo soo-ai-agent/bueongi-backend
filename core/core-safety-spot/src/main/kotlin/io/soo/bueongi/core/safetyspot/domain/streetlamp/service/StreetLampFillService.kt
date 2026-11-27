@@ -6,8 +6,8 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.fill.service.NATIONWIDE
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotWriter
 import io.soo.bueongi.storage.db.safetyspot.streetlamp.StreetLampSpot
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class StreetLampFillService(
     private val client: StreetLampClient,
     private val cache: SafetySpotRegionCache,
-    private val liveStore: SafetySpotLiveStore,
+    private val safetySpotWriter: SafetySpotWriter,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
 ) {
     private val log: Logger = LoggerFactory.getLogger(StreetLampFillService::class.java)
@@ -54,7 +54,7 @@ class StreetLampFillService(
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         // 좌표를 하나도 못 받았어도 기록해 재수집 주기 동안 다시 받지 않게 한다.
-        liveStore.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
+        safetySpotWriter.replaceRegion(SafetySpotType.STREET_LAMP, NATIONWIDE, points)
         if (points.isEmpty()) {
             log.warn("{} {}건을 받았으나 좌표가 없어 적재 0건 (범위={})", SafetySpotType.STREET_LAMP.label, fetched.size, NATIONWIDE)
             return 0

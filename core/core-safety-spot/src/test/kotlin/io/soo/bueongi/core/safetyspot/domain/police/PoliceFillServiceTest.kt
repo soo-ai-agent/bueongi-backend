@@ -5,8 +5,8 @@ import io.soo.bueongi.client.safemap.SafemapPolicePoint
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.police.service.PoliceFillService
 import io.soo.bueongi.storage.db.safetyspot.police.PoliceSpot
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotWriter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -27,12 +27,12 @@ class PoliceFillServiceTest {
     ) {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(false)
-        val liveStore = FakeLiveStore()
+        val safetySpotWriter = FakeSafetySpotWriter()
 
-        val added: Int = service(dir, client, liveStore).fill()
+        val added: Int = service(dir, client, safetySpotWriter).fill()
 
         assertThat(added).isZero()
-        assertThat(liveStore.appended).isEmpty()
+        assertThat(safetySpotWriter.appended).isEmpty()
         verify(client, never()).fetch()
     }
 
@@ -54,11 +54,11 @@ class PoliceFillServiceTest {
                 ),
             ),
         )
-        val liveStore = FakeLiveStore()
-        val service: PoliceFillService = service(dir, client, liveStore)
+        val safetySpotWriter = FakeSafetySpotWriter()
+        val service: PoliceFillService = service(dir, client, safetySpotWriter)
 
         assertThat(service.fill()).isEqualTo(1)
-        val stored: PoliceSpot = liveStore.appended.single() as PoliceSpot
+        val stored: PoliceSpot = safetySpotWriter.appended.single() as PoliceSpot
         assertThat(stored.name).isEqualTo("역삼지구대")
         assertThat(stored.phone).isEqualTo("02-000-0000")
 
@@ -73,12 +73,12 @@ class PoliceFillServiceTest {
         val client: SafemapPoliceClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetch()).thenReturn(null)
-        val liveStore = FakeLiveStore()
+        val safetySpotWriter = FakeSafetySpotWriter()
 
-        val added: Int = service(dir, client, liveStore).fill()
+        val added: Int = service(dir, client, safetySpotWriter).fill()
 
         assertThat(added).isZero()
-        assertThat(liveStore.appended).isEmpty()
+        assertThat(safetySpotWriter.appended).isEmpty()
     }
 
     @Test
@@ -93,8 +93,8 @@ class PoliceFillServiceTest {
         val service: PoliceFillService =
             PoliceFillService(
                 client = client,
-                cache = SafetySpotRegionCache(FakeLiveStore(), 90L, Clock.systemUTC()),
-                liveStore = FakeLiveStore(),
+                cache = SafetySpotRegionCache(FakeSafetySpotWriter(), 90L, Clock.systemUTC()),
+                safetySpotWriter = FakeSafetySpotWriter(),
                 retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
             )
 
@@ -110,11 +110,11 @@ class PoliceFillServiceTest {
     private fun service(
         dir: Path,
         client: SafemapPoliceClient,
-        liveStore: SafetySpotLiveStore,
+        safetySpotWriter: SafetySpotWriter,
     ): PoliceFillService =
         PoliceFillService(
             client = client,
-            cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
-            liveStore = liveStore,
+            cache = SafetySpotRegionCache(safetySpotWriter, 90L, Clock.systemUTC()),
+            safetySpotWriter = safetySpotWriter,
         )
 }

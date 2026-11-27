@@ -127,8 +127,8 @@ class RedisShareSessionStoreTest {
     }
 
     @Test
-    fun `markViewed 는 viewer 키를 짧은 TTL 로 set, isWatched 는 hasKey 로 판정`() {
-        store.markViewed("tok")
+    fun `markWatched 는 viewer 키를 짧은 TTL 로 set, isWatched 는 hasKey 로 판정`() {
+        store.markWatched("tok")
         verify(valueOps).set(eq("viewer:tok"), eq("1"), eq(Duration.ofSeconds(12)))
 
         whenever(redis.hasKey("viewer:tok")).thenReturn(true)

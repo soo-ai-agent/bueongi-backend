@@ -6,12 +6,12 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotOriginCount
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotRefreshRecord
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.stereotype.Service
 
 @Service
 class SafetySpotStatusService(
-    private val safetySpotSource: SafetySpotSpatialSource,
+    private val safetySpotSource: SafetySpotSource,
     private val refreshStatusStore: SafetySpotRefreshStatusStore,
 ) {
     fun find(): SafetySpotStatusResponse {
@@ -24,7 +24,7 @@ class SafetySpotStatusService(
                     type = type,
                     fileCount = count.fileCount,
                     apiCount = count.apiCount,
-                    lastRefreshAtMs = record?.atEpochMs,
+                    lastRefreshAtMs = record?.savedAtMs,
                     lastRefreshCount = record?.replacedCount,
                 )
             statuses.add(status)

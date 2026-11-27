@@ -5,8 +5,8 @@ import io.soo.bueongi.client.safetydata.streetlamp.StreetLampPoint
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotWriter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -27,12 +27,12 @@ class StreetLampFillServiceTest {
     ) {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(false)
-        val liveStore = FakeLiveStore()
+        val safetySpotWriter = FakeSafetySpotWriter()
 
-        val added: Int = service(dir, client, liveStore).fill()
+        val added: Int = service(dir, client, safetySpotWriter).fill()
 
         assertThat(added).isZero()
-        assertThat(liveStore.appended).isEmpty()
+        assertThat(safetySpotWriter.appended).isEmpty()
         verify(client, never()).fetch()
     }
 
@@ -48,16 +48,16 @@ class StreetLampFillServiceTest {
                 StreetLampPoint(lat = 37.4988, lng = 127.0301),
             ),
         )
-        val liveStore = FakeLiveStore()
-        val service: StreetLampFillService = service(dir, client, liveStore)
+        val safetySpotWriter = FakeSafetySpotWriter()
+        val service: StreetLampFillService = service(dir, client, safetySpotWriter)
 
         assertThat(service.fill()).isEqualTo(2)
-        assertThat(liveStore.appended).hasSize(2)
-        assertThat(liveStore.appended.first().type).isEqualTo(SafetySpotType.STREET_LAMP)
-        assertThat(liveStore.appended.first().address).isEqualTo("역삼동")
+        assertThat(safetySpotWriter.appended).hasSize(2)
+        assertThat(safetySpotWriter.appended.first().type).isEqualTo(SafetySpotType.STREET_LAMP)
+        assertThat(safetySpotWriter.appended.first().address).isEqualTo("역삼동")
 
         assertThat(service.fill()).isZero()
-        assertThat(liveStore.appended).hasSize(2)
+        assertThat(safetySpotWriter.appended).hasSize(2)
         verify(client).fetch()
     }
 
@@ -73,8 +73,8 @@ class StreetLampFillServiceTest {
         val service: StreetLampFillService =
             StreetLampFillService(
                 client = client,
-                cache = SafetySpotRegionCache(FakeLiveStore(), 90L, Clock.systemUTC()),
-                liveStore = FakeLiveStore(),
+                cache = SafetySpotRegionCache(FakeSafetySpotWriter(), 90L, Clock.systemUTC()),
+                safetySpotWriter = FakeSafetySpotWriter(),
                 retryGate = FillFailureCooldown(cooldown = Duration.ofMinutes(10), clock = ticking),
             )
 
@@ -94,22 +94,22 @@ class StreetLampFillServiceTest {
         val client: StreetLampClient = mock()
         whenever(client.isEnabled).thenReturn(true)
         whenever(client.fetch()).thenReturn(null)
-        val liveStore = FakeLiveStore()
+        val safetySpotWriter = FakeSafetySpotWriter()
 
-        val added: Int = service(dir, client, liveStore).fill()
+        val added: Int = service(dir, client, safetySpotWriter).fill()
 
         assertThat(added).isZero()
-        assertThat(liveStore.appended).isEmpty()
+        assertThat(safetySpotWriter.appended).isEmpty()
     }
 
     private fun service(
         dir: Path,
         client: StreetLampClient,
-        liveStore: SafetySpotLiveStore,
+        safetySpotWriter: SafetySpotWriter,
     ): StreetLampFillService =
         StreetLampFillService(
             client = client,
-            cache = SafetySpotRegionCache(liveStore, 90L, Clock.systemUTC()),
-            liveStore = liveStore,
+            cache = SafetySpotRegionCache(safetySpotWriter, 90L, Clock.systemUTC()),
+            safetySpotWriter = safetySpotWriter,
         )
 }

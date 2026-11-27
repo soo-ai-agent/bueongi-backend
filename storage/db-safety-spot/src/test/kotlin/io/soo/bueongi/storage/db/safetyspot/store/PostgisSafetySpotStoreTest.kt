@@ -47,9 +47,9 @@ class PostgisSafetySpotStoreTest {
         val path: List<GeoPoint> = listOf(GeoPoint(37.5000, 127.0000), GeoPoint(37.5000, 127.0100))
         val near: SafetySpotPoint = cctv(37.50020, 127.0050)
         val far: SafetySpotPoint = cctv(37.50040, 127.0050)
-        store.replaceFiles(SafetySpotType.CCTV, listOf(near, far))
+        store.replaceUpload(SafetySpotType.CCTV, listOf(near, far))
 
-        val found: List<SafetySpotPoint> = store.findWithinCorridor(SafetySpotType.CCTV, path, 30.0)
+        val found: List<SafetySpotPoint> = store.findAlongPath(SafetySpotType.CCTV, path, 30.0)
 
         assertThat(found).containsExactly(near)
     }
@@ -57,7 +57,7 @@ class PostgisSafetySpotStoreTest {
     @Test
     fun `같은 좌표는 한 곳으로 세고 외부 API 출처를 남긴다`() {
         val center = GeoPoint(37.5, 127.0)
-        store.replaceFiles(SafetySpotType.SECURITY_LAMP, listOf(lamp(37.5, 127.0, name = "업로드", region = "3000000")))
+        store.replaceUpload(SafetySpotType.SECURITY_LAMP, listOf(lamp(37.5, 127.0, name = "업로드", region = "3000000")))
         store.replaceRegion(SafetySpotType.SECURITY_LAMP, "3110000", listOf(lamp(37.5, 127.0, name = "API", region = "3110000")))
 
         val found: List<SafetySpotPoint> = store.findWithinRadius(SafetySpotType.SECURITY_LAMP, center, 10.0)
@@ -69,14 +69,18 @@ class PostgisSafetySpotStoreTest {
     fun `업로드에 든 지역의 API 조각은 업로드할 때 지운다`() {
         store.replaceRegion(SafetySpotType.SECURITY_LAMP, "5340000", listOf(lamp(35.10, 128.0, name = "API", region = "5340000")))
 
-        store.replaceFiles(SafetySpotType.SECURITY_LAMP, listOf(lamp(35.00, 128.0, name = "업로드", region = "5340000")))
+        store.replaceUpload(SafetySpotType.SECURITY_LAMP, listOf(lamp(35.00, 128.0, name = "업로드", region = "5340000")))
 
         assertThat(store.findByRegion(SafetySpotType.SECURITY_LAMP, "5340000").map { it.name }).containsExactly("업로드")
     }
 
     @Test
     fun `다시 받은 API 결과가 0건이면 기존 지역 데이터를 지우지 않는다`() {
-        store.replaceRegion(SafetySpotType.POLICE, "NATIONWIDE", listOf(SafetySpotPoint.of(SafetySpotType.POLICE, 37.5, 127.0, regionCode = "11110")))
+        store.replaceRegion(
+            SafetySpotType.POLICE,
+            "NATIONWIDE",
+            listOf(SafetySpotPoint.of(SafetySpotType.POLICE, 37.5, 127.0, regionCode = "11110")),
+        )
 
         store.replaceRegion(SafetySpotType.POLICE, "NATIONWIDE", emptyList())
 

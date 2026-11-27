@@ -2,7 +2,7 @@ package io.soo.bueongi.storage.db.safetyspot.store
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.safetyspot.model.RegionSpotTally
+import io.soo.bueongi.storage.db.safetyspot.model.RegionTypeCount
 import io.soo.bueongi.storage.db.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotFreshness
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotOriginCount
@@ -18,7 +18,7 @@ class FakeSafetySpotSource(
     // API 지역 수집 출처로 칠 점들. 색인에는 points 와 합쳐 들어간다 — 실구현처럼 API 점이 앞이다.
     apiPoints: Map<SafetySpotType, List<SafetySpotPoint>> = emptyMap(),
     override val freshness: SafetySpotFreshness? = null,
-) : SafetySpotSpatialSource {
+) : SafetySpotSource {
     private val indexByType: Map<SafetySpotType, GridSpatialIndex>
     private val apiOrigin: MutableSet<SafetySpotPoint> = Collections.newSetFromMap(IdentityHashMap())
 
@@ -40,8 +40,8 @@ class FakeSafetySpotSource(
         return index(type).withinRadius(center, radiusMeters).isNotEmpty()
     }
 
-    override fun findWithinCorridor(type: SafetySpotType, path: List<GeoPoint>, corridorMeters: Double): List<SafetySpotPoint> {
-        return index(type).withinCorridor(path, corridorMeters)
+    override fun findAlongPath(type: SafetySpotType, path: List<GeoPoint>, withinMeters: Double): List<SafetySpotPoint> {
+        return index(type).withinCorridor(path, withinMeters)
     }
 
     override fun findByRegion(type: SafetySpotType, regionCode: String): List<SafetySpotPoint> {
@@ -84,8 +84,8 @@ class FakeSafetySpotSource(
         return SafetySpotOriginCount(fileCount = index(type).size - apiCount, apiCount = apiCount)
     }
 
-    override fun tallyByRegion(): List<RegionSpotTally> {
-        val tallies: ArrayList<RegionSpotTally> = ArrayList()
+    override fun countByRegion(): List<RegionTypeCount> {
+        val tallies: ArrayList<RegionTypeCount> = ArrayList()
         for ((type, index) in indexByType) {
             val byRegion: LinkedHashMap<String, MutableList<SafetySpotPoint>> = LinkedHashMap()
             for (point in index.all) {
@@ -102,7 +102,7 @@ class FakeSafetySpotSource(
         return indexByType[type] ?: EMPTY_INDEX
     }
 
-    private fun tallyOf(regionCode: String, type: SafetySpotType, points: List<SafetySpotPoint>): RegionSpotTally {
+    private fun tallyOf(regionCode: String, type: SafetySpotType, points: List<SafetySpotPoint>): RegionTypeCount {
         var apiCount: Int = 0
         var latSum: Double = 0.0
         var lngSum: Double = 0.0
@@ -117,7 +117,7 @@ class FakeSafetySpotSource(
                 located++
             }
         }
-        return RegionSpotTally(regionCode, type, points.size, apiCount, latSum, lngSum, located)
+        return RegionTypeCount(regionCode, type, points.size, apiCount, latSum, lngSum, located)
     }
 
     companion object {

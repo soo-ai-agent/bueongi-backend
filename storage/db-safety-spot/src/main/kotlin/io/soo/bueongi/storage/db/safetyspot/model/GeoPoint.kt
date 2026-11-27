@@ -12,37 +12,42 @@ data class GeoPoint(
     val lat: Double,
     val lng: Double,
 ) {
+    // 지구를 공으로 보고 두 좌표 사이의 거리를 구한다(하버사인 공식).
     fun distanceMetersTo(other: GeoPoint): Double {
-        val dLat: Double = Math.toRadians(other.lat - lat)
-        val dLng: Double = Math.toRadians(other.lng - lng)
-        val h: Double =
-            sin(dLat / 2) * sin(dLat / 2) +
+        val latDiff: Double = Math.toRadians(other.lat - lat)
+        val lngDiff: Double = Math.toRadians(other.lng - lng)
+        val haversine: Double =
+            sin(latDiff / 2) * sin(latDiff / 2) +
                 cos(Math.toRadians(lat)) * cos(Math.toRadians(other.lat)) *
-                sin(dLng / 2) * sin(dLng / 2)
-        return EARTH_RADIUS_M * 2 * atan2(sqrt(h), sqrt(1 - h))
+                sin(lngDiff / 2) * sin(lngDiff / 2)
+        return EARTH_RADIUS_M * 2 * atan2(sqrt(haversine), sqrt(1 - haversine))
     }
 
-    fun pointTowards(other: GeoPoint, fraction: Double): GeoPoint {
-        return GeoPoint(lat = lat + (other.lat - lat) * fraction, lng = lng + (other.lng - lng) * fraction)
+    // ratio 가 0 이면 이 점, 1 이면 other, 0.5 면 둘의 한가운데다.
+    fun pointBetween(other: GeoPoint, ratio: Double): GeoPoint {
+        return GeoPoint(lat = lat + (other.lat - lat) * ratio, lng = lng + (other.lng - lng) * ratio)
     }
 
-    // 국소 평면(equirectangular) 근사라 도심 규모(수 km)에서만 유효하다.
-    fun projectOnto(a: GeoPoint, b: GeoPoint): SegmentProjection {
-        val self: PlanarPoint = toPlanar(lat)
-        val pa: PlanarPoint = a.toPlanar(lat)
-        val pb: PlanarPoint = b.toPlanar(lat)
-        val dx: Double = pb.x - pa.x
-        val dy: Double = pb.y - pa.y
-        val segLenSq: Double = dx * dx + dy * dy
-        if (segLenSq == 0.0) {
-            return SegmentProjection(t = 0.0, distanceMeters = hypot(self.x - pa.x, self.y - pa.y))
+    // 이 점이 선분(start~end) 옆 어디에 있는지 구한다.
+    // 좁은 범위를 평면으로 보고 계산하므로 도심 규모(수 km)에서만 맞다.
+    fun positionOnLine(start: GeoPoint, end: GeoPoint): LinePosition {
+        val self: FlatPoint = toFlat(lat)
+        val flatStart: FlatPoint = start.toFlat(lat)
+        val flatEnd: FlatPoint = end.toFlat(lat)
+        val lineX: Double = flatEnd.x - flatStart.x
+        val lineY: Double = flatEnd.y - flatStart.y
+        val lineLengthSquared: Double = lineX * lineX + lineY * lineY
+        if (lineLengthSquared == 0.0) {
+            val distanceMeters: Double = hypot(self.x - flatStart.x, self.y - flatStart.y)
+            return LinePosition(progress = 0.0, distanceMeters = distanceMeters)
         }
-        val tRaw: Double = ((self.x - pa.x) * dx + (self.y - pa.y) * dy) / segLenSq
-        val t: Double = max(0.0, min(1.0, tRaw))
-        return SegmentProjection(
-            t = tRaw,
-            distanceMeters = hypot(self.x - (pa.x + t * dx), self.y - (pa.y + t * dy)),
-        )
+
+        val progress: Double = ((self.x - flatStart.x) * lineX + (self.y - flatStart.y) * lineY) / lineLengthSquared
+        // 선분 밖으로 벗어난 자리는 가까운 끝점으로 당겨서 거리를 잰다.
+        val progressOnLine: Double = max(0.0, min(1.0, progress))
+        val nearestX: Double = flatStart.x + progressOnLine * lineX
+        val nearestY: Double = flatStart.y + progressOnLine * lineY
+        return LinePosition(progress = progress, distanceMeters = hypot(self.x - nearestX, self.y - nearestY))
     }
 
     fun distanceMetersToPath(path: List<GeoPoint>): Double {
@@ -52,20 +57,21 @@ data class GeoPoint(
         if (path.size == 1) {
             return distanceMetersTo(path[0])
         }
-        var nearest: Double = Double.POSITIVE_INFINITY
-        for (i in 1 until path.size) {
-            val d: Double = projectOnto(path[i - 1], path[i]).distanceMeters
-            if (d < nearest) {
-                nearest = d
+        var nearestMeters: Double = Double.POSITIVE_INFINITY
+        for (index in 1 until path.size) {
+            val distanceMeters: Double = positionOnLine(path[index - 1], path[index]).distanceMeters
+            if (distanceMeters < nearestMeters) {
+                nearestMeters = distanceMeters
             }
         }
-        return nearest
+        return nearestMeters
     }
 
-    private fun toPlanar(originLat: Double): PlanarPoint {
-        val latScale: Double = Math.toRadians(1.0) * EARTH_RADIUS_M
-        val lngScale: Double = latScale * cos(Math.toRadians(originLat))
-        return PlanarPoint(x = lng * lngScale, y = lat * latScale)
+    // 위경도를 미터 단위 평면 좌표로 바꾼다. 경도 1도의 길이는 위도마다 달라서 기준 위도(baseLat)로 맞춘다.
+    private fun toFlat(baseLat: Double): FlatPoint {
+        val metersPerLatDegree: Double = Math.toRadians(1.0) * EARTH_RADIUS_M
+        val metersPerLngDegree: Double = metersPerLatDegree * cos(Math.toRadians(baseLat))
+        return FlatPoint(x = lng * metersPerLngDegree, y = lat * metersPerLatDegree)
     }
 
     companion object {
@@ -92,14 +98,16 @@ data class GeoPoint(
 }
 
 fun List<GeoPoint>.pathLengthMeters(): Double {
-    var total: Double = 0.0
-    for (i in 1 until size) {
-        total += this[i - 1].distanceMetersTo(this[i])
+    var totalMeters: Double = 0.0
+    for (index in 1 until size) {
+        totalMeters += this[index - 1].distanceMetersTo(this[index])
     }
-    return total
+    return totalMeters
 }
 
-fun List<GeoPoint>.pickPointsAlong(spacingMeters: Double, limit: Int): List<GeoPoint> {
+// 경로를 따라 gapMeters 마다 한 점씩, 처음과 끝을 넣어 limit 개까지 고른다.
+// 경로가 길어 limit 개로 모자라면 간격을 넓혀 경로 전체에 고르게 편다.
+fun List<GeoPoint>.pickPointsAlong(gapMeters: Double, limit: Int): List<GeoPoint> {
     if (isEmpty()) {
         return emptyList()
     }
@@ -110,37 +118,39 @@ fun List<GeoPoint>.pickPointsAlong(spacingMeters: Double, limit: Int): List<GeoP
     if (totalMeters <= 0) {
         return listOf(first(), last())
     }
-    val step: Double = max(spacingMeters, totalMeters / (limit - 1))
+    val usedGapMeters: Double = max(gapMeters, totalMeters / (limit - 1))
     val picked: ArrayList<GeoPoint> = ArrayList()
     picked.add(first())
-    var walked: Double = 0.0
-    var nextAt: Double = step
-    for (i in 1 until size) {
-        val from: GeoPoint = this[i - 1]
-        val to: GeoPoint = this[i]
-        val segmentMeters: Double = from.distanceMetersTo(to)
-        while (nextAt < walked + segmentMeters && picked.size < limit - 1) {
-            picked.add(from.pointTowards(to, (nextAt - walked) / segmentMeters))
-            nextAt += step
+    var walkedMeters: Double = 0.0
+    var nextPickAtMeters: Double = usedGapMeters
+    for (index in 1 until size) {
+        val from: GeoPoint = this[index - 1]
+        val to: GeoPoint = this[index]
+        val sectionMeters: Double = from.distanceMetersTo(to)
+        while (nextPickAtMeters < walkedMeters + sectionMeters && picked.size < limit - 1) {
+            val ratio: Double = (nextPickAtMeters - walkedMeters) / sectionMeters
+            picked.add(from.pointBetween(to, ratio))
+            nextPickAtMeters += usedGapMeters
         }
-        walked += segmentMeters
+        walkedMeters += sectionMeters
     }
     picked.add(last())
     return picked
 }
 
+// 이 경로 가운데 other 경로에서 withinMeters 안으로 붙어 가는 구간의 길이를 더한다.
 fun List<GeoPoint>.overlapMetersWith(other: List<GeoPoint>, withinMeters: Double): Double {
     if (size < 2 || other.size < 2) {
         return 0.0
     }
-    var overlap: Double = 0.0
-    for (i in 1 until size) {
-        val a: GeoPoint = this[i - 1]
-        val b: GeoPoint = this[i]
-        val mid: GeoPoint = GeoPoint((a.lat + b.lat) / 2, (a.lng + b.lng) / 2)
-        if (mid.distanceMetersToPath(other) <= withinMeters) {
-            overlap += a.distanceMetersTo(b)
+    var overlapMeters: Double = 0.0
+    for (index in 1 until size) {
+        val from: GeoPoint = this[index - 1]
+        val to: GeoPoint = this[index]
+        val middle: GeoPoint = GeoPoint((from.lat + to.lat) / 2, (from.lng + to.lng) / 2)
+        if (middle.distanceMetersToPath(other) <= withinMeters) {
+            overlapMeters += from.distanceMetersTo(to)
         }
     }
-    return overlap
+    return overlapMeters
 }

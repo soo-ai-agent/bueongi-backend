@@ -18,8 +18,8 @@ core 가 보는 것은 **Store 인터페이스(또는 JpaRepository)와 storage 
 ## Store 인터페이스 — 질의로 말하고, 저장 모델을 돌려준다
 
 ```kotlin
-// storage/db-safety-spot/…/storage/db/safetyspot/store/SafetySpotSpatialSource.kt
-interface SafetySpotSpatialSource {
+// storage/db-safety-spot/…/storage/db/safetyspot/store/SafetySpotSource.kt
+interface SafetySpotSource {
     fun findAlongPath(type: SafetySpotType, path: List<GeoPoint>, withinMeters: Int): List<SafetySpot>
 
     fun findNear(type: SafetySpotType, center: GeoPoint, radiusMeters: Int): List<SafetySpot>
@@ -41,7 +41,7 @@ interface SafetySpotSpatialSource {
 
 ```
 storage/db-safety-spot/…/store/
-  SafetySpotSpatialSource.kt          인터페이스 — core 가 아는 유일한 이름
+  SafetySpotSource.kt          인터페이스 — core 가 아는 유일한 이름
   PostgisSafetySpotSpatialSource.kt   구현 — JdbcTemplate + 네이티브 SQL (internal 이어도 된다)
 storage/db-share/…/
   ShareSessionStore.kt                인터페이스
@@ -66,7 +66,7 @@ storage/db-share/…/
 @Repository
 internal class PostgisSafetySpotSpatialSource(
     private val jdbcTemplate: NamedParameterJdbcTemplate,
-) : SafetySpotSpatialSource {
+) : SafetySpotSource {
     override fun findNear(type: SafetySpotType, center: GeoPoint, radiusMeters: Int): List<SafetySpot> {
         val params: MapSqlParameterSource = MapSqlParameterSource()
             .addValue("type", type.name)
@@ -157,20 +157,20 @@ interface TodoRepository : JpaRepository<TodoEntity, Long> {
 
 ## 적발 신호
 
-| 신호 | 문제 | 심각도 |
-|---|---|---|
-| 소유자 조건 없이 id 로만 조회 후 코드에서 비교 | 권한 우회 위험 | Critical |
-| 서비스·컨트롤러에 쿼리 문자열 | 저장소 격리 붕괴 | Critical |
-| Store 인터페이스 시그니처에 JTS·Hibernate·`ResultSet`·인덱스 자료구조 | 저장 기술이 core 로 샘 | Critical |
-| 조각 교체의 삭제와 삽입이 다른 트랜잭션 | 실패 시 기존 데이터가 사라진다 | Critical |
-| 벌크 `@Modifying` 에 컨텍스트 정리 없음 | 낡은 엔티티 사용 | Critical |
-| 수십만 행 적재를 JPA `saveAll`(IDENTITY)로 | 배치가 꺼져 왕복 폭증 | Important |
-| `ST_Distance(...) < r` 로 거리 조건 | 인덱스를 못 탐 | Important |
-| 경로 좌표마다 공간 쿼리 | N+1 | Important |
-| 상한 없는 `findAll`·전체 메모리 적재 후 거르기 | 메모리·응답 폭증 | Important |
-| 루프 안 단건 조회 | N+1 | Important |
-| 이름이 의도를 감춤(`findData`) | 가독성 | Important |
-| 조건이 많아 이름이 비대해진 메서드 | Specification 미분리 | Important |
+| 신호                                                                  | 문제                           | 심각도    |
+|-----------------------------------------------------------------------|--------------------------------|-----------|
+| 소유자 조건 없이 id 로만 조회 후 코드에서 비교                        | 권한 우회 위험                 | Critical  |
+| 서비스·컨트롤러에 쿼리 문자열                                         | 저장소 격리 붕괴               | Critical  |
+| Store 인터페이스 시그니처에 JTS·Hibernate·`ResultSet`·인덱스 자료구조 | 저장 기술이 core 로 샘         | Critical  |
+| 조각 교체의 삭제와 삽입이 다른 트랜잭션                               | 실패 시 기존 데이터가 사라진다 | Critical  |
+| 벌크 `@Modifying` 에 컨텍스트 정리 없음                               | 낡은 엔티티 사용               | Critical  |
+| 수십만 행 적재를 JPA `saveAll`(IDENTITY)로                            | 배치가 꺼져 왕복 폭증          | Important |
+| `ST_Distance(...) < r` 로 거리 조건                                   | 인덱스를 못 탐                 | Important |
+| 경로 좌표마다 공간 쿼리                                               | N+1                            | Important |
+| 상한 없는 `findAll`·전체 메모리 적재 후 거르기                        | 메모리·응답 폭증               | Important |
+| 루프 안 단건 조회                                                     | N+1                            | Important |
+| 이름이 의도를 감춤(`findData`)                                        | 가독성                         | Important |
+| 조건이 많아 이름이 비대해진 메서드                                    | Specification 미분리           | Important |
 
 ## 체크리스트
 

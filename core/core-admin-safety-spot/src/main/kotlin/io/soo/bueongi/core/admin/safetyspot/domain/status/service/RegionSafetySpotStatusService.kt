@@ -7,19 +7,19 @@ import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionName
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpotCount
 import io.soo.bueongi.core.admin.safetyspot.domain.status.model.RegionSafetySpots
 import io.soo.bueongi.core.enums.SafetySpotType
-import io.soo.bueongi.storage.db.safetyspot.model.RegionSpotTally
+import io.soo.bueongi.storage.db.safetyspot.model.RegionTypeCount
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.stereotype.Service
 
 @Service
 class RegionSafetySpotStatusService(
-    private val safetySpotSource: SafetySpotSpatialSource,
+    private val safetySpotSource: SafetySpotSource,
     private val regionNames: RegionNameCatalog,
 ) {
     fun list(): List<RegionSafetySpotResponse> {
-        val rowsByCode: LinkedHashMap<String, ArrayList<RegionSpotTally>> = LinkedHashMap()
-        for (row in safetySpotSource.tallyByRegion()) {
+        val rowsByCode: LinkedHashMap<String, ArrayList<RegionTypeCount>> = LinkedHashMap()
+        for (row in safetySpotSource.countByRegion()) {
             val code: String = shownCodeOf(row.regionCode)
             rowsByCode.getOrPut(code) { ArrayList() }.add(row)
         }

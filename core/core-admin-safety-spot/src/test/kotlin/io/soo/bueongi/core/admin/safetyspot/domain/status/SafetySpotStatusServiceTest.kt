@@ -25,7 +25,7 @@ class SafetySpotStatusServiceTest {
             )
         val holder =
             SafetySpotRefreshStatusStore().apply {
-                recordUpload(SafetySpotType.CCTV, replacedCount = 372, atEpochMs = 1_700_000_000_000L)
+                recordUpload(SafetySpotType.CCTV, replacedCount = 372, savedAtMs = 1_700_000_000_000L)
             }
 
         val summary = SafetySpotStatusService(source, holder).find()
@@ -87,7 +87,7 @@ class SafetySpotStatusServiceTest {
         val source = FakeSafetySpotSource(mapOf(SafetySpotType.PEDESTRIAN_SIGNAL to points(SafetySpotType.PEDESTRIAN_SIGNAL, 2)))
         val holder =
             SafetySpotRefreshStatusStore().apply {
-                recordUpload(SafetySpotType.CCTV, replacedCount = 315_459, atEpochMs = 1L)
+                recordUpload(SafetySpotType.CCTV, replacedCount = 315_459, savedAtMs = 1L)
             }
 
         val summary = SafetySpotStatusService(source, holder).find()

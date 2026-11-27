@@ -11,7 +11,7 @@ import io.soo.bueongi.storage.db.safetyspot.model.SafePath
 import io.soo.bueongi.storage.db.safetyspot.model.overlapMetersWith
 import io.soo.bueongi.storage.db.safetyspot.model.pathLengthMeters
 import io.soo.bueongi.storage.db.safetyspot.model.pickPointsAlong
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import io.soo.bueongi.support.util.zonedAt
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
 
 @Component
 class SafetyScorer(
-    private val safetySpots: SafetySpotSpatialSource,
+    private val safetySpots: SafetySpotSource,
     private val weightsCatalog: SafetyWeightsCatalog = SafetyWeightsCatalog(),
     private val clock: Clock = Clock.systemUTC(),
 ) {
@@ -120,11 +120,11 @@ class SafetyScorer(
     }
 
     private fun countWithinCorridor(type: SafetySpotType, path: List<GeoPoint>): Int {
-        return safetySpots.findWithinCorridor(type, path, DEFAULT_CORRIDOR_METERS).size
+        return safetySpots.findAlongPath(type, path, DEFAULT_CORRIDOR_METERS).size
     }
 
     private fun countRiskNear(path: List<GeoPoint>): Int {
-        return safetySpots.findWithinCorridor(SafetySpotType.CRIME_PRONE_AREA, path, RISK_CORRIDOR_METERS).size
+        return safetySpots.findAlongPath(SafetySpotType.CRIME_PRONE_AREA, path, RISK_CORRIDOR_METERS).size
     }
 
     private fun safePathOverlapRatio(path: List<GeoPoint>, lengthMeters: Double): Double {

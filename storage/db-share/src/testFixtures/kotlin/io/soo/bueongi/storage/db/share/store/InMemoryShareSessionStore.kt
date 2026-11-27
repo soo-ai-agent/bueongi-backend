@@ -1,7 +1,7 @@
 package io.soo.bueongi.storage.db.share.store
 
 import io.soo.bueongi.storage.db.share.model.ShareSession
-import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.VIEWER_WINDOW_SECONDS
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.WATCHED_FOR_SECONDS
 import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -33,13 +33,13 @@ class InMemoryShareSessionStore(
         viewers.remove(token)
     }
 
-    override fun markViewed(token: String) {
+    override fun markWatched(token: String) {
         viewers[token] = clock.instant()
     }
 
     override fun isWatched(token: String): Boolean {
         val last: Instant = viewers[token] ?: return false
-        if (clock.instant().isBefore(last.plusSeconds(VIEWER_WINDOW_SECONDS))) {
+        if (clock.instant().isBefore(last.plusSeconds(WATCHED_FOR_SECONDS))) {
             return true
         }
         viewers.remove(token, last)

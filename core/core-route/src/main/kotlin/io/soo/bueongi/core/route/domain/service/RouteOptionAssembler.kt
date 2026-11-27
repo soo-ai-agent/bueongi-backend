@@ -9,13 +9,13 @@ import io.soo.bueongi.core.route.domain.model.RouteTagVariant
 import io.soo.bueongi.core.route.domain.model.ScoredRoute
 import io.soo.bueongi.core.route.domain.safety.model.SafetyScoreDetail
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.stereotype.Component
 
 @Component
 class RouteOptionAssembler(
     private val markerBuilder: RouteMarkerBuilder,
-    private val safetySpotSource: SafetySpotSpatialSource,
+    private val safetySpotSource: SafetySpotSource,
     private val routeTypeCatalog: RouteTypeCatalog,
 ) {
     internal fun assemble(scoredRoutes: List<ScoredRoute>, origin: GeoPoint, destination: GeoPoint): List<RouteOption> {

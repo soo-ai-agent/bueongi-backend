@@ -121,7 +121,7 @@ class ShareService(
         val session: ShareSession =
             store.findByToken(token)
                 ?: return LocationView.EXPIRED
-        store.markViewed(token)
+        store.markWatched(token)
         return locationViewOf(session)
     }
 

@@ -66,10 +66,10 @@
 
 모든 종류가 같이 쓰는 것은 종류 폴더 밖에 둔다. 부모 타입 `SafetySpotPoint`와 좌표는 `model/`이고, DB 저장과 조회
 (`PostgisSafetySpotStore`), 기동 때 CDN 반영(`SafetySpotCdnFiles`, `SafetySpotCdnSync`), 재수집 주기 판정
-(`SafetySpotRegionCache`), 지역 코드 찾기(`RegionLocator`)는 `store/`다. 테이블은
+(`SafetySpotRegionCache`), 지역 코드 찾기(`RegionCodeFinder`)는 `store/`다. 테이블은
 `src/main/resources/db/migration/V202611251400__create_safety_spot.sql`(Flyway)이 만든다.
 
-core 는 DB 를 직접 모른다. 조회는 `SafetySpotSpatialSource`, 쓰기는 `SafetySpotLiveStore` 인터페이스만 본다. 테스트는
+core 는 DB 를 직접 모른다. 조회는 `SafetySpotSource`, 쓰기는 `SafetySpotWriter` 인터페이스만 본다. 테스트는
 메모리 대역(`FakeSafetySpotSource`)을 쓴다.
 
 CSV 를 해석하는 코드는 storage 가 아니라 core 의 시설별 형식이다:
@@ -186,13 +186,13 @@ sequenceDiagram
     Admin->>Upload: 보안등 CSV 업로드
     Upload->>Upload: 헤더 해석, 좌표 변환, 빠진 지역 코드 채우기
     Upload->>Disk: facility-uploads/originals/security_lamp.csv (원본)
-    Upload->>DB: upload, cdn 조각 교체 + 업로드에 든 지역의 API 조각 삭제 (replaceFiles)
+    Upload->>DB: upload, cdn 조각 교체 + 업로드에 든 지역의 API 조각 삭제 (replaceUpload)
 ```
 
 업로드는 그 종류의 **`upload`와 `cdn` 조각을 대신한다.** 업로드에 든 지역 코드와 같은 API 조각은 지운다. 같은 시설을
 좌표만 조금 달리 두 번 세지 않기 위해서다. 다른 지역의 API 조각은 남는다.
 
-지역 코드가 빈 행은 `RegionLocator`로 채운다. 20km 안에서 지역 코드가 있는 가장 가까운 CCTV 를 KNN(`<->`)으로 찾고,
+지역 코드가 빈 행은 `RegionCodeFinder`로 채운다. 20km 안에서 지역 코드가 있는 가장 가까운 CCTV 를 KNN(`<->`)으로 찾고,
 약 1km 칸(0.01도)마다 한 번만 묻는다. CCTV 가 먼저 올라가 있어야 찾을 수 있다.
 
 `.gz`로 올려도 되고(한도 128MB, `BUEONGI_FACILITY_UPLOAD_MAX_SIZE`), CCTV 원본은 압축 그대로 올린다. 원본 CSV 는
@@ -241,17 +241,17 @@ sequenceDiagram
 
 ## 5. 조회: DB 공간 질의
 
-core 는 `SafetySpotSpatialSource`의 질의 메서드만 부른다. 구현은 `PostgisSafetySpotStore`다.
+core 는 `SafetySpotSource`의 질의 메서드만 부른다. 구현은 `PostgisSafetySpotStore`다.
 
 | 메서드                  | 하는 일                                                   |
 |-------------------------|-----------------------------------------------------------|
-| `findWithinCorridor`    | 경로 양옆 몇 m 안의 시설(`ST_DWithin`, geography 라 미터) |
+| `findAlongPath`         | 경로 양옆 몇 m 안의 시설(`ST_DWithin`, geography 라 미터) |
 | `findWithinRadius`      | 한 점에서 반경 안의 시설                                  |
 | `existsWithinRadius`    | 반경 안에 하나라도 있는지                                 |
 | `findByRegion`          | 지역 코드 하나의 시설                                     |
 | `findNearestWithRegion` | 지역 코드가 있는 가장 가까운 시설(KNN `<->`)              |
 | `countByOrigin`         | 파일 출처와 API 출처 건수(관리자 현황)                    |
-| `tallyByRegion`         | 지역별 집계(관리자 지역 현황)                             |
+| `countByRegion`         | 지역별 집계(관리자 지역 현황)                             |
 
 같은 좌표(소수 5자리)는 `DISTINCT ON (lat_e5, lng_e5)`로 한 곳만 돌려준다. 겹치면 **더 최신인 API 출처가 남는다**
 (`ORDER BY ... from_api DESC`).

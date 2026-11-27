@@ -33,7 +33,7 @@ abstract class SafetySpotCsvFormat(
     private val cameraCountHeaders: List<String> = emptyList(),
     private val phoneHeaders: List<String> = emptyList(),
     // 개방자치단체코드(7자리) 머리글만 받는다 — 행정표준 시군구코드(5자리)는 체계가 달라
-    // 지역 조회(RegionLocator → 보안등 API)와 섞이면 어긋나므로 후보에 넣지 않는다.
+    // 지역 조회(RegionCodeFinder → 보안등 API)와 섞이면 어긋나므로 후보에 넣지 않는다.
     private val regionCodeHeaders: List<String> = listOf("개방자치단체코드", "제공기관코드"),
 ) {
     fun findColumns(header: List<String>): CsvColumns {
@@ -64,8 +64,8 @@ abstract class SafetySpotCsvFormat(
         )
     }
 
-    // regionCodeFinder 가 null 이면 지역 코드 칸이 빈 행을 빈 채로 둔다 — 미리보기는 지역 코드를 쓰지 않는다.
-    fun readRow(row: List<String>, columns: CsvColumns, regionCodeFinder: RegionCodeFinder?): CsvRowResult {
+    // cellRegionCodeFinder 가 null 이면 지역 코드 칸이 빈 행을 빈 채로 둔다 — 미리보기는 지역 코드를 쓰지 않는다.
+    fun readRow(row: List<String>, columns: CsvColumns, cellRegionCodeFinder: CellRegionCodeFinder?): CsvRowResult {
         val location: GeoPoint = readLocation(row, columns) ?: return CsvRowSkipped(CsvSkipReason.NO_COORDINATE)
         val skipReason: CsvSkipReason? = skipReasonOf(row, columns)
         if (skipReason != null) {
@@ -81,7 +81,7 @@ abstract class SafetySpotCsvFormat(
                 cameraCount = columns.cameraCount(row),
                 address = columns.address(row),
                 phone = columns.phone(row),
-                regionCode = readRegionCode(row, columns, location, regionCodeFinder),
+                regionCode = readRegionCode(row, columns, location, cellRegionCodeFinder),
             )
         return CsvRowLoaded(point)
     }
@@ -114,16 +114,16 @@ abstract class SafetySpotCsvFormat(
         row: List<String>,
         columns: CsvColumns,
         location: GeoPoint,
-        regionCodeFinder: RegionCodeFinder?,
+        cellRegionCodeFinder: CellRegionCodeFinder?,
     ): String? {
         val written: String? = columns.regionCode(row)
         if (written != null) {
             return written
         }
-        if (regionCodeFinder == null) {
+        if (cellRegionCodeFinder == null) {
             return null
         }
-        return regionCodeFinder.find(location)
+        return cellRegionCodeFinder.find(location)
     }
 
     // 같은 머리글이 두 번 나오면 앞의 것을 쓴다.

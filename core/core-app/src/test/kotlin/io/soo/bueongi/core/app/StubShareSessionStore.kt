@@ -12,7 +12,7 @@ internal class StubShareSessionStore(
 
     override fun deleteByToken(token: String) = throw AssertionError("이 테스트는 delete 를 호출하지 않는다")
 
-    override fun markViewed(token: String) = throw AssertionError("이 테스트는 markViewed 를 호출하지 않는다")
+    override fun markWatched(token: String) = throw AssertionError("이 테스트는 markWatched 를 호출하지 않는다")
 
     override fun isWatched(token: String): Boolean = throw AssertionError("이 테스트는 isWatched 를 호출하지 않는다")
 

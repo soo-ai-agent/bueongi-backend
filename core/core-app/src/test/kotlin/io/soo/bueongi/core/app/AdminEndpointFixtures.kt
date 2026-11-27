@@ -9,7 +9,7 @@ import io.soo.bueongi.core.share.domain.service.ShareService
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRefreshStatusStore
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredCoord
 import io.soo.bueongi.storage.db.share.model.StoredLocation
@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Bean
 @TestConfiguration
 class AdminEndpointFixtures {
     @Bean
-    fun safetySpotSource(): SafetySpotSpatialSource {
+    fun safetySpotSource(): SafetySpotSource {
         // 저장소가 같은 좌표를 하나로 세므로 지점을 달리한다.
         val cctv: ArrayList<SafetySpotPoint> = ArrayList()
         for (i in 0 until 2) {
@@ -33,16 +33,16 @@ class AdminEndpointFixtures {
     }
 
     @Bean
-    fun safetySpotStatusService(source: SafetySpotSpatialSource): SafetySpotStatusService {
+    fun safetySpotStatusService(source: SafetySpotSource): SafetySpotStatusService {
         val holder =
             SafetySpotRefreshStatusStore().apply {
-                recordUpload(SafetySpotType.CCTV, replacedCount = 2, atEpochMs = 1L)
+                recordUpload(SafetySpotType.CCTV, replacedCount = 2, savedAtMs = 1L)
             }
         return SafetySpotStatusService(source, holder)
     }
 
     @Bean
-    fun regionSafetySpotStatusService(source: SafetySpotSpatialSource): RegionSafetySpotStatusService =
+    fun regionSafetySpotStatusService(source: SafetySpotSource): RegionSafetySpotStatusService =
         RegionSafetySpotStatusService(source, RegionNameCatalog(jacksonObjectMapper()))
 
     @Bean

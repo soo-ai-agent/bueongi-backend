@@ -7,7 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.soo.bueongi.storage.db.share.model.ShareSession
 import io.soo.bueongi.storage.db.share.model.StoredLocation
 import io.soo.bueongi.storage.db.share.model.StoredRoute
-import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.VIEWER_WINDOW_SECONDS
+import io.soo.bueongi.storage.db.share.store.ShareSessionStore.Companion.WATCHED_FOR_SECONDS
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
@@ -30,48 +30,50 @@ class RedisShareSessionStore(
 
     override fun save(session: ShareSession) {
         onRedis("save") {
-            val ttl: Duration = ttlFrom(session.expiresAt)
-            val shareKey: String = shareKey(session.token)
-            val shareFields: Map<String, String> =
-                buildMap {
-                    put(FIELD_CREATED_AT, session.createdAt.toString())
-                    put(FIELD_EXPIRES_AT, session.expiresAt.toString())
-                    put(FIELD_OWNER_SECRET, session.ownerSecret)
-                    val expectedArrivalAt: Instant? = session.expectedArrivalAt
-                    if (expectedArrivalAt != null) {
-                        put(FIELD_EXPECTED_ARRIVAL_AT, expectedArrivalAt.toString())
-                    }
-                }
-            redis.opsForHash<String, String>().putAll(shareKey, shareFields)
-            redis.expire(shareKey, ttl)
-
-            val location: StoredLocation? = session.location
-            if (location != null) {
-                val locKey: String = locationKey(session.token)
-                val fields: Map<String, String> =
-                    buildMap {
-                        put(FIELD_LAT, location.lat.toString())
-                        put(FIELD_LNG, location.lng.toString())
-                        put(FIELD_UPDATED_AT, location.updatedAt.toString())
-                        val remainingMeters: Double? = location.remainingMeters
-                        if (remainingMeters != null) {
-                            put(FIELD_REMAINING_METERS, remainingMeters.toString())
-                        }
-                        val remainingSeconds: Double? = location.remainingSeconds
-                        if (remainingSeconds != null) {
-                            put(FIELD_REMAINING_SECONDS, remainingSeconds.toString())
-                        }
-                    }
-                redis.opsForHash<String, String>().putAll(locKey, fields)
-                redis.expire(locKey, ttl)
-            }
-
-            val route: StoredRoute? = session.route
-            if (route != null) {
-                val routeKey: String = routeKey(session.token)
-                redis.opsForValue().set(routeKey, objectMapper.writeValueAsString(route), ttl)
-            }
+            val timeLeft: Duration = timeLeftUntil(session.expiresAt)
+            saveShare(session, timeLeft)
+            saveLocation(session, timeLeft)
+            saveRoute(session, timeLeft)
         }
+    }
+
+    private fun saveShare(session: ShareSession, timeLeft: Duration) {
+        val fields: HashMap<String, String> = HashMap()
+        fields[FIELD_CREATED_AT] = session.createdAt.toString()
+        fields[FIELD_EXPIRES_AT] = session.expiresAt.toString()
+        fields[FIELD_OWNER_SECRET] = session.ownerSecret
+        val expectedArrivalAt: Instant? = session.expectedArrivalAt
+        if (expectedArrivalAt != null) {
+            fields[FIELD_EXPECTED_ARRIVAL_AT] = expectedArrivalAt.toString()
+        }
+        val key: String = shareKey(session.token)
+        redis.opsForHash<String, String>().putAll(key, fields)
+        redis.expire(key, timeLeft)
+    }
+
+    private fun saveLocation(session: ShareSession, timeLeft: Duration) {
+        val location: StoredLocation = session.location ?: return
+        val fields: HashMap<String, String> = HashMap()
+        fields[FIELD_LAT] = location.lat.toString()
+        fields[FIELD_LNG] = location.lng.toString()
+        fields[FIELD_UPDATED_AT] = location.updatedAt.toString()
+        val remainingMeters: Double? = location.remainingMeters
+        if (remainingMeters != null) {
+            fields[FIELD_REMAINING_METERS] = remainingMeters.toString()
+        }
+        val remainingSeconds: Double? = location.remainingSeconds
+        if (remainingSeconds != null) {
+            fields[FIELD_REMAINING_SECONDS] = remainingSeconds.toString()
+        }
+        val key: String = locationKey(session.token)
+        redis.opsForHash<String, String>().putAll(key, fields)
+        redis.expire(key, timeLeft)
+    }
+
+    private fun saveRoute(session: ShareSession, timeLeft: Duration) {
+        val route: StoredRoute = session.route ?: return
+        val routeJson: String = objectMapper.writeValueAsString(route)
+        redis.opsForValue().set(routeKey(session.token), routeJson, timeLeft)
     }
 
     override fun findByToken(token: String): ShareSession? {
@@ -83,10 +85,16 @@ class RedisShareSessionStore(
         if (shareHash.isEmpty()) {
             return null
         }
-        val createdAt: Instant = shareHash[FIELD_CREATED_AT]?.let(Instant::parse) ?: return null
-        val expiresAt: Instant = shareHash[FIELD_EXPIRES_AT]?.let(Instant::parse) ?: return null
+        val createdAtText: String = shareHash[FIELD_CREATED_AT] ?: return null
+        val expiresAtText: String = shareHash[FIELD_EXPIRES_AT] ?: return null
         val ownerSecret: String = shareHash[FIELD_OWNER_SECRET] ?: return null
-        val expectedArrivalAt: Instant? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]?.let(::parseInstantOrNull)
+        val createdAt: Instant = Instant.parse(createdAtText)
+        val expiresAt: Instant = Instant.parse(expiresAtText)
+        var expectedArrivalAt: Instant? = null
+        val expectedArrivalAtText: String? = shareHash[FIELD_EXPECTED_ARRIVAL_AT]
+        if (expectedArrivalAtText != null) {
+            expectedArrivalAt = toInstantOrNull(expectedArrivalAtText)
+        }
 
         return ShareSession(
             token = token,
@@ -103,7 +111,8 @@ class RedisShareSessionStore(
         val hash: Map<String, String> = redis.opsForHash<String, String>().entries(locationKey(token))
         val lat: Double = hash[FIELD_LAT]?.toDoubleOrNull() ?: return null
         val lng: Double = hash[FIELD_LNG]?.toDoubleOrNull() ?: return null
-        val updatedAt: Instant = hash[FIELD_UPDATED_AT]?.let(::parseInstantOrNull) ?: return null
+        val updatedAtText: String = hash[FIELD_UPDATED_AT] ?: return null
+        val updatedAt: Instant = toInstantOrNull(updatedAtText) ?: return null
         // 배포 전에 옛 이름으로 저장된 위치(공유 수명 최대 3시간)도 남은 거리·시간을 잃지 않게 remaining_m·remaining_s 도 읽는다.
         val remainingMeters: String? = hash[FIELD_REMAINING_METERS] ?: hash["remaining_m"]
         val remainingSeconds: String? = hash[FIELD_REMAINING_SECONDS] ?: hash["remaining_s"]
@@ -127,7 +136,7 @@ class RedisShareSessionStore(
         }
     }
 
-    private fun parseInstantOrNull(value: String): Instant? {
+    private fun toInstantOrNull(value: String): Instant? {
         return try {
             Instant.parse(value)
         } catch (e: DateTimeParseException) {
@@ -142,9 +151,9 @@ class RedisShareSessionStore(
         }
     }
 
-    override fun markViewed(token: String) {
-        onRedis("markViewed") {
-            redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(VIEWER_WINDOW_SECONDS))
+    override fun markWatched(token: String) {
+        onRedis("markWatched") {
+            redis.opsForValue().set(viewerKey(token), "1", Duration.ofSeconds(WATCHED_FOR_SECONDS))
         }
     }
 
@@ -153,14 +162,12 @@ class RedisShareSessionStore(
     }
 
     override fun countActive(): Int {
-        var count: Int = 0
-        forEachSessionKey { count++ }
-        return count
+        return findSessionKeys().size
     }
 
     override fun findActive(): List<ShareSession> {
         val sessions: ArrayList<ShareSession> = ArrayList()
-        forEachSessionKey { sessionKey ->
+        for (sessionKey in findSessionKeys()) {
             val token: String = sessionKey.removePrefix(SESSION_KEY_PREFIX)
             val session: ShareSession? = findByToken(token)
             if (session != null) {
@@ -170,15 +177,17 @@ class RedisShareSessionStore(
         return sessions
     }
 
-    // KEYS 금지 — 운영 Redis 를 막는다.
-    private fun forEachSessionKey(action: (String) -> Unit) {
-        onRedis("scanSessions") {
-            redis.scan(ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build())
-                .use { cursor ->
-                    while (cursor.hasNext()) {
-                        action(cursor.next())
-                    }
+    // KEYS 명령은 끝날 때까지 Redis 를 멈춰 세우므로 쓰지 않는다. SCAN 으로 조금씩 훑는다.
+    private fun findSessionKeys(): List<String> {
+        return onRedis("scanSessions") {
+            val keys: ArrayList<String> = ArrayList()
+            val scanOptions: ScanOptions = ScanOptions.scanOptions().match(SESSION_KEY_PATTERN).count(SCAN_BATCH).build()
+            redis.scan(scanOptions).use { cursor ->
+                while (cursor.hasNext()) {
+                    keys.add(cursor.next())
                 }
+            }
+            keys
         }
     }
 
@@ -192,13 +201,13 @@ class RedisShareSessionStore(
         }
     }
 
-    private fun ttlFrom(expiresAt: Instant): Duration {
-        val remaining: Duration = Duration.between(clock.instant(), expiresAt)
-        return if (remaining.isNegative || remaining.isZero) {
-            Duration.ofSeconds(1)
-        } else {
-            remaining
+    // Redis 는 0 이하의 남은 시간을 받지 않는다. 이미 지난 공유는 1초 뒤에 지워지게 한다.
+    private fun timeLeftUntil(expiresAt: Instant): Duration {
+        val timeLeft: Duration = Duration.between(clock.instant(), expiresAt)
+        if (timeLeft.isNegative || timeLeft.isZero) {
+            return Duration.ofSeconds(1)
         }
+        return timeLeft
     }
 
     private companion object {

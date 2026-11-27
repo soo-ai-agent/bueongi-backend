@@ -4,7 +4,6 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPageBuilder
-import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowLoaded
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowSkipped
@@ -39,9 +38,9 @@ class CsvPageBuilderTest {
     @Test
     fun `검색어는 행 내용에 담긴 행으로만 쪽을 나누고, 집계는 그대로 파일 전체다`() {
         val builder = CsvPageBuilder(page = 0, size = 10, skippedOnly = false, keyword = "종로")
-        builder.countAndAdd(1, "서울 종로구 세종대로")
-        builder.countAndAdd(2, "부산 해운대구")
-        builder.countAndAdd(3, "서울 종로구 평창동")
+        builder.add(1, listOf("서울 종로구 세종대로"), skipped)
+        builder.add(2, listOf("부산 해운대구"), skipped)
+        builder.add(3, listOf("서울 종로구 평창동"), skipped)
         val page: CsvPage = builder.build(listOf("머리글"))
 
         assertThat(page.rows.map { it.rowNumber }).containsExactly(1, 3)
@@ -52,25 +51,17 @@ class CsvPageBuilderTest {
     @Test
     fun `검색어는 대소문자를 가리지 않는다`() {
         val builder = CsvPageBuilder(page = 0, size = 10, skippedOnly = false, keyword = "cctv")
-        builder.countAndAdd(1, "서울 CCTV 교차로")
+        builder.add(1, listOf("서울 CCTV 교차로"), skipped)
         val page: CsvPage = builder.build(listOf("머리글"))
 
         assertThat(page.rows.map { it.rowNumber }).containsExactly(1)
-    }
-
-    private fun CsvPageBuilder.countAndAdd(rowNumber: Int, text: String) {
-        if (count(skipped, listOf(text))) {
-            add(CsvRow(rowNumber, listOf(text), skipped))
-        }
     }
 
     // 짝수 번째 행은 빠지고, 홀수 번째 행은 적재된다.
     private fun fill(builder: CsvPageBuilder, rowCount: Int): CsvPage {
         for (rowNumber in 1..rowCount) {
             val result: CsvRowResult = if (rowNumber % 2 == 0) skipped else loaded
-            if (builder.count(result, listOf("칸"))) {
-                builder.add(CsvRow(rowNumber, listOf("칸"), result))
-            }
+            builder.add(rowNumber, listOf("칸"), result)
         }
         return builder.build(listOf("머리글"))
     }

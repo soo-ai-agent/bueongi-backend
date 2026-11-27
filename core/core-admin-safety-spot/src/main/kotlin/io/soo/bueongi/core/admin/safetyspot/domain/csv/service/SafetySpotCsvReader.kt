@@ -1,13 +1,12 @@
 package io.soo.bueongi.core.admin.safetyspot.domain.csv.service
 
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.CellRegionCodeFinder
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.CsvColumns
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.RegionCodeFinder
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvFormat
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvReadResult
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPage
 import io.soo.bueongi.storage.db.safetyspot.store.CsvPageBuilder
-import io.soo.bueongi.storage.db.safetyspot.store.CsvRow
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowLoaded
 import io.soo.bueongi.storage.db.safetyspot.store.CsvRowResult
 import io.soo.bueongi.support.util.CP949
@@ -22,7 +21,7 @@ class SafetySpotCsvReader {
     fun readPoints(
         bytes: ByteArray,
         format: SafetySpotCsvFormat,
-        regionCodeFinder: RegionCodeFinder? = null,
+        cellRegionCodeFinder: CellRegionCodeFinder? = null,
     ): SafetySpotCsvReadResult {
         val rows: List<List<String>> = readRows(bytes)
         if (rows.isEmpty()) {
@@ -34,7 +33,7 @@ class SafetySpotCsvReader {
 
         val points: ArrayList<SafetySpotPoint> = ArrayList()
         for (row in dataRows) {
-            val result: CsvRowResult = format.readRow(row, columns, regionCodeFinder)
+            val result: CsvRowResult = format.readRow(row, columns, cellRegionCodeFinder)
             if (result is CsvRowLoaded) {
                 points.add(result.point)
             }
@@ -61,11 +60,8 @@ class SafetySpotCsvReader {
 
         for (index in dataRows.indices) {
             val row: List<String> = dataRows[index]
-            val result: CsvRowResult = format.readRow(row, columns, regionCodeFinder = null)
-            val isOnPage: Boolean = pageBuilder.count(result, row)
-            if (isOnPage) {
-                pageBuilder.add(CsvRow(rowNumber = index + 1, cells = row, result = result))
-            }
+            val result: CsvRowResult = format.readRow(row, columns, cellRegionCodeFinder = null)
+            pageBuilder.add(rowNumber = index + 1, cells = row, result = result)
         }
         return pageBuilder.build(header)
     }

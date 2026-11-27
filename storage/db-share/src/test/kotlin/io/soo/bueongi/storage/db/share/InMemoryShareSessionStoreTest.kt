@@ -30,8 +30,8 @@ class InMemoryShareSessionStoreTest {
     }
 
     @Test
-    fun `markViewed 후 isWatched 는 true, 유효시간(12초) 지나면 false`() {
-        store.markViewed("abc")
+    fun `markWatched 후 isWatched 는 true, 유효시간(12초) 지나면 false`() {
+        store.markWatched("abc")
         assertTrue(store.isWatched("abc"))
         clock.advanceSeconds(12)
         assertFalse(store.isWatched("abc"))

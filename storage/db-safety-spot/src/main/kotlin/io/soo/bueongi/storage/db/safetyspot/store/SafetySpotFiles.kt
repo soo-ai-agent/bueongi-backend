@@ -27,7 +27,7 @@ internal fun File.listCsvFiles(): List<File> {
 }
 
 // 쓰는 도중 서버가 죽어도 반쯤 쓴 파일이 남지 않게, 임시 파일에 다 쓴 뒤 한 번에 바꿔 끼운다.
-internal fun File.writeBytesAtomically(bytes: ByteArray) {
+internal fun File.writeBytesSafely(bytes: ByteArray) {
     val temp: File = File.createTempFile("$nameWithoutExtension-", ".tmp", parentFile)
     try {
         Files.write(temp.toPath(), bytes)

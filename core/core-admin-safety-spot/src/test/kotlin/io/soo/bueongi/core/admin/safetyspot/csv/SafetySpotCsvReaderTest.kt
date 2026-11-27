@@ -1,6 +1,6 @@
 package io.soo.bueongi.core.admin.safetyspot.csv
 
-import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.RegionCodeFinder
+import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.CellRegionCodeFinder
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCoordSystem
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.model.SafetySpotCsvFormat
 import io.soo.bueongi.core.admin.safetyspot.domain.csv.service.SafetySpotCsvReader
@@ -9,7 +9,7 @@ import io.soo.bueongi.storage.db.safetyspot.cctv.CctvSpot
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.securitylamp.SecurityLampSpot
 import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
-import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
+import io.soo.bueongi.storage.db.safetyspot.store.RegionCodeFinder
 import io.soo.bueongi.support.util.Epsg5174
 import io.soo.bueongi.support.util.Epsg5179
 import org.assertj.core.api.Assertions.assertThat
@@ -151,9 +151,9 @@ class SafetySpotCsvReaderTest {
 
         val nearbyCctv: SafetySpotPoint = SafetySpotPoint.of(SafetySpotType.CCTV, lat = 35.13, lng = 128.2775, regionCode = "5340000")
         val source = FakeSafetySpotSource(mapOf(SafetySpotType.CCTV to listOf(nearbyCctv)))
-        val regionCodeFinder = RegionCodeFinder(RegionLocator(source))
+        val cellRegionCodeFinder = CellRegionCodeFinder(RegionCodeFinder(source))
 
-        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SECURITY_LAMP), regionCodeFinder)
+        val result = reader.readPoints(bytes(csv), SafetySpotCsvFormat.forType(SafetySpotType.SECURITY_LAMP), cellRegionCodeFinder)
 
         assertThat(result.points.single().regionCodeOrNull()).isEqualTo("5340000")
     }

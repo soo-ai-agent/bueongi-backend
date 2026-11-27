@@ -4,12 +4,12 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.api.response.NearbySafetySpotsResponse
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.stereotype.Service
 
 @Service
 class NearbySafetySpotService(
-    private val safetySpots: SafetySpotSpatialSource,
+    private val safetySpots: SafetySpotSource,
 ) {
     fun count(center: GeoPoint): NearbySafetySpotsResponse {
         val countsByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()

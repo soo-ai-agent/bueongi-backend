@@ -1,7 +1,7 @@
 package io.soo.bueongi.core.app
 
 import io.soo.bueongi.storage.db.safetyspot.store.FakeSafetySpotSource
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean
 @TestConfiguration
 class EmptySafetySpotSourceConfig {
     @Bean
-    fun safetySpotSource(): SafetySpotSpatialSource {
+    fun safetySpotSource(): SafetySpotSource {
         return FakeSafetySpotSource()
     }
 }

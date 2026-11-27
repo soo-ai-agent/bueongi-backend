@@ -65,7 +65,7 @@ class GridSpatialIndex(
             val steps: Int = ceil(spanDeg / CELL_DEG).toInt().coerceAtLeast(1)
             for (s in 1..steps) {
                 val progress: Double = s.toDouble() / steps
-                val point: GeoPoint = from.pointTowards(to, progress)
+                val point: GeoPoint = from.pointBetween(to, progress)
                 out.add(point)
             }
         }

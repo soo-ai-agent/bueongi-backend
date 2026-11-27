@@ -16,7 +16,7 @@ class SafetySpotUploadStore(
         val dir: File = File(uploadDir, ORIGINALS_DIR)
         Files.createDirectories(dir.toPath())
         val target: File = File(dir, "${type.cdnType}.csv")
-        target.writeBytesAtomically(bytes)
+        target.writeBytesSafely(bytes)
     }
 
     fun originalFiles(): List<File> {

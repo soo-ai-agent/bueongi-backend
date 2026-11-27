@@ -2,14 +2,14 @@ package io.soo.bueongi.core.route.domain.safety.service
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.route.domain.safety.model.SafetySpotCluster
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
+import io.soo.bueongi.storage.db.safetyspot.model.LinePosition
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
-import io.soo.bueongi.storage.db.safetyspot.model.SegmentProjection
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
 import org.springframework.stereotype.Component
 
 @Component
 class SafetySpotWaypointPlanner(
-    private val safetySpots: SafetySpotSpatialSource,
+    private val safetySpots: SafetySpotSource,
 ) {
     fun cluster(routePath: List<GeoPoint>): List<SafetySpotCluster> {
         if (routePath.size < 2) {
@@ -36,7 +36,7 @@ class SafetySpotWaypointPlanner(
     private fun findNearRoute(routePath: List<GeoPoint>): List<SafetySpotPoint> {
         val spotsNearRoute: ArrayList<SafetySpotPoint> = ArrayList()
         for (spotType in CLUSTER_SPOT_TYPES) {
-            val spots: List<SafetySpotPoint> = safetySpots.findWithinCorridor(spotType, routePath, CLUSTER_RADIUS_METERS)
+            val spots: List<SafetySpotPoint> = safetySpots.findAlongPath(spotType, routePath, CLUSTER_RADIUS_METERS)
             spotsNearRoute.addAll(spots)
         }
         return spotsNearRoute
@@ -51,9 +51,9 @@ class SafetySpotWaypointPlanner(
         val maxLateralMeters: Double = origin.distanceMetersTo(destination) * DEFAULT_LATERAL_RATIO
         val placed: ArrayList<PlacedCluster> = ArrayList()
         for (cluster in clusters) {
-            val projection: SegmentProjection = cluster.center.projectOnto(origin, destination)
-            val progress: Double = projection.t
-            val lateralMeters: Double = projection.distanceMeters
+            val position: LinePosition = cluster.center.positionOnLine(origin, destination)
+            val progress: Double = position.progress
+            val lateralMeters: Double = position.distanceMeters
             val nearEnds: Boolean = progress <= MIDDLE_MIN_PROGRESS || progress >= MIDDLE_MAX_PROGRESS
             if (nearEnds) {
                 continue

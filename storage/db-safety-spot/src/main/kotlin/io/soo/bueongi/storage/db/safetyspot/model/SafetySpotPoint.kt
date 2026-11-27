@@ -13,7 +13,7 @@ import io.soo.bueongi.storage.db.safetyspot.streetlamp.StreetLampSpot
 // 좌표 외의 칸은 원천(공공 API·CSV)마다 주는 것이 달라 전부 비어 있을 수 있다.
 // 지역 코드는 원천의 체계대로 두 필드로 나뉜다 — 개방자치단체코드(7자리, 예: 종로구 3000000)와
 // 행정표준 시군구코드(5자리, 예: 종로구 11110).
-// 두 체계를 한 필드에 섞으면 지역 조회(RegionLocator → 보안등 API)가 어긋난다.
+// 두 체계를 한 필드에 섞으면 지역 조회(RegionCodeFinder → 보안등 API)가 어긋난다.
 abstract class SafetySpotPoint {
     abstract val type: SafetySpotType
     abstract val lat: Double

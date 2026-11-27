@@ -1,6 +1,6 @@
 package io.soo.bueongi.storage.db.safetyspot.store
 
-// CCTV 원천은 수십만 행이라 전부 메모리에 올리지 않고, 요청한 쪽의 행만 모은다.
+// 행을 하나씩 받아, 요청한 쪽에 드는 행만 담는다. CCTV 원본은 수십만 행이라 전부 담지 않는다.
 class CsvPageBuilder(
     private val page: Int,
     private val size: Int,
@@ -13,31 +13,24 @@ class CsvPageBuilder(
     private var skippedRows: Int = 0
     private var matchedRows: Int = 0
 
-    /**
-     * 행 판정 하나를 센다. 이 행이 요청한 쪽에 들어가면 true — 그때만 칸을 나눠 [add] 한다.
-     * 전체·적재·빠짐 수는 파일 전체 기준이고, 거르기(빠진 행만·검색어)는 쪽 배치에만 걸린다.
-     */
-    fun count(result: CsvRowResult, cells: List<String>): Boolean {
+    // 전체, 적재, 빠짐 수는 파일 전체로 센다. '빠진 행만'과 검색어는 쪽에 담을 행을 고를 때만 쓴다.
+    fun add(rowNumber: Int, cells: List<String>, result: CsvRowResult) {
         totalRows++
         when (result) {
             is CsvRowLoaded -> loadedRows++
             is CsvRowSkipped -> skippedRows++
         }
-        if (skippedOnly && result !is CsvRowSkipped) {
-            return false
+        if (!isMatched(cells, result)) {
+            return
         }
-        // 결합 문자열은 검색할 때만 만든다 — CCTV 37만 행을 검색어 없이 넘길 때의 낭비가 크다.
-        if (keyword.isNotBlank() && !cells.joinToString(" ").contains(keyword, ignoreCase = true)) {
-            return false
-        }
-        val position: Int = matchedRows
+        val matchedIndex: Int = matchedRows
         matchedRows++
-        val firstOnPage: Int = page * size
-        return position >= firstOnPage && position < firstOnPage + size
-    }
 
-    fun add(row: CsvRow) {
-        rows.add(row)
+        val firstOnPage: Int = page * size
+        val isOnPage: Boolean = matchedIndex >= firstOnPage && matchedIndex < firstOnPage + size
+        if (isOnPage) {
+            rows.add(CsvRow(rowNumber, cells, result))
+        }
     }
 
     fun build(header: List<String>): CsvPage {
@@ -51,5 +44,17 @@ class CsvPageBuilder(
             page = page,
             size = size,
         )
+    }
+
+    private fun isMatched(cells: List<String>, result: CsvRowResult): Boolean {
+        if (skippedOnly && result !is CsvRowSkipped) {
+            return false
+        }
+        if (keyword.isBlank()) {
+            return true
+        }
+        // 칸을 이어 붙인 글은 검색어가 있을 때만 만든다 — CCTV 37만 행을 검색어 없이 넘길 때 낭비가 크다.
+        val rowText: String = cells.joinToString(" ")
+        return rowText.contains(keyword, ignoreCase = true)
     }
 }

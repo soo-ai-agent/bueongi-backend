@@ -7,8 +7,8 @@ import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.core.safetyspot.domain.safehouse.model.MapTile
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.safehouse.SafeHouseSpot
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotWriter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ChildSafeHouseFillService(
     private val client: ChildSafeHouseClient,
     private val cache: SafetySpotRegionCache,
-    private val liveStore: SafetySpotLiveStore,
+    private val safetySpotWriter: SafetySpotWriter,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
 ) {
     private val log: Logger = LoggerFactory.getLogger(ChildSafeHouseFillService::class.java)
@@ -54,7 +54,7 @@ class ChildSafeHouseFillService(
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         // 바다·산처럼 시설이 없는 칸도 있다 — 빈 결과도 기록해 재수집 주기 동안 다시 받지 않게 한다.
-        liveStore.replaceRegion(SafetySpotType.SAFEHOUSE, tile.code, points)
+        safetySpotWriter.replaceRegion(SafetySpotType.SAFEHOUSE, tile.code, points)
         if (points.isEmpty()) {
             return 0
         }

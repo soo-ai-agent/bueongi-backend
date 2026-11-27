@@ -243,7 +243,7 @@ Tmap이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 
 ## 4. safetyspot 모듈: storage/db-safety-spot
 
-### SafetySpotSpatialSource (`store/SafetySpotSpatialSource.kt`)
+### SafetySpotSource (`store/SafetySpotSource.kt`)
 
 읽기 창구 인터페이스. route 모듈이 보는 것은 이 인터페이스뿐이다.
 
@@ -254,18 +254,18 @@ Tmap이 중복해서 주는 비슷한 경로를 하나로 뭉친다.
 | `freshness`     | 조회 | 자료 생성 시점과 버전(기본 구현은 null)                  |
 | `sources(type)` | 조회 | 한 종류의 출처별 조각 스냅샷(기본 구현은 전부 파일 출처) |
 
-### SafetySpotLiveStore (`store/SafetySpotLiveStore.kt`)
+### SafetySpotWriter (`store/SafetySpotWriter.kt`)
 
 쓰기 창구 인터페이스. 두 교체 모두 원자적이다.
 
 | 멤버                                      | 유형 | 역할                                                   |
 |-------------------------------------------|------|--------------------------------------------------------|
-| `replaceFiles(type, points)`              | 저장 | 파일 출처 조각만 바꾸고, API로 받은 지역 조각은 남긴다 |
+| `replaceUpload(type, points)`             | 저장 | 파일 출처 조각만 바꾸고, API로 받은 지역 조각은 남긴다 |
 | `replaceRegion(type, regionCode, points)` | 저장 | 그 지역의 API 조각만 바꾼다                            |
 
 쓰는 곳은 둘이다.
 
-- `replaceFiles`: 관리자 업로드(`core-admin-safety-spot`의 `SafetySpotUploadService`)
+- `replaceUpload`: 관리자 업로드(`core-admin-safety-spot`의 `SafetySpotUploadService`)
 - `replaceRegion`: 경로 주변 채우기(`core-safety-spot`의 `*FillService` 4종)
 
 읽기(`SpatialSource`)와 쓰기(`LiveStore`)가 인터페이스 수준에서 분리되어 있다.
@@ -279,7 +279,7 @@ CSV 해석은 하지 않는다. 업로드가 변환해 둔 JSON만 읽는다(202
 |-------------------------------------------|----------------------|------|------------------------------------------------------------|
 | `index(type)`                             | 공개(override)       | 조회 | 종류별 인덱스, 없으면 빈 인덱스                            |
 | `sources(type)`                           | 공개(override)       | 조회 | 종류별 출처 조각, 없으면 빈 조각                           |
-| `replaceFiles(type, points)`              | 공개(override)       | 저장 | 파일 조각을 새 점으로 바꾸고 인덱스를 다시 세운다          |
+| `replaceUpload(type, points)`             | 공개(override)       | 저장 | 파일 조각을 새 점으로 바꾸고 인덱스를 다시 세운다          |
 | `replaceRegion(type, regionCode, points)` | 공개(override)       | 저장 | 지역 조각 하나를 새 점으로 바꾸고 인덱스를 다시 세운다     |
 | `load()`                                  | 공개(@PostConstruct) | 적재 | 부팅 때 CDN, 업로드분, 지역 캐시 순으로 읽어 조각을 세운다 |
 | `addRegionCache(sources)`                 | 비공개               | 적재 | 지역 캐시 파일을 종류별 지역 조각으로 더한다               |
@@ -342,7 +342,7 @@ CSV 해석은 `core/core-admin-safety-spot`의 `domain/csv/<시설>/XxxCsvFormat
 | 함수                             | 공개   | 유형 | 역할                                                |
 |----------------------------------|--------|------|-----------------------------------------------------|
 | `isCached(type, regionCode)`     | 공개   | 계산 | 저장 시각이 TTL 안인지                              |
-| `savedAtOf(type, regionCode)`    | 공개   | 조회 | 저장 시각(메모리, 파일 순)                          |
+| `findSavedAt(type, regionCode)`  | 공개   | 조회 | 저장 시각(메모리, 파일 순)                          |
 | `save(type, regionCode, points)` | 공개   | 저장 | 지역별 JSON 원자적 저장. 결과가 비면 기존 점을 유지 |
 | `load(type, regionCode)`         | 공개   | 조회 | 한 지역의 캐시를 점 목록으로                        |
 | `list(type)`                     | 공개   | 조회 | 캐시된 지역 코드 집합                               |
@@ -360,10 +360,10 @@ CSV 해석은 `core/core-admin-safety-spot`의 `domain/csv/<시설>/XxxCsvFormat
 
 | 함수                                           | 공개 | 유형 | 역할               |
 |------------------------------------------------|------|------|--------------------|
-| `recordUpload(type, replacedCount, atEpochMs)` | 공개 | 저장 | 업로드 한 건 기록  |
+| `recordUpload(type, replacedCount, savedAtMs)` | 공개 | 저장 | 업로드 한 건 기록  |
 | `findByType(type)`                             | 공개 | 조회 | 종류별 마지막 기록 |
 
-예전의 `record(results, atEpochMs)`(스케줄러 갱신 결과 병합)는 지금 없다. 기록하는 곳은 관리자 업로드뿐이다.
+예전의 `record(results, savedAtMs)`(스케줄러 갱신 결과 병합)는 지금 없다. 기록하는 곳은 관리자 업로드뿐이다.
 
 저장 1, 조회 1. 유형이 명확하다.
 

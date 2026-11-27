@@ -6,9 +6,9 @@ import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.core.safetyspot.domain.fill.model.FillFailureCooldown
 import io.soo.bueongi.storage.db.safetyspot.model.SafetySpotPoint
 import io.soo.bueongi.storage.db.safetyspot.securitylamp.SecurityLampSpot
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotLiveStore
 import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotRegionCache
-import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSpatialSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotSource
+import io.soo.bueongi.storage.db.safetyspot.store.SafetySpotWriter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 class SecurityLampFillService(
     private val client: SecurityLampClient,
     private val cache: SafetySpotRegionCache,
-    private val liveStore: SafetySpotLiveStore,
-    private val safetySpots: SafetySpotSpatialSource,
+    private val safetySpotWriter: SafetySpotWriter,
+    private val safetySpots: SafetySpotSource,
     private val retryGate: FillFailureCooldown = FillFailureCooldown(),
 ) {
     private val log: Logger = LoggerFactory.getLogger(SecurityLampFillService::class.java)
@@ -68,7 +68,7 @@ class SecurityLampFillService(
         }
         val points: List<SafetySpotPoint> = toSafetySpots(fetched)
         // 좌표를 안 주는 지자체가 있다(마포·강남 등) — 빈 기록해 재수집 주기 동안 다시 받지 않게 한다.
-        liveStore.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
+        safetySpotWriter.replaceRegion(SafetySpotType.SECURITY_LAMP, regionCode, points)
         if (points.isEmpty()) {
             log.warn("{} {}건을 받았으나 좌표가 없어 적재 0건 (범위={})", SafetySpotType.SECURITY_LAMP.label, fetched.size, regionCode)
             return 0

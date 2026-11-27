@@ -29,7 +29,7 @@ class ShareServiceAdminLocationTest : ShareServiceTestSupport() {
     }
 
     @Test
-    fun `대조 - 공개 getLocation 은 여전히 markViewed 를 호출한다(isWatched true, 회귀 없음)`() {
+    fun `대조 - 공개 getLocation 은 여전히 markWatched 를 호출한다(isWatched true, 회귀 없음)`() {
         val s = service.create(null)
         service.updateLocation(s.token, s.ownerSecret, report())
         assertFalse(store.isWatched(s.token))

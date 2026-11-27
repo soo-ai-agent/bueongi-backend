@@ -8,16 +8,16 @@ import io.soo.bueongi.core.safetyspot.domain.securitylamp.service.SecurityLampFi
 import io.soo.bueongi.core.safetyspot.domain.streetlamp.service.StreetLampFillService
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
 import io.soo.bueongi.storage.db.safetyspot.model.pickPointsAlong
-import io.soo.bueongi.storage.db.safetyspot.store.RegionLocator
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import io.soo.bueongi.storage.db.safetyspot.store.RegionCodeFinder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 @Component
 class SafetySpotFillTrigger(
-    private val locator: RegionLocator,
+    private val regionCodeFinder: RegionCodeFinder,
     private val securityLampFill: SecurityLampFillService,
     private val streetLampFill: StreetLampFillService,
     private val policeFill: PoliceFillService,
@@ -68,7 +68,7 @@ class SafetySpotFillTrigger(
     private fun fillSecurityLampsOf(points: List<GeoPoint>) {
         val regions: MutableSet<String> = LinkedHashSet()
         for (point in points) {
-            val code: String? = locator.locate(point)
+            val code: String? = regionCodeFinder.find(point)
             if (code != null) {
                 regions.add(code)
             }

@@ -2,7 +2,7 @@ package io.soo.bueongi.core.admin.safetyspot.domain.status.model
 
 import io.soo.bueongi.core.enums.SafetySpotType
 import io.soo.bueongi.storage.db.safetyspot.model.GeoPoint
-import io.soo.bueongi.storage.db.safetyspot.model.RegionSpotTally
+import io.soo.bueongi.storage.db.safetyspot.model.RegionTypeCount
 
 data class RegionSafetySpotCount(
     val code: String,
@@ -24,7 +24,7 @@ data class RegionSafetySpotCount(
         const val UNKNOWN_CODE: String = "unknown"
 
         // rows 는 한 지역의 줄들이다. 시설 종류마다 한 줄씩 온다.
-        fun from(code: String, region: RegionName, rows: List<RegionSpotTally>): RegionSafetySpotCount {
+        fun from(code: String, region: RegionName, rows: List<RegionTypeCount>): RegionSafetySpotCount {
             val countsByType: LinkedHashMap<SafetySpotType, Int> = LinkedHashMap()
             var fileCount: Int = 0
             var apiCount: Int = 0
